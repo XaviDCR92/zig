@@ -479,7 +479,7 @@ ZigType *get_fn_frame_type(CodeGen *g, ZigFn *fn) {
 }
 
 static void append_ptr_type_attrs(Buf *type_name, ZigType *ptr_type) {
-    const char *const_str = ptr_type->data.pointer.is_const ? " " : "var ";
+    const char *const_str = ptr_type->data.pointer.is_const ? "" : "var ";
     const char *volatile_str = ptr_type->data.pointer.is_volatile ? "volatile " : "";
     const char *allow_zero_str;
     if (ptr_type->data.pointer.ptr_len == PtrLenC) {

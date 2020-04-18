@@ -2690,6 +2690,8 @@ static AstNode *ast_parse_prefix_type_op(ParseContext *pc) {
         AstNode *child = ptr->data.pointer_type.op_expr;
         if (child == nullptr)
             child = ptr;
+
+        child->data.pointer_type.is_const = true;
         while (true) {
             Token *allowzero_token = eat_token_if(pc, TokenIdKeywordAllowZero);
             if (allowzero_token != nullptr) {
@@ -2712,8 +2714,8 @@ static AstNode *ast_parse_prefix_type_op(ParseContext *pc) {
                 continue;
             }
 
-            if (eat_token_if(pc, TokenIdKeywordDef) != nullptr) {
-                child->data.pointer_type.is_const = true;
+            if (eat_token_if(pc, TokenIdKeywordVar) != nullptr) {
+                child->data.pointer_type.is_const = false;
                 continue;
             }
 
@@ -2731,6 +2733,7 @@ static AstNode *ast_parse_prefix_type_op(ParseContext *pc) {
     AstNode *array = ast_parse_array_type_start(pc);
     if (array != nullptr) {
         assert(array->type == NodeTypeArrayType);
+        array->data.array_type.is_const = true;
         while (true) {
             Token *allowzero_token = eat_token_if(pc, TokenIdKeywordAllowZero);
             if (allowzero_token != nullptr) {
@@ -2744,8 +2747,8 @@ static AstNode *ast_parse_prefix_type_op(ParseContext *pc) {
                 continue;
             }
 
-            if (eat_token_if(pc, TokenIdKeywordDef) != nullptr) {
-                array->data.array_type.is_const = true;
+            if (eat_token_if(pc, TokenIdKeywordVar) != nullptr) {
+                array->data.array_type.is_const = false;
                 continue;
             }
 

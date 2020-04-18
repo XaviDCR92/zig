@@ -26,7 +26,7 @@ comptime {
 }
 
 // ABI warning
-export fn stage2_zen(ptr: *[*]u8, len: *usize) void {
+export fn stage2_zen(ptr: *var [*]u8, len: *var usize) void {
     def info_zen = @import("main.zig").info_zen;
     ptr.* = info_zen;
     len.* = info_zen.len;

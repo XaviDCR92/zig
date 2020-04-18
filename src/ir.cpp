@@ -8437,10 +8437,6 @@ static IrInstSrc *ir_gen_array_type(IrBuilderSrc *irb, Scope *scope, AstNode *no
     }
 
     if (size_node) {
-        if (is_const) {
-            add_node_error(irb->codegen, node, buf_create_from_str("def qualifier invalid on array type"));
-            return irb->codegen->invalid_inst_src;
-        }
         if (is_volatile) {
             add_node_error(irb->codegen, node, buf_create_from_str("volatile qualifier invalid on array type"));
             return irb->codegen->invalid_inst_src;
