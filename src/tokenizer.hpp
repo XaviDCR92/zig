@@ -61,7 +61,7 @@ enum TokenId {
     TokenIdKeywordCatch,
     TokenIdKeywordCallconv,
     TokenIdKeywordCompTime,
-    TokenIdKeywordConst,
+    TokenIdKeywordDef,
     TokenIdKeywordContinue,
     TokenIdKeywordDefer,
     TokenIdKeywordElse,

@@ -134,7 +134,7 @@ static const char *inline_string(FnInline fn_inline) {
 }
 
 static const char *const_or_var_string(bool is_const) {
-    return is_const ? "const" : "var";
+    return is_const ? "def" : "var";
 }
 
 static const char *thread_local_string(Token *tok) {
@@ -693,8 +693,8 @@ static void render_node_extra(AstRender *ar, AstNode *node, bool grouped) {
                     }
                     fprintf(ar->f, ") ");
                 }
-                if (node->data.pointer_type.is_const) {
-                    fprintf(ar->f, "const ");
+                if (!node->data.pointer_type.is_const) {
+                    fprintf(ar->f, "var ");
                 }
                 if (node->data.pointer_type.is_volatile) {
                     fprintf(ar->f, "volatile ");
@@ -879,8 +879,8 @@ static void render_node_extra(AstRender *ar, AstNode *node, bool grouped) {
                     render_node_grouped(ar, node->data.array_type.size);
                 }
                 fprintf(ar->f, "]");
-                if (node->data.array_type.is_const) {
-                    fprintf(ar->f, "const ");
+                if (!node->data.array_type.is_const) {
+                    fprintf(ar->f, "var ");
                 }
                 render_node_ungrouped(ar, node->data.array_type.child_type);
                 break;

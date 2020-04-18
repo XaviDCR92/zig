@@ -113,7 +113,7 @@ static const struct ZigKeyword zig_keywords[] = {
     {"callconv", TokenIdKeywordCallconv},
     {"catch", TokenIdKeywordCatch},
     {"comptime", TokenIdKeywordCompTime},
-    {"const", TokenIdKeywordConst},
+    {"def", TokenIdKeywordDef},
     {"continue", TokenIdKeywordContinue},
     {"defer", TokenIdKeywordDefer},
     {"else", TokenIdKeywordElse},
@@ -1574,7 +1574,7 @@ const char * token_name(TokenId id) {
         case TokenIdKeywordCatch: return "catch";
         case TokenIdKeywordCallconv: return "callconv";
         case TokenIdKeywordCompTime: return "comptime";
-        case TokenIdKeywordConst: return "const";
+        case TokenIdKeywordDef: return "def";
         case TokenIdKeywordContinue: return "continue";
         case TokenIdKeywordDefer: return "defer";
         case TokenIdKeywordElse: return "else";

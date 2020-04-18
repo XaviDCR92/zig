@@ -479,7 +479,7 @@ ZigType *get_fn_frame_type(CodeGen *g, ZigFn *fn) {
 }
 
 static void append_ptr_type_attrs(Buf *type_name, ZigType *ptr_type) {
-    const char *const_str = ptr_type->data.pointer.is_const ? "const " : "";
+    const char *const_str = ptr_type->data.pointer.is_const ? " " : "var ";
     const char *volatile_str = ptr_type->data.pointer.is_volatile ? "volatile " : "";
     const char *allow_zero_str;
     if (ptr_type->data.pointer.ptr_len == PtrLenC) {
@@ -8910,7 +8910,7 @@ static void resolve_llvm_types_optional(CodeGen *g, ZigType *type, ResolveStatus
                 8 * child_type->abi_align,
                 val_offset_in_bits,
                 ZigLLVM_DIFlags_Zero, child_llvm_di_type);
-    di_element_types[maybe_null_index] = 
+    di_element_types[maybe_null_index] =
         ZigLLVMCreateDebugMemberType(g->dbuilder, ZigLLVMTypeToScope(type->llvm_di_type),
                 "maybe", di_file, line,
                 8*g->builtin_types.entry_bool->abi_size,

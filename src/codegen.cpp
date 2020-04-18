@@ -3421,7 +3421,7 @@ static LLVMValueRef ir_render_int_to_enum(CodeGen *g, IrExecutableGen *executabl
 
         for (size_t field_i = 0; field_i < field_count; field_i += 1) {
             TypeEnumField *type_enum_field = &wanted_type->data.enumeration.fields[field_i];
-            
+
             Buf *name = type_enum_field->name;
             auto entry = occupied_tag_values.put_unique(type_enum_field->value, name);
             if (entry != nullptr) {
@@ -5136,7 +5136,7 @@ static LLVMValueRef get_enum_tag_name_function(CodeGen *g, ZigType *enum_type) {
 
     for (size_t field_i = 0; field_i < field_count; field_i += 1) {
         TypeEnumField *type_enum_field = &enum_type->data.enumeration.fields[field_i];
-        
+
         Buf *name = type_enum_field->name;
         auto entry = occupied_tag_values.put_unique(type_enum_field->value, name);
         if (entry != nullptr) {
@@ -5349,7 +5349,7 @@ static LLVMTypeRef get_atomic_abi_type(CodeGen *g, IrInstGen *instruction) {
         }
         auto bit_count = operand_type->data.integral.bit_count;
         bool is_signed = operand_type->data.integral.is_signed;
-        
+
         ir_assert(bit_count != 0, instruction);
         if (bit_count == 1 || !is_power_of_2(bit_count)) {
             return get_llvm_type(g, get_int_type(g, is_signed, operand_type->abi_size * 8));
@@ -8792,7 +8792,7 @@ Buf *codegen_generate_builtin_source(CodeGen *g) {
     static_assert(TargetSubsystemEfiRuntimeDriver == 7, "");
     {
         const char *endian_str = g->is_big_endian ? "Endian.Big" : "Endian.Little";
-        buf_appendf(contents, "pub const endian = %s;\n", endian_str);
+        buf_appendf(contents, "pub def endian = %s;\n", endian_str);
     }
     const char *out_type = nullptr;
     switch (g->out_type) {
@@ -8807,16 +8807,16 @@ Buf *codegen_generate_builtin_source(CodeGen *g) {
             out_type = "Obj";
             break;
     }
-    buf_appendf(contents, "pub const output_mode = OutputMode.%s;\n", out_type);
+    buf_appendf(contents, "pub def output_mode = OutputMode.%s;\n", out_type);
     const char *link_type = g->have_dynamic_link ? "Dynamic" : "Static";
-    buf_appendf(contents, "pub const link_mode = LinkMode.%s;\n", link_type);
-    buf_appendf(contents, "pub const is_test = %s;\n", bool_to_str(g->is_test_build));
-    buf_appendf(contents, "pub const single_threaded = %s;\n", bool_to_str(g->is_single_threaded));
+    buf_appendf(contents, "pub def link_mode = LinkMode.%s;\n", link_type);
+    buf_appendf(contents, "pub def is_test = %s;\n", bool_to_str(g->is_test_build));
+    buf_appendf(contents, "pub def single_threaded = %s;\n", bool_to_str(g->is_single_threaded));
     buf_append_str(contents, "/// Deprecated: use `std.Target.cpu.arch`\n");
-    buf_appendf(contents, "pub const arch = Arch.%s;\n", cur_arch);
-    buf_appendf(contents, "pub const abi = Abi.%s;\n", cur_abi);
+    buf_appendf(contents, "pub def arch = Arch.%s;\n", cur_arch);
+    buf_appendf(contents, "pub def abi = Abi.%s;\n", cur_abi);
     {
-        buf_append_str(contents, "pub const cpu: Cpu = ");
+        buf_append_str(contents, "pub def cpu: Cpu = ");
         if (g->zig_target->cpu_builtin_str != nullptr) {
             buf_append_str(contents, g->zig_target->cpu_builtin_str);
         } else {
@@ -8824,21 +8824,21 @@ Buf *codegen_generate_builtin_source(CodeGen *g) {
         }
     }
     {
-        buf_append_str(contents, "pub const os = ");
+        buf_append_str(contents, "pub def os = ");
         if (g->zig_target->os_builtin_str != nullptr) {
             buf_append_str(contents, g->zig_target->os_builtin_str);
         } else {
             buf_appendf(contents, "Target.Os.defaultVersionRange(.%s);\n", cur_os);
         }
     }
-    buf_appendf(contents, "pub const object_format = ObjectFormat.%s;\n", cur_obj_fmt);
-    buf_appendf(contents, "pub const mode = %s;\n", build_mode_to_str(g->build_mode));
-    buf_appendf(contents, "pub const link_libc = %s;\n", bool_to_str(g->libc_link_lib != nullptr));
-    buf_appendf(contents, "pub const link_libcpp = %s;\n", bool_to_str(g->libcpp_link_lib != nullptr));
-    buf_appendf(contents, "pub const have_error_return_tracing = %s;\n", bool_to_str(g->have_err_ret_tracing));
-    buf_appendf(contents, "pub const valgrind_support = %s;\n", bool_to_str(want_valgrind_support(g)));
-    buf_appendf(contents, "pub const position_independent_code = %s;\n", bool_to_str(g->have_pic));
-    buf_appendf(contents, "pub const strip_debug_info = %s;\n", bool_to_str(g->strip_debug_symbols));
+    buf_appendf(contents, "pub def object_format = ObjectFormat.%s;\n", cur_obj_fmt);
+    buf_appendf(contents, "pub def mode = %s;\n", build_mode_to_str(g->build_mode));
+    buf_appendf(contents, "pub def link_libc = %s;\n", bool_to_str(g->libc_link_lib != nullptr));
+    buf_appendf(contents, "pub def link_libcpp = %s;\n", bool_to_str(g->libcpp_link_lib != nullptr));
+    buf_appendf(contents, "pub def have_error_return_tracing = %s;\n", bool_to_str(g->have_err_ret_tracing));
+    buf_appendf(contents, "pub def valgrind_support = %s;\n", bool_to_str(want_valgrind_support(g)));
+    buf_appendf(contents, "pub def position_independent_code = %s;\n", bool_to_str(g->have_pic));
+    buf_appendf(contents, "pub def strip_debug_info = %s;\n", bool_to_str(g->strip_debug_symbols));
 
     {
         const char *code_model;
@@ -8865,13 +8865,13 @@ Buf *codegen_generate_builtin_source(CodeGen *g) {
             zig_unreachable();
         }
 
-        buf_appendf(contents, "pub const code_model = CodeModel.%s;\n", code_model);
+        buf_appendf(contents, "pub def code_model = CodeModel.%s;\n", code_model);
     }
 
     {
         TargetSubsystem detected_subsystem = detect_subsystem(g);
         if (detected_subsystem != TargetSubsystemAuto) {
-            buf_appendf(contents, "pub const explicit_subsystem = SubSystem.%s;\n", subsystem_to_str(detected_subsystem));
+            buf_appendf(contents, "pub def explicit_subsystem = SubSystem.%s;\n", subsystem_to_str(detected_subsystem));
         }
     }
 
@@ -8880,7 +8880,7 @@ Buf *codegen_generate_builtin_source(CodeGen *g) {
             "pub var test_functions: []TestFn = undefined; // overwritten later\n"
         );
 
-        buf_appendf(contents, "pub const test_io_mode = %s;\n",
+        buf_appendf(contents, "pub def test_io_mode = %s;\n",
             g->test_is_evented ? ".evented" : ".blocking");
     }
 
@@ -9085,7 +9085,7 @@ static void init(CodeGen *g) {
             abi_name = (g->zig_target->arch == ZigLLVM_riscv32) ? "ilp32" : "lp64";
         }
     }
-    
+
     g->target_machine = ZigLLVMCreateTargetMachine(target_ref, buf_ptr(&g->llvm_triple_str),
             target_specific_cpu_args, target_specific_features, opt_level, reloc_mode,
             to_llvm_code_model(g), g->function_sections, float_abi, abi_name);
@@ -10153,7 +10153,7 @@ static void get_c_type(CodeGen *g, GenH *gen_h, ZigType *type_entry, Buf *out_bu
                 ZigType *child_type = type_entry->data.pointer.child_type;
                 get_c_type(g, gen_h, child_type, &child_buf);
 
-                const char *const_str = type_entry->data.pointer.is_const ? "const " : "";
+                const char *const_str = type_entry->data.pointer.is_const ? "" : "var ";
                 buf_resize(out_buf, 0);
                 buf_appendf(out_buf, "%s%s *", const_str, buf_ptr(&child_buf));
                 break;

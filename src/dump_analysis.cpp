@@ -610,7 +610,7 @@ static void anal_dump_decl(AnalDumpCtx *ctx, Tld *tld) {
             if (var != nullptr) {
                 jw_object_field(jw, "kind");
                 if (var->src_is_const) {
-                    jw_string(jw, "const");
+                    jw_string(jw, "def");
                 } else {
                     jw_string(jw, "var");
                 }
@@ -636,7 +636,7 @@ static void anal_dump_decl(AnalDumpCtx *ctx, Tld *tld) {
 
             if (fn != nullptr) {
                 jw_object_field(jw, "kind");
-                jw_string(jw, "const");
+                jw_string(jw, "def");
 
                 jw_object_field(jw, "type");
                 anal_dump_type_ref(ctx, fn->type_entry);
@@ -707,7 +707,9 @@ static void anal_dump_pointer_attrs(AnalDumpCtx *ctx, ZigType *ty) {
         jw_int(jw, ty->data.pointer.explicit_alignment);
     }
     if (ty->data.pointer.is_const) {
-        jw_object_field(jw, "const");
+        jw_object_field(jw, "var");
+    }
+    else {
         jw_bool(jw, true);
     }
     if (ty->data.pointer.is_volatile) {

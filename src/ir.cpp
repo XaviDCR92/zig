@@ -8438,7 +8438,7 @@ static IrInstSrc *ir_gen_array_type(IrBuilderSrc *irb, Scope *scope, AstNode *no
 
     if (size_node) {
         if (is_const) {
-            add_node_error(irb->codegen, node, buf_create_from_str("const qualifier invalid on array type"));
+            add_node_error(irb->codegen, node, buf_create_from_str("def qualifier invalid on array type"));
             return irb->codegen->invalid_inst_src;
         }
         if (is_volatile) {
@@ -11563,8 +11563,8 @@ static ConstCastOnly types_match_const_cast_only(IrAnalyze *ira, ZigType *wanted
     if (wanted_type == actual_type)
         return result;
 
-    // If pointers have the same representation in memory, they can be "const-casted".
-    // `const` attribute can be gained
+    // If pointers have the same representation in memory, they can be "var-casted".
+    // `var` attribute can be gained
     // `volatile` attribute can be gained
     // `allowzero` attribute can be gained (whether from explicit attribute, C pointer, or optional pointer)
     //   but only if !wanted_is_mutable

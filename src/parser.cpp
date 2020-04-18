@@ -816,7 +816,7 @@ static AstNode *ast_parse_fn_proto(ParseContext *pc) {
 
 // VarDecl <- (KEYWORD_const / KEYWORD_var) IDENTIFIER (COLON TypeExpr)? ByteAlign? LinkSection? (EQUAL Expr)? SEMICOLON
 static AstNode *ast_parse_var_decl(ParseContext *pc) {
-    Token *mut_kw = eat_token_if(pc, TokenIdKeywordConst);
+    Token *mut_kw = eat_token_if(pc, TokenIdKeywordDef);
     if (mut_kw == nullptr)
         mut_kw = eat_token_if(pc, TokenIdKeywordVar);
     if (mut_kw == nullptr)
@@ -836,7 +836,7 @@ static AstNode *ast_parse_var_decl(ParseContext *pc) {
     expect_token(pc, TokenIdSemicolon);
 
     AstNode *res = ast_create_node(pc, NodeTypeVariableDeclaration, mut_kw);
-    res->data.variable_declaration.is_const = mut_kw->id == TokenIdKeywordConst;
+    res->data.variable_declaration.is_const = mut_kw->id == TokenIdKeywordDef;
     res->data.variable_declaration.symbol = token_buf(identifier);
     res->data.variable_declaration.type = type_expr;
     res->data.variable_declaration.align_expr = align_expr;
@@ -2712,7 +2712,7 @@ static AstNode *ast_parse_prefix_type_op(ParseContext *pc) {
                 continue;
             }
 
-            if (eat_token_if(pc, TokenIdKeywordConst) != nullptr) {
+            if (eat_token_if(pc, TokenIdKeywordDef) != nullptr) {
                 child->data.pointer_type.is_const = true;
                 continue;
             }
@@ -2744,7 +2744,7 @@ static AstNode *ast_parse_prefix_type_op(ParseContext *pc) {
                 continue;
             }
 
-            if (eat_token_if(pc, TokenIdKeywordConst) != nullptr) {
+            if (eat_token_if(pc, TokenIdKeywordDef) != nullptr) {
                 array->data.array_type.is_const = true;
                 continue;
             }

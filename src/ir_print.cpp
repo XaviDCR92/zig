@@ -732,7 +732,7 @@ static void ir_print_merge_err_sets(IrPrintSrc *irp, IrInstSrcMergeErrSets *inst
 }
 
 static void ir_print_decl_var_src(IrPrintSrc *irp, IrInstSrcDeclVar *decl_var_instruction) {
-    const char *var_or_const = decl_var_instruction->var->gen_is_const ? "const" : "var";
+    const char *var_or_const = decl_var_instruction->var->gen_is_const ? "def" : "var";
     const char *name = decl_var_instruction->var->name;
     if (decl_var_instruction->var_type) {
         fprintf(irp->f, "%s %s: ", var_or_const, name);
@@ -1205,7 +1205,7 @@ static void ir_print_array_type(IrPrintSrc *irp, IrInstSrcArrayType *instruction
 }
 
 static void ir_print_slice_type(IrPrintSrc *irp, IrInstSrcSliceType *instruction) {
-    const char *const_kw = instruction->is_const ? "const " : "";
+    const char *const_kw = instruction->is_const ? "" : "var ";
     fprintf(irp->f, "[]%s", const_kw);
     ir_print_other_inst_src(irp, instruction->child_type);
 }
@@ -2167,7 +2167,7 @@ static void ir_print_ptr_type(IrPrintSrc *irp, IrInstSrcPtrType *instruction) {
         ir_print_other_inst_src(irp, instruction->align_value);
         fprintf(irp->f, ")");
     }
-    const char *const_str = instruction->is_const ? "const " : "";
+    const char *const_str = instruction->is_const ? "" : "var ";
     const char *volatile_str = instruction->is_volatile ? "volatile " : "";
     fprintf(irp->f, ":%" PRIu32 ":%" PRIu32 " %s%s", instruction->bit_offset_start, instruction->host_int_bytes,
             const_str, volatile_str);
@@ -2448,7 +2448,7 @@ static void ir_print_mul_add(IrPrintGen *irp, IrInstGenMulAdd *instruction) {
 
 static void ir_print_decl_var_gen(IrPrintGen *irp, IrInstGenDeclVar *decl_var_instruction) {
     ZigVar *var = decl_var_instruction->var;
-    const char *var_or_const = decl_var_instruction->var->gen_is_const ? "const" : "var";
+    const char *var_or_const = decl_var_instruction->var->gen_is_const ? "def" : "var";
     const char *name = decl_var_instruction->var->name;
     fprintf(irp->f, "%s %s: %s align(%u) = ", var_or_const, name, buf_ptr(&var->var_type->name),
             var->align_bytes);
