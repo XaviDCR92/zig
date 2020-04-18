@@ -1,6 +1,6 @@
 pub def pthread_mutex_t = extern struct {
     inner: ?*c_void = null,
 };
-pub defthread_cond_t = extern struct {
+pub def pthread_cond_t = extern struct {
     inner: ?*c_void = null,
 };

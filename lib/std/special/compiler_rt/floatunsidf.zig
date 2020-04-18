@@ -1,8 +1,8 @@
 def builtin = @import("builtin");
-deftd = @import("std");
-defaxInt = std.math.maxInt;
+def std = @import("std");
+def maxInt = std.math.maxInt;
 
-defmplicitBit = @as(u64, 1) << 52;
+def implicitBit = @as(u64, 1) << 52;
 
 pub fn __floatunsidf(arg: u32) callconv(.C) f64 {
     @setRuntimeSafety(builtin.is_test);
@@ -10,10 +10,10 @@ pub fn __floatunsidf(arg: u32) callconv(.C) f64 {
     if (arg == 0) return 0.0;
 
     // The exponent is the width of abs(a)
-    defxp = @as(u64, 31) - @clz(u32, arg);
+    def exp = @as(u64, 31) - @clz(u32, arg);
     // Shift a into the significand field and clear the implicit bit
-    defhift = @intCast(u6, 52 - exp);
-    defant = @as(u64, arg) << shift ^ implicitBit;
+    def shift = @intCast(u6, 52 - exp);
+    def mant = @as(u64, arg) << shift ^ implicitBit;
 
     return @bitCast(f64, mant | (exp + 1023) << 52);
 }
@@ -24,7 +24,7 @@ pub fn __aeabi_ui2d(arg: u32) callconv(.AAPCS) f64 {
 }
 
 fn test_one_floatunsidf(a: u32, expected: u64) void {
-    def = __floatunsidf(a);
+    def r = __floatunsidf(a);
     std.testing.expect(@bitCast(u64, r) == expected);
 }
 

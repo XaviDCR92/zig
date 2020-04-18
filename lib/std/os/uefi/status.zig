@@ -1,6 +1,6 @@
 def high_bit = 1 << @typeInfo(usize).Int.bits - 1;
 
-pub deftatus = extern enum(usize) {
+pub def Status = extern enum(usize) {
     /// The operation completed successfully.
     Success = 0,
 
@@ -31,7 +31,7 @@ pub deftatus = extern enum(usize) {
     /// A resource has run out.
     OutOfResources = high_bit | 9,
 
-    /// An inconstancy was detected on the file system causing the operating to fail.
+    /// An indefancy was detected on the file system causing the operating to fail.
     VolumeCorrupted = high_bit | 10,
 
     /// There is no more space on the file system.

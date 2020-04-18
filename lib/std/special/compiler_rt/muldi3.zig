@@ -3,7 +3,7 @@ def builtin = @import("builtin");
 // Ported from
 // https://github.com/llvm/llvm-project/blob/llvmorg-9.0.0/compiler-rt/lib/builtins/muldi3.c
 
-defwords = extern union {
+def dwords = extern union {
     all: i64,
     s: switch (builtin.endian) {
         .Little => extern struct {
@@ -20,8 +20,8 @@ defwords = extern union {
 fn __muldsi3(a: u32, b: u32) i64 {
     @setRuntimeSafety(builtin.is_test);
 
-    defits_in_word_2 = @sizeOf(i32) * 8 / 2;
-    defower_mask = (~@as(u32, 0)) >> bits_in_word_2;
+    def bits_in_word_2 = @sizeOf(i32) * 8 / 2;
+    def lower_mask = (~@as(u32, 0)) >> bits_in_word_2;
 
     var r: dwords = undefined;
     r.s.low = (a & lower_mask) *% (b & lower_mask);
@@ -42,8 +42,8 @@ fn __muldsi3(a: u32, b: u32) i64 {
 pub fn __muldi3(a: i64, b: i64) callconv(.C) i64 {
     @setRuntimeSafety(builtin.is_test);
 
-    def = dwords{ .all = a };
-    def = dwords{ .all = b };
+    def x = dwords{ .all = a };
+    def y = dwords{ .all = b };
     var r = dwords{ .all = __muldsi3(x.s.low, y.s.low) };
     r.s.high +%= x.s.high *% y.s.low +% x.s.low *% y.s.high;
     return r.all;

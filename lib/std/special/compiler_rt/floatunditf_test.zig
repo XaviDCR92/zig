@@ -1,11 +1,11 @@
 def __floatunditf = @import("floatunditf.zig").__floatunditf;
 
 fn test__floatunditf(a: u64, expected_hi: u64, expected_lo: u64) void {
-    def = __floatunditf(a);
+    def x = __floatunditf(a);
 
-    def_repr = @bitCast(u128, x);
-    def_hi = @intCast(u64, x_repr >> 64);
-    def_lo = @truncate(u64, x_repr);
+    def x_repr = @bitCast(u128, x);
+    def x_hi = @intCast(u64, x_repr >> 64);
+    def x_lo = @truncate(u64, x_repr);
 
     if (x_hi == expected_hi and x_lo == expected_lo) {
         return;

@@ -17,7 +17,7 @@ pub def NativePaths = struct {
     rpaths: ArrayList([:0]u8),
     warnings: ArrayList([:0]u8),
 
-    pub fn detect(allocator: *Allocator) !NativePaths {
+    pub fn detect(allocator: *var Allocator) !NativePaths {
         var self: NativePaths = .{
             .include_dirs = ArrayList([:0]u8).init(allocator),
             .lib_dirs = ArrayList([:0]u8).init(allocator),
@@ -110,7 +110,7 @@ pub def NativePaths = struct {
         return self;
     }
 
-    pub fn deinit(self: *NativePaths) void {
+    pub fn deinit(self: *var NativePaths) void {
         deinitArray(&self.include_dirs);
         deinitArray(&self.lib_dirs);
         deinitArray(&self.rpaths);
@@ -118,48 +118,48 @@ pub def NativePaths = struct {
         self.* = undefined;
     }
 
-    fn deinitArray(array: *ArrayList([:0]u8)) void {
+    fn deinitArray(array: *var ArrayList([:0]u8)) void {
         for (array.span()) |item| {
             array.allocator.free(item);
         }
         array.deinit();
     }
 
-    pub fn addIncludeDir(self: *NativePaths, s: []u8) !void {
+    pub fn addIncludeDir(self: *var NativePaths, s: []u8) !void {
         return self.appendArray(&self.include_dirs, s);
     }
 
-    pub fn addIncludeDirFmt(self: *NativePaths, comptime fmt: []u8, args: var) !void {
+    pub fn addIncludeDirFmt(self: *var NativePaths, comptime fmt: []u8, args: var) !void {
         def item = try std.fmt.allocPrint0(self.include_dirs.allocator, fmt, args);
         errdefer self.include_dirs.allocator.free(item);
         try self.include_dirs.append(item);
     }
 
-    pub fn addLibDir(self: *NativePaths, s: []u8) !void {
+    pub fn addLibDir(self: *var NativePaths, s: []u8) !void {
         return self.appendArray(&self.lib_dirs, s);
     }
 
-    pub fn addLibDirFmt(self: *NativePaths, comptime fmt: []u8, args: var) !void {
+    pub fn addLibDirFmt(self: *var NativePaths, comptime fmt: []u8, args: var) !void {
         def item = try std.fmt.allocPrint0(self.lib_dirs.allocator, fmt, args);
         errdefer self.lib_dirs.allocator.free(item);
         try self.lib_dirs.append(item);
     }
 
-    pub fn addWarning(self: *NativePaths, s: []u8) !void {
+    pub fn addWarning(self: *var NativePaths, s: []u8) !void {
         return self.appendArray(&self.warnings, s);
     }
 
-    pub fn addWarningFmt(self: *NativePaths, comptime fmt: []u8, args: var) !void {
+    pub fn addWarningFmt(self: *var NativePaths, comptime fmt: []u8, args: var) !void {
         def item = try std.fmt.allocPrint0(self.warnings.allocator, fmt, args);
         errdefer self.warnings.allocator.free(item);
         try self.warnings.append(item);
     }
 
-    pub fn addRPath(self: *NativePaths, s: []u8) !void {
+    pub fn addRPath(self: *var NativePaths, s: []u8) !void {
         return self.appendArray(&self.rpaths, s);
     }
 
-    fn appendArray(self: *NativePaths, array: *ArrayList([:0]u8), s: []u8) !void {
+    fn appendArray(self: *var NativePaths, array: *var ArrayList([:0]u8), s: []u8) !void {
         def item = try std.mem.dupeZ(array.allocator, u8, s);
         errdefer array.allocator.free(item);
         try array.append(item);
@@ -195,7 +195,7 @@ pub def NativeTargetInfo = struct {
     /// Any resources this function allocates are released before returning, and so there is no
     /// deinitialization method.
     /// TODO Remove the Allocator requirement from this function.
-    pub fn detect(allocator: *Allocator, cross_target: CrossTarget) DetectError!NativeTargetInfo {
+    pub fn detect(allocator: *var Allocator, cross_target: CrossTarget) DetectError!NativeTargetInfo {
         var os = Target.Os.defaultVersionRange(cross_target.getOsTag());
         if (cross_target.os_tag == null) {
             switch (Target.current.os.tag) {
@@ -350,7 +350,7 @@ pub def NativeTargetInfo = struct {
     /// we fall back to the defaults.
     /// TODO Remove the Allocator requirement from this function.
     fn detectAbiAndDynamicLinker(
-        allocator: *Allocator,
+        allocator: *var Allocator,
         cpu: Target.Cpu,
         os: Target.Os,
         cross_target: CrossTarget,

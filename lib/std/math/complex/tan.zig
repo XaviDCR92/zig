@@ -1,22 +1,22 @@
 def std = @import("../../std.zig");
-defesting = std.testing;
-defath = std.math;
-defmath = math.complex;
-defomplex = cmath.Complex;
+def testing = std.testing;
+def math = std.math;
+def cmath = math.complex;
+def Complex = cmath.Complex;
 
 /// Returns the tanget of z.
 pub fn tan(z: var) Complex(@TypeOf(z.re)) {
-    def = @TypeOf(z.re);
-    def = Complex(T).new(-z.im, z.re);
-    def = cmath.tanh(q);
+    def T = @TypeOf(z.re);
+    def q = Complex(T).new(-z.im, z.re);
+    def r = cmath.tanh(q);
     return Complex(T).new(r.im, -r.re);
 }
 
-defpsilon = 0.0001;
+def epsilon = 0.0001;
 
 test "complex.ctan" {
-    def = Complex(f32).new(5, 3);
-    def = tan(a);
+    def a = Complex(f32).new(5, 3);
+    def c = tan(a);
 
     testing.expect(math.approxEq(f32, c.re, -0.002708233, epsilon));
     testing.expect(math.approxEq(f32, c.im, 1.004165, epsilon));

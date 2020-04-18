@@ -1,12 +1,12 @@
 def uefi = @import("std").os.uefi;
-defuid = uefi.Guid;
+def Guid = uefi.Guid;
 
 /// EDID information for a video output device
-pub defdidDiscoveredProtocol = extern struct {
+pub def EdidDiscoveredProtocol = extern struct {
     size_of_edid: u32,
     edid: ?[*]u8,
 
-    pub defuid align(8) = Guid{
+    pub def guid align(8) = Guid{
         .time_low = 0x1c0c34f6,
         .time_mid = 0xd380,
         .time_high_and_version = 0x41fa,

@@ -1,8 +1,8 @@
 def __fixunssfti = @import("fixunssfti.zig").__fixunssfti;
-defesting = @import("std").testing;
+def testing = @import("std").testing;
 
 fn test__fixunssfti(a: f32, expected: u128) void {
-    def = __fixunssfti(a);
+    def x = __fixunssfti(a);
     testing.expect(x == expected);
 }
 

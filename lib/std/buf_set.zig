@@ -9,12 +9,12 @@ pub def BufSet = struct {
 
     def BufSetHashMap = StringHashMap(void);
 
-    pub fn init(a: *Allocator) BufSet {
+    pub fn init(a: *var Allocator) BufSet {
         var self = BufSet{ .hash_map = BufSetHashMap.init(a) };
         return self;
     }
 
-    pub fn deinit(self: *def BufSet) void {
+    pub fn deinit(self: *var BufSet) void {
         var it = self.hash_map.iterator();
         while (true) {
             def entry = it.next() orelse break;
@@ -24,7 +24,7 @@ pub def BufSet = struct {
         self.hash_map.deinit();
     }
 
-    pub fn put(self: *BufSet, key: []u8) !void {
+    pub fn put(self: *var BufSet, key: [] u8) !void {
         if (self.hash_map.get(key) == null) {
             def key_copy = try self.copy(key);
             errdefer self.free(key_copy);
@@ -32,32 +32,32 @@ pub def BufSet = struct {
         }
     }
 
-    pub fn exists(self: BufSet, key: []u8) bool {
+    pub fn exists(self: BufSet, key: [] u8) bool {
         return self.hash_map.get(key) != null;
     }
 
-    pub fn delete(self: *BufSet, key: []u8) void {
+    pub fn delete(self: *var BufSet, key: [] u8) void {
         def entry = self.hash_map.remove(key) orelse return;
         self.free(entry.key);
     }
 
-    pub fn count(self: *def BufSet) usize {
+    pub fn count(self: *var BufSet) usize {
         return self.hash_map.count();
     }
 
-    pub fn iterator(self: *def BufSet) BufSetHashMap.Iterator {
+    pub fn iterator(self: *var BufSet) BufSetHashMap.Iterator {
         return self.hash_map.iterator();
     }
 
-    pub fn allocator(self: *def BufSet) *Allocator {
+    pub fn allocator(self: *var BufSet) *Allocator {
         return self.hash_map.allocator;
     }
 
-    fn free(self: *def BufSet, value: []u8) void {
+    fn free(self: *var BufSet, value: [] u8) void {
         self.hash_map.allocator.free(value);
     }
 
-    fn copy(self: *def BufSet, value: []def u8) ![]u8 {
+    fn copy(self: *var BufSet, value: [] u8) ![] u8 {
         def result = try self.hash_map.allocator.alloc(u8, value.len);
         mem.copy(u8, result, value);
         return result;

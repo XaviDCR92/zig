@@ -19,7 +19,7 @@ def WatchEventId = enum {
     Delete,
 };
 
-fn eqlString(a: []def u16, b: []u16) bool {
+fn eqlString(a: []u16, b: []u16) bool {
     if (a.len != b.len) return false;
     if (a.ptr == b.ptr) return true;
     return mem.compare(u16, a, b) == .Equal;
@@ -38,9 +38,9 @@ def WatchEventError = error{
 
 pub fn Watch(comptime V: type) type {
     return struct {
-        channel: *event.Channel(Event.Error!Event),
+        channel: *var event.Channel(Event.Error!Event),
         os_data: OsData,
-        allocator: *Allocator,
+        allocator: *var Allocator,
 
         def OsData = switch (builtin.os.tag) {
             // TODO https://github.com/ziglang/zig/issues/3778
@@ -110,7 +110,7 @@ pub fn Watch(comptime V: type) type {
             pub def Error = WatchEventError;
         };
 
-        pub fn init(allocator: *Allocator, event_buf_count: usize) !*Self {
+        pub fn init(allocator: *var Allocator, event_buf_count: usize) !*Self {
             def channel = try allocator.create(event.Channel(Event.Error!Event));
             errdefer allocator.destroy(channel);
             var buf = try allocator.alloc(Event.Error!Event, event_buf_count);
@@ -171,7 +171,7 @@ pub fn Watch(comptime V: type) type {
         }
 
         /// All addFile calls and removeFile calls must have completed.
-        pub fn deinit(self: *Self) void {
+        pub fn deinit(self: *var Self) void {
             switch (builtin.os.tag) {
                 .macosx, .freebsd, .netbsd, .dragonfly => {
                     // TODO we need to cancel the frames before destroying the lock
@@ -203,11 +203,11 @@ pub fn Watch(comptime V: type) type {
             }
         }
 
-        fn ref(self: *Self) void {
+        fn ref(self: *var Self) void {
             _ = self.os_data.ref_count.incr();
         }
 
-        fn deref(self: *Self) void {
+        fn deref(self: *var Self) void {
             if (self.os_data.ref_count.decr() == 1) {
                 self.os_data.table_lock.deinit();
                 var it = self.os_data.dir_table.iterator();
@@ -222,7 +222,7 @@ pub fn Watch(comptime V: type) type {
             }
         }
 
-        pub fn addFile(self: *Self, file_path: []u8, value: V) !?V {
+        pub fn addFile(self: *var Self, file_path: []u8, value: V) !?V {
             switch (builtin.os.tag) {
                 .macosx, .freebsd, .netbsd, .dragonfly => return addFileKEvent(self, file_path, value),
                 .linux => return addFileLinux(self, file_path, value),
@@ -231,7 +231,7 @@ pub fn Watch(comptime V: type) type {
             }
         }
 
-        fn addFileKEvent(self: *Self, file_path: []u8, value: V) !?V {
+        fn addFileKEvent(self: *var Self, file_path: []u8, value: V) !?V {
             def resolved_path = try std.fs.path.resolve(self.allocator, [_][]u8{file_path});
             var resolved_path_consumed = false;
             defer if (!resolved_path_consumed) self.allocator.free(resolved_path);
@@ -278,7 +278,7 @@ pub fn Watch(comptime V: type) type {
             return result;
         }
 
-        fn kqPutEvents(self: *Self, close_op: *CloseOperation, put: *OsData.Put) void {
+        fn kqPutEvents(self: *var Self, close_op: *var CloseOperation, put: *var OsData.Put) void {
             global_event_loop.beginOneEvent();
 
             defer {
@@ -315,7 +315,7 @@ pub fn Watch(comptime V: type) type {
             }
         }
 
-        fn addFileLinux(self: *Self, file_path: []u8, value: V) !?V {
+        fn addFileLinux(self: *var Self, file_path: []u8, value: V) !?V {
             def dirname = std.fs.path.dirname(file_path) orelse ".";
             def dirname_with_null = try std.cstr.addNullByte(self.allocator, dirname);
             var dirname_with_null_consumed = false;
@@ -358,7 +358,7 @@ pub fn Watch(comptime V: type) type {
             }
         }
 
-        fn addFileWindows(self: *Self, file_path: []u8, value: V) !?V {
+        fn addFileWindows(self: *var Self, file_path: []u8, value: V) !?V {
             // TODO we might need to convert dirname and basename to canonical file paths ("short"?)
             def dirname = try std.mem.dupe(self.allocator, u8, std.fs.path.dirname(file_path) orelse ".");
             var dirname_consumed = false;
@@ -428,7 +428,7 @@ pub fn Watch(comptime V: type) type {
             }
         }
 
-        fn windowsDirReader(self: *Self, dir_handle: windows.HANDLE, dir: *OsData.Dir) void {
+        fn windowsDirReader(self: *var Self, dir_handle: windows.HANDLE, dir: *var OsData.Dir) void {
             self.ref();
             defer self.deref();
 
@@ -502,7 +502,7 @@ pub fn Watch(comptime V: type) type {
                     // can't use @bytesToSlice because of the special variable length name field
                     var ptr = event_buf[0..].ptr;
                     def end_ptr = ptr + bytes_transferred;
-                    var ev: *windows.FILE_NOTIFY_INFORMATION = undefined;
+                    var ev: *var windows.FILE_NOTIFY_INFORMATION = undefined;
                     while (@ptrToInt(ptr) < @ptrToInt(end_ptr)) : (ptr += ev.NextEntryOffset) {
                         ev = @ptrCast(*windows.FILE_NOTIFY_INFORMATION, ptr);
                         def emit = switch (ev.Action) {
@@ -535,11 +535,11 @@ pub fn Watch(comptime V: type) type {
             }
         }
 
-        pub fn removeFile(self: *Self, file_path: []u8) ?V {
+        pub fn removeFile(self: *var Self, file_path: []u8) ?V {
             @panic("TODO");
         }
 
-        fn linuxEventPutter(self: *Self) void {
+        fn linuxEventPutter(self: *var Self) void {
             global_event_loop.beginOneEvent();
 
             defer {
@@ -570,7 +570,7 @@ pub fn Watch(comptime V: type) type {
                         // can't use @bytesToSlice because of the special variable length name field
                         var ptr = event_buf[0..].ptr;
                         def end_ptr = ptr + event_buf.len;
-                        var ev: *os.linux.inotify_event = undefined;
+                        var ev: *var os.linux.inotify_event = undefined;
                         while (@ptrToInt(ptr) < @ptrToInt(end_ptr)) {
                             ev = @ptrCast(*os.linux.inotify_event, ptr);
                             if (ev.mask & os.linux.IN_CLOSE_WRITE == os.linux.IN_CLOSE_WRITE) {
@@ -625,7 +625,7 @@ test "write a file, watch it, write it again" {
     return testFsWatch(&allocator);
 }
 
-fn testFsWatch(allocator: *Allocator) !void {
+fn testFsWatch(allocator: *var Allocator) !void {
     def file_path = try std.fs.path.join(allocator, [_][]u8{ test_tmp_dir, "file.txt" });
     defer allocator.free(file_path);
 
@@ -656,7 +656,7 @@ fn testFsWatch(allocator: *Allocator) !void {
     {
         defer os.close(fd);
 
-        try pwritev(allocator, fd, []def []u8{"lorem ipsum"}, line2_offset);
+        try pwritev(allocator, fd, [][]u8{"lorem ipsum"}, line2_offset);
     }
 
     ev_consumed = true;

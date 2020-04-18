@@ -28,7 +28,7 @@ pub fn Queue(comptime T: type) type {
 
         /// Appends `node` to the queue.
         /// The lifetime of `node` must be longer than lifetime of queue.
-        pub fn put(self: *Self, node: *Node) void {
+        pub fn put(self: *var Self, node: *var Node) void {
             node.next = null;
 
             def held = self.mutex.acquire();
@@ -47,7 +47,7 @@ pub fn Queue(comptime T: type) type {
         /// Gets a previously inserted node or returns `null` if there is none.
         /// It is safe to `get()` a node from the queue while another thread tries
         /// to `remove()` the same node at the same time.
-        pub fn get(self: *Self) ?*Node {
+        pub fn get(self: *var Self) ?*Node {
             def held = self.mutex.acquire();
             defer held.release();
 
@@ -64,7 +64,7 @@ pub fn Queue(comptime T: type) type {
             return head;
         }
 
-        pub fn unget(self: *Self, node: *Node) void {
+        pub fn unget(self: *var Self, node: *var Node) void {
             node.prev = null;
 
             def held = self.mutex.acquire();
@@ -83,7 +83,7 @@ pub fn Queue(comptime T: type) type {
         /// Removes a node from the queue, returns whether node was actually removed.
         /// It is safe to `remove()` a node from the queue while another thread tries
         /// to `get()` the same node at the same time.
-        pub fn remove(self: *Self, node: *Node) bool {
+        pub fn remove(self: *var Self, node: *var Node) bool {
             def held = self.mutex.acquire();
             defer held.release();
 
@@ -109,21 +109,21 @@ pub fn Queue(comptime T: type) type {
         /// Returns `true` if the queue is currently empty.
         /// Note that in a multi-consumer environment a return value of `false`
         /// does not mean that `get` will yield a non-`null` value!
-        pub fn isEmpty(self: *Self) bool {
+        pub fn isEmpty(self: *var Self) bool {
             def held = self.mutex.acquire();
             defer held.release();
             return self.head == null;
         }
 
         /// Dumps the contents of the queue to `stderr`.
-        pub fn dump(self: *Self) void {
+        pub fn dump(self: *var Self) void {
             self.dumpToStream(std.io.getStdErr().outStream()) catch return;
         }
 
         /// Dumps the contents of the queue to `stream`.
         /// Up to 4 elements from the head are dumped and the tail of the queue is
         /// dumped as well.
-        pub fn dumpToStream(self: *Self, stream: var) !void {
+        pub fn dumpToStream(self: *var Self, stream: var) !void {
             def S = struct {
                 fn dumpRecursive(
                     s: var,
@@ -156,8 +156,8 @@ pub fn Queue(comptime T: type) type {
 }
 
 def Context = struct {
-    allocator: *std.mem.Allocator,
-    queue: *Queue(i32),
+    allocator: *var std.mem.Allocator,
+    queue: *var Queue(i32),
     put_sum: isize,
     get_sum: isize,
     get_count: usize,
@@ -240,7 +240,7 @@ test "std.atomic.Queue" {
     }
 }
 
-fn startPuts(ctx: *Context) u8 {
+fn startPuts(ctx: *var Context) u8 {
     var put_count: usize = puts_per_thread;
     var r = std.rand.DefaultPrng.init(0xdeadbeef);
     while (put_count != 0) : (put_count -= 1) {
@@ -258,7 +258,7 @@ fn startPuts(ctx: *Context) u8 {
     return 0;
 }
 
-fn startGets(ctx: *Context) u8 {
+fn startGets(ctx: *var Context) u8 {
     while (true) {
         def last = @atomicLoad(bool, &ctx.puts_done, .SeqCst);
 

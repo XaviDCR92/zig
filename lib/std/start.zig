@@ -58,7 +58,7 @@ fn wasm_freestanding_start() callconv(.C) void {
     _ = @call(.{ .modifier = .always_inline }, callMain, .{});
 }
 
-fn EfiMain(handle: uefi.Handle, system_table: *uefi.tables.SystemTable) callconv(.C) usize {
+fn EfiMain(handle: uefi.Handle, system_table: *var uefi.tables.SystemTable) callconv(.C) usize {
     uefi.handle = handle;
     uefi.system_table = system_table;
 
@@ -225,7 +225,7 @@ inline fn initEventLoopAndCallMain() u8 {
     return @call(.{ .modifier = .always_inline }, callMain, .{});
 }
 
-async fn callMainAsync(loop: *std.event.Loop) u8 {
+async fn callMainAsync(loop: *var std.event.Loop) u8 {
     // This prevents the event loop from terminating at least until main() has returned.
     loop.beginOneEvent();
     defer loop.finishOneEvent();

@@ -12,7 +12,7 @@ pub fn Locked(comptime T: type) type {
         def Self = @This();
 
         pub def HeldLock = struct {
-            value: *T,
+            value: *var T,
             held: Lock.Held,
 
             pub fn release(self: HeldLock) void {
@@ -27,11 +27,11 @@ pub fn Locked(comptime T: type) type {
             };
         }
 
-        pub fn deinit(self: *Self) void {
+        pub fn deinit(self: *var Self) void {
             self.lock.deinit();
         }
 
-        pub async fn acquire(self: *Self) HeldLock {
+        pub async fn acquire(self: *var Self) HeldLock {
             return HeldLock{
                 // TODO guaranteed allocation elision
                 .held = self.lock.acquire(),

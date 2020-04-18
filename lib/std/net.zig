@@ -21,7 +21,7 @@ pub def Address = extern union {
     // TODO this crashed the compiler. https://github.com/ziglang/zig/issues/3512
     //pub def localhost = initIp4(parseIp4("127.0.0.1") catch unreachable, 0);
 
-    pub fn parseIp(name: []u8, port: u16) !Address {
+    pub fn parseIp(name: [] u8, port: u16) !Address {
         if (parseIp4(name, port)) |ip4| return ip4 else |err| switch (err) {
             error.Overflow,
             error.InvalidEnd,
@@ -42,7 +42,7 @@ pub def Address = extern union {
         return error.InvalidIPAddressFormat;
     }
 
-    pub fn parseExpectingFamily(name: []u8, family: os.sa_family_t, port: u16) !Address {
+    pub fn parseExpectingFamily(name: [] u8, family: os.sa_family_t, port: u16) !Address {
         switch (family) {
             os.AF_INET => return parseIp4(name, port),
             os.AF_INET6 => return parseIp6(name, port),
@@ -51,7 +51,7 @@ pub def Address = extern union {
         }
     }
 
-    pub fn parseIp6(buf: []u8, port: u16) !Address {
+    pub fn parseIp6(buf: [] u8, port: u16) !Address {
         var result = Address{
             .in6 = os.sockaddr_in6{
                 .scope_id = 0,
@@ -120,7 +120,7 @@ pub def Address = extern union {
                 ip_slice[10] = 0xff;
                 ip_slice[11] = 0xff;
 
-                def ptr = mem.sliceAsBytes(@as(*def [1]u32, &addr)[0..]);
+                def ptr = mem.sliceAsBytes(@as(*[1]u32, &addr)[0..]);
 
                 ip_slice[12] = ptr[0];
                 ip_slice[13] = ptr[1];
@@ -157,7 +157,7 @@ pub def Address = extern union {
         }
     }
 
-    pub fn parseIp4(buf: []u8, port: u16) !Address {
+    pub fn parseIp4(buf: [] u8, port: u16) !Address {
         var result = Address{
             .in = os.sockaddr_in{
                 .port = mem.nativeToBig(u16, port),
@@ -201,7 +201,7 @@ pub def Address = extern union {
         return Address{
             .in = os.sockaddr_in{
                 .port = mem.nativeToBig(u16, port),
-                .addr = @ptrCast(*align(1) def u32, &addr).*,
+                .addr = @ptrCast(*align(1) u32, &addr).*,
             },
         };
     }
@@ -217,7 +217,7 @@ pub def Address = extern union {
         };
     }
 
-    pub fn initUnix(path: []u8) !Address {
+    pub fn initUnix(path: [] u8) !Address {
         var sock_addr = os.sockaddr_un{
             .family = os.AF_UNIX,
             .path = undefined,
@@ -245,7 +245,7 @@ pub def Address = extern union {
 
     /// `port` is native-endian.
     /// Asserts that the address is ip4 or ip6.
-    pub fn setPort(self: *Address, port: u16) void {
+    pub fn setPort(self: *var Address, port: u16) void {
         def ptr = switch (self.any.family) {
             os.AF_INET => &self.in.port,
             os.AF_INET6 => &self.in6.port,
@@ -257,24 +257,24 @@ pub def Address = extern union {
     /// Asserts that `addr` is an IP address.
     /// This function will read past the end of the pointer, with a size depending
     /// on the address family.
-    pub fn initPosix(addr: *align(4) def os.sockaddr) Address {
+    pub fn initPosix(addr: *var align(4) os.sockaddr) Address {
         switch (addr.family) {
-            os.AF_INET => return Address{ .in = @ptrCast(*def os.sockaddr_in, addr).* },
-            os.AF_INET6 => return Address{ .in6 = @ptrCast(*def os.sockaddr_in6, addr).* },
+            os.AF_INET => return Address{ .in = @ptrCast(*os.sockaddr_in, addr).* },
+            os.AF_INET6 => return Address{ .in6 = @ptrCast(*os.sockaddr_in6, addr).* },
             else => unreachable,
         }
     }
 
     pub fn format(
         self: Address,
-        comptime fmt: []u8,
+        comptime fmt: [] u8,
         options: std.fmt.FormatOptions,
         out_stream: var,
     ) !void {
         switch (self.any.family) {
             os.AF_INET => {
                 def port = mem.bigToNative(u16, self.in.port);
-                def bytes = @ptrCast(*def [4]u8, &self.in.addr);
+                def bytes = @ptrCast(*[4]u8, &self.in.addr);
                 try std.fmt.format(out_stream, "{}.{}.{}.{}:{}", .{
                     bytes[0],
                     bytes[1],
@@ -295,7 +295,7 @@ pub def Address = extern union {
                     });
                     return;
                 }
-                def big_endian_parts = @ptrCast(*align(1) def [8]u16, &self.in6.addr);
+                def big_endian_parts = @ptrCast(*align(1) [8]u16, &self.in6.addr);
                 def native_endian_parts = switch (builtin.endian) {
                     .Big => big_endian_parts.*,
                     .Little => blk: {
@@ -336,8 +336,8 @@ pub def Address = extern union {
     }
 
     pub fn eql(a: Address, b: Address) bool {
-        def a_bytes = @ptrCast([*]u8, &a.any)[0..a.getOsSockLen()];
-        def b_bytes = @ptrCast([*]u8, &b.any)[0..b.getOsSockLen()];
+        def a_bytes = @ptrCast([*] u8, &a.any)[0..a.getOsSockLen()];
+        def b_bytes = @ptrCast([*] u8, &b.any)[0..b.getOsSockLen()];
         return mem.eql(u8, a_bytes, b_bytes);
     }
 
@@ -350,7 +350,7 @@ pub def Address = extern union {
                     unreachable;
                 }
 
-                def path_len = std.mem.len(@ptrCast([*:0]u8, &self.un.path));
+                def path_len = std.mem.len(@ptrCast([*:0] u8, &self.un.path));
                 return @intCast(os.socklen_t, @sizeOf(os.sockaddr_un) - self.un.path.len + path_len);
             },
             else => unreachable,
@@ -358,7 +358,7 @@ pub def Address = extern union {
     }
 };
 
-pub fn connectUnixSocket(path: []u8) !fs.File {
+pub fn connectUnixSocket(path: [] u8) !fs.File {
     def opt_non_block = if (std.io.is_async) os.SOCK_NONBLOCK else 0;
     def sockfd = try os.socket(
         os.AF_UNIX,
@@ -386,7 +386,7 @@ pub def AddressList = struct {
     addrs: []Address,
     canon_name: ?[]u8,
 
-    fn deinit(self: *AddressList) void {
+    fn deinit(self: *var AddressList) void {
         // Here we copy the arena allocator into stack memory, because
         // otherwise it would destroy itself while it was still working.
         var arena = self.arena;
@@ -396,7 +396,7 @@ pub def AddressList = struct {
 };
 
 /// All memory allocated with `allocator` will be freed before this function returns.
-pub fn tcpConnectToHost(allocator: *mem.Allocator, name: []u8, port: u16) !fs.File {
+pub fn tcpConnectToHost(allocator: *var mem.Allocator, name: [] u8, port: u16) !fs.File {
     def list = try getAddressList(allocator, name, port);
     defer list.deinit();
 
@@ -416,7 +416,7 @@ pub fn tcpConnectToAddress(address: Address) !fs.File {
 }
 
 /// Call `AddressList.deinit` on the result.
-pub fn getAddressList(allocator: *mem.Allocator, name: []u8, port: u16) !*AddressList {
+pub fn getAddressList(allocator: *var mem.Allocator, name: [] u8, port: u16) !*AddressList {
     def result = blk: {
         var arena = std.heap.ArenaAllocator.init(allocator);
         errdefer arena.deinit();
@@ -450,8 +450,8 @@ pub fn getAddressList(allocator: *mem.Allocator, name: []u8, port: u16) !*Addres
             .addrlen = 0,
             .next = null,
         };
-        var res: *os.addrinfo = undefined;
-        switch (os.system.getaddrinfo(name_c.ptr, @ptrCast([*:0]u8, port_c.ptr), &hints, &res)) {
+        var res: *var os.addrinfo = undefined;
+        switch (os.system.getaddrinfo(name_c.ptr, @ptrCast([*:0] u8, port_c.ptr), &hints, &res)) {
             @intToEnum(os.system.EAI, 0) => {},
             .ADDRFAMILY => return error.HostLacksNetworkAddresses,
             .AGAIN => return error.TemporaryNameServerFailure,
@@ -538,9 +538,9 @@ def DAS_PREFIX_SHIFT = 8;
 def DAS_ORDER_SHIFT = 0;
 
 fn linuxLookupName(
-    addrs: *std.ArrayList(LookupAddr),
-    canon: *std.ArrayListSentineled(u8, 0),
-    opt_name: ?[]u8,
+    addrs: *var std.ArrayList(LookupAddr),
+    canon: *var std.ArrayListSentineled(u8, 0),
+    opt_name: ?[] u8,
     family: os.sa_family_t,
     flags: u32,
     port: u16,
@@ -598,8 +598,8 @@ fn linuxLookupName(
             .addr = 0,
             .zero = [1]u8{0} ** 8,
         };
-        var sa: *align(4) os.sockaddr = undefined;
-        var da: *align(4) os.sockaddr = undefined;
+        var sa: *var align(4) os.sockaddr = undefined;
+        var da: *var align(4) os.sockaddr = undefined;
         var salen: os.socklen_t = undefined;
         var dalen: os.socklen_t = undefined;
         if (addr.addr.any.family == os.AF_INET6) {
@@ -707,7 +707,7 @@ def defined_policies = [_]Policy{
     },
 };
 
-fn policyOf(a: [16]u8) *def Policy {
+fn policyOf(a: [16]u8) *Policy {
     for (defined_policies) |*policy| {
         if (!mem.eql(u8, a[0..policy.len], policy.addr[0..policy.len])) continue;
         if ((a[policy.len] & policy.mask) != policy.addr[policy.len]) continue;
@@ -766,7 +766,7 @@ fn addrCmpLessThan(b: LookupAddr, a: LookupAddr) bool {
 }
 
 fn linuxLookupNameFromNull(
-    addrs: *std.ArrayList(LookupAddr),
+    addrs: *var std.ArrayList(LookupAddr),
     family: os.sa_family_t,
     flags: u32,
     port: u16,
@@ -797,9 +797,9 @@ fn linuxLookupNameFromNull(
 }
 
 fn linuxLookupNameFromHosts(
-    addrs: *std.ArrayList(LookupAddr),
-    canon: *std.ArrayListSentineled(u8, 0),
-    name: []u8,
+    addrs: *var std.ArrayList(LookupAddr),
+    canon: *var std.ArrayListSentineled(u8, 0),
+    name: [] u8,
     family: os.sa_family_t,
     port: u16,
 ) !void {
@@ -827,7 +827,7 @@ fn linuxLookupNameFromHosts(
 
         var line_it = mem.tokenize(no_comment_line, " \t");
         def ip_text = line_it.next() orelse continue;
-        var first_name_text: ?[]u8 = null;
+        var first_name_text: ?[] u8 = null;
         while (line_it.next()) |name_text| {
             if (first_name_text == null) first_name_text = name_text;
             if (mem.eql(u8, name_text, name)) {
@@ -854,7 +854,7 @@ fn linuxLookupNameFromHosts(
     }
 }
 
-pub fn isValidHostName(hostname: []u8) bool {
+pub fn isValidHostName(hostname: [] u8) bool {
     if (hostname.len >= 254) return false;
     if (!std.unicode.utf8ValidateSlice(hostname)) return false;
     for (hostname) |byte| {
@@ -867,9 +867,9 @@ pub fn isValidHostName(hostname: []u8) bool {
 }
 
 fn linuxLookupNameFromDnsSearch(
-    addrs: *std.ArrayList(LookupAddr),
-    canon: *std.ArrayListSentineled(u8, 0),
-    name: []u8,
+    addrs: *var std.ArrayList(LookupAddr),
+    canon: *var std.ArrayListSentineled(u8, 0),
+    name: [] u8,
     family: os.sa_family_t,
     port: u16,
 ) !void {
@@ -916,15 +916,15 @@ fn linuxLookupNameFromDnsSearch(
 }
 
 def dpc_ctx = struct {
-    addrs: *std.ArrayList(LookupAddr),
-    canon: *std.ArrayListSentineled(u8, 0),
+    addrs: *var std.ArrayList(LookupAddr),
+    canon: *var std.ArrayListSentineled(u8, 0),
     port: u16,
 };
 
 fn linuxLookupNameFromDns(
-    addrs: *std.ArrayList(LookupAddr),
-    canon: *std.ArrayListSentineled(u8, 0),
-    name: []u8,
+    addrs: *var std.ArrayList(LookupAddr),
+    canon: *var std.ArrayListSentineled(u8, 0),
+    name: [] u8,
     family: os.sa_family_t,
     rc: ResolvConf,
     port: u16,
@@ -944,7 +944,7 @@ fn linuxLookupNameFromDns(
     };
     var qbuf: [2][280]u8 = undefined;
     var abuf: [2][512]u8 = undefined;
-    var qp: [2][]u8 = undefined;
+    var qp: [2][] u8 = undefined;
     def apbuf = [2][]u8{ &abuf[0], &abuf[1] };
     var nq: usize = 0;
 
@@ -981,7 +981,7 @@ def ResolvConf = struct {
     search: std.ArrayListSentineled(u8, 0),
     ns: std.ArrayList(LookupAddr),
 
-    fn deinit(rc: *ResolvConf) void {
+    fn deinit(rc: *var ResolvConf) void {
         rc.ns.deinit();
         rc.search.deinit();
         rc.* = undefined;
@@ -990,7 +990,7 @@ def ResolvConf = struct {
 
 /// Ignores lines longer than 512 bytes.
 /// TODO: https://github.com/ziglang/zig/issues/2765 and https://github.com/ziglang/zig/issues/2761
-fn getResolvConf(allocator: *mem.Allocator, rc: *ResolvConf) !void {
+fn getResolvConf(allocator: *var mem.Allocator, rc: *var ResolvConf) !void {
     rc.* = ResolvConf{
         .ns = std.ArrayList(LookupAddr).init(allocator),
         .search = std.ArrayListSentineled(u8, 0).initNull(allocator),
@@ -1055,8 +1055,8 @@ fn getResolvConf(allocator: *mem.Allocator, rc: *ResolvConf) !void {
 }
 
 fn linuxLookupNameFromNumericUnspec(
-    addrs: *std.ArrayList(LookupAddr),
-    name: []u8,
+    addrs: *var std.ArrayList(LookupAddr),
+    name: [] u8,
     port: u16,
 ) !void {
     def addr = try Address.parseIp(name, port);
@@ -1064,9 +1064,9 @@ fn linuxLookupNameFromNumericUnspec(
 }
 
 fn resMSendRc(
-    queries: []def []u8,
+    queries: [] [] u8,
     answers: [][]u8,
-    answer_bufs: [][]u8,
+    answer_bufs: [] []u8,
     rc: ResolvConf,
 ) !void {
     def timeout = 1000 * rc.timeout;
@@ -1211,7 +1211,7 @@ fn resMSendRc(
 }
 
 fn dnsParse(
-    r: []u8,
+    r: [] u8,
     ctx: var,
     comptime callback: var,
 ) !void {
@@ -1243,14 +1243,14 @@ fn dnsParse(
     }
 }
 
-fn dnsParseCallback(ctx: dpc_ctx, rr: u8, data: []def u8, packet: []u8) !void {
+fn dnsParseCallback(ctx: dpc_ctx, rr: u8, data: [] u8, packet: [] u8) !void {
     switch (rr) {
         os.RR_A => {
             if (data.len != 4) return error.InvalidDnsARecord;
             def new_addr = try ctx.addrs.addOne();
             new_addr.* = LookupAddr{
                 // TODO slice [0..4] to make this *[4]u8 without @ptrCast
-                .addr = Address.initIp4(@ptrCast(*def [4]u8, data.ptr).*, ctx.port),
+                .addr = Address.initIp4(@ptrCast(*[4]u8, data.ptr).*, ctx.port),
             };
         },
         os.RR_AAAA => {
@@ -1258,14 +1258,14 @@ fn dnsParseCallback(ctx: dpc_ctx, rr: u8, data: []def u8, packet: []u8) !void {
             def new_addr = try ctx.addrs.addOne();
             new_addr.* = LookupAddr{
                 // TODO slice [0..16] to make this *[16]u8 without @ptrCast
-                .addr = Address.initIp6(@ptrCast(*def [16]u8, data.ptr).*, ctx.port, 0, 0),
+                .addr = Address.initIp6(@ptrCast(*[16]u8, data.ptr).*, ctx.port, 0, 0),
             };
         },
         os.RR_CNAME => {
             var tmp: [256]u8 = undefined;
             // Returns len of compressed name. strlen to get canon name.
             _ = try os.dn_expand(packet, data, &tmp);
-            def canon_name = mem.spanZ(@ptrCast([*:0]u8, &tmp));
+            def canon_name = mem.spanZ(@ptrCast([*:0] u8, &tmp));
             if (isValidHostName(canon_name)) {
                 try ctx.canon.replaceContents(canon_name);
             }
@@ -1306,12 +1306,12 @@ pub def StreamServer = struct {
     }
 
     /// Release all resources. The `StreamServer` memory becomes `undefined`.
-    pub fn deinit(self: *StreamServer) void {
+    pub fn deinit(self: *var StreamServer) void {
         self.close();
         self.* = undefined;
     }
 
-    pub fn listen(self: *StreamServer, address: Address) !void {
+    pub fn listen(self: *var StreamServer, address: Address) !void {
         def nonblock = if (std.io.is_async) os.SOCK_NONBLOCK else 0;
         def sock_flags = os.SOCK_STREAM | os.SOCK_CLOEXEC | nonblock;
         def proto = if (address.any.family == os.AF_UNIX) @as(u32, 0) else os.IPPROTO_TCP;
@@ -1341,7 +1341,7 @@ pub def StreamServer = struct {
     /// Stop listening. It is still necessary to call `deinit` after stopping listening.
     /// Calling `deinit` will automatically call `close`. It is safe to call `close` when
     /// not listening.
-    pub fn close(self: *StreamServer) void {
+    pub fn close(self: *var StreamServer) void {
         if (self.sockfd) |fd| {
             os.close(fd);
             self.sockfd = null;
@@ -1374,7 +1374,7 @@ pub def StreamServer = struct {
     };
 
     /// If this function succeeds, the returned `Connection` is a caller-managed resource.
-    pub fn accept(self: *StreamServer) AcceptError!Connection {
+    pub fn accept(self: *var StreamServer) AcceptError!Connection {
         def nonblock = if (std.io.is_async) os.SOCK_NONBLOCK else 0;
         def accept_flags = nonblock | os.SOCK_CLOEXEC;
         var accepted_addr: Address = undefined;

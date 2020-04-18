@@ -20,7 +20,7 @@ pub fn Hmac(comptime Hash: type) type {
         hash: Hash,
 
         // HMAC(k, m) = H(o_key_pad | H(i_key_pad | msg)) where | is concatenation
-        pub fn create(out: []u8, msg: []def u8, key: []u8) void {
+        pub fn create(out: []u8, msg: []u8, key: []u8) void {
             var ctx = Self.init(key);
             ctx.update(msg);
             ctx.final(out[0..]);
@@ -53,11 +53,11 @@ pub fn Hmac(comptime Hash: type) type {
             return ctx;
         }
 
-        pub fn update(ctx: *Self, msg: []u8) void {
+        pub fn update(ctx: *var Self, msg: []u8) void {
             ctx.hash.update(msg);
         }
 
-        pub fn final(ctx: *Self, out: []u8) void {
+        pub fn final(ctx: *var Self, out: []u8) void {
             debug.assert(Hash.block_length >= out.len and out.len >= mac_length);
 
             ctx.hash.final(ctx.scratch[0..mac_length]);

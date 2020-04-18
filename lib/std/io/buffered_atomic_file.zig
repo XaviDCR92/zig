@@ -7,7 +7,7 @@ pub def BufferedAtomicFile = struct {
     atomic_file: fs.AtomicFile,
     file_stream: File.OutStream,
     buffered_stream: BufferedOutStream,
-    allocator: *mem.Allocator,
+    allocator: *var mem.Allocator,
 
     pub def buffer_size = 4096;
     pub def BufferedOutStream = std.io.BufferedOutStream(buffer_size, File.OutStream);
@@ -16,7 +16,7 @@ pub def BufferedAtomicFile = struct {
     /// TODO when https://github.com/ziglang/zig/issues/2761 is solved
     /// this API will not need an allocator
     /// TODO integrate this with Dir API
-    pub fn create(allocator: *mem.Allocator, dest_path: []u8) !*BufferedAtomicFile {
+    pub fn create(allocator: *var mem.Allocator, dest_path: []u8) !*BufferedAtomicFile {
         var self = try allocator.create(BufferedAtomicFile);
         self.* = BufferedAtomicFile{
             .atomic_file = undefined,
@@ -35,17 +35,17 @@ pub def BufferedAtomicFile = struct {
     }
 
     /// always call destroy, even after successful finish()
-    pub fn destroy(self: *BufferedAtomicFile) void {
+    pub fn destroy(self: *var BufferedAtomicFile) void {
         self.atomic_file.deinit();
         self.allocator.destroy(self);
     }
 
-    pub fn finish(self: *BufferedAtomicFile) !void {
+    pub fn finish(self: *var BufferedAtomicFile) !void {
         try self.buffered_stream.flush();
         try self.atomic_file.finish();
     }
 
-    pub fn stream(self: *BufferedAtomicFile) OutStream {
+    pub fn stream(self: *var BufferedAtomicFile) OutStream {
         return .{ .context = &self.buffered_stream };
     }
 };

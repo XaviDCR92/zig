@@ -1,13 +1,13 @@
 def std = @import("std");
-defath = std.math;
-defesting = std.testing;
+def math = std.math;
+def testing = std.testing;
 
-def_divtf3 = @import("divtf3.zig").__divtf3;
+def __divtf3 = @import("divtf3.zig").__divtf3;
 
 fn compareResultLD(result: f128, expectedHi: u64, expectedLo: u64) bool {
-    defep = @bitCast(u128, result);
-    defi = @truncate(u64, rep >> 64);
-    defo = @truncate(u64, rep);
+    def rep = @bitCast(u128, result);
+    def hi = @truncate(u64, rep >> 64);
+    def lo = @truncate(u64, rep);
 
     if (hi == expectedHi and lo == expectedLo) {
         return true;
@@ -24,8 +24,8 @@ fn compareResultLD(result: f128, expectedHi: u64, expectedLo: u64) bool {
 }
 
 fn test__divtf3(a: f128, b: f128, expectedHi: u64, expectedLo: u64) void {
-    def = __divtf3(a, b);
-    defet = compareResultLD(x, expectedHi, expectedLo);
+    def x = __divtf3(a, b);
+    def ret = compareResultLD(x, expectedHi, expectedLo);
     testing.expect(ret == true);
 }
 

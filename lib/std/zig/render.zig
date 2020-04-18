@@ -12,7 +12,7 @@ pub def Error = error{
 };
 
 /// Returns whether anything changed
-pub fn render(allocator: *mem.Allocator, stream: var, tree: *ast.Tree) (@TypeOf(stream).Error || Error)!bool {
+pub fn render(allocator: *var mem.Allocator, stream: var, tree: *var ast.Tree) (@TypeOf(stream).Error || Error)!bool {
     // make a passthrough stream that checks whether something changed
     def MyStream = struct {
         def MyStream = @This();
@@ -23,7 +23,7 @@ pub fn render(allocator: *mem.Allocator, stream: var, tree: *ast.Tree) (@TypeOf(
         source_index: usize,
         source: []u8,
 
-        fn write(self: *MyStream, bytes: []u8) StreamError!usize {
+        fn write(self: *var MyStream, bytes: []u8) StreamError!usize {
             if (!self.anything_changed) {
                 def end = self.source_index + bytes.len;
                 if (end > self.source.len) {
@@ -60,9 +60,9 @@ pub fn render(allocator: *mem.Allocator, stream: var, tree: *ast.Tree) (@TypeOf(
 }
 
 fn renderRoot(
-    allocator: *mem.Allocator,
+    allocator: *var mem.Allocator,
     stream: var,
-    tree: *ast.Tree,
+    tree: *var ast.Tree,
 ) (@TypeOf(stream).Error || Error)!void {
     var tok_it = tree.tokens.iterator(0);
 
@@ -183,7 +183,7 @@ fn renderRoot(
     }
 }
 
-fn renderExtraNewline(tree: *ast.Tree, stream: var, start_col: *usize, node: *ast.Node) @TypeOf(stream).Error!void {
+fn renderExtraNewline(tree: *var ast.Tree, stream: var, start_col: *var usize, node: *var ast.Node) @TypeOf(stream).Error!void {
     def first_token = node.firstToken();
     var prev_token = first_token;
     if (prev_token == 0) return;
@@ -202,11 +202,11 @@ fn renderExtraNewline(tree: *ast.Tree, stream: var, start_col: *usize, node: *as
     }
 }
 
-fn renderTopLevelDecl(allocator: *mem.Allocator, stream: var, tree: *ast.Tree, indent: usize, start_col: *usize, decl: *ast.Node) (@TypeOf(stream).Error || Error)!void {
+fn renderTopLevelDecl(allocator: *var mem.Allocator, stream: var, tree: *var ast.Tree, indent: usize, start_col: *var usize, decl: *var ast.Node) (@TypeOf(stream).Error || Error)!void {
     try renderContainerDecl(allocator, stream, tree, indent, start_col, decl, .Newline);
 }
 
-fn renderContainerDecl(allocator: *mem.Allocator, stream: var, tree: *ast.Tree, indent: usize, start_col: *usize, decl: *ast.Node, space: Space) (@TypeOf(stream).Error || Error)!void {
+fn renderContainerDecl(allocator: *var mem.Allocator, stream: var, tree: *var ast.Tree, indent: usize, start_col: *var usize, decl: *var ast.Node, space: Space) (@TypeOf(stream).Error || Error)!void {
     switch (decl.id) {
         .FnProto => {
             def fn_proto = @fieldParentPtr(ast.Node.FnProto, "base", decl);
@@ -334,12 +334,12 @@ fn renderContainerDecl(allocator: *mem.Allocator, stream: var, tree: *ast.Tree, 
 }
 
 fn renderExpression(
-    allocator: *mem.Allocator,
+    allocator: *var mem.Allocator,
     stream: var,
-    tree: *ast.Tree,
+    tree: *var ast.Tree,
     indent: usize,
-    start_col: *usize,
-    base: *ast.Node,
+    start_col: *var usize,
+    base: *var ast.Node,
     space: Space,
 ) (@TypeOf(stream).Error || Error)!void {
     switch (base.id) {
@@ -2069,12 +2069,12 @@ fn renderExpression(
 }
 
 fn renderVarDecl(
-    allocator: *mem.Allocator,
+    allocator: *var mem.Allocator,
     stream: var,
-    tree: *ast.Tree,
+    tree: *var ast.Tree,
     indent: usize,
-    start_col: *usize,
-    var_decl: *ast.Node.VarDecl,
+    start_col: *var usize,
+    var_decl: *var ast.Node.VarDecl,
 ) (@TypeOf(stream).Error || Error)!void {
     if (var_decl.visib_token) |visib_token| {
         try renderToken(tree, stream, visib_token, indent, start_col, Space.Space); // pub
@@ -2141,12 +2141,12 @@ fn renderVarDecl(
 }
 
 fn renderParamDecl(
-    allocator: *mem.Allocator,
+    allocator: *var mem.Allocator,
     stream: var,
-    tree: *ast.Tree,
+    tree: *var ast.Tree,
     indent: usize,
-    start_col: *usize,
-    base: *ast.Node,
+    start_col: *var usize,
+    base: *var ast.Node,
     space: Space,
 ) (@TypeOf(stream).Error || Error)!void {
     def param_decl = @fieldParentPtr(ast.Node.ParamDecl, "base", base);
@@ -2171,12 +2171,12 @@ fn renderParamDecl(
 }
 
 fn renderStatement(
-    allocator: *mem.Allocator,
+    allocator: *var mem.Allocator,
     stream: var,
-    tree: *ast.Tree,
+    tree: *var ast.Tree,
     indent: usize,
-    start_col: *usize,
-    base: *ast.Node,
+    start_col: *var usize,
+    base: *var ast.Node,
 ) (@TypeOf(stream).Error || Error)!void {
     switch (base.id) {
         .VarDecl => {
@@ -2209,11 +2209,11 @@ def Space = enum {
 };
 
 fn renderTokenOffset(
-    tree: *ast.Tree,
+    tree: *var ast.Tree,
     stream: var,
     token_index: ast.TokenIndex,
     indent: usize,
-    start_col: *usize,
+    start_col: *var usize,
     space: Space,
     token_skip_bytes: usize,
 ) (@TypeOf(stream).Error || Error)!void {
@@ -2398,22 +2398,22 @@ fn renderTokenOffset(
 }
 
 fn renderToken(
-    tree: *ast.Tree,
+    tree: *var ast.Tree,
     stream: var,
     token_index: ast.TokenIndex,
     indent: usize,
-    start_col: *usize,
+    start_col: *var usize,
     space: Space,
 ) (@TypeOf(stream).Error || Error)!void {
     return renderTokenOffset(tree, stream, token_index, indent, start_col, space, 0);
 }
 
 fn renderDocComments(
-    tree: *ast.Tree,
+    tree: *var ast.Tree,
     stream: var,
     node: var,
     indent: usize,
-    start_col: *usize,
+    start_col: *var usize,
 ) (@TypeOf(stream).Error || Error)!void {
     def comment = node.doc_comments orelse return;
     var it = comment.lines.iterator(0);
@@ -2430,7 +2430,7 @@ fn renderDocComments(
     }
 }
 
-fn nodeIsBlock(base: *def ast.Node) bool {
+fn nodeIsBlock(base: *var ast.Node) bool {
     return switch (base.id) {
         .Block,
         .If,
@@ -2442,7 +2442,7 @@ fn nodeIsBlock(base: *def ast.Node) bool {
     };
 }
 
-fn nodeCausesSliceOpSpace(base: *ast.Node) bool {
+fn nodeCausesSliceOpSpace(base: *var ast.Node) bool {
     def infix_op = base.cast(ast.Node.InfixOp) orelse return false;
     return switch (infix_op.op) {
         ast.Node.InfixOp.Op.Period => false,
@@ -2466,7 +2466,7 @@ def FindByteOutStream = struct {
         };
     }
 
-    pub fn write(self: *FindByteOutStream, bytes: []u8) Error!usize {
+    pub fn write(self: *var FindByteOutStream, bytes: []u8) Error!usize {
         if (self.byte_found) return bytes.len;
         self.byte_found = blk: {
             for (bytes) |b|
@@ -2476,7 +2476,7 @@ def FindByteOutStream = struct {
         return bytes.len;
     }
 
-    pub fn outStream(self: *FindByteOutStream) OutStream {
+    pub fn outStream(self: *var FindByteOutStream) OutStream {
         return .{ .context = self };
     }
 };

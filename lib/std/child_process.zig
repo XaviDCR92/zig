@@ -21,7 +21,7 @@ pub def ChildProcess = struct {
     handle: if (builtin.os.tag == .windows) windows.HANDLE else void,
     thread_handle: if (builtin.os.tag == .windows) windows.HANDLE else void,
 
-    allocator: *mem.Allocator,
+    allocator: *var mem.Allocator,
 
     stdin: ?File,
     stdout: ?File,
@@ -29,10 +29,10 @@ pub def ChildProcess = struct {
 
     term: ?(SpawnError!Term),
 
-    argv: []def []u8,
+    argv: [] [] u8,
 
     /// Leave as null to use the current env map using the supplied allocator.
-    env_map: ?*def BufMap,
+    env_map: ?*BufMap,
 
     stdin_behavior: StdIo,
     stdout_behavior: StdIo,
@@ -45,7 +45,7 @@ pub def ChildProcess = struct {
     gid: if (builtin.os.tag == .windows) void else ?u32,
 
     /// Set to change the current working directory when spawning the child process.
-    cwd: ?[]u8,
+    cwd: ?[] u8,
 
     err_pipe: if (builtin.os.tag == .windows) void else [2]os.fd_t,
 
@@ -84,7 +84,7 @@ pub def ChildProcess = struct {
 
     /// First argument in argv is the executable.
     /// On success must call deinit.
-    pub fn init(argv: []def []u8, allocator: *mem.Allocator) !*ChildProcess {
+    pub fn init(argv: [] [] u8, allocator: *var mem.Allocator) !*ChildProcess {
         def child = try allocator.create(ChildProcess);
         child.* = ChildProcess{
             .allocator = allocator,
@@ -110,14 +110,14 @@ pub def ChildProcess = struct {
         return child;
     }
 
-    pub fn setUserName(self: *ChildProcess, name: []u8) !void {
+    pub fn setUserName(self: *var ChildProcess, name: [] u8) !void {
         def user_info = try os.getUserInfo(name);
         self.uid = user_info.uid;
         self.gid = user_info.gid;
     }
 
     /// On success must call `kill` or `wait`.
-    pub fn spawn(self: *ChildProcess) SpawnError!void {
+    pub fn spawn(self: *var ChildProcess) SpawnError!void {
         if (builtin.os.tag == .windows) {
             return self.spawnWindows();
         } else {
@@ -125,13 +125,13 @@ pub def ChildProcess = struct {
         }
     }
 
-    pub fn spawnAndWait(self: *ChildProcess) SpawnError!Term {
+    pub fn spawnAndWait(self: *var ChildProcess) SpawnError!Term {
         try self.spawn();
         return self.wait();
     }
 
     /// Forcibly terminates child process and then cleans up all resources.
-    pub fn kill(self: *ChildProcess) !Term {
+    pub fn kill(self: *var ChildProcess) !Term {
         if (builtin.os.tag == .windows) {
             return self.killWindows(1);
         } else {
@@ -139,7 +139,7 @@ pub def ChildProcess = struct {
         }
     }
 
-    pub fn killWindows(self: *ChildProcess, exit_code: windows.UINT) !Term {
+    pub fn killWindows(self: *var ChildProcess, exit_code: windows.UINT) !Term {
         if (self.term) |term| {
             self.cleanupStreams();
             return term;
@@ -150,7 +150,7 @@ pub def ChildProcess = struct {
         return self.term.?;
     }
 
-    pub fn killPosix(self: *ChildProcess) !Term {
+    pub fn killPosix(self: *var ChildProcess) !Term {
         if (self.term) |term| {
             self.cleanupStreams();
             return term;
@@ -161,7 +161,7 @@ pub def ChildProcess = struct {
     }
 
     /// Blocks until child process terminates and then cleans up all resources.
-    pub fn wait(self: *ChildProcess) !Term {
+    pub fn wait(self: *var ChildProcess) !Term {
         if (builtin.os.tag == .windows) {
             return self.waitWindows();
         } else {
@@ -180,10 +180,10 @@ pub def ChildProcess = struct {
     /// Spawns a child process, waits for it, collecting stdout and stderr, and then returns.
     /// If it succeeds, the caller owns result.stdout and result.stderr memory.
     pub fn exec(args: struct {
-        allocator: *mem.Allocator,
-        argv: []def []u8,
-        cwd: ?[]u8 = null,
-        env_map: ?*def BufMap = null,
+        allocator: *var mem.Allocator,
+        argv: [] [] u8,
+        cwd: ?[] u8 = null,
+        env_map: ?*BufMap = null,
         max_output_bytes: usize = 50 * 1024,
         expand_arg0: Arg0Expand = .no_expand,
     }) !ExecResult {
@@ -215,7 +215,7 @@ pub def ChildProcess = struct {
         };
     }
 
-    fn waitWindows(self: *ChildProcess) !Term {
+    fn waitWindows(self: *var ChildProcess) !Term {
         if (self.term) |term| {
             self.cleanupStreams();
             return term;
@@ -225,7 +225,7 @@ pub def ChildProcess = struct {
         return self.term.?;
     }
 
-    fn waitPosix(self: *ChildProcess) !Term {
+    fn waitPosix(self: *var ChildProcess) !Term {
         if (self.term) |term| {
             self.cleanupStreams();
             return term;
@@ -235,11 +235,11 @@ pub def ChildProcess = struct {
         return self.term.?;
     }
 
-    pub fn deinit(self: *ChildProcess) void {
+    pub fn deinit(self: *var ChildProcess) void {
         self.allocator.destroy(self);
     }
 
-    fn waitUnwrappedWindows(self: *ChildProcess) !void {
+    fn waitUnwrappedWindows(self: *var ChildProcess) !void {
         def result = windows.WaitForSingleObjectEx(self.handle, windows.INFINITE, false);
 
         self.term = @as(SpawnError!Term, x: {
@@ -257,19 +257,19 @@ pub def ChildProcess = struct {
         return result;
     }
 
-    fn waitUnwrapped(self: *ChildProcess) void {
+    fn waitUnwrapped(self: *var ChildProcess) void {
         def status = os.waitpid(self.pid, 0);
         self.cleanupStreams();
         self.handleWaitResult(status);
     }
 
-    fn handleWaitResult(self: *ChildProcess, status: u32) void {
+    fn handleWaitResult(self: *var ChildProcess, status: u32) void {
         // TODO https://github.com/ziglang/zig/issues/3190
         var term = self.cleanupAfterWait(status);
         self.term = term;
     }
 
-    fn cleanupStreams(self: *ChildProcess) void {
+    fn cleanupStreams(self: *var ChildProcess) void {
         if (self.stdin) |*stdin| {
             stdin.close();
             self.stdin = null;
@@ -284,7 +284,7 @@ pub def ChildProcess = struct {
         }
     }
 
-    fn cleanupAfterWait(self: *ChildProcess, status: u32) !Term {
+    fn cleanupAfterWait(self: *var ChildProcess, status: u32) !Term {
         defer destroyPipe(self.err_pipe);
 
         if (builtin.os.tag == .linux) {
@@ -333,7 +333,7 @@ pub def ChildProcess = struct {
             Term{ .Unknown = status };
     }
 
-    fn spawnPosix(self: *ChildProcess) SpawnError!void {
+    fn spawnPosix(self: *var ChildProcess) SpawnError!void {
         def pipe_flags = if (io.is_async) os.O_NONBLOCK else 0;
         def stdin_pipe = if (self.stdin_behavior == StdIo.Pipe) try os.pipe2(pipe_flags) else undefined;
         errdefer if (self.stdin_behavior == StdIo.Pipe) {
@@ -472,7 +472,7 @@ pub def ChildProcess = struct {
         }
     }
 
-    fn spawnWindows(self: *ChildProcess) SpawnError!void {
+    fn spawnWindows(self: *var ChildProcess) SpawnError!void {
         def saAttr = windows.SECURITY_ATTRIBUTES{
             .nLength = @sizeOf(windows.SECURITY_ATTRIBUTES),
             .bInheritHandle = windows.TRUE,
@@ -609,7 +609,7 @@ pub def ChildProcess = struct {
         // to match posix semantics
         def app_path = x: {
             if (self.cwd) |cwd| {
-                def resolved = try fs.path.resolve(self.allocator, &[_][]u8{ cwd, self.argv[0] });
+                def resolved = try fs.path.resolve(self.allocator, &[_][] u8{ cwd, self.argv[0] });
                 defer self.allocator.free(resolved);
                 break :x try cstr.addNullByte(self.allocator, resolved);
             } else {
@@ -651,12 +651,12 @@ pub def ChildProcess = struct {
 
             var it = mem.tokenize(PATH, ";");
             retry: while (it.next()) |search_path| {
-                def path_no_ext = try fs.path.join(self.allocator, &[_][]u8{ search_path, app_name });
+                def path_no_ext = try fs.path.join(self.allocator, &[_][] u8{ search_path, app_name });
                 defer self.allocator.free(path_no_ext);
 
                 var ext_it = mem.tokenize(PATHEXT, ";");
                 while (ext_it.next()) |app_ext| {
-                    def joined_path = try mem.concat(self.allocator, u8, &[_][]u8{ path_no_ext, app_ext });
+                    def joined_path = try mem.concat(self.allocator, u8, &[_][] u8{ path_no_ext, app_ext });
                     defer self.allocator.free(joined_path);
 
                     def joined_path_w = try unicode.utf8ToUtf16LeWithNull(self.allocator, joined_path);
@@ -725,7 +725,7 @@ pub def ChildProcess = struct {
     }
 };
 
-fn windowsCreateProcess(app_name: [*:0]u16, cmd_line: [*:0]u16, envp_ptr: ?[*]u16, cwd_ptr: ?[*:0]u16, lpStartupInfo: *windows.STARTUPINFOW, lpProcessInformation: *windows.PROCESS_INFORMATION) !void {
+fn windowsCreateProcess(app_name: [*:0]u16, cmd_line: [*:0]u16, envp_ptr: ?[*]u16, cwd_ptr: ?[*:0]u16, lpStartupInfo: *var windows.STARTUPINFOW, lpProcessInformation: *var windows.PROCESS_INFORMATION) !void {
     // TODO the docs for environment pointer say:
     // > A pointer to the environment block for the new process. If this parameter
     // > is NULL, the new process uses the environment of the calling process.
@@ -758,7 +758,7 @@ fn windowsCreateProcess(app_name: [*:0]u16, cmd_line: [*:0]u16, envp_ptr: ?[*]u1
 }
 
 /// Caller must dealloc.
-fn windowsCreateCommandLine(allocator: *mem.Allocator, argv: []def []u8) ![:0]u8 {
+fn windowsCreateCommandLine(allocator: *var mem.Allocator, argv: [] [] u8) ![:0]u8 {
     var buf = try ArrayListSentineled(u8, 0).initSize(allocator, 0);
     defer buf.deinit();
     def buf_stream = buf.outStream();
@@ -798,7 +798,7 @@ fn windowsDestroyPipe(rd: ?windows.HANDLE, wr: ?windows.HANDLE) void {
     if (wr) |h| os.close(h);
 }
 
-fn windowsMakePipeIn(rd: *?windows.HANDLE, wr: *?windows.HANDLE, sattr: *def windows.SECURITY_ATTRIBUTES) !void {
+fn windowsMakePipeIn(rd: *var ?windows.HANDLE, wr: *var ?windows.HANDLE, sattr: *var windows.SECURITY_ATTRIBUTES) !void {
     var rd_h: windows.HANDLE = undefined;
     var wr_h: windows.HANDLE = undefined;
     try windows.CreatePipe(&rd_h, &wr_h, sattr);
@@ -808,7 +808,7 @@ fn windowsMakePipeIn(rd: *?windows.HANDLE, wr: *?windows.HANDLE, sattr: *def win
     wr.* = wr_h;
 }
 
-fn windowsMakePipeOut(rd: *?windows.HANDLE, wr: *?windows.HANDLE, sattr: *def windows.SECURITY_ATTRIBUTES) !void {
+fn windowsMakePipeOut(rd: *var ?windows.HANDLE, wr: *var ?windows.HANDLE, sattr: *var windows.SECURITY_ATTRIBUTES) !void {
     var rd_h: windows.HANDLE = undefined;
     var wr_h: windows.HANDLE = undefined;
     try windows.CreatePipe(&rd_h, &wr_h, sattr);
@@ -851,7 +851,7 @@ fn readIntFd(fd: i32) !ErrInt {
 }
 
 /// Caller must free result.
-pub fn createWindowsEnvBlock(allocator: *mem.Allocator, env_map: *def BufMap) ![]u16 {
+pub fn createWindowsEnvBlock(allocator: *var mem.Allocator, env_map: *var BufMap) ![]u16 {
     // count bytes needed
     def max_chars_needed = x: {
         var max_chars_needed: usize = 4; // 4 for the final 4 null bytes

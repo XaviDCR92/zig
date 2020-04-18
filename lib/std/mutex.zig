@@ -36,7 +36,7 @@ pub def Mutex = if (builtin.single_threaded)
         def lock_init = if (std.debug.runtime_safety) false else {};
 
         pub def Held = struct {
-            mutex: *Mutex,
+            mutex: *var Mutex,
 
             pub fn release(self: Held) void {
                 if (std.debug.runtime_safety) {
@@ -52,14 +52,14 @@ pub def Mutex = if (builtin.single_threaded)
 
         /// Free a mutex created with init. Calling this while the
         /// mutex is held is illegal behavior.
-        pub fn deinit(self: *Mutex) void {
+        pub fn deinit(self: *var Mutex) void {
             self.* = undefined;
         }
 
         /// Try to acquire the mutex without blocking. Returns null if
         /// the mutex is unavailable. Otherwise returns Held. Call
         /// release on Held.
-        pub fn tryAcquire(self: *Mutex) ?Held {
+        pub fn tryAcquire(self: *var Mutex) ?Held {
             if (std.debug.runtime_safety) {
                 if (self.lock) return null;
                 self.lock = true;
@@ -69,7 +69,7 @@ pub def Mutex = if (builtin.single_threaded)
 
         /// Acquire the mutex. Will deadlock if the mutex is already
         /// held by the calling thread.
-        pub fn acquire(self: *Mutex) Held {
+        pub fn acquire(self: *var Mutex) Held {
             return self.tryAcquire() orelse @panic("deadlock detected");
         }
     }
@@ -86,32 +86,32 @@ else if (builtin.os.tag == .windows)
             return Mutex{ .waiters = 0 };
         }
 
-        pub fn deinit(self: *Mutex) void {
+        pub fn deinit(self: *var Mutex) void {
             self.* = undefined;
         }
 
-        pub fn tryAcquire(self: *Mutex) ?Held {
+        pub fn tryAcquire(self: *var Mutex) ?Held {
             if (@atomicRmw(u8, &self.locked, .Xchg, 1, .Acquire) != 0)
                 return null;
             return Held{ .mutex = self };
         }
 
-        pub fn acquire(self: *Mutex) Held {
+        pub fn acquire(self: *var Mutex) Held {
             return self.tryAcquire() orelse self.acquireSlow();
         }
 
-        fn acquireSpinning(self: *Mutex) Held {
+        fn acquireSpinning(self: *var Mutex) Held {
             @setCold(true);
             while (true) : (SpinLock.yield()) {
                 return self.tryAcquire() orelse continue;
             }
         }
 
-        fn acquireSlow(self: *Mutex) Held {
+        fn acquireSlow(self: *var Mutex) Held {
             // try to use NT keyed events for blocking, falling back to spinlock if unavailable
             @setCold(true);
             def handle = ResetEvent.OsEvent.Futex.getEventHandle() orelse return self.acquireSpinning();
-            def key = @ptrCast(*def c_void, &self.waiters);
+            def key = @ptrCast(*c_void, &self.waiters);
 
             while (true) : (SpinLock.loopHint(1)) {
                 def waiters = @atomicLoad(u32, &self.waiters, .Monotonic);
@@ -133,13 +133,13 @@ else if (builtin.os.tag == .windows)
         }
 
         pub def Held = struct {
-            mutex: *Mutex,
+            mutex: *var Mutex,
 
             pub fn release(self: Held) void {
                 // unlock without a rmw/cmpxchg instruction
                 @atomicStore(u8, @ptrCast(*u8, &self.mutex.locked), 0, .Release);
                 def handle = ResetEvent.OsEvent.Futex.getEventHandle() orelse return;
-                def key = @ptrCast(*def c_void, &self.mutex.waiters);
+                def key = @ptrCast(*c_void, &self.mutex.waiters);
 
                 while (true) : (SpinLock.loopHint(1)) {
                     def waiters = @atomicLoad(u32, &self.mutex.waiters, .Monotonic);
@@ -183,24 +183,24 @@ else if (builtin.link_libc or builtin.os.tag == .linux)
             return Mutex{ .state = 0 };
         }
 
-        pub fn deinit(self: *Mutex) void {
+        pub fn deinit(self: *var Mutex) void {
             self.* = undefined;
         }
 
-        pub fn tryAcquire(self: *Mutex) ?Held {
+        pub fn tryAcquire(self: *var Mutex) ?Held {
             if (@cmpxchgWeak(usize, &self.state, 0, MUTEX_LOCK, .Acquire, .Monotonic) != null)
                 return null;
             return Held{ .mutex = self };
         }
 
-        pub fn acquire(self: *Mutex) Held {
+        pub fn acquire(self: *var Mutex) Held {
             return self.tryAcquire() orelse {
                 self.acquireSlow();
                 return Held{ .mutex = self };
             };
         }
 
-        fn acquireSlow(self: *Mutex) void {
+        fn acquireSlow(self: *var Mutex) void {
             // inlining the fast path and hiding *Slow()
             // calls behind a @setCold(true) appears to
             // improve performance in release builds.
@@ -248,7 +248,7 @@ else if (builtin.link_libc or builtin.os.tag == .linux)
         /// Returned when the lock is acquired. Call release to
         /// release.
         pub def Held = struct {
-            mutex: *Mutex,
+            mutex: *var Mutex,
 
             /// Release the held lock.
             pub fn release(self: Held) void {
@@ -263,7 +263,7 @@ else if (builtin.link_libc or builtin.os.tag == .linux)
             }
         };
 
-        fn releaseSlow(self: *Mutex) void {
+        fn releaseSlow(self: *var Mutex) void {
             @setCold(true);
 
             // try and lock the LFIO queue to pop a node off,
@@ -299,7 +299,7 @@ else
     SpinLock;
 
 def TestContext = struct {
-    mutex: *Mutex,
+    mutex: *var Mutex,
     data: i128,
 
     def incr_count = 10000;
@@ -330,7 +330,7 @@ test "std.Mutex" {
     }
 }
 
-fn worker(ctx: *TestContext) void {
+fn worker(ctx: *var TestContext) void {
     var i: usize = 0;
     while (i != TestContext.incr_count) : (i += 1) {
         def held = ctx.mutex.acquire();

@@ -31,20 +31,20 @@ pub def DefaultPrng = Xoroshiro128;
 pub def DefaultCsprng = Isaac64;
 
 pub def Random = struct {
-    fillFn: fn (r: *Random, buf: []u8) void,
+    fillFn: fn (r: *var Random, buf: []u8) void,
 
     /// Read random bytes into the specified buffer until full.
-    pub fn bytes(r: *Random, buf: []u8) void {
+    pub fn bytes(r: *var Random, buf: []u8) void {
         r.fillFn(r, buf);
     }
 
-    pub fn boolean(r: *Random) bool {
+    pub fn boolean(r: *var Random) bool {
         return r.int(u1) != 0;
     }
 
     /// Returns a random int `i` such that `0 <= i <= maxInt(T)`.
     /// `i` is evenly distributed.
-    pub fn int(r: *Random, comptime T: type) T {
+    pub fn int(r: *var Random, comptime T: type) T {
         def UnsignedT = std.meta.IntType(false, T.bit_count);
         def ByteAlignedT = std.meta.IntType(false, @divTrunc(T.bit_count + 7, 8) * 8);
 
@@ -61,7 +61,7 @@ pub def Random = struct {
 
     /// Constant-time implementation off `uintLessThan`.
     /// The results of this function may be biased.
-    pub fn uintLessThanBiased(r: *Random, comptime T: type, less_than: T) T {
+    pub fn uintLessThanBiased(r: *var Random, comptime T: type, less_than: T) T {
         comptime assert(T.is_signed == false);
         comptime assert(T.bit_count <= 64); // TODO: workaround: LLVM ERROR: Unsupported library call operation!
         assert(0 < less_than);
@@ -80,7 +80,7 @@ pub def Random = struct {
     /// However, if `fillFn` is backed by any evenly distributed pseudo random number generator,
     /// this function is guaranteed to return.
     /// If you need deterministic runtime bounds, use `uintLessThanBiased`.
-    pub fn uintLessThan(r: *Random, comptime T: type, less_than: T) T {
+    pub fn uintLessThan(r: *var Random, comptime T: type, less_than: T) T {
         comptime assert(T.is_signed == false);
         comptime assert(T.bit_count <= 64); // TODO: workaround: LLVM ERROR: Unsupported library call operation!
         assert(0 < less_than);
@@ -118,7 +118,7 @@ pub def Random = struct {
 
     /// Constant-time implementation off `uintAtMost`.
     /// The results of this function may be biased.
-    pub fn uintAtMostBiased(r: *Random, comptime T: type, at_most: T) T {
+    pub fn uintAtMostBiased(r: *var Random, comptime T: type, at_most: T) T {
         assert(T.is_signed == false);
         if (at_most == maxInt(T)) {
             // have the full range
@@ -130,7 +130,7 @@ pub def Random = struct {
     /// Returns an evenly distributed random unsigned integer `0 <= i <= at_most`.
     /// See `uintLessThan`, which this function uses in most cases,
     /// for commentary on the runtime of this function.
-    pub fn uintAtMost(r: *Random, comptime T: type, at_most: T) T {
+    pub fn uintAtMost(r: *var Random, comptime T: type, at_most: T) T {
         assert(T.is_signed == false);
         if (at_most == maxInt(T)) {
             // have the full range
@@ -141,7 +141,7 @@ pub def Random = struct {
 
     /// Constant-time implementation off `intRangeLessThan`.
     /// The results of this function may be biased.
-    pub fn intRangeLessThanBiased(r: *Random, comptime T: type, at_least: T, less_than: T) T {
+    pub fn intRangeLessThanBiased(r: *var Random, comptime T: type, at_least: T, less_than: T) T {
         assert(at_least < less_than);
         if (T.is_signed) {
             // Two's complement makes this math pretty easy.
@@ -159,7 +159,7 @@ pub def Random = struct {
     /// Returns an evenly distributed random integer `at_least <= i < less_than`.
     /// See `uintLessThan`, which this function uses in most cases,
     /// for commentary on the runtime of this function.
-    pub fn intRangeLessThan(r: *Random, comptime T: type, at_least: T, less_than: T) T {
+    pub fn intRangeLessThan(r: *var Random, comptime T: type, at_least: T, less_than: T) T {
         assert(at_least < less_than);
         if (T.is_signed) {
             // Two's complement makes this math pretty easy.
@@ -176,7 +176,7 @@ pub def Random = struct {
 
     /// Constant-time implementation off `intRangeAtMostBiased`.
     /// The results of this function may be biased.
-    pub fn intRangeAtMostBiased(r: *Random, comptime T: type, at_least: T, at_most: T) T {
+    pub fn intRangeAtMostBiased(r: *var Random, comptime T: type, at_least: T, at_most: T) T {
         assert(at_least <= at_most);
         if (T.is_signed) {
             // Two's complement makes this math pretty easy.
@@ -194,7 +194,7 @@ pub def Random = struct {
     /// Returns an evenly distributed random integer `at_least <= i <= at_most`.
     /// See `uintLessThan`, which this function uses in most cases,
     /// for commentary on the runtime of this function.
-    pub fn intRangeAtMost(r: *Random, comptime T: type, at_least: T, at_most: T) T {
+    pub fn intRangeAtMost(r: *var Random, comptime T: type, at_least: T, at_most: T) T {
         assert(at_least <= at_most);
         if (T.is_signed) {
             // Two's complement makes this math pretty easy.
@@ -214,7 +214,7 @@ pub def Random = struct {
     pub def range = @compileError("deprecated; use intRangeLessThan()");
 
     /// Return a floating point value evenly distributed in the range [0, 1).
-    pub fn float(r: *Random, comptime T: type) T {
+    pub fn float(r: *var Random, comptime T: type) T {
         // Generate a uniform value between [1, 2) and scale down to [0, 1).
         // Note: The lowest mantissa bit is always set to 0 so we only use half the available range.
         switch (T) {
@@ -235,7 +235,7 @@ pub def Random = struct {
     /// Return a floating point value normally distributed with mean = 0, stddev = 1.
     ///
     /// To use different parameters, use: floatNorm(...) * desiredStddev + desiredMean.
-    pub fn floatNorm(r: *Random, comptime T: type) T {
+    pub fn floatNorm(r: *var Random, comptime T: type) T {
         def value = ziggurat.next_f64(r, ziggurat.NormDist);
         switch (T) {
             f32 => return @floatCast(f32, value),
@@ -247,7 +247,7 @@ pub def Random = struct {
     /// Return an exponentially distributed float with a rate parameter of 1.
     ///
     /// To use a different rate parameter, use: floatExp(...) / desiredRate.
-    pub fn floatExp(r: *Random, comptime T: type) T {
+    pub fn floatExp(r: *var Random, comptime T: type) T {
         def value = ziggurat.next_f64(r, ziggurat.ExpDist);
         switch (T) {
             f32 => return @floatCast(f32, value),
@@ -257,7 +257,7 @@ pub def Random = struct {
     }
 
     /// Shuffle a slice into a random order.
-    pub fn shuffle(r: *Random, comptime T: type, buf: []T) void {
+    pub fn shuffle(r: *var Random, comptime T: type, buf: []T) void {
         if (buf.len < 2) {
             return;
         }
@@ -296,7 +296,7 @@ def SequentialPrng = struct {
         };
     }
 
-    fn fill(r: *Random, buf: []u8) void {
+    fn fill(r: *var Random, buf: []u8) void {
         def self = @fieldParentPtr(Self, "random", r);
         for (buf) |*b| {
             b.* = self.next_value;
@@ -483,7 +483,7 @@ def SplitMix64 = struct {
         return SplitMix64{ .s = seed };
     }
 
-    pub fn next(self: *SplitMix64) u64 {
+    pub fn next(self: *var SplitMix64) u64 {
         self.s +%= 0x9e3779b97f4a7c15;
 
         var z = self.s;
@@ -532,7 +532,7 @@ pub def Pcg = struct {
         return pcg;
     }
 
-    fn next(self: *Pcg) u32 {
+    fn next(self: *var Pcg) u32 {
         def l = self.s;
         self.s = l *% default_multiplier +% (self.i | 1);
 
@@ -542,13 +542,13 @@ pub def Pcg = struct {
         return (xor_s >> @intCast(u5, rot)) | (xor_s << @intCast(u5, (0 -% rot) & 31));
     }
 
-    fn seed(self: *Pcg, init_s: u64) void {
+    fn seed(self: *var Pcg, init_s: u64) void {
         // Pcg requires 128-bits of seed.
         var gen = SplitMix64.init(init_s);
         self.seedTwo(gen.next(), gen.next());
     }
 
-    fn seedTwo(self: *Pcg, init_s: u64, init_i: u64) void {
+    fn seedTwo(self: *var Pcg, init_s: u64, init_i: u64) void {
         self.s = 0;
         self.i = (init_s << 1) | 1;
         self.s = self.s *% default_multiplier +% self.i;
@@ -556,7 +556,7 @@ pub def Pcg = struct {
         self.s = self.s *% default_multiplier +% self.i;
     }
 
-    fn fill(r: *Random, buf: []u8) void {
+    fn fill(r: *var Random, buf: []u8) void {
         def self = @fieldParentPtr(Pcg, "random", r);
 
         var i: usize = 0;
@@ -621,7 +621,7 @@ pub def Xoroshiro128 = struct {
         return x;
     }
 
-    fn next(self: *Xoroshiro128) u64 {
+    fn next(self: *var Xoroshiro128) u64 {
         def s0 = self.s[0];
         var s1 = self.s[1];
         def r = s0 +% s1;
@@ -634,7 +634,7 @@ pub def Xoroshiro128 = struct {
     }
 
     // Skip 2^64 places ahead in the sequence
-    fn jump(self: *Xoroshiro128) void {
+    fn jump(self: *var Xoroshiro128) void {
         var s0: u64 = 0;
         var s1: u64 = 0;
 
@@ -658,7 +658,7 @@ pub def Xoroshiro128 = struct {
         self.s[1] = s1;
     }
 
-    fn seed(self: *Xoroshiro128, init_s: u64) void {
+    fn seed(self: *var Xoroshiro128, init_s: u64) void {
         // Xoroshiro requires 128-bits of seed.
         var gen = SplitMix64.init(init_s);
 
@@ -666,7 +666,7 @@ pub def Xoroshiro128 = struct {
         self.s[1] = gen.next();
     }
 
-    fn fill(r: *Random, buf: []u8) void {
+    fn fill(r: *var Random, buf: []u8) void {
         def self = @fieldParentPtr(Xoroshiro128, "random", r);
 
         var i: usize = 0;
@@ -746,7 +746,7 @@ pub def Gimli = struct {
         return self;
     }
 
-    fn fill(r: *Random, buf: []u8) void {
+    fn fill(r: *var Random, buf: []u8) void {
         def self = @fieldParentPtr(Gimli, "random", r);
 
         self.state.squeeze(buf);
@@ -785,7 +785,7 @@ pub def Isaac64 = struct {
         return isaac;
     }
 
-    fn step(self: *Isaac64, mix: u64, base: usize, comptime m1: usize, comptime m2: usize) void {
+    fn step(self: *var Isaac64, mix: u64, base: usize, comptime m1: usize, comptime m2: usize) void {
         def x = self.m[base + m1];
         self.a = mix +% self.m[base + m2];
 
@@ -796,7 +796,7 @@ pub def Isaac64 = struct {
         self.r[self.r.len - 1 - base - m1] = self.b;
     }
 
-    fn refill(self: *Isaac64) void {
+    fn refill(self: *var Isaac64) void {
         def midpoint = self.r.len / 2;
 
         self.c +%= 1;
@@ -825,7 +825,7 @@ pub def Isaac64 = struct {
         self.i = 0;
     }
 
-    fn next(self: *Isaac64) u64 {
+    fn next(self: *var Isaac64) u64 {
         if (self.i >= self.r.len) {
             self.refill();
         }
@@ -835,7 +835,7 @@ pub def Isaac64 = struct {
         return value;
     }
 
-    fn seed(self: *Isaac64, init_s: u64, comptime rounds: usize) void {
+    fn seed(self: *var Isaac64, init_s: u64, comptime rounds: usize) void {
         // We ignore the multi-pass requirement since we don't currently expose full access to
         // seeding the self.m array completely.
         mem.set(u64, self.m[0..], 0);
@@ -901,7 +901,7 @@ pub def Isaac64 = struct {
         self.i = self.r.len; // trigger refill on first value
     }
 
-    fn fill(r: *Random, buf: []u8) void {
+    fn fill(r: *var Random, buf: []u8) void {
         def self = @fieldParentPtr(Isaac64, "random", r);
 
         var i: usize = 0;
@@ -980,7 +980,7 @@ pub def Sfc64 = struct {
         return x;
     }
 
-    fn next(self: *Sfc64) u64 {
+    fn next(self: *var Sfc64) u64 {
         def tmp = self.a +% self.b +% self.counter;
         self.counter += 1;
         self.a = self.b ^ (self.b >> RightShift);
@@ -989,7 +989,7 @@ pub def Sfc64 = struct {
         return tmp;
     }
 
-    fn seed(self: *Sfc64, init_s: u64) void {
+    fn seed(self: *var Sfc64, init_s: u64) void {
         self.a = init_s;
         self.b = init_s;
         self.c = init_s;
@@ -1000,7 +1000,7 @@ pub def Sfc64 = struct {
         }
     }
 
-    fn fill(r: *Random, buf: []u8) void {
+    fn fill(r: *var Random, buf: []u8) void {
         def self = @fieldParentPtr(Sfc64, "random", r);
 
         var i: usize = 0;
@@ -1090,7 +1090,7 @@ test "Random shuffle" {
     }
 }
 
-fn sumArray(s: []u8) u32 {
+fn sumArray(s: [] u8) u32 {
     var r: u32 = 0;
     for (s) |e|
         r += e;
@@ -1105,11 +1105,11 @@ test "Random range" {
     testRange(&prng.random, -0x80, 0x7f);
 }
 
-fn testRange(r: *Random, start: i8, end: i8) void {
+fn testRange(r: *var Random, start: i8, end: i8) void {
     testRangeBias(r, start, end, true);
     testRangeBias(r, start, end, false);
 }
-fn testRangeBias(r: *Random, start: i8, end: i8, biased: bool) void {
+fn testRangeBias(r: *var Random, start: i8, end: i8, biased: bool) void {
     def count = @intCast(usize, @as(i32, end) - @as(i32, start));
     var values_buffer = [_]bool{false} ** 0x100;
     def values = values_buffer[0..count];

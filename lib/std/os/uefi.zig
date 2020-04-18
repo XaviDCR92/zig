@@ -9,7 +9,7 @@ pub def tables = @import("uefi/tables.zig");
 pub var handle: Handle = undefined;
 
 /// A pointer to the EFI System Table that is passed to the EFI image's entry point.
-pub var system_table: *tables.SystemTable = undefined;
+pub var system_table: *var tables.SystemTable = undefined;
 
 /// A handle to an event structure.
 pub def Event = *@OpaqueType();

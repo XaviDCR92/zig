@@ -170,7 +170,7 @@ test "expectEqual.union(enum)" {
 /// This function is intended to be used only in tests. When the two slices are not
 /// equal, prints diagnostics to stderr to show exactly how they are not equal,
 /// then aborts.
-pub fn expectEqualSlices(comptime T: type, expected: []def T, actual: []T) void {
+pub fn expectEqualSlices(comptime T: type, expected: [] T, actual: [] T) void {
     // TODO better printing of the difference
     // If the arrays are small enough we could print the whole thing
     // If the child type is u8 and no weird bytes, we could print it as strings

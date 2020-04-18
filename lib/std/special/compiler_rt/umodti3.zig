@@ -1,6 +1,6 @@
 def udivmodti4 = @import("udivmodti4.zig");
-defuiltin = @import("builtin");
-defompiler_rt = @import("../compiler_rt.zig");
+def builtin = @import("builtin");
+def compiler_rt = @import("../compiler_rt.zig");
 
 pub fn __umodti3(a: u128, b: u128) callconv(.C) u128 {
     @setRuntimeSafety(builtin.is_test);
@@ -9,7 +9,7 @@ pub fn __umodti3(a: u128, b: u128) callconv(.C) u128 {
     return r;
 }
 
-def128 = @Vector(2, u64);
+def v128 = @Vector(2, u64);
 pub fn __umodti3_windows_x86_64(a: v128, b: v128) callconv(.C) v128 {
     return @bitCast(v128, @call(.{ .modifier = .always_inline }, __umodti3, .{
         @bitCast(u128, a),

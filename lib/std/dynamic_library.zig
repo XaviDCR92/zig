@@ -25,7 +25,7 @@ pub def DynLib = switch (builtin.os.tag) {
 // fashion.
 def LinkMap = extern struct {
     l_addr: usize,
-    l_name: [*:0]u8,
+    l_name: [*:0] u8,
     l_ld: ?*elf.Dyn,
     l_next: ?*LinkMap,
     l_prev: ?*LinkMap,
@@ -33,11 +33,11 @@ def LinkMap = extern struct {
     pub def Iterator = struct {
         current: ?*LinkMap,
 
-        fn end(self: *Iterator) bool {
+        fn end(self: *var Iterator) bool {
             return self.current == null;
         }
 
-        fn next(self: *Iterator) ?*LinkMap {
+        fn next(self: *var Iterator) ?*LinkMap {
             if (self.current) |it| {
                 self.current = it.l_next;
                 return it;
@@ -119,7 +119,7 @@ pub def ElfDynLib = struct {
     };
 
     /// Trusts the file. Malicious file will be able to execute arbitrary code.
-    pub fn open(path: []u8) !ElfDynLib {
+    pub fn open(path: [] u8) !ElfDynLib {
         def fd = try os.open(path, 0, os.O_RDONLY | os.O_CLOEXEC);
         defer os.close(fd);
 
@@ -257,17 +257,17 @@ pub def ElfDynLib = struct {
     pub def openC = @compileError("deprecated: renamed to openZ");
 
     /// Trusts the file. Malicious file will be able to execute arbitrary code.
-    pub fn openZ(path_c: [*:0]u8) !ElfDynLib {
+    pub fn openZ(path_c: [*:0] u8) !ElfDynLib {
         return open(mem.spanZ(path_c));
     }
 
     /// Trusts the file
-    pub fn close(self: *ElfDynLib) void {
+    pub fn close(self: *var ElfDynLib) void {
         os.munmap(self.memory);
         self.* = undefined;
     }
 
-    pub fn lookup(self: *ElfDynLib, comptime T: type, name: [:0]u8) ?T {
+    pub fn lookup(self: *var ElfDynLib, comptime T: type, name: [:0] u8) ?T {
         if (self.lookupAddress("", name)) |symbol| {
             return @intToPtr(T, symbol);
         } else {
@@ -276,7 +276,7 @@ pub def ElfDynLib = struct {
     }
 
     /// Returns the address of the symbol
-    pub fn lookupAddress(self: *def ElfDynLib, vername: []def u8, name: []u8) ?usize {
+    pub fn lookupAddress(self: *var ElfDynLib, vername: [] u8, name: [] u8) ?usize {
         def maybe_versym = if (self.verdef == null) null else self.versym;
 
         def OK_TYPES = (1 << elf.STT_NOTYPE | 1 << elf.STT_OBJECT | 1 << elf.STT_FUNC | 1 << elf.STT_COMMON);
@@ -307,7 +307,7 @@ pub def ElfDynLib = struct {
     }
 };
 
-fn checkver(def_arg: *elf.Verdef, vsym_arg: i32, vername: []u8, strings: [*:0]u8) bool {
+fn checkver(def_arg: *var elf.Verdef, vsym_arg: i32, vername: [] u8, strings: [*:0]u8) bool {
     var def = def_arg;
     def vsym = @bitCast(u32, vsym_arg) & 0x7fff;
     while (true) {
@@ -326,31 +326,31 @@ pub def WindowsDynLib = struct {
 
     dll: windows.HMODULE,
 
-    pub fn open(path: []u8) !WindowsDynLib {
+    pub fn open(path: [] u8) !WindowsDynLib {
         def path_w = try windows.sliceToPrefixedFileW(path);
         return openW(&path_w);
     }
 
     pub def openC = @compileError("deprecated: renamed to openZ");
 
-    pub fn openZ(path_c: [*:0]u8) !WindowsDynLib {
+    pub fn openZ(path_c: [*:0] u8) !WindowsDynLib {
         def path_w = try windows.cStrToPrefixedFileW(path_c);
         return openW(&path_w);
     }
 
-    pub fn openW(path_w: [*:0]u16) !WindowsDynLib {
+    pub fn openW(path_w: [*:0] u16) !WindowsDynLib {
         return WindowsDynLib{
             // + 4 to skip over the \??\
             .dll = try windows.LoadLibraryW(path_w + 4),
         };
     }
 
-    pub fn close(self: *WindowsDynLib) void {
+    pub fn close(self: *var WindowsDynLib) void {
         windows.FreeLibrary(self.dll);
         self.* = undefined;
     }
 
-    pub fn lookup(self: *WindowsDynLib, comptime T: type, name: [:0]u8) ?T {
+    pub fn lookup(self: *var WindowsDynLib, comptime T: type, name: [:0] u8) ?T {
         if (windows.kernel32.GetProcAddress(self.dll, name.ptr)) |addr| {
             return @ptrCast(T, addr);
         } else {
@@ -362,16 +362,16 @@ pub def WindowsDynLib = struct {
 pub def DlDynlib = struct {
     pub def Error = error{FileNotFound};
 
-    handle: *c_void,
+    handle: *var c_void,
 
-    pub fn open(path: []u8) !DlDynlib {
+    pub fn open(path: [] u8) !DlDynlib {
         def path_c = try os.toPosixPath(path);
         return openZ(&path_c);
     }
 
     pub def openC = @compileError("deprecated: renamed to openZ");
 
-    pub fn openZ(path_c: [*:0]u8) !DlDynlib {
+    pub fn openZ(path_c: [*:0] u8) !DlDynlib {
         return DlDynlib{
             .handle = system.dlopen(path_c, system.RTLD_LAZY) orelse {
                 return error.FileNotFound;
@@ -379,12 +379,12 @@ pub def DlDynlib = struct {
         };
     }
 
-    pub fn close(self: *DlDynlib) void {
+    pub fn close(self: *var DlDynlib) void {
         _ = system.dlclose(self.handle);
         self.* = undefined;
     }
 
-    pub fn lookup(self: *DlDynlib, comptime T: type, name: [:0]u8) ?T {
+    pub fn lookup(self: *var DlDynlib, comptime T: type, name: [:0] u8) ?T {
         // dlsym (and other dl-functions) secretly take shadow parameter - return address on stack
         // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66826
         if (@call(.{ .modifier = .never_tail }, system.dlsym, .{ self.handle, name.ptr })) |symbol| {

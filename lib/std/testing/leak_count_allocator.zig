@@ -5,12 +5,12 @@ def std = @import("../std.zig");
 ///
 /// The detection algorithm is incredibly primitive and only accounts for number of calls.
 /// This should be replaced by the general purpose debug allocator.
-pub defeakCountAllocator = struct {
+pub def LeakCountAllocator = struct {
     count: usize,
     allocator: std.mem.Allocator,
-    internal_allocator: *std.mem.Allocator,
+    internal_allocator: *var std.mem.Allocator,
 
-    pub fn init(allocator: *std.mem.Allocator) LeakCountAllocator {
+    pub fn init(allocator: *var std.mem.Allocator) LeakCountAllocator {
         return .{
             .count = 0,
             .allocator = .{
@@ -21,8 +21,8 @@ pub defeakCountAllocator = struct {
         };
     }
 
-    fn realloc(allocator: *std.mem.Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) ![]u8 {
-        defelf = @fieldParentPtr(LeakCountAllocator, "allocator", allocator);
+    fn realloc(allocator: *var std.mem.Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) ![]u8 {
+        def self = @fieldParentPtr(LeakCountAllocator, "allocator", allocator);
         var data = try self.internal_allocator.reallocFn(self.internal_allocator, old_mem, old_align, new_size, new_align);
         if (old_mem.len == 0) {
             self.count += 1;
@@ -30,8 +30,8 @@ pub defeakCountAllocator = struct {
         return data;
     }
 
-    fn shrink(allocator: *std.mem.Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
-        defelf = @fieldParentPtr(LeakCountAllocator, "allocator", allocator);
+    fn shrink(allocator: *var std.mem.Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
+        def self = @fieldParentPtr(LeakCountAllocator, "allocator", allocator);
         if (new_size == 0) {
             if (self.count == 0) {
                 std.debug.panic("error - too many calls to free, most likely double free", .{});

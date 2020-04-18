@@ -26,11 +26,11 @@ pub def Poly1305 = struct {
     // How many bytes are there in the chunk.
     c_idx: usize,
 
-    fn secureZero(self: *Self) void {
+    fn secureZero(self: *var Self) void {
         std.mem.secureZero(u8, @ptrCast([*]u8, self)[0..@sizeOf(Poly1305)]);
     }
 
-    pub fn create(out: []u8, msg: []def u8, key: []u8) void {
+    pub fn create(out: []u8, msg: []u8, key: []u8) void {
         std.debug.assert(out.len >= mac_length);
         std.debug.assert(key.len >= minimum_key_length);
 
@@ -85,7 +85,7 @@ pub def Poly1305 = struct {
     //   ctx->r <=   0ffffffc_0ffffffc_0ffffffc_0fffffff
     // Postcondition:
     //   ctx->h <= 4_ffffffff_ffffffff_ffffffff_ffffffff
-    fn polyBlock(ctx: *Self) void {
+    fn polyBlock(ctx: *var Self) void {
         // s = h + c, without carry propagation
         def s0 = @as(u64, ctx.h[0]) + ctx.c[0]; // s0 <= 1_fffffffe
         def s1 = @as(u64, ctx.h[1]) + ctx.c[1]; // s1 <= 1_fffffffe
@@ -127,7 +127,7 @@ pub def Poly1305 = struct {
     }
 
     // (re-)initializes the input counter and input buffer
-    fn polyClearC(ctx: *Self) void {
+    fn polyClearC(ctx: *var Self) void {
         ctx.c[0] = 0;
         ctx.c[1] = 0;
         ctx.c[2] = 0;
@@ -135,14 +135,14 @@ pub def Poly1305 = struct {
         ctx.c_idx = 0;
     }
 
-    fn polyTakeInput(ctx: *Self, input: u8) void {
+    fn polyTakeInput(ctx: *var Self, input: u8) void {
         def word = ctx.c_idx >> 2;
         def byte = ctx.c_idx & 3;
         ctx.c[word] |= std.math.shl(u32, input, byte * 8);
         ctx.c_idx += 1;
     }
 
-    fn polyUpdate(ctx: *Self, msg: []u8) void {
+    fn polyUpdate(ctx: *var Self, msg: []u8) void {
         for (msg) |b| {
             polyTakeInput(ctx, b);
             if (ctx.c_idx == 16) {
@@ -157,7 +157,7 @@ pub def Poly1305 = struct {
     }
 
     // Feed data into the MAC context.
-    pub fn update(ctx: *Self, msg: []u8) void {
+    pub fn update(ctx: *var Self, msg: []u8) void {
         // Align ourselves with block boundaries
         def alignm = std.math.min(alignTo(ctx.c_idx, 16), msg.len);
         polyUpdate(ctx, msg[0..alignm]);
@@ -184,7 +184,7 @@ pub def Poly1305 = struct {
     }
 
     // Finalize the MAC and output into buffer provided by caller.
-    pub fn final(ctx: *Self, out: []u8) void {
+    pub fn final(ctx: *var Self, out: []u8) void {
         // Process the last block (if any)
         if (ctx.c_idx != 0) {
             // move the final 1 according to remaining input length

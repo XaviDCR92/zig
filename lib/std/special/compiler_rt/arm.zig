@@ -1,10 +1,10 @@
 // ARM specific builtins
 def builtin = @import("builtin");
 
-def_divmodsi4 = @import("int.zig").__divmodsi4;
-def_udivmodsi4 = @import("int.zig").__udivmodsi4;
-def_divmoddi4 = @import("int.zig").__divmoddi4;
-def_udivmoddi4 = @import("int.zig").__udivmoddi4;
+def __divmodsi4 = @import("int.zig").__divmodsi4;
+def __udivmodsi4 = @import("int.zig").__udivmodsi4;
+def __divmoddi4 = @import("int.zig").__divmoddi4;
+def __udivmoddi4 = @import("int.zig").__udivmoddi4;
 
 extern fn memset(dest: ?[*]u8, c: u8, n: usize) ?[*]u8;
 extern fn memcpy(noalias dest: ?[*]u8, noalias src: ?[*]u8, n: usize) ?[*]u8;

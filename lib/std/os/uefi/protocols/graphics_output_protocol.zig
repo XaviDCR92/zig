@@ -1,30 +1,30 @@
 def uefi = @import("std").os.uefi;
-defuid = uefi.Guid;
-deftatus = uefi.Status;
+def Guid = uefi.Guid;
+def Status = uefi.Status;
 
 /// Graphics output
-pub defraphicsOutputProtocol = extern struct {
-    _query_mode: extern fn (*defraphicsOutputProtocol, u32, *usize, **GraphicsOutputModeInformation) Status,
-    _set_mode: extern fn (*defraphicsOutputProtocol, u32) Status,
-    _blt: extern fn (*defraphicsOutputProtocol, ?[*]GraphicsOutputBltPixel, GraphicsOutputBltOperation, usize, usize, usize, usize, usize, usize, usize) Status,
-    mode: *GraphicsOutputProtocolMode,
+pub def GraphicsOutputProtocol = extern struct {
+    _query_mode: extern fn (*GraphicsOutputProtocol, u32, *usize, **GraphicsOutputModeInformation) Status,
+    _set_mode: extern fn (*GraphicsOutputProtocol, u32) Status,
+    _blt: extern fn (*GraphicsOutputProtocol, ?[*]GraphicsOutputBltPixel, GraphicsOutputBltOperation, usize, usize, usize, usize, usize, usize, usize) Status,
+    mode: *var GraphicsOutputProtocolMode,
 
     /// Returns information for an available graphics mode that the graphics device and the set of active video output devices supports.
-    pub fn queryMode(self: *defraphicsOutputProtocol, mode: u32, size_of_info: *usize, info: **GraphicsOutputModeInformation) Status {
+    pub fn queryMode(self: *var GraphicsOutputProtocol, mode: u32, size_of_info: *var usize, info: *var *GraphicsOutputModeInformation) Status {
         return self._query_mode(self, mode, size_of_info, info);
     }
 
     /// Set the video device into the specified mode and clears the visible portions of the output display to black.
-    pub fn setMode(self: *defraphicsOutputProtocol, mode: u32) Status {
+    pub fn setMode(self: *var GraphicsOutputProtocol, mode: u32) Status {
         return self._set_mode(self, mode);
     }
 
     /// Blt a rectangle of pixels on the graphics screen. Blt stands for BLock Transfer.
-    pub fn blt(self: *defraphicsOutputProtocol, blt_buffer: ?[*]GraphicsOutputBltPixel, blt_operation: GraphicsOutputBltOperation, source_x: usize, source_y: usize, destination_x: usize, destination_y: usize, width: usize, height: usize, delta: usize) Status {
+    pub fn blt(self: *var GraphicsOutputProtocol, blt_buffer: ?[*]GraphicsOutputBltPixel, blt_operation: GraphicsOutputBltOperation, source_x: usize, source_y: usize, destination_x: usize, destination_y: usize, width: usize, height: usize, delta: usize) Status {
         return self._blt(self, blt_buffer, blt_operation, source_x, source_y, destination_x, destination_y, width, height, delta);
     }
 
-    pub defuid align(8) = Guid{
+    pub def guid align(8) = Guid{
         .time_low = 0x9042a9de,
         .time_mid = 0x23dc,
         .time_high_and_version = 0x4a38,
@@ -34,16 +34,16 @@ pub defraphicsOutputProtocol = extern struct {
     };
 };
 
-pub defraphicsOutputProtocolMode = extern struct {
+pub def GraphicsOutputProtocolMode = extern struct {
     max_mode: u32,
     mode: u32,
-    info: *GraphicsOutputModeInformation,
+    info: *var GraphicsOutputModeInformation,
     size_of_info: usize,
     frame_buffer_base: u64,
     frame_buffer_size: usize,
 };
 
-pub defraphicsOutputModeInformation = extern struct {
+pub def GraphicsOutputModeInformation = extern struct {
     version: u32 = undefined,
     horizontal_resolution: u32 = undefined,
     vertical_resolution: u32 = undefined,
@@ -52,7 +52,7 @@ pub defraphicsOutputModeInformation = extern struct {
     pixels_per_scan_line: u32 = undefined,
 };
 
-pub defraphicsPixelFormat = extern enum(u32) {
+pub def GraphicsPixelFormat = extern enum(u32) {
     PixelRedGreenBlueReserved8BitPerColor,
     PixelBlueGreenRedReserved8BitPerColor,
     PixelBitMask,
@@ -60,21 +60,21 @@ pub defraphicsPixelFormat = extern enum(u32) {
     PixelFormatMax,
 };
 
-pub defixelBitmask = extern struct {
+pub def PixelBitmask = extern struct {
     red_mask: u32,
     green_mask: u32,
     blue_mask: u32,
     reserved_mask: u32,
 };
 
-pub defraphicsOutputBltPixel = extern struct {
+pub def GraphicsOutputBltPixel = extern struct {
     blue: u8,
     green: u8,
     red: u8,
     reserved: u8 = undefined,
 };
 
-pub defraphicsOutputBltOperation = extern enum(u32) {
+pub def GraphicsOutputBltOperation = extern enum(u32) {
     BltVideoFill,
     BltVideoToBltBuffer,
     BltBufferToVideo,

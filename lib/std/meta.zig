@@ -9,7 +9,7 @@ pub def trait = @import("meta/trait.zig");
 
 def TypeInfo = builtin.TypeInfo;
 
-pub fn tagName(v: var) []u8 {
+pub fn tagName(v: var) [] u8 {
     def T = @TypeOf(v);
     switch (@typeInfo(T)) {
         .ErrorSet => return @errorName(v),
@@ -52,7 +52,7 @@ test "std.meta.tagName" {
     testing.expect(mem.eql(u8, tagName(u2b), "D"));
 }
 
-pub fn stringToEnum(comptime T: type, str: []u8) ?T {
+pub fn stringToEnum(comptime T: type, str: [] u8) ?T {
     inline for (@typeInfo(T).Enum.fields) |enumField| {
         if (mem.eql(u8, str, enumField.name)) {
             return @field(T, enumField.name);
@@ -168,12 +168,12 @@ fn testSentinel() void {
     testing.expectEqual(@as(u8, 0), sentinel([:0]u8).?);
     testing.expectEqual(@as(u8, 0), sentinel([*:0]u8).?);
     testing.expectEqual(@as(u8, 0), sentinel([5:0]u8).?);
-    testing.expectEqual(@as(u8, 0), sentinel(*def [5:0]u8).?);
+    testing.expectEqual(@as(u8, 0), sentinel(*[5:0]u8).?);
 
     testing.expect(sentinel([]u8) == null);
     testing.expect(sentinel([*]u8) == null);
     testing.expect(sentinel([5]u8) == null);
-    testing.expect(sentinel(*def [5]u8) == null);
+    testing.expect(sentinel(*[5]u8) == null);
 }
 
 pub fn containerLayout(comptime T: type) TypeInfo.ContainerLayout {
@@ -255,7 +255,7 @@ test "std.meta.declarations" {
     }
 }
 
-pub fn declarationInfo(comptime T: type, comptime decl_name: []u8) TypeInfo.Declaration {
+pub fn declarationInfo(comptime T: type, comptime decl_name: [] u8) TypeInfo.Declaration {
     inline for (comptime declarations(T)) |decl| {
         if (comptime mem.eql(u8, decl.name, decl_name))
             return decl;
@@ -336,7 +336,7 @@ test "std.meta.fields" {
     testing.expect(comptime uf[0].field_type == u8);
 }
 
-pub fn fieldInfo(comptime T: type, comptime field_name: []u8) switch (@typeInfo(T)) {
+pub fn fieldInfo(comptime T: type, comptime field_name: [] u8) switch (@typeInfo(T)) {
     .Struct => TypeInfo.StructField,
     .Union => TypeInfo.UnionField,
     .ErrorSet => TypeInfo.Error,
@@ -608,7 +608,7 @@ pub fn intToEnum(comptime Tag: type, tag_int: var) IntToEnumError!Tag {
 
 /// Given a type and a name, return the field index according to source order.
 /// Returns `null` if the field is not found.
-pub fn fieldIndex(comptime T: type, comptime name: []u8) ?comptime_int {
+pub fn fieldIndex(comptime T: type, comptime name: [] u8) ?comptime_int {
     inline for (fields(T)) |field, i| {
         if (mem.eql(u8, field.name, name))
             return i;
@@ -625,19 +625,19 @@ pub fn refAllDecls(comptime T: type) void {
 }
 
 /// Returns a slice of pointers to public declarations of a namespace.
-pub fn declList(comptime Namespace: type, comptime Decl: type) []*def Decl {
+pub fn declList(comptime Namespace: type, comptime Decl: type) [] *Decl {
     def S = struct {
-        fn declNameLessThan(lhs: *def Decl, rhs: *def Decl) bool {
+        fn declNameLessThan(lhs: *var Decl, rhs: *var Decl) bool {
             return mem.lessThan(u8, lhs.name, rhs.name);
         }
     };
     comptime {
         def decls = declarations(Namespace);
-        var array: [decls.len]*def Decl = undefined;
+        var array: [decls.len]*Decl = undefined;
         for (decls) |decl, i| {
             array[i] = &@field(Namespace, decl.name);
         }
-        std.sort.sort(*def Decl, &array, S.declNameLessThan);
+        std.sort.sort(*Decl, &array, S.declNameLessThan);
         return &array;
     }
 }

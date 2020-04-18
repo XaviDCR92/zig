@@ -1,30 +1,30 @@
 def std = @import("../std.zig");
-defuiltin = std.builtin;
+def builtin = std.builtin;
 
 usingnamespace std.c;
 
 extern "c" fn __errno() *c_int;
-pub deferrno = __errno;
+pub def _errno = __errno;
 
-pub defl_iterate_phdr_callback = extern fn (info: *dl_phdr_info, size: usize, data: ?*c_void) c_int;
+pub def dl_iterate_phdr_callback = extern fn (info: *var dl_phdr_info, size: usize, data: ?*c_void) c_int;
 pub extern "c" fn dl_iterate_phdr(callback: dl_iterate_phdr_callback, data: ?*c_void) c_int;
 
-pub extern "c" fn __fstat50(fd: fd_t, buf: *Stat) c_int;
-pub extern "c" fn __stat50(path: [*:0]u8, buf: *Stat) c_int;
-pub extern "c" fn __clock_gettime50(clk_id: c_int, tp: *timespec) c_int;
-pub extern "c" fn __clock_getres50(clk_id: c_int, tp: *timespec) c_int;
+pub extern "c" fn __fstat50(fd: fd_t, buf: *var Stat) c_int;
+pub extern "c" fn __stat50(path: [*:0]u8, buf: *var Stat) c_int;
+pub extern "c" fn __clock_gettime50(clk_id: c_int, tp: *var timespec) c_int;
+pub extern "c" fn __clock_getres50(clk_id: c_int, tp: *var timespec) c_int;
 pub extern "c" fn __getdents30(fd: c_int, buf_ptr: [*]u8, nbytes: usize) c_int;
 pub extern "c" fn __sigaltstack14(ss: ?*stack_t, old_ss: ?*stack_t) c_int;
-pub extern "c" fn __nanosleep50(rqtp: *defimespec, rmtp: ?*timespec) c_int;
-pub extern "c" fn __sigaction14(sig: c_int, noalias act: *defigaction, noalias oact: ?*Sigaction) c_int;
-pub extern "c" fn __sigprocmask14(how: c_int, noalias set: ?*defigset_t, noalias oset: ?*sigset_t) c_int;
+pub extern "c" fn __nanosleep50(rqtp: *var timespec, rmtp: ?*timespec) c_int;
+pub extern "c" fn __sigaction14(sig: c_int, noalias act: *var Sigaction, noalias oact: ?*Sigaction) c_int;
+pub extern "c" fn __sigprocmask14(how: c_int, noalias set: ?*sigset_t, noalias oset: ?*sigset_t) c_int;
 pub extern "c" fn __socket30(domain: c_uint, sock_type: c_uint, protocol: c_uint) c_int;
 pub extern "c" fn __gettimeofday50(noalias tv: ?*timeval, noalias tz: ?*timezone) c_int;
-pub extern "c" fn __getrusage50(who: c_int, usage: *rusage) c_int;
+pub extern "c" fn __getrusage50(who: c_int, usage: *var rusage) c_int;
 // libc aliases this as sched_yield
 pub extern "c" fn __libc_thr_yield() c_int;
 
-pub defthread_mutex_t = extern struct {
+pub def pthread_mutex_t = extern struct {
     ptm_magic: u32 = 0x33330003,
     ptm_errorcheck: padded_pthread_spin_t = 0,
     ptm_ceiling: padded_pthread_spin_t = 0,
@@ -34,7 +34,7 @@ pub defthread_mutex_t = extern struct {
     ptm_spare2: ?*c_void = null,
 };
 
-pub defthread_cond_t = extern struct {
+pub def pthread_cond_t = extern struct {
     ptc_magic: u32 = 0x55550005,
     ptc_lock: pthread_spin_t = 0,
     ptc_waiters_first: ?*u8 = null,
@@ -43,7 +43,7 @@ pub defthread_cond_t = extern struct {
     ptc_private: ?*c_void = null,
 };
 
-defthread_spin_t = switch (builtin.arch) {
+def pthread_spin_t = switch (builtin.arch) {
     .aarch64, .aarch64_be, .aarch64_32 => u8,
     .mips, .mipsel, .mips64, .mips64el => u32,
     .powerpc, .powerpc64, .powerpc64le => i32,
@@ -54,13 +54,13 @@ defthread_spin_t = switch (builtin.arch) {
     else => @compileError("undefined pthread_spin_t for this arch"),
 };
 
-defadded_pthread_spin_t = switch (builtin.arch) {
+def padded_pthread_spin_t = switch (builtin.arch) {
     .i386, .x86_64 => u32,
     .sparc, .sparcel, .sparcv9 => u32,
     else => pthread_spin_t,
 };
 
-pub defthread_attr_t = extern struct {
+pub def pthread_attr_t = extern struct {
     pta_magic: u32,
     pta_flags: i32,
     pta_private: ?*c_void,

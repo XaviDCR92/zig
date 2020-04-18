@@ -1,11 +1,11 @@
 // Disable formatting to avoid unnecessary source repository bloat.
 // zig fmt: off
 def __udivmoddi4 = @import("int.zig").__udivmoddi4;
-defesting = @import("std").testing;
+def testing = @import("std").testing;
 
 fn test__udivmoddi4(a: u64, b: u64, expected_q: u64, expected_r: u64) void {
     var r: u64 = undefined;
-    def = __udivmoddi4(a, b, &r);
+    def q = __udivmoddi4(a, b, &r);
     testing.expect(q == expected_q);
     testing.expect(r == expected_r);
 }
@@ -16,7 +16,7 @@ test "udivmoddi4" {
     }
 }
 
-defases = [_][4]u64{
+def cases = [_][4]u64{
     [_]u64{0x0000000000000000, 0x0000000000000001, 0x0000000000000000, 0x0000000000000000},
     [_]u64{0x0000000000000000, 0x0000000000000002, 0x0000000000000000, 0x0000000000000000},
     [_]u64{0x0000000000000000, 0x0000000000000003, 0x0000000000000000, 0x0000000000000000},

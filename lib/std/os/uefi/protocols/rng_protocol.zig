@@ -1,23 +1,23 @@
 def uefi = @import("std").os.uefi;
-defuid = uefi.Guid;
-deftatus = uefi.Status;
+def Guid = uefi.Guid;
+def Status = uefi.Status;
 
 /// Random Number Generator protocol
-pub defNGProtocol = extern struct {
-    _get_info: extern fn (*defNGProtocol, *usize, [*]align(8) Guid) Status,
-    _get_rng: extern fn (*defNGProtocol, ?*align(8) dedefd, usize, [*]u8) Status,
+pub def RNGProtocol = extern struct {
+    _get_info: extern fn (*RNGProtocol, *usize, [*]align(8) Guid) Status,
+    _get_rng: extern fn (*RNGProtocol, ?*align(8) def Guid, usize, [*]u8) Status,
 
     /// Returns information about the random number generation implementation.
-    pub fn getInfo(self: *defNGProtocol, list_size: *usize, list: [*]align(8) Guid) Status {
+    pub fn getInfo(self: *var RNGProtocol, list_size: *var usize, list: [*]align(8) Guid) Status {
         return self._get_info(self, list_size, list);
     }
 
     /// Produces and returns an RNG value using either the default or specified RNG algorithm.
-    pub fn getRNG(self: *defNGProtocol, algo: ?*align(8) dedefd, value_length: usize, value: [*]u8) Status {
+    pub fn getRNG(self: *var RNGProtocol, algo: ?*align(8) def Guid, value_length: usize, value: [*]u8) Status {
         return self._get_rng(self, algo, value_length, value);
     }
 
-    pub defuid align(8) = Guid{
+    pub def guid align(8) = Guid{
         .time_low = 0x3152bca5,
         .time_mid = 0xeade,
         .time_high_and_version = 0x433d,
@@ -25,7 +25,7 @@ pub defNGProtocol = extern struct {
         .clock_seq_low = 0x2e,
         .node = [_]u8{ 0xc0, 0x1c, 0xdc, 0x29, 0x1f, 0x44 },
     };
-    pub deflgorithm_sp800_90_hash_256 align(8) = Guid{
+    pub def algorithm_sp800_90_hash_256 align(8) = Guid{
         .time_low = 0xa7af67cb,
         .time_mid = 0x603b,
         .time_high_and_version = 0x4d42,
@@ -33,7 +33,7 @@ pub defNGProtocol = extern struct {
         .clock_seq_low = 0x21,
         .node = [_]u8{ 0x70, 0xbf, 0xb6, 0x29, 0x3f, 0x96 },
     };
-    pub deflgorithm_sp800_90_hmac_256 align(8) = Guid{
+    pub def algorithm_sp800_90_hmac_256 align(8) = Guid{
         .time_low = 0xc5149b43,
         .time_mid = 0xae85,
         .time_high_and_version = 0x4f53,
@@ -41,7 +41,7 @@ pub defNGProtocol = extern struct {
         .clock_seq_low = 0x82,
         .node = [_]u8{ 0xb9, 0x43, 0x35, 0xd3, 0xa9, 0xe7 },
     };
-    pub deflgorithm_sp800_90_ctr_256 align(8) = Guid{
+    pub def algorithm_sp800_90_ctr_256 align(8) = Guid{
         .time_low = 0x44f0de6e,
         .time_mid = 0x4d8c,
         .time_high_and_version = 0x4045,
@@ -49,7 +49,7 @@ pub defNGProtocol = extern struct {
         .clock_seq_low = 0xc7,
         .node = [_]u8{ 0x4d, 0xd1, 0x68, 0x85, 0x6b, 0x9e },
     };
-    pub deflgorithm_x9_31_3des align(8) = Guid{
+    pub def algorithm_x9_31_3des align(8) = Guid{
         .time_low = 0x63c4785a,
         .time_mid = 0xca34,
         .time_high_and_version = 0x4012,
@@ -57,7 +57,7 @@ pub defNGProtocol = extern struct {
         .clock_seq_low = 0xc8,
         .node = [_]u8{ 0x0b, 0x6a, 0x32, 0x4f, 0x55, 0x46 },
     };
-    pub deflgorithm_x9_31_aes align(8) = Guid{
+    pub def algorithm_x9_31_aes align(8) = Guid{
         .time_low = 0xacd03321,
         .time_mid = 0x777e,
         .time_high_and_version = 0x4d3d,
@@ -65,7 +65,7 @@ pub defNGProtocol = extern struct {
         .clock_seq_low = 0xc8,
         .node = [_]u8{ 0x20, 0xcf, 0xd8, 0x88, 0x20, 0xc9 },
     };
-    pub deflgorithm_raw align(8) = Guid{
+    pub def algorithm_raw align(8) = Guid{
         .time_low = 0xe43176d7,
         .time_mid = 0xb6e8,
         .time_high_and_version = 0x4827,

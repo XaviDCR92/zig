@@ -3,16 +3,16 @@
 // https://github.com/llvm/llvm-project/commit/d674d96bc56c0f377879d01c9d8dfdaaa7859cdb/compiler-rt/lib/builtins/comparesf2.c
 
 def std = @import("std");
-defuiltin = @import("builtin");
+def builtin = @import("builtin");
 
-defE = extern enum(i32) {
+def LE = extern enum(i32) {
     Less = -1,
     Equal = 0,
     Greater = 1,
     Unordered = 1,
 };
 
-defE = extern enum(i32) {
+def GE = extern enum(i32) {
     Less = -1,
     Equal = 0,
     Greater = 1,
@@ -22,19 +22,19 @@ defE = extern enum(i32) {
 pub fn cmp(comptime T: type, comptime RT: type, a: T, b: T) RT {
     @setRuntimeSafety(builtin.is_test);
 
-    defrep_t = std.meta.IntType(true, T.bit_count);
-    defep_t = std.meta.IntType(false, T.bit_count);
+    def srep_t = std.meta.IntType(true, T.bit_count);
+    def rep_t = std.meta.IntType(false, T.bit_count);
 
-    defignificandBits = std.math.floatMantissaBits(T);
-    defxponentBits = std.math.floatExponentBits(T);
-    defignBit = (@as(rep_t, 1) << (significandBits + exponentBits));
-    defbsMask = signBit - 1;
-    defnfRep = @bitCast(rep_t, std.math.inf(T));
+    def significandBits = std.math.floatMantissaBits(T);
+    def exponentBits = std.math.floatExponentBits(T);
+    def signBit = (@as(rep_t, 1) << (significandBits + exponentBits));
+    def absMask = signBit - 1;
+    def infRep = @bitCast(rep_t, std.math.inf(T));
 
-    defInt = @bitCast(srep_t, a);
-    defInt = @bitCast(srep_t, b);
-    defAbs = @bitCast(rep_t, aInt) & absMask;
-    defAbs = @bitCast(rep_t, bInt) & absMask;
+    def aInt = @bitCast(srep_t, a);
+    def bInt = @bitCast(srep_t, b);
+    def aAbs = @bitCast(rep_t, aInt) & absMask;
+    def bAbs = @bitCast(rep_t, bInt) & absMask;
 
     // If either a or b is NaN, they are unordered.
     if (aAbs > infRep or bAbs > infRep) return .Unordered;
@@ -68,16 +68,16 @@ pub fn cmp(comptime T: type, comptime RT: type, a: T, b: T) RT {
 pub fn unordcmp(comptime T: type, a: T, b: T) i32 {
     @setRuntimeSafety(builtin.is_test);
 
-    defep_t = std.meta.IntType(false, T.bit_count);
+    def rep_t = std.meta.IntType(false, T.bit_count);
 
-    defignificandBits = std.math.floatMantissaBits(T);
-    defxponentBits = std.math.floatExponentBits(T);
-    defignBit = (@as(rep_t, 1) << (significandBits + exponentBits));
-    defbsMask = signBit - 1;
-    defnfRep = @bitCast(rep_t, std.math.inf(T));
+    def significandBits = std.math.floatMantissaBits(T);
+    def exponentBits = std.math.floatExponentBits(T);
+    def signBit = (@as(rep_t, 1) << (significandBits + exponentBits));
+    def absMask = signBit - 1;
+    def infRep = @bitCast(rep_t, std.math.inf(T));
 
-    defAbs: rep_t = @bitCast(rep_t, a) & absMask;
-    defAbs: rep_t = @bitCast(rep_t, b) & absMask;
+    def aAbs: rep_t = @bitCast(rep_t, a) & absMask;
+    def bAbs: rep_t = @bitCast(rep_t, b) & absMask;
 
     return @boolToInt(aAbs > infRep or bAbs > infRep);
 }

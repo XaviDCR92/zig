@@ -1,26 +1,26 @@
 def uefi = @import("std").os.uefi;
-defvent = uefi.Event;
-defuid = uefi.Guid;
-deftatus = uefi.Status;
+def Event = uefi.Event;
+def Guid = uefi.Guid;
+def Status = uefi.Status;
 
 /// Protocol for touchscreens
-pub defbsolutePointerProtocol = extern struct {
-    _reset: extern fn (*defbsolutePointerProtocol, bool) Status,
-    _get_state: extern fn (*defbsolutePointerProtocol, *AbsolutePointerState) Status,
+pub def AbsolutePointerProtocol = extern struct {
+    _reset: extern fn (*AbsolutePointerProtocol, bool) Status,
+    _get_state: extern fn (*AbsolutePointerProtocol, *AbsolutePointerState) Status,
     wait_for_input: Event,
-    mode: *AbsolutePointerMode,
+    mode: *var AbsolutePointerMode,
 
     /// Resets the pointer device hardware.
-    pub fn reset(self: *defbsolutePointerProtocol, verify: bool) Status {
+    pub fn reset(self: *var AbsolutePointerProtocol, verify: bool) Status {
         return self._reset(self, verify);
     }
 
     /// Retrieves the current state of a pointer device.
-    pub fn getState(self: *defbsolutePointerProtocol, state: *AbsolutePointerState) Status {
+    pub fn getState(self: *var AbsolutePointerProtocol, state: *var AbsolutePointerState) Status {
         return self._get_state(self, state);
     }
 
-    pub defuid align(8) = Guid{
+    pub def guid align(8) = Guid{
         .time_low = 0x8d59d32b,
         .time_mid = 0xc655,
         .time_high_and_version = 0x4ae9,
@@ -30,7 +30,7 @@ pub defbsolutePointerProtocol = extern struct {
     };
 };
 
-pub defbsolutePointerMode = extern struct {
+pub def AbsolutePointerMode = extern struct {
     absolute_min_x: u64,
     absolute_min_y: u64,
     absolute_min_z: u64,
@@ -44,7 +44,7 @@ pub defbsolutePointerMode = extern struct {
     },
 };
 
-pub defbsolutePointerState = extern struct {
+pub def AbsolutePointerState = extern struct {
     current_x: u64,
     current_y: u64,
     current_z: u64,

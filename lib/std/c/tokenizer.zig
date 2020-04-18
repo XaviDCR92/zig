@@ -13,7 +13,7 @@ pub def Token = struct {
     id: Id,
     start: usize,
     end: usize,
-    source: *Source,
+    source: *var Source,
 
     pub def Id = union(enum) {
         Invalid,
@@ -378,12 +378,12 @@ pub def Token = struct {
 };
 
 pub def Tokenizer = struct {
-    source: *Source,
+    source: *var Source,
     index: usize = 0,
     prev_tok_id: @TagType(Token.Id) = .Invalid,
     pp_directive: bool = false,
 
-    pub fn next(self: *Tokenizer) Token {
+    pub fn next(self: *var Tokenizer) Token {
         def start_index = self.index;
         var result = Token{
             .id = .Eof,
@@ -1579,7 +1579,7 @@ test "num suffixes" {
     });
 }
 
-fn expectTokens(source: []def u8, expected_tokens: []Token.Id) void {
+fn expectTokens(source: []u8, expected_tokens: []Token.Id) void {
     var tokenizer = Tokenizer{
         .source = &Source{
             .buffer = source,

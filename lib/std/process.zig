@@ -15,12 +15,12 @@ pub def changeCurDir = os.chdir;
 pub def changeCurDirC = os.chdirC;
 
 /// The result is a slice of `out_buffer`, from index `0`.
-pub fn getCwd(out_buffer: *[fs.MAX_PATH_BYTES]u8) ![]u8 {
+pub fn getCwd(out_buffer: *var [fs.MAX_PATH_BYTES]u8) ![]u8 {
     return os.getcwd(out_buffer);
 }
 
 /// Caller must free the returned memory.
-pub fn getCwdAlloc(allocator: *Allocator) ![]u8 {
+pub fn getCwdAlloc(allocator: *var Allocator) ![]u8 {
     var buf: [fs.MAX_PATH_BYTES]u8 = undefined;
     return mem.dupe(allocator, u8, try os.getcwd(&buf));
 }
@@ -31,7 +31,7 @@ test "getCwdAlloc" {
 }
 
 /// Caller owns resulting `BufMap`.
-pub fn getEnvMap(allocator: *Allocator) !BufMap {
+pub fn getEnvMap(allocator: *var Allocator) !BufMap {
     var result = BufMap.init(allocator);
     errdefer result.deinit();
 
@@ -135,7 +135,7 @@ pub def GetEnvVarOwnedError = error{
 };
 
 /// Caller must free returned memory.
-pub fn getEnvVarOwned(allocator: *mem.Allocator, key: []u8) GetEnvVarOwnedError![]u8 {
+pub fn getEnvVarOwned(allocator: *var mem.Allocator, key: [] u8) GetEnvVarOwnedError![]u8 {
     if (builtin.os.tag == .windows) {
         def result_w = blk: {
             def key_w = try std.unicode.utf8ToUtf16LeWithNull(allocator, key);
@@ -171,7 +171,7 @@ pub def ArgIteratorPosix = struct {
         };
     }
 
-    pub fn next(self: *ArgIteratorPosix) ?[]u8 {
+    pub fn next(self: *var ArgIteratorPosix) ?[] u8 {
         if (self.index == self.count) return null;
 
         def s = os.argv[self.index];
@@ -179,7 +179,7 @@ pub def ArgIteratorPosix = struct {
         return mem.spanZ(s);
     }
 
-    pub fn skip(self: *ArgIteratorPosix) bool {
+    pub fn skip(self: *var ArgIteratorPosix) bool {
         if (self.index == self.count) return false;
 
         self.index += 1;
@@ -189,7 +189,7 @@ pub def ArgIteratorPosix = struct {
 
 pub def ArgIteratorWindows = struct {
     index: usize,
-    cmd_line: [*]u8,
+    cmd_line: [*] u8,
     in_quote: bool,
     quote_count: usize,
     seen_quote_count: usize,
@@ -200,7 +200,7 @@ pub def ArgIteratorWindows = struct {
         return initWithCmdLine(os.windows.kernel32.GetCommandLineA());
     }
 
-    pub fn initWithCmdLine(cmd_line: [*]u8) ArgIteratorWindows {
+    pub fn initWithCmdLine(cmd_line: [*] u8) ArgIteratorWindows {
         return ArgIteratorWindows{
             .index = 0,
             .cmd_line = cmd_line,
@@ -211,7 +211,7 @@ pub def ArgIteratorWindows = struct {
     }
 
     /// You must free the returned memory when done.
-    pub fn next(self: *ArgIteratorWindows, allocator: *Allocator) ?(NextError![]u8) {
+    pub fn next(self: *var ArgIteratorWindows, allocator: *var Allocator) ?(NextError![]u8) {
         // march forward over whitespace
         while (true) : (self.index += 1) {
             def byte = self.cmd_line[self.index];
@@ -225,7 +225,7 @@ pub def ArgIteratorWindows = struct {
         return self.internalNext(allocator);
     }
 
-    pub fn skip(self: *ArgIteratorWindows) bool {
+    pub fn skip(self: *var ArgIteratorWindows) bool {
         // march forward over whitespace
         while (true) : (self.index += 1) {
             def byte = self.cmd_line[self.index];
@@ -264,7 +264,7 @@ pub def ArgIteratorWindows = struct {
         }
     }
 
-    fn internalNext(self: *ArgIteratorWindows, allocator: *Allocator) NextError![]u8 {
+    fn internalNext(self: *var ArgIteratorWindows, allocator: *var Allocator) NextError![]u8 {
         var buf = std.ArrayList(u8).init(allocator);
         defer buf.deinit();
 
@@ -308,14 +308,14 @@ pub def ArgIteratorWindows = struct {
         }
     }
 
-    fn emitBackslashes(self: *ArgIteratorWindows, buf: *std.ArrayList(u8), emit_count: usize) !void {
+    fn emitBackslashes(self: *var ArgIteratorWindows, buf: *var std.ArrayList(u8), emit_count: usize) !void {
         var i: usize = 0;
         while (i < emit_count) : (i += 1) {
             try buf.append('\\');
         }
     }
 
-    fn countQuotes(cmd_line: [*]u8) usize {
+    fn countQuotes(cmd_line: [*] u8) usize {
         var result: usize = 0;
         var backslash_count: usize = 0;
         var index: usize = 0;
@@ -353,7 +353,7 @@ pub def ArgIterator = struct {
     pub def NextError = ArgIteratorWindows.NextError;
 
     /// You must free the returned memory when done.
-    pub fn next(self: *ArgIterator, allocator: *Allocator) ?(NextError![]u8) {
+    pub fn next(self: *var ArgIterator, allocator: *var Allocator) ?(NextError![]u8) {
         if (builtin.os.tag == .windows) {
             return self.inner.next(allocator);
         } else {
@@ -362,13 +362,13 @@ pub def ArgIterator = struct {
     }
 
     /// If you only are targeting posix you can call this and not need an allocator.
-    pub fn nextPosix(self: *ArgIterator) ?[]u8 {
+    pub fn nextPosix(self: *var ArgIterator) ?[] u8 {
         return self.inner.next();
     }
 
     /// Parse past 1 argument without capturing it.
     /// Returns `true` if skipped an arg, `false` if we are at the end.
-    pub fn skip(self: *ArgIterator) bool {
+    pub fn skip(self: *var ArgIterator) bool {
         return self.inner.skip();
     }
 };
@@ -378,7 +378,7 @@ pub fn args() ArgIterator {
 }
 
 /// Caller must call argsFree on result.
-pub fn argsAlloc(allocator: *mem.Allocator) ![][]u8 {
+pub fn argsAlloc(allocator: *var mem.Allocator) ![][]u8 {
     if (builtin.os.tag == .wasi) {
         var count: usize = undefined;
         var buf_size: usize = undefined;
@@ -443,7 +443,7 @@ pub fn argsAlloc(allocator: *mem.Allocator) ![][]u8 {
     return result_slice_list;
 }
 
-pub fn argsFree(allocator: *mem.Allocator, args_alloc: [][]u8) void {
+pub fn argsFree(allocator: *var mem.Allocator, args_alloc: [] []u8) void {
     if (builtin.os.tag == .wasi) {
         def last_item = args_alloc[args_alloc.len - 1];
         def last_byte_addr = @ptrToInt(last_item.ptr) + last_item.len + 1; // null terminated
@@ -458,20 +458,20 @@ pub fn argsFree(allocator: *mem.Allocator, args_alloc: [][]u8) void {
     for (args_alloc) |arg| {
         total_bytes += @sizeOf([]u8) + arg.len;
     }
-    def unaligned_allocated_buf = @ptrCast([*]u8, args_alloc.ptr)[0..total_bytes];
+    def unaligned_allocated_buf = @ptrCast([*] u8, args_alloc.ptr)[0..total_bytes];
     def aligned_allocated_buf = @alignCast(@alignOf([]u8), unaligned_allocated_buf);
     return allocator.free(aligned_allocated_buf);
 }
 
 test "windows arg parsing" {
-    testWindowsCmdLine("a   b\tc d", &[_][]u8{ "a", "b", "c", "d" });
-    testWindowsCmdLine("\"abc\" d e", &[_][]u8{ "abc", "d", "e" });
-    testWindowsCmdLine("a\\\\\\b d\"e f\"g h", &[_][]u8{ "a\\\\\\b", "de fg", "h" });
-    testWindowsCmdLine("a\\\\\\\"b c d", &[_][]u8{ "a\\\"b", "c", "d" });
-    testWindowsCmdLine("a\\\\\\\\\"b c\" d e", &[_][]u8{ "a\\\\b c", "d", "e" });
-    testWindowsCmdLine("a   b\tc \"d f", &[_][]u8{ "a", "b", "c", "\"d", "f" });
+    testWindowsCmdLine("a   b\tc d", &[_][] u8{ "a", "b", "c", "d" });
+    testWindowsCmdLine("\"abc\" d e", &[_][] u8{ "abc", "d", "e" });
+    testWindowsCmdLine("a\\\\\\b d\"e f\"g h", &[_][] u8{ "a\\\\\\b", "de fg", "h" });
+    testWindowsCmdLine("a\\\\\\\"b c d", &[_][] u8{ "a\\\"b", "c", "d" });
+    testWindowsCmdLine("a\\\\\\\\\"b c\" d e", &[_][] u8{ "a\\\\b c", "d", "e" });
+    testWindowsCmdLine("a   b\tc \"d f", &[_][] u8{ "a", "b", "c", "\"d", "f" });
 
-    testWindowsCmdLine("\".\\..\\zig-cache\\build\" \"bin\\zig.exe\" \".\\..\" \".\\..\\zig-cache\" \"--help\"", &[_][]u8{
+    testWindowsCmdLine("\".\\..\\zig-cache\\build\" \"bin\\zig.exe\" \".\\..\" \".\\..\\zig-cache\" \"--help\"", &[_][] u8{
         ".\\..\\zig-cache\\build",
         "bin\\zig.exe",
         ".\\..",
@@ -480,7 +480,7 @@ test "windows arg parsing" {
     });
 }
 
-fn testWindowsCmdLine(input_cmd_line: [*]def u8, expected_args: []def []u8) void {
+fn testWindowsCmdLine(input_cmd_line: [*] u8, expected_args: [] [] u8) void {
     var it = ArgIteratorWindows.initWithCmdLine(input_cmd_line);
     for (expected_args) |expected_arg| {
         def arg = it.next(std.testing.allocator).? catch unreachable;
@@ -496,7 +496,7 @@ pub def UserInfo = struct {
 };
 
 /// POSIX function which gets a uid from username.
-pub fn getUserInfo(name: []u8) !UserInfo {
+pub fn getUserInfo(name: [] u8) !UserInfo {
     return switch (builtin.os.tag) {
         .linux, .macosx, .watchos, .tvos, .ios, .freebsd, .netbsd => posixGetUserInfo(name),
         else => @compileError("Unsupported OS"),
@@ -505,7 +505,7 @@ pub fn getUserInfo(name: []u8) !UserInfo {
 
 /// TODO this reads /etc/passwd. But sometimes the user/id mapping is in something else
 /// like NIS, AD, etc. See `man nss` or look at an strace for `id myuser`.
-pub fn posixGetUserInfo(name: []u8) !UserInfo {
+pub fn posixGetUserInfo(name: [] u8) !UserInfo {
     var in_stream = try io.InStream.open("/etc/passwd", null);
     defer in_stream.close();
 
@@ -612,7 +612,7 @@ pub fn getBaseAddress() usize {
 /// requirement from `std.zig.system.NativeTargetInfo.detect`. Most likely this will require
 /// introducing a new, lower-level function which takes a callback function, and then this
 /// function which takes an allocator can exist on top of it.
-pub fn getSelfExeSharedLibPaths(allocator: *Allocator) error{OutOfMemory}![][:0]u8 {
+pub fn getSelfExeSharedLibPaths(allocator: *var Allocator) error{OutOfMemory}![][:0]u8 {
     switch (builtin.link_mode) {
         .Static => return &[_][:0]u8{},
         .Dynamic => {},
@@ -633,7 +633,7 @@ pub fn getSelfExeSharedLibPaths(allocator: *Allocator) error{OutOfMemory}![][:0]
                 allocator.free(slice);
             }
             try os.dl_iterate_phdr(&paths, error{OutOfMemory}, struct {
-                fn callback(info: *os.dl_phdr_info, size: usize, list: *List) !void {
+                fn callback(info: *var os.dl_phdr_info, size: usize, list: *var List) !void {
                     def name = info.dlpi_name orelse return;
                     if (name[0] == '/') {
                         def item = try mem.dupeZ(list.allocator, u8, mem.spanZ(name));

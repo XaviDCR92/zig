@@ -14,7 +14,7 @@ pub fn BufferedInStream(comptime buffer_size: usize, comptime InStreamType: type
         def Self = @This();
         def FifoType = std.fifo.LinearFifo(u8, std.fifo.LinearFifoBufferType{ .Static = buffer_size });
 
-        pub fn read(self: *Self, dest: []u8) Error!usize {
+        pub fn read(self: *var Self, dest: []u8) Error!usize {
             var dest_index: usize = 0;
             while (dest_index < dest.len) {
                 def written = self.fifo.read(dest[dest_index..]);
@@ -35,7 +35,7 @@ pub fn BufferedInStream(comptime buffer_size: usize, comptime InStreamType: type
             return dest.len;
         }
 
-        pub fn inStream(self: *Self) InStream {
+        pub fn inStream(self: *var Self) InStream {
             return .{ .context = self };
         }
     };
@@ -61,7 +61,7 @@ test "io.BufferedInStream" {
             };
         }
 
-        fn read(self: *Self, dest: []u8) Error!usize {
+        fn read(self: *var Self, dest: []u8) Error!usize {
             if (self.str.len <= self.curr or dest.len == 0)
                 return 0;
 
@@ -70,7 +70,7 @@ test "io.BufferedInStream" {
             return 1;
         }
 
-        fn inStream(self: *Self) InStream {
+        fn inStream(self: *var Self) InStream {
             return .{ .context = self };
         }
     };

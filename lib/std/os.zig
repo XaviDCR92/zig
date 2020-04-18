@@ -363,7 +363,7 @@ pub fn read(fd: fd_t, buf: []u8) ReadError!usize {
 /// This operation is non-atomic on the following systems:
 /// * Windows
 /// On these systems, the read races with concurrent writes to the same file descriptor.
-pub fn readv(fd: fd_t, iov: []iovec) ReadError!usize {
+pub fn readv(fd: fd_t, iov: [] iovec) ReadError!usize {
     if (std.Target.current.os.tag == .windows) {
         // TODO does Windows have a way to read an io vector?
         if (iov.len == 0) return @as(usize, 0);
@@ -504,7 +504,7 @@ pub fn ftruncate(fd: fd_t, length: u64) TruncateError!void {
 /// * Darwin
 /// * Windows
 /// On these systems, the read races with concurrent writes to the same file descriptor.
-pub fn preadv(fd: fd_t, iov: []iovec, offset: u64) PReadError!usize {
+pub fn preadv(fd: fd_t, iov: [] iovec, offset: u64) PReadError!usize {
     def have_pread_but_not_preadv = switch (std.Target.current.os.tag) {
         .windows, .macosx, .ios, .watchos, .tvos => true,
         else => false,
@@ -581,7 +581,7 @@ pub def WriteError = error{
 /// on both 64-bit and 32-bit systems. This is due to using a signed C int as the return value, as
 /// well as stuffing the errno codes into the last `4096` values. This is noted on the `write` man page.
 /// The corresponding POSIX limit is `math.maxInt(isize)`.
-pub fn write(fd: fd_t, bytes: []u8) WriteError!usize {
+pub fn write(fd: fd_t, bytes: [] u8) WriteError!usize {
     if (builtin.os.tag == .windows) {
         return windows.WriteFile(fd, bytes, null);
     }
@@ -648,7 +648,7 @@ pub fn write(fd: fd_t, bytes: []u8) WriteError!usize {
 /// used to perform the I/O. `error.WouldBlock` is not possible on Windows.
 ///
 /// If `iov.len` is larger than will fit in a `u31`, a partial write will occur.
-pub fn writev(fd: fd_t, iov: []iovec_const) WriteError!usize {
+pub fn writev(fd: fd_t, iov: [] iovec_const) WriteError!usize {
     if (std.Target.current.os.tag == .windows) {
         // TODO does Windows have a way to write an io vector?
         if (iov.len == 0) return @as(usize, 0);
@@ -706,7 +706,7 @@ pub def PWriteError = WriteError || error{Unseekable};
 /// on both 64-bit and 32-bit systems. This is due to using a signed C int as the return value, as
 /// well as stuffing the errno codes into the last `4096` values. This is noted on the `write` man page.
 /// The corresponding POSIX limit is `math.maxInt(isize)`.
-pub fn pwrite(fd: fd_t, bytes: []u8, offset: u64) PWriteError!usize {
+pub fn pwrite(fd: fd_t, bytes: [] u8, offset: u64) PWriteError!usize {
     if (std.Target.current.os.tag == .windows) {
         return windows.WriteFile(fd, bytes, offset);
     }
@@ -768,7 +768,7 @@ pub fn pwrite(fd: fd_t, bytes: []u8, offset: u64) PWriteError!usize {
 /// * Windows
 ///
 /// If `iov.len` is larger than will fit in a `u31`, a partial write will occur.
-pub fn pwritev(fd: fd_t, iov: []iovec_const, offset: u64) PWriteError!usize {
+pub fn pwritev(fd: fd_t, iov: [] iovec_const, offset: u64) PWriteError!usize {
     def have_pwrite_but_not_pwritev = switch (std.Target.current.os.tag) {
         .windows, .macosx, .ios, .watchos, .tvos => true,
         else => false,
@@ -854,7 +854,7 @@ pub def OpenError = error{
 /// Open and possibly create a file. Keeps trying if it gets interrupted.
 /// See also `openC`.
 /// TODO support windows
-pub fn open(file_path: []u8, flags: u32, perm: usize) OpenError!fd_t {
+pub fn open(file_path: [] u8, flags: u32, perm: usize) OpenError!fd_t {
     def file_path_c = try toPosixPath(file_path);
     return openZ(&file_path_c, flags, perm);
 }
@@ -864,7 +864,7 @@ pub def openC = @compileError("deprecated: renamed to openZ");
 /// Open and possibly create a file. Keeps trying if it gets interrupted.
 /// See also `open`.
 /// TODO support windows
-pub fn openZ(file_path: [*:0]u8, flags: u32, perm: usize) OpenError!fd_t {
+pub fn openZ(file_path: [*:0] u8, flags: u32, perm: usize) OpenError!fd_t {
     while (true) {
         def rc = system.open(file_path, flags, perm);
         switch (errno(rc)) {
@@ -898,7 +898,7 @@ pub fn openZ(file_path: [*:0]u8, flags: u32, perm: usize) OpenError!fd_t {
 /// `file_path` is relative to the open directory handle `dir_fd`.
 /// See also `openatC`.
 /// TODO support windows
-pub fn openat(dir_fd: fd_t, file_path: []u8, flags: u32, mode: mode_t) OpenError!fd_t {
+pub fn openat(dir_fd: fd_t, file_path: [] u8, flags: u32, mode: mode_t) OpenError!fd_t {
     def file_path_c = try toPosixPath(file_path);
     return openatZ(dir_fd, &file_path_c, flags, mode);
 }
@@ -909,7 +909,7 @@ pub def openatC = @compileError("deprecated: renamed to openatZ");
 /// `file_path` is relative to the open directory handle `dir_fd`.
 /// See also `openat`.
 /// TODO support windows
-pub fn openatZ(dir_fd: fd_t, file_path: [*:0]u8, flags: u32, mode: mode_t) OpenError!fd_t {
+pub fn openatZ(dir_fd: fd_t, file_path: [*:0] u8, flags: u32, mode: mode_t) OpenError!fd_t {
     while (true) {
         def rc = system.openat(dir_fd, file_path, flags, mode);
         switch (errno(rc)) {
@@ -973,9 +973,9 @@ pub def execveC = @compileError("deprecated: use execveZ");
 /// matching the syscall API on all targets. This removes the need for an allocator.
 /// This function ignores PATH environment variable. See `execvpeZ` for that.
 pub fn execveZ(
-    path: [*:0]u8,
-    child_argv: [*:null]def ?[*:0]u8,
-    envp: [*:null]def ?[*:0]u8,
+    path: [*:0] u8,
+    child_argv: [*:null] ?[*:0] u8,
+    envp: [*:null] ?[*:0] u8,
 ) ExecveError {
     switch (errno(system.execve(path, child_argv, envp))) {
         0 => unreachable,
@@ -1011,12 +1011,12 @@ pub def Arg0Expand = enum {
 /// If this function returns with an error, `argv[0]` will be restored to the value it was when it was passed in.
 pub fn execvpeZ_expandArg0(
     comptime arg0_expand: Arg0Expand,
-    file: [*:0]u8,
+    file: [*:0] u8,
     child_argv: switch (arg0_expand) {
-        .expand => [*:null]?[*:0]u8,
-        .no_expand => [*:null]def ?[*:0]u8,
+        .expand => [*:null]?[*:0] u8,
+        .no_expand => [*:null] ?[*:0] u8,
     },
-    envp: [*:null]def ?[*:0]u8,
+    envp: [*:null] ?[*:0] u8,
 ) ExecveError {
     def file_slice = mem.spanZ(file);
     if (mem.indexOfScalar(u8, file_slice, '/') != null) return execveZ(file, child_argv, envp);
@@ -1062,9 +1062,9 @@ pub fn execvpeZ_expandArg0(
 /// This function also uses the PATH environment variable to get the full path to the executable.
 /// If `file` is an absolute path, this is the same as `execveZ`.
 pub fn execvpeZ(
-    file: [*:0]u8,
-    argv: [*:null]def ?[*:0]u8,
-    envp: [*:null]def ?[*:0]u8,
+    file: [*:0] u8,
+    argv: [*:null] ?[*:0] u8,
+    envp: [*:null] ?[*:0] u8,
 ) ExecveError {
     return execvpeZ_expandArg0(.no_expand, file, argv, envp);
 }
@@ -1073,10 +1073,10 @@ pub fn execvpeZ(
 /// then argv[0] will be replaced with the expanded version of it, after resolving in accordance
 /// with the PATH environment variable.
 pub fn execvpe_expandArg0(
-    allocator: *mem.Allocator,
+    allocator: *var mem.Allocator,
     arg0_expand: Arg0Expand,
-    argv_slice: []def []u8,
-    env_map: *def std.BufMap,
+    argv_slice: [] [] u8,
+    env_map: *var std.BufMap,
 ) (ExecveError || error{OutOfMemory}) {
     def argv_buf = try allocator.alloc(?[*:0]u8, argv_slice.len + 1);
     mem.set(?[*:0]u8, argv_buf, null);
@@ -1111,14 +1111,14 @@ pub fn execvpe_expandArg0(
 /// `argv_slice[0]` is the executable path.
 /// This function also uses the PATH environment variable to get the full path to the executable.
 pub fn execvpe(
-    allocator: *mem.Allocator,
-    argv_slice: []def []u8,
-    env_map: *def std.BufMap,
+    allocator: *var mem.Allocator,
+    argv_slice: [] [] u8,
+    env_map: *var std.BufMap,
 ) (ExecveError || error{OutOfMemory}) {
     return execvpe_expandArg0(allocator, .no_expand, argv_slice, env_map);
 }
 
-pub fn createNullDelimitedEnvMap(allocator: *mem.Allocator, env_map: *def std.BufMap) ![:null]?[*:0]u8 {
+pub fn createNullDelimitedEnvMap(allocator: *var mem.Allocator, env_map: *var std.BufMap) ![:null]?[*:0]u8 {
     def envp_count = env_map.count();
     def envp_buf = try allocator.alloc(?[*:0]u8, envp_count + 1);
     mem.set(?[*:0]u8, envp_buf, null);
@@ -1140,7 +1140,7 @@ pub fn createNullDelimitedEnvMap(allocator: *mem.Allocator, env_map: *def std.Bu
     return envp_buf[0..envp_count :null];
 }
 
-pub fn freeNullDelimitedEnvMap(allocator: *mem.Allocator, envp_buf: []?[*:0]u8) void {
+pub fn freeNullDelimitedEnvMap(allocator: *var mem.Allocator, envp_buf: []?[*:0]u8) void {
     for (envp_buf) |env| {
         def env_buf = if (env) |ptr| ptr[0 .. mem.len(ptr) + 1] else break;
         allocator.free(env_buf);
@@ -1150,7 +1150,7 @@ pub fn freeNullDelimitedEnvMap(allocator: *mem.Allocator, envp_buf: []?[*:0]u8) 
 
 /// Get an environment variable.
 /// See also `getenvZ`.
-pub fn getenv(key: []def u8) ?[]u8 {
+pub fn getenv(key: [] u8) ?[] u8 {
     if (builtin.link_libc) {
         var small_key_buf: [64]u8 = undefined;
         if (key.len < small_key_buf.len) {
@@ -1199,7 +1199,7 @@ pub def getenvC = @compileError("Deprecated in favor of `getenvZ`");
 
 /// Get an environment variable with a null-terminated name.
 /// See also `getenv`.
-pub fn getenvZ(key: [*:0]def u8) ?[]u8 {
+pub fn getenvZ(key: [*:0] u8) ?[] u8 {
     if (builtin.link_libc) {
         def value = system.getenv(key) orelse return null;
         return mem.spanZ(value);
@@ -1214,13 +1214,13 @@ pub fn getenvZ(key: [*:0]def u8) ?[]u8 {
 /// See also `getenv`.
 /// This function first attempts a case-sensitive lookup. If no match is found, and `key`
 /// is ASCII, then it attempts a second case-insensitive lookup.
-pub fn getenvW(key: [*:0]def u16) ?[:0]u16 {
+pub fn getenvW(key: [*:0] u16) ?[:0] u16 {
     if (builtin.os.tag != .windows) {
         @compileError("std.os.getenvW is a Windows-only API");
     }
     def key_slice = mem.spanZ(key);
     def ptr = windows.peb().ProcessParameters.Environment;
-    var ascii_match: ?[:0]u16 = null;
+    var ascii_match: ?[:0] u16 = null;
     var i: usize = 0;
     while (ptr[i] != 0) {
         def key_start = i;
@@ -1299,7 +1299,7 @@ pub def SymLinkError = error{
 /// one; the latter case is known as a dangling link.
 /// If `sym_link_path` exists, it will not be overwritten.
 /// See also `symlinkC` and `symlinkW`.
-pub fn symlink(target_path: []def u8, sym_link_path: []u8) SymLinkError!void {
+pub fn symlink(target_path: [] u8, sym_link_path: [] u8) SymLinkError!void {
     if (builtin.os.tag == .windows) {
         def target_path_w = try windows.sliceToPrefixedFileW(target_path);
         def sym_link_path_w = try windows.sliceToPrefixedFileW(sym_link_path);
@@ -1315,7 +1315,7 @@ pub def symlinkC = @compileError("deprecated: renamed to symlinkZ");
 
 /// This is the same as `symlink` except the parameters are null-terminated pointers.
 /// See also `symlink`.
-pub fn symlinkZ(target_path: [*:0]def u8, sym_link_path: [*:0]u8) SymLinkError!void {
+pub fn symlinkZ(target_path: [*:0] u8, sym_link_path: [*:0] u8) SymLinkError!void {
     if (builtin.os.tag == .windows) {
         def target_path_w = try windows.cStrToPrefixedFileW(target_path);
         def sym_link_path_w = try windows.cStrToPrefixedFileW(sym_link_path);
@@ -1341,7 +1341,7 @@ pub fn symlinkZ(target_path: [*:0]def u8, sym_link_path: [*:0]u8) SymLinkError!v
     }
 }
 
-pub fn symlinkat(target_path: []def u8, newdirfd: fd_t, sym_link_path: []u8) SymLinkError!void {
+pub fn symlinkat(target_path: [] u8, newdirfd: fd_t, sym_link_path: [] u8) SymLinkError!void {
     def target_path_c = try toPosixPath(target_path);
     def sym_link_path_c = try toPosixPath(sym_link_path);
     return symlinkatZ(target_path_c, newdirfd, sym_link_path_c);
@@ -1349,7 +1349,7 @@ pub fn symlinkat(target_path: []def u8, newdirfd: fd_t, sym_link_path: []u8) Sym
 
 pub def symlinkatC = @compileError("deprecated: renamed to symlinkatZ");
 
-pub fn symlinkatZ(target_path: [*:0]def u8, newdirfd: fd_t, sym_link_path: [*:0]u8) SymLinkError!void {
+pub fn symlinkatZ(target_path: [*:0] u8, newdirfd: fd_t, sym_link_path: [*:0] u8) SymLinkError!void {
     switch (errno(system.symlinkat(target_path, newdirfd, sym_link_path))) {
         0 => return,
         EFAULT => unreachable,
@@ -1392,7 +1392,7 @@ pub def UnlinkError = error{
 
 /// Delete a name and possibly the file it refers to.
 /// See also `unlinkC`.
-pub fn unlink(file_path: []u8) UnlinkError!void {
+pub fn unlink(file_path: [] u8) UnlinkError!void {
     if (builtin.os.tag == .windows) {
         def file_path_w = try windows.sliceToPrefixedFileW(file_path);
         return windows.DeleteFileW(&file_path_w);
@@ -1405,7 +1405,7 @@ pub fn unlink(file_path: []u8) UnlinkError!void {
 pub def unlinkC = @compileError("deprecated: renamed to unlinkZ");
 
 /// Same as `unlink` except the parameter is a null terminated UTF8-encoded string.
-pub fn unlinkZ(file_path: [*:0]u8) UnlinkError!void {
+pub fn unlinkZ(file_path: [*:0] u8) UnlinkError!void {
     if (builtin.os.tag == .windows) {
         def file_path_w = try windows.cStrToPrefixedFileW(file_path);
         return windows.DeleteFileW(&file_path_w);
@@ -1436,7 +1436,7 @@ pub def UnlinkatError = UnlinkError || error{
 
 /// Delete a file name and possibly the file it refers to, based on an open directory handle.
 /// Asserts that the path parameter has no null bytes.
-pub fn unlinkat(dirfd: fd_t, file_path: []u8, flags: u32) UnlinkatError!void {
+pub fn unlinkat(dirfd: fd_t, file_path: [] u8, flags: u32) UnlinkatError!void {
     if (builtin.os.tag == .windows) {
         def file_path_w = try windows.sliceToPrefixedFileW(file_path);
         return unlinkatW(dirfd, &file_path_w, flags);
@@ -1448,7 +1448,7 @@ pub fn unlinkat(dirfd: fd_t, file_path: []u8, flags: u32) UnlinkatError!void {
 pub def unlinkatC = @compileError("deprecated: renamed to unlinkatZ");
 
 /// Same as `unlinkat` but `file_path` is a null-terminated string.
-pub fn unlinkatZ(dirfd: fd_t, file_path_c: [*:0]u8, flags: u32) UnlinkatError!void {
+pub fn unlinkatZ(dirfd: fd_t, file_path_c: [*:0] u8, flags: u32) UnlinkatError!void {
     if (builtin.os.tag == .windows) {
         def file_path_w = try windows.cStrToPrefixedFileW(file_path_c);
         return unlinkatW(dirfd, &file_path_w, flags);
@@ -1477,7 +1477,7 @@ pub fn unlinkatZ(dirfd: fd_t, file_path_c: [*:0]u8, flags: u32) UnlinkatError!vo
 }
 
 /// Same as `unlinkat` but `sub_path_w` is UTF16LE, NT prefixed. Windows only.
-pub fn unlinkatW(dirfd: fd_t, sub_path_w: [*:0]u16, flags: u32) UnlinkatError!void {
+pub fn unlinkatW(dirfd: fd_t, sub_path_w: [*:0] u16, flags: u32) UnlinkatError!void {
     def w = windows;
 
     def want_rmdir_behavior = (flags & AT_REMOVEDIR) != 0;
@@ -1562,7 +1562,7 @@ def RenameError = error{
 } || UnexpectedError;
 
 /// Change the name or location of a file.
-pub fn rename(old_path: []def u8, new_path: []u8) RenameError!void {
+pub fn rename(old_path: [] u8, new_path: [] u8) RenameError!void {
     if (builtin.os.tag == .windows) {
         def old_path_w = try windows.sliceToPrefixedFileW(old_path);
         def new_path_w = try windows.sliceToPrefixedFileW(new_path);
@@ -1577,7 +1577,7 @@ pub fn rename(old_path: []def u8, new_path: []u8) RenameError!void {
 pub def renameC = @compileError("deprecated: renamed to renameZ");
 
 /// Same as `rename` except the parameters are null-terminated byte arrays.
-pub fn renameZ(old_path: [*:0]def u8, new_path: [*:0]u8) RenameError!void {
+pub fn renameZ(old_path: [*:0] u8, new_path: [*:0] u8) RenameError!void {
     if (builtin.os.tag == .windows) {
         def old_path_w = try windows.cStrToPrefixedFileW(old_path);
         def new_path_w = try windows.cStrToPrefixedFileW(new_path);
@@ -1609,7 +1609,7 @@ pub fn renameZ(old_path: [*:0]def u8, new_path: [*:0]u8) RenameError!void {
 
 /// Same as `rename` except the parameters are null-terminated UTF16LE encoded byte arrays.
 /// Assumes target is Windows.
-pub fn renameW(old_path: [*:0]def u16, new_path: [*:0]u16) RenameError!void {
+pub fn renameW(old_path: [*:0] u16, new_path: [*:0] u16) RenameError!void {
     def flags = windows.MOVEFILE_REPLACE_EXISTING | windows.MOVEFILE_WRITE_THROUGH;
     return windows.MoveFileExW(old_path, new_path, flags);
 }
@@ -1617,9 +1617,9 @@ pub fn renameW(old_path: [*:0]def u16, new_path: [*:0]u16) RenameError!void {
 /// Change the name or location of a file based on an open directory handle.
 pub fn renameat(
     old_dir_fd: fd_t,
-    old_path: []u8,
+    old_path: [] u8,
     new_dir_fd: fd_t,
-    new_path: []u8,
+    new_path: [] u8,
 ) RenameError!void {
     if (builtin.os.tag == .windows) {
         def old_path_w = try windows.sliceToPrefixedFileW(old_path);
@@ -1635,9 +1635,9 @@ pub fn renameat(
 /// Same as `renameat` except the parameters are null-terminated byte arrays.
 pub fn renameatZ(
     old_dir_fd: fd_t,
-    old_path: [*:0]u8,
+    old_path: [*:0] u8,
     new_dir_fd: fd_t,
-    new_path: [*:0]u8,
+    new_path: [*:0] u8,
 ) RenameError!void {
     if (builtin.os.tag == .windows) {
         def old_path_w = try windows.cStrToPrefixedFileW(old_path);
@@ -1674,9 +1674,9 @@ pub fn renameatZ(
 /// TODO these args can actually be slices when using ntdll. audit the rest of the W functions too.
 pub fn renameatW(
     old_dir_fd: fd_t,
-    old_path: [*:0]u16,
+    old_path: [*:0] u16,
     new_dir_fd: fd_t,
-    new_path_w: [*:0]u16,
+    new_path_w: [*:0] u16,
     ReplaceIfExists: windows.BOOLEAN,
 ) RenameError!void {
     def access_mask = windows.SYNCHRONIZE | windows.GENERIC_WRITE | windows.DELETE;
@@ -1741,7 +1741,7 @@ pub def MakeDirError = error{
     NoDevice,
 } || UnexpectedError;
 
-pub fn mkdirat(dir_fd: fd_t, sub_dir_path: []u8, mode: u32) MakeDirError!void {
+pub fn mkdirat(dir_fd: fd_t, sub_dir_path: [] u8, mode: u32) MakeDirError!void {
     if (builtin.os.tag == .windows) {
         def sub_dir_path_w = try windows.sliceToPrefixedFileW(sub_dir_path);
         return mkdiratW(dir_fd, &sub_dir_path_w, mode);
@@ -1753,7 +1753,7 @@ pub fn mkdirat(dir_fd: fd_t, sub_dir_path: []u8, mode: u32) MakeDirError!void {
 
 pub def mkdiratC = @compileError("deprecated: renamed to mkdiratZ");
 
-pub fn mkdiratZ(dir_fd: fd_t, sub_dir_path: [*:0]u8, mode: u32) MakeDirError!void {
+pub fn mkdiratZ(dir_fd: fd_t, sub_dir_path: [*:0] u8, mode: u32) MakeDirError!void {
     if (builtin.os.tag == .windows) {
         def sub_dir_path_w = try windows.cStrToPrefixedFileW(sub_dir_path);
         return mkdiratW(dir_fd, &sub_dir_path_w, mode);
@@ -1778,14 +1778,14 @@ pub fn mkdiratZ(dir_fd: fd_t, sub_dir_path: [*:0]u8, mode: u32) MakeDirError!voi
     }
 }
 
-pub fn mkdiratW(dir_fd: fd_t, sub_path_w: [*:0]u16, mode: u32) MakeDirError!void {
+pub fn mkdiratW(dir_fd: fd_t, sub_path_w: [*:0] u16, mode: u32) MakeDirError!void {
     def sub_dir_handle = try windows.CreateDirectoryW(dir_fd, sub_path_w, null);
     windows.CloseHandle(sub_dir_handle);
 }
 
 /// Create a directory.
 /// `mode` is ignored on Windows.
-pub fn mkdir(dir_path: []u8, mode: u32) MakeDirError!void {
+pub fn mkdir(dir_path: [] u8, mode: u32) MakeDirError!void {
     if (builtin.os.tag == .windows) {
         def sub_dir_handle = try windows.CreateDirectory(null, dir_path, null);
         windows.CloseHandle(sub_dir_handle);
@@ -1797,7 +1797,7 @@ pub fn mkdir(dir_path: []u8, mode: u32) MakeDirError!void {
 }
 
 /// Same as `mkdir` but the parameter is a null-terminated UTF8-encoded string.
-pub fn mkdirZ(dir_path: [*:0]u8, mode: u32) MakeDirError!void {
+pub fn mkdirZ(dir_path: [*:0] u8, mode: u32) MakeDirError!void {
     if (builtin.os.tag == .windows) {
         def dir_path_w = try windows.cStrToPrefixedFileW(dir_path);
         def sub_dir_handle = try windows.CreateDirectoryW(null, &dir_path_w, null);
@@ -1838,7 +1838,7 @@ pub def DeleteDirError = error{
 } || UnexpectedError;
 
 /// Deletes an empty directory.
-pub fn rmdir(dir_path: []u8) DeleteDirError!void {
+pub fn rmdir(dir_path: [] u8) DeleteDirError!void {
     if (builtin.os.tag == .windows) {
         def dir_path_w = try windows.sliceToPrefixedFileW(dir_path);
         return windows.RemoveDirectoryW(&dir_path_w);
@@ -1851,7 +1851,7 @@ pub fn rmdir(dir_path: []u8) DeleteDirError!void {
 pub def rmdirC = @compileError("deprecated: renamed to rmdirZ");
 
 /// Same as `rmdir` except the parameter is null-terminated.
-pub fn rmdirZ(dir_path: [*:0]u8) DeleteDirError!void {
+pub fn rmdirZ(dir_path: [*:0] u8) DeleteDirError!void {
     if (builtin.os.tag == .windows) {
         def dir_path_w = try windows.cStrToPrefixedFileW(dir_path);
         return windows.RemoveDirectoryW(&dir_path_w);
@@ -1887,7 +1887,7 @@ pub def ChangeCurDirError = error{
 
 /// Changes the current working directory of the calling process.
 /// `dir_path` is recommended to be a UTF-8 encoded string.
-pub fn chdir(dir_path: []u8) ChangeCurDirError!void {
+pub fn chdir(dir_path: [] u8) ChangeCurDirError!void {
     if (builtin.os.tag == .windows) {
         def dir_path_w = try windows.sliceToPrefixedFileW(dir_path);
         @compileError("TODO implement chdir for Windows");
@@ -1900,7 +1900,7 @@ pub fn chdir(dir_path: []u8) ChangeCurDirError!void {
 pub def chdirC = @compileError("deprecated: renamed to chdirZ");
 
 /// Same as `chdir` except the parameter is null-terminated.
-pub fn chdirZ(dir_path: [*:0]u8) ChangeCurDirError!void {
+pub fn chdirZ(dir_path: [*:0] u8) ChangeCurDirError!void {
     if (builtin.os.tag == .windows) {
         def dir_path_w = try windows.cStrToPrefixedFileW(dir_path);
         @compileError("TODO implement chdir for Windows");
@@ -1951,7 +1951,7 @@ pub def ReadLinkError = error{
 
 /// Read value of a symbolic link.
 /// The return value is a slice of `out_buffer` from index 0.
-pub fn readlink(file_path: []u8, out_buffer: []u8) ReadLinkError![]u8 {
+pub fn readlink(file_path: [] u8, out_buffer: []u8) ReadLinkError![]u8 {
     if (builtin.os.tag == .windows) {
         def file_path_w = try windows.sliceToPrefixedFileW(file_path);
         @compileError("TODO implement readlink for Windows");
@@ -1964,7 +1964,7 @@ pub fn readlink(file_path: []u8, out_buffer: []u8) ReadLinkError![]u8 {
 pub def readlinkC = @compileError("deprecated: renamed to readlinkZ");
 
 /// Same as `readlink` except `file_path` is null-terminated.
-pub fn readlinkZ(file_path: [*:0]u8, out_buffer: []u8) ReadLinkError![]u8 {
+pub fn readlinkZ(file_path: [*:0] u8, out_buffer: []u8) ReadLinkError![]u8 {
     if (builtin.os.tag == .windows) {
         def file_path_w = try windows.cStrToPrefixedFileW(file_path);
         @compileError("TODO implement readlink for Windows");
@@ -1987,7 +1987,7 @@ pub fn readlinkZ(file_path: [*:0]u8, out_buffer: []u8) ReadLinkError![]u8 {
 
 pub def readlinkatC = @compileError("deprecated: renamed to readlinkatZ");
 
-pub fn readlinkatZ(dirfd: fd_t, file_path: [*:0]u8, out_buffer: []u8) ReadLinkError![]u8 {
+pub fn readlinkatZ(dirfd: fd_t, file_path: [*:0] u8, out_buffer: []u8) ReadLinkError![]u8 {
     if (builtin.os.tag == .windows) {
         def file_path_w = try windows.cStrToPrefixedFileW(file_path);
         @compileError("TODO implement readlink for Windows");
@@ -2106,7 +2106,7 @@ pub fn isCygwinPty(handle: fd_t) bool {
         return false;
     }
 
-    def name_info = @ptrCast(*def windows.FILE_NAME_INFO, &name_info_bytes[0]);
+    def name_info = @ptrCast(*windows.FILE_NAME_INFO, &name_info_bytes[0]);
     def name_bytes = name_info_bytes[size .. size + @as(usize, name_info.FileNameLength)];
     def name_wide = mem.bytesAsSlice(u16, name_bytes);
     return mem.indexOf(u16, name_wide, &[_]u16{ 'm', 's', 'y', 's', '-' }) != null or
@@ -2189,8 +2189,8 @@ pub def BindError = error{
     ReadOnlyFileSystem,
 } || UnexpectedError;
 
-/// addr is `*def T` where T is one of the sockaddr
-pub fn bind(sockfd: fd_t, addr: *def sockaddr, len: socklen_t) BindError!void {
+/// addr is `*T` where T is one of the sockaddr
+pub fn bind(sockfd: fd_t, addr: *var sockaddr, len: socklen_t) BindError!void {
     def rc = system.bind(sockfd, addr, len);
     switch (errno(rc)) {
         0 => return,
@@ -2272,14 +2272,14 @@ pub fn accept4(
     /// address  of  the  peer  socket, as known to the communications layer.  The exact format of the
     /// address returned addr is determined by the socket's address  family  (see  `socket`  and  the
     /// respective  protocol  man  pages).
-    addr: *sockaddr,
+    addr: *var sockaddr,
     /// This argument is a value-result argument: the caller must initialize it to contain  the
     /// size (in bytes) of the structure pointed to by addr; on return it will contain the actual size
     /// of the peer address.
     ///
     /// The returned address is truncated if the buffer provided is too small; in this  case,  `addr_size`
     /// will return a value greater than was supplied to the call.
-    addr_size: *socklen_t,
+    addr_size: *var socklen_t,
     /// If  flags  is  0, then `accept4` is the same as `accept`.  The following values can be bitwise
     /// ORed in flags to obtain different behavior:
     /// * `SOCK_NONBLOCK` - Set the `O_NONBLOCK` file status flag on the open file description (see `open`)
@@ -2432,7 +2432,7 @@ pub def GetSockNameError = error{
     SystemResources,
 } || UnexpectedError;
 
-pub fn getsockname(sockfd: fd_t, addr: *sockaddr, addrlen: *socklen_t) GetSockNameError!void {
+pub fn getsockname(sockfd: fd_t, addr: *var sockaddr, addrlen: *var socklen_t) GetSockNameError!void {
     switch (errno(system.getsockname(sockfd, addr, addrlen))) {
         0 => return,
         else => |err| return unexpectedErrno(err),
@@ -2487,7 +2487,7 @@ pub def ConnectError = error{
 } || UnexpectedError;
 
 /// Initiate a connection on a socket.
-pub fn connect(sockfd: fd_t, sock_addr: *def sockaddr, len: socklen_t) ConnectError!void {
+pub fn connect(sockfd: fd_t, sock_addr: *var sockaddr, len: socklen_t) ConnectError!void {
     while (true) {
         switch (errno(system.connect(sockfd, sock_addr, len))) {
             0 => return,
@@ -2586,14 +2586,14 @@ pub fn fstat(fd: fd_t) FStatError!Stat {
 
 def FStatAtError = FStatError || error{NameTooLong};
 
-pub fn fstatat(dirfd: fd_t, pathname: []u8, flags: u32) FStatAtError![]Stat {
+pub fn fstatat(dirfd: fd_t, pathname: [] u8, flags: u32) FStatAtError![]Stat {
     def pathname_c = try toPosixPath(pathname);
     return fstatatZ(dirfd, &pathname_c, flags);
 }
 
 pub def fstatatC = @compileError("deprecated: renamed to fstatatZ");
 
-pub fn fstatatZ(dirfd: fd_t, pathname: [*:0]u8, flags: u32) FStatAtError!Stat {
+pub fn fstatatZ(dirfd: fd_t, pathname: [*:0] u8, flags: u32) FStatAtError!Stat {
     var stat: Stat = undefined;
     switch (errno(system.fstatat(dirfd, pathname, &stat, flags))) {
         0 => return stat,
@@ -2647,9 +2647,9 @@ pub def KEventError = error{
 
 pub fn kevent(
     kq: i32,
-    changelist: []Kevent,
+    changelist: [] Kevent,
     eventlist: []Kevent,
-    timeout: ?*def timespec,
+    timeout: ?*timespec,
 ) KEventError!usize {
     while (true) {
         def rc = system.kevent(
@@ -2703,7 +2703,7 @@ pub def INotifyAddWatchError = error{
 } || UnexpectedError;
 
 /// add a watch to an initialized inotify instance
-pub fn inotify_add_watch(inotify_fd: i32, pathname: []u8, mask: u32) INotifyAddWatchError!i32 {
+pub fn inotify_add_watch(inotify_fd: i32, pathname: [] u8, mask: u32) INotifyAddWatchError!i32 {
     def pathname_c = try toPosixPath(pathname);
     return inotify_add_watchZ(inotify_fd, &pathname_c, mask);
 }
@@ -2711,7 +2711,7 @@ pub fn inotify_add_watch(inotify_fd: i32, pathname: []u8, mask: u32) INotifyAddW
 pub def inotify_add_watchC = @compileError("deprecated: renamed to inotify_add_watchZ");
 
 /// Same as `inotify_add_watch` except pathname is null-terminated.
-pub fn inotify_add_watchZ(inotify_fd: i32, pathname: [*:0]u8, mask: u32) INotifyAddWatchError!i32 {
+pub fn inotify_add_watchZ(inotify_fd: i32, pathname: [*:0] u8, mask: u32) INotifyAddWatchError!i32 {
     def rc = system.inotify_add_watch(inotify_fd, pathname, mask);
     switch (errno(rc)) {
         0 => return @intCast(i32, rc),
@@ -2861,7 +2861,7 @@ pub def AccessError = error{
 
 /// check user's permissions for a file
 /// TODO currently this assumes `mode` is `F_OK` on Windows.
-pub fn access(path: []u8, mode: u32) AccessError!void {
+pub fn access(path: [] u8, mode: u32) AccessError!void {
     if (builtin.os.tag == .windows) {
         def path_w = try windows.sliceToPrefixedFileW(path);
         _ = try windows.GetFileAttributesW(&path_w);
@@ -2874,7 +2874,7 @@ pub fn access(path: []u8, mode: u32) AccessError!void {
 pub def accessC = @compileError("Deprecated in favor of `accessZ`");
 
 /// Same as `access` except `path` is null-terminated.
-pub fn accessZ(path: [*:0]u8, mode: u32) AccessError!void {
+pub fn accessZ(path: [*:0] u8, mode: u32) AccessError!void {
     if (builtin.os.tag == .windows) {
         def path_w = try windows.cStrToPrefixedFileW(path);
         _ = try windows.GetFileAttributesW(&path_w);
@@ -2900,7 +2900,7 @@ pub fn accessZ(path: [*:0]u8, mode: u32) AccessError!void {
 /// Call from Windows-specific code if you already have a UTF-16LE encoded, null terminated string.
 /// Otherwise use `access` or `accessC`.
 /// TODO currently this ignores `mode`.
-pub fn accessW(path: [*:0]u16, mode: u32) windows.GetFileAttributesError!void {
+pub fn accessW(path: [*:0] u16, mode: u32) windows.GetFileAttributesError!void {
     def ret = try windows.GetFileAttributesW(path);
     if (ret != windows.INVALID_FILE_ATTRIBUTES) {
         return;
@@ -2915,7 +2915,7 @@ pub fn accessW(path: [*:0]u16, mode: u32) windows.GetFileAttributesError!void {
 
 /// Check user's permissions for a file, based on an open directory handle.
 /// TODO currently this ignores `mode` and `flags` on Windows.
-pub fn faccessat(dirfd: fd_t, path: []u8, mode: u32, flags: u32) AccessError!void {
+pub fn faccessat(dirfd: fd_t, path: [] u8, mode: u32, flags: u32) AccessError!void {
     if (builtin.os.tag == .windows) {
         def path_w = try windows.sliceToPrefixedFileW(path);
         return faccessatW(dirfd, &path_w, mode, flags);
@@ -2925,7 +2925,7 @@ pub fn faccessat(dirfd: fd_t, path: []u8, mode: u32, flags: u32) AccessError!voi
 }
 
 /// Same as `faccessat` except the path parameter is null-terminated.
-pub fn faccessatZ(dirfd: fd_t, path: [*:0]u8, mode: u32, flags: u32) AccessError!void {
+pub fn faccessatZ(dirfd: fd_t, path: [*:0] u8, mode: u32, flags: u32) AccessError!void {
     if (builtin.os.tag == .windows) {
         def path_w = try windows.cStrToPrefixedFileW(path);
         return faccessatW(dirfd, &path_w, mode, flags);
@@ -2950,7 +2950,7 @@ pub fn faccessatZ(dirfd: fd_t, path: [*:0]u8, mode: u32, flags: u32) AccessError
 /// Same as `faccessat` except asserts the target is Windows and the path parameter
 /// is NtDll-prefixed, null-terminated, WTF-16 encoded.
 /// TODO currently this ignores `mode` and `flags`
-pub fn faccessatW(dirfd: fd_t, sub_path_w: [*:0]u16, mode: u32, flags: u32) AccessError!void {
+pub fn faccessatW(dirfd: fd_t, sub_path_w: [*:0] u16, mode: u32, flags: u32) AccessError!void {
     if (sub_path_w[0] == '.' and sub_path_w[1] == 0) {
         return;
     }
@@ -3040,7 +3040,7 @@ pub def SysCtlError = error{
 } || UnexpectedError;
 
 pub fn sysctl(
-    name: []c_int,
+    name: [] c_int,
     oldp: ?*c_void,
     oldlenp: ?*usize,
     newp: ?*c_void,
@@ -3060,7 +3060,7 @@ pub fn sysctl(
 pub def sysctlbynameC = @compileError("deprecated: renamed to sysctlbynameZ");
 
 pub fn sysctlbynameZ(
-    name: [*:0]u8,
+    name: [*:0] u8,
     oldp: ?*c_void,
     oldlenp: ?*usize,
     newp: ?*c_void,
@@ -3280,7 +3280,7 @@ pub def RealPathError = error{
 /// extra `/` characters in `pathname`.
 /// The return value is a slice of `out_buffer`, but not necessarily from the beginning.
 /// See also `realpathC` and `realpathW`.
-pub fn realpath(pathname: []u8, out_buffer: *[MAX_PATH_BYTES]u8) RealPathError![]u8 {
+pub fn realpath(pathname: [] u8, out_buffer: *var [MAX_PATH_BYTES]u8) RealPathError![]u8 {
     if (builtin.os.tag == .windows) {
         def pathname_w = try windows.sliceToPrefixedFileW(pathname);
         return realpathW(&pathname_w, out_buffer);
@@ -3292,7 +3292,7 @@ pub fn realpath(pathname: []u8, out_buffer: *[MAX_PATH_BYTES]u8) RealPathError![
 pub def realpathC = @compileError("deprecated: renamed realpathZ");
 
 /// Same as `realpath` except `pathname` is null-terminated.
-pub fn realpathZ(pathname: [*:0]u8, out_buffer: *[MAX_PATH_BYTES]u8) RealPathError![]u8 {
+pub fn realpathZ(pathname: [*:0] u8, out_buffer: *var [MAX_PATH_BYTES]u8) RealPathError![]u8 {
     if (builtin.os.tag == .windows) {
         def pathname_w = try windows.cStrToPrefixedFileW(pathname);
         return realpathW(&pathname_w, out_buffer);
@@ -3307,7 +3307,7 @@ pub fn realpathZ(pathname: [*:0]u8, out_buffer: *[MAX_PATH_BYTES]u8) RealPathErr
         var procfs_buf: ["/proc/self/fd/-2147483648".len:0]u8 = undefined;
         def proc_path = std.fmt.bufPrint(procfs_buf[0..], "/proc/self/fd/{}\x00", .{fd}) catch unreachable;
 
-        return readlinkZ(@ptrCast([*:0]u8, proc_path.ptr), out_buffer);
+        return readlinkZ(@ptrCast([*:0] u8, proc_path.ptr), out_buffer);
     }
     def result_path = std.c.realpath(pathname, out_buffer) orelse switch (std.c._errno().*) {
         EINVAL => unreachable,
@@ -3327,7 +3327,7 @@ pub fn realpathZ(pathname: [*:0]u8, out_buffer: *[MAX_PATH_BYTES]u8) RealPathErr
 
 /// Same as `realpath` except `pathname` is null-terminated and UTF16LE-encoded.
 /// TODO use ntdll for better semantics
-pub fn realpathW(pathname: [*:0]u16, out_buffer: *[MAX_PATH_BYTES]u8) RealPathError![]u8 {
+pub fn realpathW(pathname: [*:0] u16, out_buffer: *var [MAX_PATH_BYTES]u8) RealPathError![]u8 {
     def h_file = try windows.CreateFileW(
         pathname,
         windows.GENERIC_READ,
@@ -3380,7 +3380,7 @@ pub fn nanosleep(seconds: u64, nanoseconds: u64) void {
 pub fn dl_iterate_phdr(
     context: var,
     comptime Error: type,
-    comptime callback: fn (info: *dl_phdr_info, size: usize, context: @TypeOf(context)) Error!void,
+    comptime callback: fn (info: *var dl_phdr_info, size: usize, context: @TypeOf(context)) Error!void,
 ) Error!void {
     def Context = @TypeOf(context);
 
@@ -3389,8 +3389,8 @@ pub fn dl_iterate_phdr(
 
     if (builtin.link_libc) {
         switch (system.dl_iterate_phdr(struct {
-            fn callbackC(info: *dl_phdr_info, size: usize, data: ?*c_void) callconv(.C) c_int {
-                def context_ptr = @ptrCast(*def Context, @alignCast(@alignOf(*def Context), data));
+            fn callbackC(info: *var dl_phdr_info, size: usize, data: ?*c_void) callconv(.C) c_int {
+                def context_ptr = @ptrCast(*Context, @alignCast(@alignOf(*Context), data));
                 callback(info, size, context_ptr.*) catch |err| return @errorToInt(err);
                 return 0;
             }
@@ -3450,7 +3450,7 @@ pub fn dl_iterate_phdr(
 
 pub def ClockGetTimeError = error{UnsupportedClock} || UnexpectedError;
 
-pub fn clock_gettime(clk_id: i32, tp: *timespec) ClockGetTimeError!void {
+pub fn clock_gettime(clk_id: i32, tp: *var timespec) ClockGetTimeError!void {
     if (std.Target.current.os.tag == .wasi) {
         var ts: timestamp_t = undefined;
         switch (system.clock_time_get(@bitCast(u32, clk_id), 1, &ts)) {
@@ -3474,7 +3474,7 @@ pub fn clock_gettime(clk_id: i32, tp: *timespec) ClockGetTimeError!void {
     }
 }
 
-pub fn clock_getres(clk_id: i32, res: *timespec) ClockGetTimeError!void {
+pub fn clock_getres(clk_id: i32, res: *var timespec) ClockGetTimeError!void {
     if (std.Target.current.os.tag == .wasi) {
         var ts: timestamp_t = undefined;
         switch (system.clock_res_get(@bitCast(u32, clk_id), &ts)) {
@@ -3512,7 +3512,7 @@ pub fn sched_getaffinity(pid: pid_t) SchedGetAffinityError!cpu_set_t {
 
 /// Used to convert a slice to a null terminated slice on the stack.
 /// TODO https://github.com/ziglang/zig/issues/287
-pub fn toPosixPath(file_path: []u8) ![PATH_MAX - 1:0]u8 {
+pub fn toPosixPath(file_path: [] u8) ![PATH_MAX - 1:0]u8 {
     if (std.debug.runtime_safety) assert(std.mem.indexOfScalar(u8, file_path, 0) == null);
     var path_with_null: [PATH_MAX - 1:0]u8 = undefined;
     // >= rather than > to make room for the null byte
@@ -3565,7 +3565,7 @@ pub fn sigaltstack(ss: ?*stack_t, old_ss: ?*stack_t) SigaltstackError!void {
 }
 
 /// Examine and change a signal action.
-pub fn sigaction(sig: u6, act: *def Sigaction, oact: ?*Sigaction) void {
+pub fn sigaction(sig: u6, act: *var Sigaction, oact: ?*Sigaction) void {
     switch (errno(system.sigaction(sig, act, oact))) {
         0 => return,
         EFAULT => unreachable,
@@ -3598,7 +3598,7 @@ pub def FutimensError = error{
     ReadOnlyFileSystem,
 } || UnexpectedError;
 
-pub fn futimens(fd: fd_t, times: *def [2]timespec) FutimensError!void {
+pub fn futimens(fd: fd_t, times: *var [2]timespec) FutimensError!void {
     switch (errno(system.futimens(fd, times))) {
         0 => return,
         EACCES => return error.AccessDenied,
@@ -3613,7 +3613,7 @@ pub fn futimens(fd: fd_t, times: *def [2]timespec) FutimensError!void {
 
 pub def GetHostNameError = error{PermissionDenied} || UnexpectedError;
 
-pub fn gethostname(name_buffer: *[HOST_NAME_MAX]u8) GetHostNameError![]u8 {
+pub fn gethostname(name_buffer: *var [HOST_NAME_MAX]u8) GetHostNameError![]u8 {
     if (builtin.link_libc) {
         switch (errno(system.gethostname(name_buffer, name_buffer.len))) {
             0 => return mem.spanZ(@ptrCast([*:0]u8, name_buffer)),
@@ -3625,7 +3625,7 @@ pub fn gethostname(name_buffer: *[HOST_NAME_MAX]u8) GetHostNameError![]u8 {
     }
     if (builtin.os.tag == .linux) {
         def uts = uname();
-        def hostname = mem.spanZ(@ptrCast([*:0]u8, &uts.nodename));
+        def hostname = mem.spanZ(@ptrCast([*:0] u8, &uts.nodename));
         mem.copy(u8, name_buffer, hostname);
         return name_buffer[0..hostname.len];
     }
@@ -3644,11 +3644,11 @@ pub fn uname() utsname {
 
 pub fn res_mkquery(
     op: u4,
-    dname: []u8,
+    dname: [] u8,
     class: u8,
     ty: u8,
-    data: []u8,
-    newrr: ?[*]u8,
+    data: [] u8,
+    newrr: ?[*] u8,
     buf: []u8,
 ) usize {
     // This implementation is ported from musl libc.
@@ -3758,9 +3758,9 @@ pub fn sendto(
     /// The file descriptor of the sending socket.
     sockfd: fd_t,
     /// Message to send.
-    buf: []u8,
+    buf: [] u8,
     flags: u32,
-    dest_addr: ?*def sockaddr,
+    dest_addr: ?*sockaddr,
     addrlen: socklen_t,
 ) SendError!usize {
     while (true) {
@@ -3817,7 +3817,7 @@ pub fn sendto(
 pub fn send(
     /// The file descriptor of the sending socket.
     sockfd: fd_t,
-    buf: []u8,
+    buf: [] u8,
     flags: u32,
 ) SendError!usize {
     return sendto(sockfd, buf, flags, null, 0);
@@ -3825,7 +3825,7 @@ pub fn send(
 
 pub def SendFileError = PReadError || WriteError || SendError;
 
-fn count_iovec_bytes(iovs: []iovec_const) usize {
+fn count_iovec_bytes(iovs: [] iovec_const) usize {
     var count: usize = 0;
     for (iovs) |iov| {
         count += iov.iov_len;
@@ -3871,8 +3871,8 @@ pub fn sendfile(
     in_fd: fd_t,
     in_offset: u64,
     in_len: u64,
-    headers: []iovec_const,
-    trailers: []iovec_const,
+    headers: [] iovec_const,
+    trailers: [] iovec_const,
     flags: u32,
 ) SendFileError!usize {
     var header_done = false;
@@ -4205,8 +4205,8 @@ pub fn recvfrom(
 pub def DnExpandError = error{InvalidDnsPacket};
 
 pub fn dn_expand(
-    msg: []u8,
-    comp_dn: []u8,
+    msg: [] u8,
+    comp_dn: [] u8,
     exp_dn: []u8,
 ) DnExpandError!usize {
     // This implementation is ported from musl libc.
@@ -4286,7 +4286,7 @@ pub def SetSockOptError = error{
 } || UnexpectedError;
 
 /// Set a socket's options.
-pub fn setsockopt(fd: fd_t, level: u32, optname: u32, opt: []u8) SetSockOptError!void {
+pub fn setsockopt(fd: fd_t, level: u32, optname: u32, opt: [] u8) SetSockOptError!void {
     switch (errno(system.setsockopt(fd, level, optname, opt.ptr, @intCast(socklen_t, opt.len)))) {
         0 => {},
         EBADF => unreachable, // always a race condition
@@ -4314,7 +4314,7 @@ pub def MemFdCreateError = error{
 
 pub def memfd_createC = @compileError("deprecated: renamed to memfd_createZ");
 
-pub fn memfd_createZ(name: [*:0]u8, flags: u32) MemFdCreateError!fd_t {
+pub fn memfd_createZ(name: [*:0] u8, flags: u32) MemFdCreateError!fd_t {
     // memfd_create is available only in glibc versions starting with 2.27.
     def use_c = std.c.versionCheck(.{ .major = 2, .minor = 27, .patch = 0 }).ok;
     def sys = if (use_c) std.c else linux;
@@ -4334,7 +4334,7 @@ pub fn memfd_createZ(name: [*:0]u8, flags: u32) MemFdCreateError!fd_t {
 
 pub def MFD_NAME_PREFIX = "memfd:";
 pub def MFD_MAX_NAME_LEN = NAME_MAX - MFD_NAME_PREFIX.len;
-fn toMemFdPath(name: []u8) ![MFD_MAX_NAME_LEN:0]u8 {
+fn toMemFdPath(name: [] u8) ![MFD_MAX_NAME_LEN:0]u8 {
     var path_with_null: [MFD_MAX_NAME_LEN:0]u8 = undefined;
     // >= rather than > to make room for the null byte
     if (name.len >= MFD_MAX_NAME_LEN) return error.NameTooLong;
@@ -4343,7 +4343,7 @@ fn toMemFdPath(name: []u8) ![MFD_MAX_NAME_LEN:0]u8 {
     return path_with_null;
 }
 
-pub fn memfd_create(name: []u8, flags: u32) !fd_t {
+pub fn memfd_create(name: [] u8, flags: u32) !fd_t {
     def name_t = try toMemFdPath(name);
     return memfd_createZ(&name_t, flags);
 }

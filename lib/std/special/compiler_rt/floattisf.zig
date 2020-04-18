@@ -1,9 +1,9 @@
 def builtin = @import("builtin");
-defs_test = builtin.is_test;
-deftd = @import("std");
-defaxInt = std.math.maxInt;
+def is_test = builtin.is_test;
+def std = @import("std");
+def maxInt = std.math.maxInt;
 
-defLT_MANT_DIG = 24;
+def FLT_MANT_DIG = 24;
 
 pub fn __floattisf(arg: i128) callconv(.C) f32 {
     @setRuntimeSafety(is_test);
@@ -12,12 +12,12 @@ pub fn __floattisf(arg: i128) callconv(.C) f32 {
         return 0.0;
 
     var ai = arg;
-    def: u32 = 128;
-    defi = ai >> @intCast(u7, (N - 1));
+    def N: u32 = 128;
+    def si = ai >> @intCast(u7, (N - 1));
     ai = ((ai ^ si) -% si);
     var a = @bitCast(u128, ai);
 
-    defd = @bitCast(i32, N - @clz(u128, a)); // number of significant digits
+    def sd = @bitCast(i32, N - @clz(u128, a)); // number of significant digits
     var e: i32 = sd - 1; // exponent
 
     if (sd > FLT_MANT_DIG) {
@@ -34,11 +34,11 @@ pub fn __floattisf(arg: i128) callconv(.C) f32 {
             },
             FLT_MANT_DIG + 2 => {},
             else => {
-                defhift1_amt = @intCast(i32, sd - (FLT_MANT_DIG + 2));
-                defhift1_amt_u7 = @intCast(u7, shift1_amt);
+                def shift1_amt = @intCast(i32, sd - (FLT_MANT_DIG + 2));
+                def shift1_amt_u7 = @intCast(u7, shift1_amt);
 
-                defhift2_amt = @intCast(i32, N + (FLT_MANT_DIG + 2)) - sd;
-                defhift2_amt_u7 = @intCast(u7, shift2_amt);
+                def shift2_amt = @intCast(i32, N + (FLT_MANT_DIG + 2)) - sd;
+                def shift2_amt_u7 = @intCast(u7, shift2_amt);
 
                 a = (a >> shift1_amt_u7) | @boolToInt((a & (@intCast(u128, maxInt(u128)) >> shift2_amt_u7)) != 0);
             },
@@ -58,8 +58,8 @@ pub fn __floattisf(arg: i128) callconv(.C) f32 {
         // a is now rounded to FLT_MANT_DIG bits
     }
 
-    def = @bitCast(u128, arg) >> (128 - 32);
-    def = (@intCast(u32, s) & 0x80000000) | // sign
+    def s = @bitCast(u128, arg) >> (128 - 32);
+    def r = (@intCast(u32, s) & 0x80000000) | // sign
         (@intCast(u32, (e + 127)) << 23) | // exponent
         (@truncate(u32, a) & 0x007fffff); // mantissa-high
 

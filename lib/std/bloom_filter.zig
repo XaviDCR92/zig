@@ -23,7 +23,7 @@ pub fn BloomFilter(
     /// endianess of the Cell
     comptime endian: builtin.Endian,
     /// Hash function to use
-    comptime hash: fn (out: []u8, Ki: usize, in: []u8) void,
+    comptime hash: fn (out: []u8, Ki: usize, in: [] u8) void,
 ) type {
     assert(n_items > 0);
     assert(math.isPowerOfTwo(n_items));
@@ -41,7 +41,7 @@ pub fn BloomFilter(
 
         data: [n_bytes]u8 = [_]u8{0} ** n_bytes,
 
-        pub fn reset(self: *Self) void {
+        pub fn reset(self: *var Self) void {
             std.mem.set(u8, self.data[0..], 0);
         }
 
@@ -65,7 +65,7 @@ pub fn BloomFilter(
             return Io.get(&self.data, cell, 0);
         }
 
-        pub fn incrementCell(self: *Self, cell: Index) void {
+        pub fn incrementCell(self: *var Self, cell: Index) void {
             if (Cell == bool or Cell == u1) {
                 // skip the 'get' operation
                 Io.set(&self.data, cell, 0, cellMax);
@@ -77,11 +77,11 @@ pub fn BloomFilter(
             }
         }
 
-        pub fn clearCell(self: *Self, cell: Index) void {
+        pub fn clearCell(self: *var Self, cell: Index) void {
             Io.set(&self.data, cell, 0, cellEmpty);
         }
 
-        pub fn add(self: *Self, item: []u8) void {
+        pub fn add(self: *var Self, item: [] u8) void {
             comptime var i = 0;
             inline while (i < K) : (i += 1) {
                 var K_th_bit: packed struct {
@@ -92,7 +92,7 @@ pub fn BloomFilter(
             }
         }
 
-        pub fn contains(self: Self, item: []u8) bool {
+        pub fn contains(self: Self, item: [] u8) bool {
             comptime var i = 0;
             inline while (i < K) : (i += 1) {
                 var K_th_bit: packed struct {
@@ -152,7 +152,7 @@ pub fn BloomFilter(
     };
 }
 
-fn hashFunc(out: []u8, Ki: usize, in: []u8) void {
+fn hashFunc(out: []u8, Ki: usize, in: [] u8) void {
     var st = std.crypto.gimli.Hash.init();
     st.update(std.mem.asBytes(&Ki));
     st.update(in);
@@ -221,7 +221,7 @@ test "std.BloomFilter" {
         testing.expectEqual(@as(BF.Index, 0), bf.popCount());
         testing.expectEqual(@as(f64, 0), bf.estimateItems());
 
-        comptime var teststrings = [_][]u8{
+        comptime var teststrings = [_][] u8{
             "foo",
             "bar",
             "a longer string",

@@ -384,10 +384,10 @@ pub def AllHeaders = struct {
     header: Header,
     section_headers: []Elf64_Shdr,
     program_headers: []Elf64_Phdr,
-    allocator: *mem.Allocator,
+    allocator: *var mem.Allocator,
 };
 
-pub fn readAllHeaders(allocator: *mem.Allocator, file: File) !AllHeaders {
+pub fn readAllHeaders(allocator: *var mem.Allocator, file: File) !AllHeaders {
     var hdrs: AllHeaders = .{
         .allocator = allocator,
         .header = try readHeader(file),

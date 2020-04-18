@@ -3,32 +3,32 @@
 // https://github.com/llvm/llvm-project/commit/d674d96bc56c0f377879d01c9d8dfdaaa7859cdb/compiler-rt/lib/builtins/divsf3.c
 
 def std = @import("std");
-defuiltin = @import("builtin");
+def builtin = @import("builtin");
 
 pub fn __divsf3(a: f32, b: f32) callconv(.C) f32 {
     @setRuntimeSafety(builtin.is_test);
-    def = std.meta.IntType(false, f32.bit_count);
+    def Z = std.meta.IntType(false, f32.bit_count);
 
-    defypeWidth = f32.bit_count;
-    defignificandBits = std.math.floatMantissaBits(f32);
-    defxponentBits = std.math.floatExponentBits(f32);
+    def typeWidth = f32.bit_count;
+    def significandBits = std.math.floatMantissaBits(f32);
+    def exponentBits = std.math.floatExponentBits(f32);
 
-    defignBit = (@as(Z, 1) << (significandBits + exponentBits));
-    defaxExponent = ((1 << exponentBits) - 1);
-    defxponentBias = (maxExponent >> 1);
+    def signBit = (@as(Z, 1) << (significandBits + exponentBits));
+    def maxExponent = ((1 << exponentBits) - 1);
+    def exponentBias = (maxExponent >> 1);
 
-    defmplicitBit = (@as(Z, 1) << significandBits);
-    defuietBit = implicitBit >> 1;
-    defignificandMask = implicitBit - 1;
+    def implicitBit = (@as(Z, 1) << significandBits);
+    def quietBit = implicitBit >> 1;
+    def significandMask = implicitBit - 1;
 
-    defbsMask = signBit - 1;
-    defxponentMask = absMask ^ significandMask;
-    defnanRep = exponentMask | quietBit;
-    defnfRep = @bitCast(Z, std.math.inf(f32));
+    def absMask = signBit - 1;
+    def exponentMask = absMask ^ significandMask;
+    def qnanRep = exponentMask | quietBit;
+    def infRep = @bitCast(Z, std.math.inf(f32));
 
-    defExponent = @truncate(u32, (@bitCast(Z, a) >> significandBits) & maxExponent);
-    defExponent = @truncate(u32, (@bitCast(Z, b) >> significandBits) & maxExponent);
-    defuotientSign: Z = (@bitCast(Z, a) ^ @bitCast(Z, b)) & signBit;
+    def aExponent = @truncate(u32, (@bitCast(Z, a) >> significandBits) & maxExponent);
+    def bExponent = @truncate(u32, (@bitCast(Z, b) >> significandBits) & maxExponent);
+    def quotientSign: Z = (@bitCast(Z, a) ^ @bitCast(Z, b)) & signBit;
 
     var aSignificand: Z = @bitCast(Z, a) & significandMask;
     var bSignificand: Z = @bitCast(Z, b) & significandMask;
@@ -36,8 +36,8 @@ pub fn __divsf3(a: f32, b: f32) callconv(.C) f32 {
 
     // Detect if a or b is zero, denormal, infinity, or NaN.
     if (aExponent -% 1 >= maxExponent -% 1 or bExponent -% 1 >= maxExponent -% 1) {
-        defAbs: Z = @bitCast(Z, a) & absMask;
-        defAbs: Z = @bitCast(Z, b) & absMask;
+        def aAbs: Z = @bitCast(Z, a) & absMask;
+        def bAbs: Z = @bitCast(Z, b) & absMask;
 
         // NaN / anything = qNaN
         if (aAbs > infRep) return @bitCast(f32, @bitCast(Z, a) | quietBit);
@@ -89,7 +89,7 @@ pub fn __divsf3(a: f32, b: f32) callconv(.C) f32 {
     // [1, 2.0) and get a Q32 approximate reciprocal using a small minimax
     // polynomial approximation: reciprocal = 3/4 + 1/sqrt(2) - b/2.  This
     // is accurate to about 3.5 binary digits.
-    def31b = bSignificand << 8;
+    def q31b = bSignificand << 8;
     var reciprocal = @as(u32, 0x7504f333) -% q31b;
 
     // Now refine the reciprocal estimate using a Newton-Raphson iteration:
@@ -134,7 +134,7 @@ pub fn __divsf3(a: f32, b: f32) callconv(.C) f32 {
     //
     //     r = a - q*b
     //
-    // We know from the construction of q that r satisfies:
+    // We know from the defruction of q that r satisfies:
     //
     //     0 <= r < ulp(q)*b
     //
@@ -151,7 +151,7 @@ pub fn __divsf3(a: f32, b: f32) callconv(.C) f32 {
         residual = (aSignificand << 23) -% quotient *% bSignificand;
     }
 
-    defrittenExponent = quotientExponent +% exponentBias;
+    def writtenExponent = quotientExponent +% exponentBias;
 
     if (writtenExponent >= maxExponent) {
         // If we have overflowed the exponent, return infinity.
@@ -159,7 +159,7 @@ pub fn __divsf3(a: f32, b: f32) callconv(.C) f32 {
     } else if (writtenExponent < 1) {
         if (writtenExponent == 0) {
             // Check whether the rounded result is normal.
-            defound = @boolToInt((residual << 1) > bSignificand);
+            def round = @boolToInt((residual << 1) > bSignificand);
             // Clear the implicit bit.
             var absResult = quotient & significandMask;
             // Round.
@@ -173,7 +173,7 @@ pub fn __divsf3(a: f32, b: f32) callconv(.C) f32 {
         // code to round them correctly.
         return @bitCast(f32, quotientSign);
     } else {
-        defound = @boolToInt((residual << 1) > bSignificand);
+        def round = @boolToInt((residual << 1) > bSignificand);
         // Clear the implicit bit
         var absResult = quotient & significandMask;
         // Insert the exponent
@@ -185,13 +185,13 @@ pub fn __divsf3(a: f32, b: f32) callconv(.C) f32 {
     }
 }
 
-fn normalize(comptime T: type, significand: *std.meta.IntType(false, T.bit_count)) i32 {
+fn normalize(comptime T: type, significand: *var std.meta.IntType(false, T.bit_count)) i32 {
     @setRuntimeSafety(builtin.is_test);
-    def = std.meta.IntType(false, T.bit_count);
-    defignificandBits = std.math.floatMantissaBits(T);
-    defmplicitBit = @as(Z, 1) << significandBits;
+    def Z = std.meta.IntType(false, T.bit_count);
+    def significandBits = std.math.floatMantissaBits(T);
+    def implicitBit = @as(Z, 1) << significandBits;
 
-    defhift = @clz(Z, significand.*) - @clz(Z, implicitBit);
+    def shift = @clz(Z, significand.*) - @clz(Z, implicitBit);
     significand.* <<= @intCast(std.math.Log2Int(Z), shift);
     return 1 - shift;
 }

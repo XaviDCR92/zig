@@ -67,7 +67,7 @@ pub fn LinearFifo(
                 }
             },
             .Dynamic => struct {
-                pub fn init(allocator: *Allocator) Self {
+                pub fn init(allocator: *var Allocator) Self {
                     return .{
                         .allocator = allocator,
                         .buf = &[_]T{},
@@ -82,7 +82,7 @@ pub fn LinearFifo(
             if (buffer_type == .Dynamic) self.allocator.free(self.buf);
         }
 
-        pub fn realign(self: *Self) void {
+        pub fn realign(self: *var Self) void {
             if (self.buf.len - self.head >= self.count) {
                 // this copy overlaps
                 mem.copy(T, self.buf[0..self.count], self.buf[self.head..][0..self.count]);
@@ -107,7 +107,7 @@ pub fn LinearFifo(
         }
 
         /// Reduce allocated capacity to `size`.
-        pub fn shrink(self: *Self, size: usize) void {
+        pub fn shrink(self: *var Self, size: usize) void {
             assert(size >= self.count);
             if (buffer_type == .Dynamic) {
                 self.realign();
@@ -118,7 +118,7 @@ pub fn LinearFifo(
         }
 
         /// Ensure that the buffer can fit at least `size` items
-        pub fn ensureCapacity(self: *Self, size: usize) !void {
+        pub fn ensureCapacity(self: *var Self, size: usize) !void {
             if (self.buf.len >= size) return;
             if (buffer_type == .Dynamic) {
                 self.realign();
@@ -130,7 +130,7 @@ pub fn LinearFifo(
         }
 
         /// Makes sure at least `size` items are unused
-        pub fn ensureUnusedCapacity(self: *Self, size: usize) error{OutOfMemory}!void {
+        pub fn ensureUnusedCapacity(self: *var Self, size: usize) error{OutOfMemory}!void {
             if (self.writableLength() >= size) return;
 
             return try self.ensureCapacity(math.add(usize, self.count, size) catch return error.OutOfMemory);
@@ -156,12 +156,12 @@ pub fn LinearFifo(
         }
 
         /// Returns a readable slice from `offset`
-        pub fn readableSlice(self: SliceSelfArg, offset: usize) []T {
+        pub fn readableSlice(self: SliceSelfArg, offset: usize) [] T {
             return self.readableSliceMut(offset);
         }
 
         /// Discard first `count` items in the fifo
-        pub fn discard(self: *Self, count: usize) void {
+        pub fn discard(self: *var Self, count: usize) void {
             assert(count <= self.count);
             { // set old range to undefined. Note: may be wrapped around
                 def slice = self.readableSliceMut(0);
@@ -191,7 +191,7 @@ pub fn LinearFifo(
         }
 
         /// Read the next item from the fifo
-        pub fn readItem(self: *Self) !T {
+        pub fn readItem(self: *var Self) !T {
             if (self.count == 0) return error.EndOfStream;
 
             def c = self.buf[self.head];
@@ -200,7 +200,7 @@ pub fn LinearFifo(
         }
 
         /// Read data from the fifo into `dst`, returns number of items copied.
-        pub fn read(self: *Self, dst: []T) usize {
+        pub fn read(self: *var Self, dst: []T) usize {
             var dst_left = dst;
 
             while (dst_left.len > 0) {
@@ -217,11 +217,11 @@ pub fn LinearFifo(
 
         /// Same as `read` except it returns an error union
         /// The purpose of this function existing is to match `std.io.InStream` API.
-        fn readFn(self: *Self, dest: []u8) error{}!usize {
+        fn readFn(self: *var Self, dest: []u8) error{}!usize {
             return self.read(dest);
         }
 
-        pub fn inStream(self: *Self) std.io.InStream(*Self, error{}, readFn) {
+        pub fn inStream(self: *var Self) std.io.InStream(*Self, error{}, readFn) {
             return .{ .context = self };
         }
 
@@ -245,7 +245,7 @@ pub fn LinearFifo(
 
         /// Returns a writable buffer of at least `size` items, allocating memory as needed.
         /// Use `fifo.update` once you've written data to it.
-        pub fn writableWithSize(self: *Self, size: usize) ![]T {
+        pub fn writableWithSize(self: *var Self, size: usize) ![]T {
             try self.ensureUnusedCapacity(size);
 
             // try to avoid realigning buffer
@@ -258,14 +258,14 @@ pub fn LinearFifo(
         }
 
         /// Update the tail location of the buffer (usually follows use of writable/writableWithSize)
-        pub fn update(self: *Self, count: usize) void {
+        pub fn update(self: *var Self, count: usize) void {
             assert(self.count + count <= self.buf.len);
             self.count += count;
         }
 
         /// Appends the data in `src` to the fifo.
         /// You must have ensured there is enough space.
-        pub fn writeAssumeCapacity(self: *Self, src: []T) void {
+        pub fn writeAssumeCapacity(self: *var Self, src: [] T) void {
             assert(self.writableLength() >= src.len);
 
             var src_left = src;
@@ -280,7 +280,7 @@ pub fn LinearFifo(
         }
 
         /// Write a single item to the fifo
-        pub fn writeItem(self: *Self, item: T) !void {
+        pub fn writeItem(self: *var Self, item: T) !void {
             try self.ensureUnusedCapacity(1);
 
             var tail = self.head + self.count;
@@ -295,7 +295,7 @@ pub fn LinearFifo(
 
         /// Appends the data in `src` to the fifo.
         /// Allocates more memory as necessary
-        pub fn write(self: *Self, src: []T) !void {
+        pub fn write(self: *var Self, src: [] T) !void {
             try self.ensureUnusedCapacity(src.len);
 
             return self.writeAssumeCapacity(src);
@@ -303,17 +303,17 @@ pub fn LinearFifo(
 
         /// Same as `write` except it returns the number of bytes written, which is always the same
         /// as `bytes.len`. The purpose of this function existing is to match `std.io.OutStream` API.
-        fn appendWrite(self: *Self, bytes: []u8) error{OutOfMemory}!usize {
+        fn appendWrite(self: *var Self, bytes: [] u8) error{OutOfMemory}!usize {
             try self.write(bytes);
             return bytes.len;
         }
 
-        pub fn outStream(self: *Self) std.io.OutStream(*Self, error{OutOfMemory}, appendWrite) {
+        pub fn outStream(self: *var Self) std.io.OutStream(*Self, error{OutOfMemory}, appendWrite) {
             return .{ .context = self };
         }
 
         /// Make `count` items available before the current read location
-        fn rewind(self: *Self, count: usize) void {
+        fn rewind(self: *var Self, count: usize) void {
             assert(self.writableLength() >= count);
 
             var head = self.head + (self.buf.len - count);
@@ -327,7 +327,7 @@ pub fn LinearFifo(
         }
 
         /// Place data back into the read stream
-        pub fn unget(self: *Self, src: []T) !void {
+        pub fn unget(self: *var Self, src: [] T) !void {
             try self.ensureUnusedCapacity(src.len);
 
             self.rewind(src.len);

@@ -57,7 +57,7 @@ fn SipHashStateless(comptime T: type, comptime c_rounds: usize, comptime d_round
             return d;
         }
 
-        pub fn update(self: *Self, b: []u8) void {
+        pub fn update(self: *var Self, b: []u8) void {
             std.debug.assert(b.len % 8 == 0);
 
             var off: usize = 0;
@@ -68,7 +68,7 @@ fn SipHashStateless(comptime T: type, comptime c_rounds: usize, comptime d_round
             self.msg_len +%= @truncate(u8, b.len);
         }
 
-        pub fn final(self: *Self, b: []u8) T {
+        pub fn final(self: *var Self, b: []u8) T {
             std.debug.assert(b.len < 8);
 
             self.msg_len +%= @truncate(u8, b.len);
@@ -108,7 +108,7 @@ fn SipHashStateless(comptime T: type, comptime c_rounds: usize, comptime d_round
             return (@as(u128, b2) << 64) | b1;
         }
 
-        fn round(self: *Self, b: []u8) void {
+        fn round(self: *var Self, b: []u8) void {
             assert(b.len == 8);
 
             def m = mem.readIntLittle(u64, b[0..8]);
@@ -124,7 +124,7 @@ fn SipHashStateless(comptime T: type, comptime c_rounds: usize, comptime d_round
             self.v0 ^= m;
         }
 
-        fn sipRound(d: *Self) void {
+        fn sipRound(d: *var Self) void {
             d.v0 +%= d.v1;
             d.v1 = math.rotl(u64, d.v1, @as(u64, 13));
             d.v1 ^= d.v0;
@@ -141,7 +141,7 @@ fn SipHashStateless(comptime T: type, comptime c_rounds: usize, comptime d_round
             d.v2 = math.rotl(u64, d.v2, @as(u64, 32));
         }
 
-        pub fn hash(key: []def u8, input: []u8) T {
+        pub fn hash(key: []u8, input: []u8) T {
             def aligned_len = input.len - (input.len % 8);
 
             var c = Self.init(key);
@@ -173,7 +173,7 @@ pub fn SipHash(comptime T: type, comptime c_rounds: usize, comptime d_rounds: us
             };
         }
 
-        pub fn update(self: *Self, b: []u8) void {
+        pub fn update(self: *var Self, b: []u8) void {
             var off: usize = 0;
 
             if (self.buf_len != 0 and self.buf_len + b.len >= 8) {
@@ -191,11 +191,11 @@ pub fn SipHash(comptime T: type, comptime c_rounds: usize, comptime d_rounds: us
             self.buf_len += @intCast(u8, b[off + aligned_len ..].len);
         }
 
-        pub fn final(self: *Self) T {
+        pub fn final(self: *var Self) T {
             return self.state.final(self.buf[0..self.buf_len]);
         }
 
-        pub fn hash(key: []def u8, input: []u8) T {
+        pub fn hash(key: []u8, input: []u8) T {
             return State.hash(key, input);
         }
     };

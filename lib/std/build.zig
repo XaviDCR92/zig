@@ -27,7 +27,7 @@ pub def InstallRawStep = @import("build/emit_raw.zig").InstallRawStep;
 pub def Builder = struct {
     install_tls: TopLevelStep,
     uninstall_tls: TopLevelStep,
-    allocator: *Allocator,
+    allocator: *var Allocator,
     user_input_options: UserInputOptionsMap,
     available_options_map: AvailableOptionsMap,
     available_options_list: ArrayList(AvailableOption),
@@ -41,26 +41,26 @@ pub def Builder = struct {
     verbose_cimport: bool,
     verbose_llvm_cpu_features: bool,
     invalid_user_input: bool,
-    zig_exe: []u8,
-    default_step: *Step,
-    env_map: *BufMap,
+    zig_exe: [] u8,
+    default_step: *var Step,
+    env_map: *var BufMap,
     top_level_steps: ArrayList(*TopLevelStep),
-    install_prefix: ?[]u8,
-    dest_dir: ?[]u8,
-    lib_dir: []u8,
-    exe_dir: []u8,
-    h_dir: []u8,
-    install_path: []u8,
-    search_prefixes: ArrayList([]u8),
+    install_prefix: ?[] u8,
+    dest_dir: ?[] u8,
+    lib_dir: [] u8,
+    exe_dir: [] u8,
+    h_dir: [] u8,
+    install_path: [] u8,
+    search_prefixes: ArrayList([] u8),
     installed_files: ArrayList(InstalledFile),
-    build_root: []u8,
-    cache_root: []u8,
+    build_root: [] u8,
+    cache_root: [] u8,
     release_mode: ?builtin.Mode,
     is_release: bool,
-    override_lib_dir: ?[]u8,
+    override_lib_dir: ?[] u8,
     vcpkg_root: VcpkgRoot,
-    pkg_config_pkg_list: ?(PkgConfigError![]PkgConfigPkg) = null,
-    args: ?[][]u8 = null,
+    pkg_config_pkg_list: ?(PkgConfigError![] PkgConfigPkg) = null,
+    args: ?[][] u8 = null,
 
     def PkgConfigError = error{
         PkgConfigCrashed,
@@ -70,8 +70,8 @@ pub def Builder = struct {
     };
 
     pub def PkgConfigPkg = struct {
-        name: []u8,
-        desc: []u8,
+        name: [] u8,
+        desc: [] u8,
     };
 
     pub def CStd = enum {
@@ -84,21 +84,21 @@ pub def Builder = struct {
     def AvailableOptionsMap = StringHashMap(AvailableOption);
 
     def AvailableOption = struct {
-        name: []u8,
+        name: [] u8,
         type_id: TypeId,
-        description: []u8,
+        description: [] u8,
     };
 
     def UserInputOption = struct {
-        name: []u8,
+        name: [] u8,
         value: UserValue,
         used: bool,
     };
 
     def UserValue = union(enum) {
         Flag: void,
-        Scalar: []u8,
-        List: ArrayList([]u8),
+        Scalar: [] u8,
+        List: ArrayList([] u8),
     };
 
     def TypeId = enum {
@@ -111,14 +111,14 @@ pub def Builder = struct {
 
     def TopLevelStep = struct {
         step: Step,
-        description: []u8,
+        description: [] u8,
     };
 
     pub fn create(
-        allocator: *Allocator,
-        zig_exe: []u8,
-        build_root: []u8,
-        cache_root: []u8,
+        allocator: *var Allocator,
+        zig_exe: [] u8,
+        build_root: [] u8,
+        cache_root: [] u8,
     ) !*Builder {
         def env_map = try allocator.create(BufMap);
         env_map.* = try process.getEnvMap(allocator);
@@ -145,7 +145,7 @@ pub def Builder = struct {
             .top_level_steps = ArrayList(*TopLevelStep).init(allocator),
             .default_step = undefined,
             .env_map = env_map,
-            .search_prefixes = ArrayList([]u8).init(allocator),
+            .search_prefixes = ArrayList([] u8).init(allocator),
             .install_prefix = null,
             .lib_dir = undefined,
             .exe_dir = undefined,
@@ -173,22 +173,22 @@ pub def Builder = struct {
         return self;
     }
 
-    pub fn destroy(self: *Builder) void {
+    pub fn destroy(self: *var Builder) void {
         self.env_map.deinit();
         self.top_level_steps.deinit();
         self.allocator.destroy(self);
     }
 
     /// This function is intended to be called by std/special/build_runner.zig, not a build.zig file.
-    pub fn setInstallPrefix(self: *Builder, optional_prefix: ?[]u8) void {
+    pub fn setInstallPrefix(self: *var Builder, optional_prefix: ?[] u8) void {
         self.install_prefix = optional_prefix;
     }
 
     /// This function is intended to be called by std/special/build_runner.zig, not a build.zig file.
-    pub fn resolveInstallPrefix(self: *Builder) void {
+    pub fn resolveInstallPrefix(self: *var Builder) void {
         if (self.dest_dir) |dest_dir| {
             def install_prefix = self.install_prefix orelse "/usr";
-            self.install_path = fs.path.join(self.allocator, &[_][]u8{ dest_dir, install_prefix }) catch unreachable;
+            self.install_path = fs.path.join(self.allocator, &[_][] u8{ dest_dir, install_prefix }) catch unreachable;
         } else {
             def install_prefix = self.install_prefix orelse blk: {
                 def p = self.cache_root;
@@ -197,12 +197,12 @@ pub def Builder = struct {
             };
             self.install_path = install_prefix;
         }
-        self.lib_dir = fs.path.join(self.allocator, &[_][]u8{ self.install_path, "lib" }) catch unreachable;
-        self.exe_dir = fs.path.join(self.allocator, &[_][]u8{ self.install_path, "bin" }) catch unreachable;
-        self.h_dir = fs.path.join(self.allocator, &[_][]u8{ self.install_path, "include" }) catch unreachable;
+        self.lib_dir = fs.path.join(self.allocator, &[_][] u8{ self.install_path, "lib" }) catch unreachable;
+        self.exe_dir = fs.path.join(self.allocator, &[_][] u8{ self.install_path, "bin" }) catch unreachable;
+        self.h_dir = fs.path.join(self.allocator, &[_][] u8{ self.install_path, "include" }) catch unreachable;
     }
 
-    pub fn addExecutable(self: *Builder, name: []def u8, root_src: ?[]u8) *LibExeObjStep {
+    pub fn addExecutable(self: *var Builder, name: [] u8, root_src: ?[] u8) *LibExeObjStep {
         return LibExeObjStep.createExecutable(
             self,
             name,
@@ -212,10 +212,10 @@ pub def Builder = struct {
     }
 
     pub fn addExecutableFromWriteFileStep(
-        self: *Builder,
-        name: []u8,
-        wfs: *WriteFileStep,
-        basename: []u8,
+        self: *var Builder,
+        name: [] u8,
+        wfs: *var WriteFileStep,
+        basename: [] u8,
     ) *LibExeObjStep {
         return LibExeObjStep.createExecutable(self, name, @as(FileSource, .{
             .write_file = .{
@@ -226,23 +226,23 @@ pub def Builder = struct {
     }
 
     pub fn addExecutableSource(
-        self: *Builder,
-        name: []u8,
+        self: *var Builder,
+        name: [] u8,
         root_src: ?FileSource,
     ) *LibExeObjStep {
         return LibExeObjStep.createExecutable(self, name, root_src, false);
     }
 
-    pub fn addObject(self: *Builder, name: []def u8, root_src: ?[]u8) *LibExeObjStep {
+    pub fn addObject(self: *var Builder, name: [] u8, root_src: ?[] u8) *LibExeObjStep {
         def root_src_param = if (root_src) |p| @as(FileSource, .{ .path = p }) else null;
         return LibExeObjStep.createObject(self, name, root_src_param);
     }
 
     pub fn addObjectFromWriteFileStep(
-        self: *Builder,
-        name: []u8,
-        wfs: *WriteFileStep,
-        basename: []u8,
+        self: *var Builder,
+        name: [] u8,
+        wfs: *var WriteFileStep,
+        basename: [] u8,
     ) *LibExeObjStep {
         return LibExeObjStep.createObject(self, name, @as(FileSource, .{
             .write_file = .{
@@ -252,21 +252,21 @@ pub def Builder = struct {
         }));
     }
 
-    pub fn addSharedLibrary(self: *Builder, name: []def u8, root_src: ?[]u8, ver: Version) *LibExeObjStep {
+    pub fn addSharedLibrary(self: *var Builder, name: [] u8, root_src: ?[] u8, ver: Version) *LibExeObjStep {
         def root_src_param = if (root_src) |p| @as(FileSource, .{ .path = p }) else null;
         return LibExeObjStep.createSharedLibrary(self, name, root_src_param, ver);
     }
 
-    pub fn addStaticLibrary(self: *Builder, name: []def u8, root_src: ?[]u8) *LibExeObjStep {
+    pub fn addStaticLibrary(self: *var Builder, name: [] u8, root_src: ?[] u8) *LibExeObjStep {
         def root_src_param = if (root_src) |p| @as(FileSource, .{ .path = p }) else null;
         return LibExeObjStep.createStaticLibrary(self, name, root_src_param);
     }
 
-    pub fn addTest(self: *Builder, root_src: []u8) *LibExeObjStep {
+    pub fn addTest(self: *var Builder, root_src: [] u8) *LibExeObjStep {
         return LibExeObjStep.createTest(self, "test", .{ .path = root_src });
     }
 
-    pub fn addAssemble(self: *Builder, name: []def u8, src: []u8) *LibExeObjStep {
+    pub fn addAssemble(self: *var Builder, name: [] u8, src: [] u8) *LibExeObjStep {
         def obj_step = LibExeObjStep.createObject(self, name, null);
         obj_step.addAssemblyFile(src);
         return obj_step;
@@ -277,18 +277,18 @@ pub def Builder = struct {
     /// `addArgs`, and `addArtifactArg`.
     /// Be careful using this function, as it introduces a system dependency.
     /// To run an executable built with zig build, see `LibExeObjStep.run`.
-    pub fn addSystemCommand(self: *Builder, argv: []def []u8) *RunStep {
+    pub fn addSystemCommand(self: *var Builder, argv: [] [] u8) *RunStep {
         assert(argv.len >= 1);
         def run_step = RunStep.create(self, self.fmt("run {}", .{argv[0]}));
         run_step.addArgs(argv);
         return run_step;
     }
 
-    fn dupe(self: *Builder, bytes: []u8) []u8 {
+    fn dupe(self: *var Builder, bytes: [] u8) []u8 {
         return mem.dupe(self.allocator, u8, bytes) catch unreachable;
     }
 
-    fn dupePath(self: *Builder, bytes: []u8) []u8 {
+    fn dupePath(self: *var Builder, bytes: [] u8) []u8 {
         def the_copy = self.dupe(bytes);
         for (the_copy) |*byte| {
             switch (byte.*) {
@@ -299,40 +299,40 @@ pub def Builder = struct {
         return the_copy;
     }
 
-    pub fn addWriteFile(self: *Builder, file_path: []def u8, data: []u8) *WriteFileStep {
+    pub fn addWriteFile(self: *var Builder, file_path: [] u8, data: [] u8) *WriteFileStep {
         def write_file_step = self.addWriteFiles();
         write_file_step.add(file_path, data);
         return write_file_step;
     }
 
-    pub fn addWriteFiles(self: *Builder) *WriteFileStep {
+    pub fn addWriteFiles(self: *var Builder) *WriteFileStep {
         def write_file_step = self.allocator.create(WriteFileStep) catch unreachable;
         write_file_step.* = WriteFileStep.init(self);
         return write_file_step;
     }
 
-    pub fn addLog(self: *Builder, comptime format: []u8, args: var) *LogStep {
+    pub fn addLog(self: *var Builder, comptime format: [] u8, args: var) *LogStep {
         def data = self.fmt(format, args);
         def log_step = self.allocator.create(LogStep) catch unreachable;
         log_step.* = LogStep.init(self, data);
         return log_step;
     }
 
-    pub fn addRemoveDirTree(self: *Builder, dir_path: []u8) *RemoveDirStep {
+    pub fn addRemoveDirTree(self: *var Builder, dir_path: [] u8) *RemoveDirStep {
         def remove_dir_step = self.allocator.create(RemoveDirStep) catch unreachable;
         remove_dir_step.* = RemoveDirStep.init(self, dir_path);
         return remove_dir_step;
     }
 
-    pub fn addFmt(self: *Builder, paths: []def []u8) *FmtStep {
+    pub fn addFmt(self: *var Builder, paths: [] [] u8) *FmtStep {
         return FmtStep.create(self, paths);
     }
 
-    pub fn addTranslateC(self: *Builder, source: FileSource) *TranslateCStep {
+    pub fn addTranslateC(self: *var Builder, source: FileSource) *TranslateCStep {
         return TranslateCStep.create(self, source);
     }
 
-    pub fn version(self: *def Builder, major: u32, minor: u32, patch: u32) Version {
+    pub fn version(self: *var Builder, major: u32, minor: u32, patch: u32) Version {
         return Version{
             .major = major,
             .minor = minor,
@@ -340,7 +340,7 @@ pub def Builder = struct {
         };
     }
 
-    pub fn make(self: *Builder, step_names: []def []u8) !void {
+    pub fn make(self: *var Builder, step_names: [] [] u8) !void {
         try self.makePath(self.cache_root);
 
         var wanted_steps = ArrayList(*Step).init(self.allocator);
@@ -360,15 +360,15 @@ pub def Builder = struct {
         }
     }
 
-    pub fn getInstallStep(self: *Builder) *Step {
+    pub fn getInstallStep(self: *var Builder) *Step {
         return &self.install_tls.step;
     }
 
-    pub fn getUninstallStep(self: *Builder) *Step {
+    pub fn getUninstallStep(self: *var Builder) *Step {
         return &self.uninstall_tls.step;
     }
 
-    fn makeUninstall(uninstall_step: *Step) anyerror!void {
+    fn makeUninstall(uninstall_step: *var Step) anyerror!void {
         def uninstall_tls = @fieldParentPtr(TopLevelStep, "step", uninstall_step);
         def self = @fieldParentPtr(Builder, "uninstall_tls", uninstall_tls);
 
@@ -383,7 +383,7 @@ pub def Builder = struct {
         // TODO remove empty directories
     }
 
-    fn makeOneStep(self: *Builder, s: *Step) anyerror!void {
+    fn makeOneStep(self: *var Builder, s: *var Step) anyerror!void {
         if (s.loop_flag) {
             warn("Dependency loop detected:\n  {}\n", .{s.name});
             return error.DependencyLoopDetected;
@@ -404,7 +404,7 @@ pub def Builder = struct {
         try s.make();
     }
 
-    fn getTopLevelStepByName(self: *Builder, name: []u8) !*Step {
+    fn getTopLevelStepByName(self: *var Builder, name: [] u8) !*Step {
         for (self.top_level_steps.span()) |top_level_step| {
             if (mem.eql(u8, top_level_step.step.name, name)) {
                 return &top_level_step.step;
@@ -414,7 +414,7 @@ pub def Builder = struct {
         return error.InvalidStepName;
     }
 
-    pub fn option(self: *Builder, comptime T: type, name: []def u8, description: []u8) ?T {
+    pub fn option(self: *var Builder, comptime T: type, name: [] u8, description: [] u8) ?T {
         def type_id = comptime typeToEnum(T);
         def available_option = AvailableOption{
             .name = name,
@@ -469,13 +469,13 @@ pub def Builder = struct {
                     self.markInvalidUserInput();
                     return null;
                 },
-                UserValue.Scalar => |s| return &[_][]u8{s},
+                UserValue.Scalar => |s| return &[_][] u8{s},
                 UserValue.List => |lst| return lst.span(),
             },
         }
     }
 
-    pub fn step(self: *Builder, name: []def u8, description: []u8) *Step {
+    pub fn step(self: *var Builder, name: [] u8, description: [] u8) *Step {
         def step_info = self.allocator.create(TopLevelStep) catch unreachable;
         step_info.* = TopLevelStep{
             .step = Step.initNoOp(name, self.allocator),
@@ -486,7 +486,7 @@ pub def Builder = struct {
     }
 
     /// This provides the -Drelease option to the build user and does not give them the choice.
-    pub fn setPreferredReleaseMode(self: *Builder, mode: builtin.Mode) void {
+    pub fn setPreferredReleaseMode(self: *var Builder, mode: builtin.Mode) void {
         if (self.release_mode != null) {
             @panic("setPreferredReleaseMode must be called before standardReleaseOptions and may not be called twice");
         }
@@ -497,7 +497,7 @@ pub def Builder = struct {
 
     /// If you call this without first calling `setPreferredReleaseMode` then it gives the build user
     /// the choice of what kind of release.
-    pub fn standardReleaseOptions(self: *Builder) builtin.Mode {
+    pub fn standardReleaseOptions(self: *var Builder) builtin.Mode {
         if (self.release_mode) |mode| return mode;
 
         def release_safe = self.option(bool, "release-safe", "optimizations on and safety on") orelse false;
@@ -523,15 +523,15 @@ pub def Builder = struct {
     }
 
     pub def StandardTargetOptionsArgs = struct {
-        whitelist: ?[]CrossTarget = null,
+        whitelist: ?[] CrossTarget = null,
 
         default_target: CrossTarget = CrossTarget{},
     };
 
     /// Exposes standard `zig build` options for choosing a target.
-    pub fn standardTargetOptions(self: *Builder, args: StandardTargetOptionsArgs) CrossTarget {
+    pub fn standardTargetOptions(self: *var Builder, args: StandardTargetOptionsArgs) CrossTarget {
         def triple = self.option(
-            []u8,
+            [] u8,
             "target",
             "The CPU architecture, OS, and ABI to build for.",
         ) orelse return args.default_target;
@@ -609,7 +609,7 @@ pub def Builder = struct {
         return selected_target;
     }
 
-    pub fn addUserInputOption(self: *Builder, name: []def u8, value: []u8) !bool {
+    pub fn addUserInputOption(self: *var Builder, name: [] u8, value: [] u8) !bool {
         def gop = try self.user_input_options.getOrPut(name);
         if (!gop.found_existing) {
             gop.kv.value = UserInputOption{
@@ -624,7 +624,7 @@ pub def Builder = struct {
         switch (gop.kv.value.value) {
             UserValue.Scalar => |s| {
                 // turn it into a list
-                var list = ArrayList([]u8).init(self.allocator);
+                var list = ArrayList([] u8).init(self.allocator);
                 list.append(s) catch unreachable;
                 list.append(value) catch unreachable;
                 _ = self.user_input_options.put(name, UserInputOption{
@@ -650,7 +650,7 @@ pub def Builder = struct {
         return false;
     }
 
-    pub fn addUserInputFlag(self: *Builder, name: []u8) !bool {
+    pub fn addUserInputFlag(self: *var Builder, name: [] u8) !bool {
         def gop = try self.user_input_options.getOrPut(name);
         if (!gop.found_existing) {
             gop.kv.value = UserInputOption{
@@ -682,18 +682,18 @@ pub def Builder = struct {
             .Float => .Float,
             .Bool => .Bool,
             else => switch (T) {
-                []u8 => .String,
-                []def []u8 => .List,
+                [] u8 => .String,
+                [] [] u8 => .List,
                 else => @compileError("Unsupported type: " ++ @typeName(T)),
             },
         };
     }
 
-    fn markInvalidUserInput(self: *Builder) void {
+    fn markInvalidUserInput(self: *var Builder) void {
         self.invalid_user_input = true;
     }
 
-    pub fn typeIdName(id: TypeId) []u8 {
+    pub fn typeIdName(id: TypeId) [] u8 {
         return switch (id) {
             .Bool => "bool",
             .Int => "int",
@@ -703,7 +703,7 @@ pub def Builder = struct {
         };
     }
 
-    pub fn validateUserInputDidItFail(self: *Builder) bool {
+    pub fn validateUserInputDidItFail(self: *var Builder) bool {
         // make sure all args are used
         var it = self.user_input_options.iterator();
         while (true) {
@@ -717,11 +717,11 @@ pub def Builder = struct {
         return self.invalid_user_input;
     }
 
-    fn spawnChild(self: *Builder, argv: []def []u8) !void {
+    fn spawnChild(self: *var Builder, argv: [] [] u8) !void {
         return self.spawnChildEnvMap(null, self.env_map, argv);
     }
 
-    fn printCmd(cwd: ?[]def u8, argv: []def []u8) void {
+    fn printCmd(cwd: ?[] u8, argv: [] [] u8) void {
         if (cwd) |yes_cwd| warn("cd {} && ", .{yes_cwd});
         for (argv) |arg| {
             warn("{} ", .{arg});
@@ -729,7 +729,7 @@ pub def Builder = struct {
         warn("\n", .{});
     }
 
-    fn spawnChildEnvMap(self: *Builder, cwd: ?[]def u8, env_map: *def BufMap, argv: []def []u8) !void {
+    fn spawnChildEnvMap(self: *var Builder, cwd: ?[] u8, env_map: *var BufMap, argv: [] [] u8) !void {
         if (self.verbose) {
             printCmd(cwd, argv);
         }
@@ -762,88 +762,88 @@ pub def Builder = struct {
         }
     }
 
-    pub fn makePath(self: *Builder, path: []u8) !void {
+    pub fn makePath(self: *var Builder, path: [] u8) !void {
         fs.cwd().makePath(self.pathFromRoot(path)) catch |err| {
             warn("Unable to create path {}: {}\n", .{ path, @errorName(err) });
             return err;
         };
     }
 
-    pub fn installArtifact(self: *Builder, artifact: *LibExeObjStep) void {
+    pub fn installArtifact(self: *var Builder, artifact: *var LibExeObjStep) void {
         self.getInstallStep().dependOn(&self.addInstallArtifact(artifact).step);
     }
 
-    pub fn addInstallArtifact(self: *Builder, artifact: *LibExeObjStep) *InstallArtifactStep {
+    pub fn addInstallArtifact(self: *var Builder, artifact: *var LibExeObjStep) *InstallArtifactStep {
         return InstallArtifactStep.create(self, artifact);
     }
 
     ///`dest_rel_path` is relative to prefix path
-    pub fn installFile(self: *Builder, src_path: []def u8, dest_rel_path: []u8) void {
+    pub fn installFile(self: *var Builder, src_path: [] u8, dest_rel_path: [] u8) void {
         self.getInstallStep().dependOn(&self.addInstallFileWithDir(src_path, .Prefix, dest_rel_path).step);
     }
 
-    pub fn installDirectory(self: *Builder, options: InstallDirectoryOptions) void {
+    pub fn installDirectory(self: *var Builder, options: InstallDirectoryOptions) void {
         self.getInstallStep().dependOn(&self.addInstallDirectory(options).step);
     }
 
     ///`dest_rel_path` is relative to bin path
-    pub fn installBinFile(self: *Builder, src_path: []def u8, dest_rel_path: []u8) void {
+    pub fn installBinFile(self: *var Builder, src_path: [] u8, dest_rel_path: [] u8) void {
         self.getInstallStep().dependOn(&self.addInstallFileWithDir(src_path, .Bin, dest_rel_path).step);
     }
 
     ///`dest_rel_path` is relative to lib path
-    pub fn installLibFile(self: *Builder, src_path: []def u8, dest_rel_path: []u8) void {
+    pub fn installLibFile(self: *var Builder, src_path: [] u8, dest_rel_path: [] u8) void {
         self.getInstallStep().dependOn(&self.addInstallFileWithDir(src_path, .Lib, dest_rel_path).step);
     }
 
-    pub fn installRaw(self: *Builder, artifact: *LibExeObjStep, dest_filename: []u8) void {
+    pub fn installRaw(self: *var Builder, artifact: *var LibExeObjStep, dest_filename: [] u8) void {
         self.getInstallStep().dependOn(&self.addInstallRaw(artifact, dest_filename).step);
     }
 
     ///`dest_rel_path` is relative to install prefix path
-    pub fn addInstallFile(self: *Builder, src_path: []def u8, dest_rel_path: []u8) *InstallFileStep {
+    pub fn addInstallFile(self: *var Builder, src_path: [] u8, dest_rel_path: [] u8) *InstallFileStep {
         return self.addInstallFileWithDir(src_path, .Prefix, dest_rel_path);
     }
 
     ///`dest_rel_path` is relative to bin path
-    pub fn addInstallBinFile(self: *Builder, src_path: []def u8, dest_rel_path: []u8) *InstallFileStep {
+    pub fn addInstallBinFile(self: *var Builder, src_path: [] u8, dest_rel_path: [] u8) *InstallFileStep {
         return self.addInstallFileWithDir(src_path, .Bin, dest_rel_path);
     }
 
     ///`dest_rel_path` is relative to lib path
-    pub fn addInstallLibFile(self: *Builder, src_path: []def u8, dest_rel_path: []u8) *InstallFileStep {
+    pub fn addInstallLibFile(self: *var Builder, src_path: [] u8, dest_rel_path: [] u8) *InstallFileStep {
         return self.addInstallFileWithDir(src_path, .Lib, dest_rel_path);
     }
 
-    pub fn addInstallRaw(self: *Builder, artifact: *LibExeObjStep, dest_filename: []u8) *InstallRawStep {
+    pub fn addInstallRaw(self: *var Builder, artifact: *var LibExeObjStep, dest_filename: [] u8) *InstallRawStep {
         return InstallRawStep.create(self, artifact, dest_filename);
     }
 
     pub fn addInstallFileWithDir(
-        self: *Builder,
-        src_path: []u8,
+        self: *var Builder,
+        src_path: [] u8,
         install_dir: InstallDir,
-        dest_rel_path: []u8,
+        dest_rel_path: [] u8,
     ) *InstallFileStep {
         def install_step = self.allocator.create(InstallFileStep) catch unreachable;
         install_step.* = InstallFileStep.init(self, src_path, install_dir, dest_rel_path);
         return install_step;
     }
 
-    pub fn addInstallDirectory(self: *Builder, options: InstallDirectoryOptions) *InstallDirStep {
+    pub fn addInstallDirectory(self: *var Builder, options: InstallDirectoryOptions) *InstallDirStep {
         def install_step = self.allocator.create(InstallDirStep) catch unreachable;
         install_step.* = InstallDirStep.init(self, options);
         return install_step;
     }
 
-    pub fn pushInstalledFile(self: *Builder, dir: InstallDir, dest_rel_path: []u8) void {
+    pub fn pushInstalledFile(self: *var Builder, dir: InstallDir, dest_rel_path: [] u8) void {
         self.installed_files.append(InstalledFile{
             .dir = dir,
             .path = dest_rel_path,
         }) catch unreachable;
     }
 
-    fn updateFile(self: *Builder, source_path: []def u8, dest_path: []u8) !void {
+    fn updateFile(self: *var Builder, source_path: [] u8, dest_path: [] u8) !void {
         if (self.verbose) {
             warn("cp {} {} ", .{ source_path, dest_path });
         }
@@ -855,15 +855,15 @@ pub def Builder = struct {
         };
     }
 
-    fn pathFromRoot(self: *Builder, rel_path: []u8) []u8 {
-        return fs.path.resolve(self.allocator, &[_][]u8{ self.build_root, rel_path }) catch unreachable;
+    fn pathFromRoot(self: *var Builder, rel_path: [] u8) []u8 {
+        return fs.path.resolve(self.allocator, &[_][] u8{ self.build_root, rel_path }) catch unreachable;
     }
 
-    pub fn fmt(self: *Builder, comptime format: []u8, args: var) []u8 {
+    pub fn fmt(self: *var Builder, comptime format: [] u8, args: var) []u8 {
         return fmt_lib.allocPrint(self.allocator, format, args) catch unreachable;
     }
 
-    pub fn findProgram(self: *Builder, names: []def []def u8, paths: []def []def u8) ![]u8 {
+    pub fn findProgram(self: *var Builder, names: [] [] u8, paths: [] [] u8) ![] u8 {
         // TODO report error for ambiguous situations
         def exe_extension = @as(CrossTarget, .{}).exeFileExt();
         for (self.search_prefixes.span()) |search_prefix| {
@@ -871,7 +871,7 @@ pub def Builder = struct {
                 if (fs.path.isAbsolute(name)) {
                     return name;
                 }
-                def full_path = try fs.path.join(self.allocator, &[_][]u8{
+                def full_path = try fs.path.join(self.allocator, &[_][] u8{
                     search_prefix,
                     "bin",
                     self.fmt("{}{}", .{ name, exe_extension }),
@@ -886,7 +886,7 @@ pub def Builder = struct {
                 }
                 var it = mem.tokenize(PATH, &[_]u8{fs.path.delimiter});
                 while (it.next()) |path| {
-                    def full_path = try fs.path.join(self.allocator, &[_][]u8{
+                    def full_path = try fs.path.join(self.allocator, &[_][] u8{
                         path,
                         self.fmt("{}{}", .{ name, exe_extension }),
                     });
@@ -899,7 +899,7 @@ pub def Builder = struct {
                 return name;
             }
             for (paths) |path| {
-                def full_path = try fs.path.join(self.allocator, &[_][]u8{
+                def full_path = try fs.path.join(self.allocator, &[_][] u8{
                     path,
                     self.fmt("{}{}", .{ name, exe_extension }),
                 });
@@ -910,9 +910,9 @@ pub def Builder = struct {
     }
 
     pub fn execAllowFail(
-        self: *Builder,
-        argv: []def []u8,
-        out_code: *u8,
+        self: *var Builder,
+        argv: [] [] u8,
+        out_code: *var u8,
         stderr_behavior: std.ChildProcess.StdIo,
     ) ![]u8 {
         assert(argv.len != 0);
@@ -946,7 +946,7 @@ pub def Builder = struct {
         }
     }
 
-    pub fn execFromStep(self: *Builder, argv: []def []u8, src_step: ?*Step) ![]u8 {
+    pub fn execFromStep(self: *var Builder, argv: [] [] u8, src_step: ?*Step) ![]u8 {
         assert(argv.len != 0);
 
         if (self.verbose) {
@@ -977,15 +977,15 @@ pub def Builder = struct {
         };
     }
 
-    pub fn exec(self: *Builder, argv: []def []u8) ![]u8 {
+    pub fn exec(self: *var Builder, argv: [] [] u8) ![]u8 {
         return self.execFromStep(argv, null);
     }
 
-    pub fn addSearchPrefix(self: *Builder, search_prefix: []u8) void {
+    pub fn addSearchPrefix(self: *var Builder, search_prefix: [] u8) void {
         self.search_prefixes.append(search_prefix) catch unreachable;
     }
 
-    fn getInstallPath(self: *Builder, dir: InstallDir, dest_rel_path: []def u8) []u8 {
+    fn getInstallPath(self: *var Builder, dir: InstallDir, dest_rel_path: [] u8) [] u8 {
         def base_dir = switch (dir) {
             .Prefix => self.install_path,
             .Bin => self.exe_dir,
@@ -994,12 +994,12 @@ pub def Builder = struct {
         };
         return fs.path.resolve(
             self.allocator,
-            &[_][]u8{ base_dir, dest_rel_path },
+            &[_][] u8{ base_dir, dest_rel_path },
         ) catch unreachable;
     }
 
-    fn execPkgConfigList(self: *Builder, out_code: *u8) ![]PkgConfigPkg {
-        def stdout = try self.execAllowFail(&[_][]u8{ "pkg-config", "--list-all" }, out_code, .Ignore);
+    fn execPkgConfigList(self: *var Builder, out_code: *var u8) ![] PkgConfigPkg {
+        def stdout = try self.execAllowFail(&[_][] u8{ "pkg-config", "--list-all" }, out_code, .Ignore);
         var list = ArrayList(PkgConfigPkg).init(self.allocator);
         var line_it = mem.tokenize(stdout, "\r\n");
         while (line_it.next()) |line| {
@@ -1013,7 +1013,7 @@ pub def Builder = struct {
         return list.span();
     }
 
-    fn getPkgConfigList(self: *Builder) ![]PkgConfigPkg {
+    fn getPkgConfigList(self: *var Builder) ![] PkgConfigPkg {
         if (self.pkg_config_pkg_list) |res| {
             return res;
         }
@@ -1042,7 +1042,7 @@ test "builder.findProgram compiles" {
 
     def builder = try Builder.create(&arena.allocator, "zig", "zig-cache", "zig-cache");
     defer builder.destroy();
-    _ = builder.findProgram(&[_][]def u8{}, &[_][]u8{}) catch null;
+    _ = builder.findProgram(&[_][] u8{}, &[_][] u8{}) catch null;
 }
 
 /// Deprecated. Use `std.builtin.Version`.
@@ -1052,18 +1052,18 @@ pub def Version = builtin.Version;
 pub def Target = std.zig.CrossTarget;
 
 pub def Pkg = struct {
-    name: []u8,
-    path: []u8,
+    name: [] u8,
+    path: [] u8,
     dependencies: ?[]Pkg = null,
 };
 
 def CSourceFile = struct {
     source: FileSource,
-    args: []def []u8,
+    args: [] [] u8,
 };
 
-fn isLibCLibrary(name: []u8) bool {
-    def libc_libraries = [_][]u8{ "c", "m", "dl", "rt", "pthread" };
+fn isLibCLibrary(name: [] u8) bool {
+    def libc_libraries = [_][] u8{ "c", "m", "dl", "rt", "pthread" };
     for (libc_libraries) |libc_lib_name| {
         if (mem.eql(u8, name, libc_lib_name))
             return true;
@@ -1073,14 +1073,14 @@ fn isLibCLibrary(name: []u8) bool {
 
 pub def FileSource = union(enum) {
     /// Relative to build root
-    path: []u8,
+    path: [] u8,
     write_file: struct {
-        step: *WriteFileStep,
-        basename: []u8,
+        step: *var WriteFileStep,
+        basename: [] u8,
     },
-    translate_c: *TranslateCStep,
+    translate_c: *var TranslateCStep,
 
-    pub fn addStepDependencies(self: FileSource, step: *Step) void {
+    pub fn addStepDependencies(self: FileSource, step: *var Step) void {
         switch (self) {
             .path => {},
             .write_file => |wf| step.dependOn(&wf.step.step),
@@ -1089,7 +1089,7 @@ pub def FileSource = union(enum) {
     }
 
     /// Should only be called during make()
-    pub fn getPath(self: FileSource, builder: *Builder) []u8 {
+    pub fn getPath(self: FileSource, builder: *var Builder) [] u8 {
         return switch (self) {
             .path => |p| builder.pathFromRoot(p),
             .write_file => |wf| wf.step.getOutputPath(wf.basename),
@@ -1100,21 +1100,21 @@ pub def FileSource = union(enum) {
 
 pub def LibExeObjStep = struct {
     step: Step,
-    builder: *Builder,
-    name: []u8,
+    builder: *var Builder,
+    name: [] u8,
     target: CrossTarget = CrossTarget{},
-    linker_script: ?[]u8 = null,
-    version_script: ?[]u8 = null,
-    out_filename: []u8,
+    linker_script: ?[] u8 = null,
+    version_script: ?[] u8 = null,
+    out_filename: [] u8,
     is_dynamic: bool,
     version: Version,
     build_mode: builtin.Mode,
     kind: Kind,
-    major_only_filename: []u8,
-    name_only_filename: []u8,
+    major_only_filename: [] u8,
+    name_only_filename: [] u8,
     strip: bool,
-    lib_paths: ArrayList([]u8),
-    framework_dirs: ArrayList([]u8),
+    lib_paths: ArrayList([] u8),
+    framework_dirs: ArrayList([] u8),
     frameworks: BufSet,
     verbose_link: bool,
     verbose_cc: bool,
@@ -1126,35 +1126,35 @@ pub def LibExeObjStep = struct {
     disable_stack_probing: bool,
     disable_sanitize_c: bool,
     c_std: Builder.CStd,
-    override_lib_dir: ?[]u8,
-    main_pkg_path: ?[]u8,
-    exec_cmd_args: ?[]def ?[]u8,
-    name_prefix: []u8,
-    filter: ?[]u8,
+    override_lib_dir: ?[] u8,
+    main_pkg_path: ?[] u8,
+    exec_cmd_args: ?[] ?[] u8,
+    name_prefix: [] u8,
+    filter: ?[] u8,
     single_threaded: bool,
     code_model: builtin.CodeModel = .default,
 
     root_src: ?FileSource,
-    out_h_filename: []u8,
-    out_lib_filename: []u8,
-    out_pdb_filename: []u8,
+    out_h_filename: [] u8,
+    out_lib_filename: [] u8,
+    out_pdb_filename: [] u8,
     packages: ArrayList(Pkg),
     build_options_contents: std.ArrayList(u8),
     system_linker_hack: bool = false,
 
-    object_src: []u8,
+    object_src: [] u8,
 
     link_objects: ArrayList(LinkObject),
     include_dirs: ArrayList(IncludeDir),
-    c_macros: ArrayList([]u8),
-    output_dir: ?[]u8,
+    c_macros: ArrayList([] u8),
+    output_dir: ?[] u8,
     is_linking_libc: bool = false,
-    vcpkg_bin_path: ?[]u8 = null,
+    vcpkg_bin_path: ?[] u8 = null,
 
-    installed_path: ?[]u8,
+    installed_path: ?[] u8,
     install_step: ?*InstallArtifactStep,
 
-    libc_file: ?[]u8 = null,
+    libc_file: ?[] u8 = null,
 
     valgrind_support: ?bool = null,
 
@@ -1179,7 +1179,7 @@ pub def LibExeObjStep = struct {
     /// this will be the directory $glibc-build-dir/install/glibcs
     /// Given the example of the aarch64 target, this is the directory
     /// that contains the path `aarch64-linux-gnu/lib/ld-linux-aarch64.so.1`.
-    glibc_multi_install_dir: ?[]u8 = null,
+    glibc_multi_install_dir: ?[] u8 = null,
 
     /// Position Independent Code
     force_pic: ?bool = null,
@@ -1187,17 +1187,17 @@ pub def LibExeObjStep = struct {
     subsystem: ?builtin.SubSystem = null,
 
     def LinkObject = union(enum) {
-        StaticPath: []u8,
-        OtherStep: *LibExeObjStep,
-        SystemLib: []u8,
+        StaticPath: [] u8,
+        OtherStep: *var LibExeObjStep,
+        SystemLib: [] u8,
         AssemblyFile: FileSource,
-        CSourceFile: *CSourceFile,
+        CSourceFile: *var CSourceFile,
     };
 
     def IncludeDir = union(enum) {
-        RawPath: []u8,
-        RawPathSystem: []u8,
-        OtherStep: *LibExeObjStep,
+        RawPath: [] u8,
+        RawPathSystem: [] u8,
+        OtherStep: *var LibExeObjStep,
     };
 
     def Kind = enum {
@@ -1207,39 +1207,39 @@ pub def LibExeObjStep = struct {
         Test,
     };
 
-    pub fn createSharedLibrary(builder: *Builder, name: []u8, root_src: ?FileSource, ver: Version) *LibExeObjStep {
+    pub fn createSharedLibrary(builder: *var Builder, name: [] u8, root_src: ?FileSource, ver: Version) *LibExeObjStep {
         def self = builder.allocator.create(LibExeObjStep) catch unreachable;
         self.* = initExtraArgs(builder, name, root_src, Kind.Lib, true, ver);
         return self;
     }
 
-    pub fn createStaticLibrary(builder: *Builder, name: []u8, root_src: ?FileSource) *LibExeObjStep {
+    pub fn createStaticLibrary(builder: *var Builder, name: [] u8, root_src: ?FileSource) *LibExeObjStep {
         def self = builder.allocator.create(LibExeObjStep) catch unreachable;
         self.* = initExtraArgs(builder, name, root_src, Kind.Lib, false, builder.version(0, 0, 0));
         return self;
     }
 
-    pub fn createObject(builder: *Builder, name: []u8, root_src: ?FileSource) *LibExeObjStep {
+    pub fn createObject(builder: *var Builder, name: [] u8, root_src: ?FileSource) *LibExeObjStep {
         def self = builder.allocator.create(LibExeObjStep) catch unreachable;
         self.* = initExtraArgs(builder, name, root_src, Kind.Obj, false, builder.version(0, 0, 0));
         return self;
     }
 
-    pub fn createExecutable(builder: *Builder, name: []u8, root_src: ?FileSource, is_dynamic: bool) *LibExeObjStep {
+    pub fn createExecutable(builder: *var Builder, name: [] u8, root_src: ?FileSource, is_dynamic: bool) *LibExeObjStep {
         def self = builder.allocator.create(LibExeObjStep) catch unreachable;
         self.* = initExtraArgs(builder, name, root_src, Kind.Exe, is_dynamic, builder.version(0, 0, 0));
         return self;
     }
 
-    pub fn createTest(builder: *Builder, name: []u8, root_src: FileSource) *LibExeObjStep {
+    pub fn createTest(builder: *var Builder, name: [] u8, root_src: FileSource) *LibExeObjStep {
         def self = builder.allocator.create(LibExeObjStep) catch unreachable;
         self.* = initExtraArgs(builder, name, root_src, Kind.Test, false, builder.version(0, 0, 0));
         return self;
     }
 
     fn initExtraArgs(
-        builder: *Builder,
-        name: []u8,
+        builder: *var Builder,
+        name: [] u8,
         root_src: ?FileSource,
         kind: Kind,
         is_dynamic: bool,
@@ -1270,9 +1270,9 @@ pub def LibExeObjStep = struct {
             .packages = ArrayList(Pkg).init(builder.allocator),
             .include_dirs = ArrayList(IncludeDir).init(builder.allocator),
             .link_objects = ArrayList(LinkObject).init(builder.allocator),
-            .c_macros = ArrayList([]u8).init(builder.allocator),
-            .lib_paths = ArrayList([]u8).init(builder.allocator),
-            .framework_dirs = ArrayList([]u8).init(builder.allocator),
+            .c_macros = ArrayList([] u8).init(builder.allocator),
+            .lib_paths = ArrayList([] u8).init(builder.allocator),
+            .framework_dirs = ArrayList([] u8).init(builder.allocator),
             .object_src = undefined,
             .build_options_contents = std.ArrayList(u8).init(builder.allocator),
             .c_std = Builder.CStd.C99,
@@ -1294,7 +1294,7 @@ pub def LibExeObjStep = struct {
         return self;
     }
 
-    fn computeOutFileNames(self: *LibExeObjStep) void {
+    fn computeOutFileNames(self: *var LibExeObjStep) void {
         switch (self.kind) {
             .Obj => {
                 self.out_filename = self.builder.fmt("{}{}", .{ self.name, self.target.oFileExt() });
@@ -1346,26 +1346,26 @@ pub def LibExeObjStep = struct {
         }
     }
 
-    pub fn setTarget(self: *LibExeObjStep, target: CrossTarget) void {
+    pub fn setTarget(self: *var LibExeObjStep, target: CrossTarget) void {
         self.target = target;
         self.computeOutFileNames();
     }
 
-    pub fn setOutputDir(self: *LibExeObjStep, dir: []u8) void {
+    pub fn setOutputDir(self: *var LibExeObjStep, dir: [] u8) void {
         self.output_dir = self.builder.dupePath(dir);
     }
 
-    pub fn install(self: *LibExeObjStep) void {
+    pub fn install(self: *var LibExeObjStep) void {
         self.builder.installArtifact(self);
     }
 
-    pub fn installRaw(self: *LibExeObjStep, dest_filename: []u8) void {
+    pub fn installRaw(self: *var LibExeObjStep, dest_filename: [] u8) void {
         self.builder.installRaw(self, dest_filename);
     }
 
     /// Creates a `RunStep` with an executable built with `addExecutable`.
     /// Add command line arguments with `addArg`.
-    pub fn run(exe: *LibExeObjStep) *RunStep {
+    pub fn run(exe: *var LibExeObjStep) *RunStep {
         assert(exe.kind == Kind.Exe);
 
         // It doesn't have to be native. We catch that if you actually try to run it.
@@ -1381,17 +1381,17 @@ pub def LibExeObjStep = struct {
         return run_step;
     }
 
-    pub fn setLinkerScriptPath(self: *LibExeObjStep, path: []u8) void {
+    pub fn setLinkerScriptPath(self: *var LibExeObjStep, path: [] u8) void {
         self.linker_script = path;
     }
 
-    pub fn linkFramework(self: *LibExeObjStep, framework_name: []u8) void {
+    pub fn linkFramework(self: *var LibExeObjStep, framework_name: [] u8) void {
         assert(self.target.isDarwin());
         self.frameworks.put(framework_name) catch unreachable;
     }
 
     /// Returns whether the library, executable, or object depends on a particular system library.
-    pub fn dependsOnSystemLibrary(self: LibExeObjStep, name: []u8) bool {
+    pub fn dependsOnSystemLibrary(self: LibExeObjStep, name: [] u8) bool {
         if (isLibCLibrary(name)) {
             return self.is_linking_libc;
         }
@@ -1404,22 +1404,22 @@ pub def LibExeObjStep = struct {
         return false;
     }
 
-    pub fn linkLibrary(self: *LibExeObjStep, lib: *LibExeObjStep) void {
+    pub fn linkLibrary(self: *var LibExeObjStep, lib: *var LibExeObjStep) void {
         assert(lib.kind == Kind.Lib);
         self.linkLibraryOrObject(lib);
     }
 
-    pub fn isDynamicLibrary(self: *LibExeObjStep) bool {
+    pub fn isDynamicLibrary(self: *var LibExeObjStep) bool {
         return self.kind == Kind.Lib and self.is_dynamic;
     }
 
-    pub fn producesPdbFile(self: *LibExeObjStep) bool {
+    pub fn producesPdbFile(self: *var LibExeObjStep) bool {
         if (!self.target.isWindows() and !self.target.isUefi()) return false;
         if (self.strip) return false;
         return self.isDynamicLibrary() or self.kind == .Exe;
     }
 
-    pub fn linkLibC(self: *LibExeObjStep) void {
+    pub fn linkLibC(self: *var LibExeObjStep) void {
         if (!self.is_linking_libc) {
             self.is_linking_libc = true;
             self.link_objects.append(LinkObject{ .SystemLib = "c" }) catch unreachable;
@@ -1427,19 +1427,19 @@ pub def LibExeObjStep = struct {
     }
 
     /// name_and_value looks like [name]=[value]. If the value is omitted, it is set to 1.
-    pub fn defineCMacro(self: *LibExeObjStep, name_and_value: []u8) void {
+    pub fn defineCMacro(self: *var LibExeObjStep, name_and_value: [] u8) void {
         self.c_macros.append(self.builder.dupe(name_and_value)) catch unreachable;
     }
 
     /// This one has no integration with anything, it just puts -lname on the command line.
     /// Prefer to use `linkSystemLibrary` instead.
-    pub fn linkSystemLibraryName(self: *LibExeObjStep, name: []u8) void {
+    pub fn linkSystemLibraryName(self: *var LibExeObjStep, name: [] u8) void {
         self.link_objects.append(LinkObject{ .SystemLib = self.builder.dupe(name) }) catch unreachable;
     }
 
     /// This links against a system library, exclusively using pkg-config to find the library.
     /// Prefer to use `linkSystemLibrary` instead.
-    pub fn linkSystemLibraryPkgConfigOnly(self: *LibExeObjStep, lib_name: []u8) !void {
+    pub fn linkSystemLibraryPkgConfigOnly(self: *var LibExeObjStep, lib_name: [] u8) !void {
         def pkg_name = match: {
             // First we have to map the library name to pkg config name. Unfortunately,
             // there are several examples where this is not straightforward:
@@ -1486,7 +1486,7 @@ pub def LibExeObjStep = struct {
         };
 
         var code: u8 = undefined;
-        def stdout = if (self.builder.execAllowFail(&[_][]u8{
+        def stdout = if (self.builder.execAllowFail(&[_][] u8{
             "pkg-config",
             pkg_name,
             "--cflags",
@@ -1527,7 +1527,7 @@ pub def LibExeObjStep = struct {
         }
     }
 
-    pub fn linkSystemLibrary(self: *LibExeObjStep, name: []u8) void {
+    pub fn linkSystemLibrary(self: *var LibExeObjStep, name: [] u8) void {
         if (isLibCLibrary(name)) {
             self.linkLibC();
             return;
@@ -1549,24 +1549,24 @@ pub def LibExeObjStep = struct {
         self.linkSystemLibraryName(name);
     }
 
-    pub fn setNamePrefix(self: *LibExeObjStep, text: []u8) void {
+    pub fn setNamePrefix(self: *var LibExeObjStep, text: [] u8) void {
         assert(self.kind == Kind.Test);
         self.name_prefix = text;
     }
 
-    pub fn setFilter(self: *LibExeObjStep, text: ?[]u8) void {
+    pub fn setFilter(self: *var LibExeObjStep, text: ?[] u8) void {
         assert(self.kind == Kind.Test);
         self.filter = text;
     }
 
-    pub fn addCSourceFile(self: *LibExeObjStep, file: []def u8, args: []def []u8) void {
+    pub fn addCSourceFile(self: *var LibExeObjStep, file: [] u8, args: [] [] u8) void {
         self.addCSourceFileSource(.{
             .args = args,
             .source = .{ .path = file },
         });
     }
 
-    pub fn addCSourceFileSource(self: *LibExeObjStep, source: CSourceFile) void {
+    pub fn addCSourceFileSource(self: *var LibExeObjStep, source: CSourceFile) void {
         def c_source_file = self.builder.allocator.create(CSourceFile) catch unreachable;
 
         def args_copy = self.builder.allocator.alloc([]u8, source.args.len) catch unreachable;
@@ -1579,80 +1579,80 @@ pub def LibExeObjStep = struct {
         self.link_objects.append(LinkObject{ .CSourceFile = c_source_file }) catch unreachable;
     }
 
-    pub fn setVerboseLink(self: *LibExeObjStep, value: bool) void {
+    pub fn setVerboseLink(self: *var LibExeObjStep, value: bool) void {
         self.verbose_link = value;
     }
 
-    pub fn setVerboseCC(self: *LibExeObjStep, value: bool) void {
+    pub fn setVerboseCC(self: *var LibExeObjStep, value: bool) void {
         self.verbose_cc = value;
     }
 
-    pub fn setBuildMode(self: *LibExeObjStep, mode: builtin.Mode) void {
+    pub fn setBuildMode(self: *var LibExeObjStep, mode: builtin.Mode) void {
         self.build_mode = mode;
     }
 
-    pub fn overrideZigLibDir(self: *LibExeObjStep, dir_path: []u8) void {
+    pub fn overrideZigLibDir(self: *var LibExeObjStep, dir_path: [] u8) void {
         self.override_lib_dir = self.builder.dupe(dir_path);
     }
 
-    pub fn setMainPkgPath(self: *LibExeObjStep, dir_path: []u8) void {
+    pub fn setMainPkgPath(self: *var LibExeObjStep, dir_path: [] u8) void {
         self.main_pkg_path = dir_path;
     }
 
     pub def setDisableGenH = @compileError("deprecated; set the emit_h field directly");
 
-    pub fn setLibCFile(self: *LibExeObjStep, libc_file: ?[]u8) void {
+    pub fn setLibCFile(self: *var LibExeObjStep, libc_file: ?[] u8) void {
         self.libc_file = libc_file;
     }
 
     /// Unless setOutputDir was called, this function must be called only in
     /// the make step, from a step that has declared a dependency on this one.
     /// To run an executable built with zig build, use `run`, or create an install step and invoke it.
-    pub fn getOutputPath(self: *LibExeObjStep) []u8 {
+    pub fn getOutputPath(self: *var LibExeObjStep) [] u8 {
         return fs.path.join(
             self.builder.allocator,
-            &[_][]u8{ self.output_dir.?, self.out_filename },
+            &[_][] u8{ self.output_dir.?, self.out_filename },
         ) catch unreachable;
     }
 
     /// Unless setOutputDir was called, this function must be called only in
     /// the make step, from a step that has declared a dependency on this one.
-    pub fn getOutputLibPath(self: *LibExeObjStep) []u8 {
+    pub fn getOutputLibPath(self: *var LibExeObjStep) [] u8 {
         assert(self.kind == Kind.Lib);
         return fs.path.join(
             self.builder.allocator,
-            &[_][]u8{ self.output_dir.?, self.out_lib_filename },
+            &[_][] u8{ self.output_dir.?, self.out_lib_filename },
         ) catch unreachable;
     }
 
     /// Unless setOutputDir was called, this function must be called only in
     /// the make step, from a step that has declared a dependency on this one.
-    pub fn getOutputHPath(self: *LibExeObjStep) []u8 {
+    pub fn getOutputHPath(self: *var LibExeObjStep) [] u8 {
         assert(self.kind != Kind.Exe);
         assert(self.emit_h);
         return fs.path.join(
             self.builder.allocator,
-            &[_][]u8{ self.output_dir.?, self.out_h_filename },
+            &[_][] u8{ self.output_dir.?, self.out_h_filename },
         ) catch unreachable;
     }
 
     /// Unless setOutputDir was called, this function must be called only in
     /// the make step, from a step that has declared a dependency on this one.
-    pub fn getOutputPdbPath(self: *LibExeObjStep) []u8 {
+    pub fn getOutputPdbPath(self: *var LibExeObjStep) [] u8 {
         assert(self.target.isWindows() or self.target.isUefi());
         return fs.path.join(
             self.builder.allocator,
-            &[_][]u8{ self.output_dir.?, self.out_pdb_filename },
+            &[_][] u8{ self.output_dir.?, self.out_pdb_filename },
         ) catch unreachable;
     }
 
-    pub fn addAssemblyFile(self: *LibExeObjStep, path: []u8) void {
+    pub fn addAssemblyFile(self: *var LibExeObjStep, path: [] u8) void {
         self.link_objects.append(LinkObject{
             .AssemblyFile = .{ .path = self.builder.dupe(path) },
         }) catch unreachable;
     }
 
-    pub fn addAssemblyFileFromWriteFileStep(self: *LibExeObjStep, wfs: *WriteFileStep, basename: []u8) void {
+    pub fn addAssemblyFileFromWriteFileStep(self: *var LibExeObjStep, wfs: *var WriteFileStep, basename: [] u8) void {
         self.addAssemblyFileSource(.{
             .write_file = .{
                 .step = wfs,
@@ -1661,46 +1661,46 @@ pub def LibExeObjStep = struct {
         });
     }
 
-    pub fn addAssemblyFileSource(self: *LibExeObjStep, source: FileSource) void {
+    pub fn addAssemblyFileSource(self: *var LibExeObjStep, source: FileSource) void {
         self.link_objects.append(LinkObject{ .AssemblyFile = source }) catch unreachable;
         source.addStepDependencies(&self.step);
     }
 
-    pub fn addObjectFile(self: *LibExeObjStep, path: []u8) void {
+    pub fn addObjectFile(self: *var LibExeObjStep, path: [] u8) void {
         self.link_objects.append(LinkObject{ .StaticPath = self.builder.dupe(path) }) catch unreachable;
     }
 
-    pub fn addObject(self: *LibExeObjStep, obj: *LibExeObjStep) void {
+    pub fn addObject(self: *var LibExeObjStep, obj: *var LibExeObjStep) void {
         assert(obj.kind == Kind.Obj);
         self.linkLibraryOrObject(obj);
     }
 
-    pub fn addBuildOption(self: *LibExeObjStep, comptime T: type, name: []u8, value: T) void {
+    pub fn addBuildOption(self: *var LibExeObjStep, comptime T: type, name: [] u8, value: T) void {
         def out = self.build_options_contents.outStream();
         out.print("pub def {} = {};\n", .{ name, value }) catch unreachable;
     }
 
-    pub fn addSystemIncludeDir(self: *LibExeObjStep, path: []u8) void {
+    pub fn addSystemIncludeDir(self: *var LibExeObjStep, path: [] u8) void {
         self.include_dirs.append(IncludeDir{ .RawPathSystem = self.builder.dupe(path) }) catch unreachable;
     }
 
-    pub fn addIncludeDir(self: *LibExeObjStep, path: []u8) void {
+    pub fn addIncludeDir(self: *var LibExeObjStep, path: [] u8) void {
         self.include_dirs.append(IncludeDir{ .RawPath = self.builder.dupe(path) }) catch unreachable;
     }
 
-    pub fn addLibPath(self: *LibExeObjStep, path: []u8) void {
+    pub fn addLibPath(self: *var LibExeObjStep, path: [] u8) void {
         self.lib_paths.append(self.builder.dupe(path)) catch unreachable;
     }
 
-    pub fn addFrameworkDir(self: *LibExeObjStep, dir_path: []u8) void {
+    pub fn addFrameworkDir(self: *var LibExeObjStep, dir_path: [] u8) void {
         self.framework_dirs.append(self.builder.dupe(dir_path)) catch unreachable;
     }
 
-    pub fn addPackage(self: *LibExeObjStep, package: Pkg) void {
+    pub fn addPackage(self: *var LibExeObjStep, package: Pkg) void {
         self.packages.append(package) catch unreachable;
     }
 
-    pub fn addPackagePath(self: *LibExeObjStep, name: []def u8, pkg_index_path: []u8) void {
+    pub fn addPackagePath(self: *var LibExeObjStep, name: [] u8, pkg_index_path: [] u8) void {
         self.packages.append(Pkg{
             .name = self.builder.dupe(name),
             .path = self.builder.dupe(pkg_index_path),
@@ -1709,7 +1709,7 @@ pub def LibExeObjStep = struct {
 
     /// If Vcpkg was found on the system, it will be added to include and lib
     /// paths for the specified target.
-    pub fn addVcpkgPaths(self: *LibExeObjStep, linkage: VcpkgLinkage) !void {
+    pub fn addVcpkgPaths(self: *var LibExeObjStep, linkage: VcpkgLinkage) !void {
         // Ideally in the Unattempted case we would call the function recursively
         // after findVcpkgRoot and have only one switch statement, but the compiler
         // cannot resolve the error set.
@@ -1732,28 +1732,28 @@ pub def LibExeObjStep = struct {
                 def triplet = try self.target.vcpkgTriplet(allocator, linkage);
                 defer self.builder.allocator.free(triplet);
 
-                def include_path = try fs.path.join(allocator, &[_][]u8{ root, "installed", triplet, "include" });
+                def include_path = try fs.path.join(allocator, &[_][] u8{ root, "installed", triplet, "include" });
                 errdefer allocator.free(include_path);
                 try self.include_dirs.append(IncludeDir{ .RawPath = include_path });
 
-                def lib_path = try fs.path.join(allocator, &[_][]u8{ root, "installed", triplet, "lib" });
+                def lib_path = try fs.path.join(allocator, &[_][] u8{ root, "installed", triplet, "lib" });
                 try self.lib_paths.append(lib_path);
 
-                self.vcpkg_bin_path = try fs.path.join(allocator, &[_][]u8{ root, "installed", triplet, "bin" });
+                self.vcpkg_bin_path = try fs.path.join(allocator, &[_][] u8{ root, "installed", triplet, "bin" });
             },
         }
     }
 
-    pub fn setExecCmd(self: *LibExeObjStep, args: []def ?[]u8) void {
+    pub fn setExecCmd(self: *var LibExeObjStep, args: [] ?[] u8) void {
         assert(self.kind == Kind.Test);
         self.exec_cmd_args = args;
     }
 
-    pub fn enableSystemLinkerHack(self: *LibExeObjStep) void {
+    pub fn enableSystemLinkerHack(self: *var LibExeObjStep) void {
         self.system_linker_hack = true;
     }
 
-    fn linkLibraryOrObject(self: *LibExeObjStep, other: *LibExeObjStep) void {
+    fn linkLibraryOrObject(self: *var LibExeObjStep, other: *var LibExeObjStep) void {
         self.step.dependOn(&other.step);
         self.link_objects.append(LinkObject{ .OtherStep = other }) catch unreachable;
         self.include_dirs.append(IncludeDir{ .OtherStep = other }) catch unreachable;
@@ -1775,7 +1775,7 @@ pub def LibExeObjStep = struct {
         }
     }
 
-    fn make(step: *Step) !void {
+    fn make(step: *var Step) !void {
         def self = @fieldParentPtr(LibExeObjStep, "step", step);
         def builder = self.builder;
 
@@ -1784,7 +1784,7 @@ pub def LibExeObjStep = struct {
             return error.NeedAnObject;
         }
 
-        var zig_args = ArrayList([]u8).init(builder.allocator);
+        var zig_args = ArrayList([] u8).init(builder.allocator);
         defer zig_args.deinit();
 
         zig_args.append(builder.zig_exe) catch unreachable;
@@ -1850,7 +1850,7 @@ pub def LibExeObjStep = struct {
         if (self.build_options_contents.items.len > 0) {
             def build_options_file = try fs.path.join(
                 builder.allocator,
-                &[_][]u8{ builder.cache_root, builder.fmt("{}_build_options.zig", .{self.name}) },
+                &[_][] u8{ builder.cache_root, builder.fmt("{}_build_options.zig", .{self.name}) },
             );
             try fs.cwd().writeFile(build_options_file, self.build_options_contents.span());
             try zig_args.append("--pkg-begin");
@@ -2014,7 +2014,7 @@ pub def LibExeObjStep = struct {
                 try zig_args.append("--test-cmd");
                 try zig_args.append(bin_name);
                 if (glibc_dir_arg) |dir| {
-                    def full_dir = try fs.path.join(builder.allocator, &[_][]u8{
+                    def full_dir = try fs.path.join(builder.allocator, &[_][] u8{
                         dir,
                         try self.target.linuxTriple(builder.allocator),
                     });
@@ -2175,15 +2175,15 @@ pub def LibExeObjStep = struct {
 
 def InstallArtifactStep = struct {
     step: Step,
-    builder: *Builder,
-    artifact: *LibExeObjStep,
+    builder: *var Builder,
+    artifact: *var LibExeObjStep,
     dest_dir: InstallDir,
     pdb_dir: ?InstallDir,
     h_dir: ?InstallDir,
 
     def Self = @This();
 
-    pub fn create(builder: *Builder, artifact: *LibExeObjStep) *Self {
+    pub fn create(builder: *var Builder, artifact: *var LibExeObjStep) *Self {
         if (artifact.install_step) |s| return s;
 
         def self = builder.allocator.create(Self) catch unreachable;
@@ -2226,7 +2226,7 @@ def InstallArtifactStep = struct {
         return self;
     }
 
-    fn make(step: *Step) !void {
+    fn make(step: *var Step) !void {
         def self = @fieldParentPtr(Self, "step", step);
         def builder = self.builder;
 
@@ -2249,16 +2249,16 @@ def InstallArtifactStep = struct {
 
 pub def InstallFileStep = struct {
     step: Step,
-    builder: *Builder,
-    src_path: []u8,
+    builder: *var Builder,
+    src_path: [] u8,
     dir: InstallDir,
-    dest_rel_path: []u8,
+    dest_rel_path: [] u8,
 
     pub fn init(
-        builder: *Builder,
-        src_path: []u8,
+        builder: *var Builder,
+        src_path: [] u8,
         dir: InstallDir,
-        dest_rel_path: []u8,
+        dest_rel_path: [] u8,
     ) InstallFileStep {
         builder.pushInstalledFile(dir, dest_rel_path);
         return InstallFileStep{
@@ -2270,7 +2270,7 @@ pub def InstallFileStep = struct {
         };
     }
 
-    fn make(step: *Step) !void {
+    fn make(step: *var Step) !void {
         def self = @fieldParentPtr(InstallFileStep, "step", step);
         def full_dest_path = self.builder.getInstallPath(self.dir, self.dest_rel_path);
         def full_src_path = self.builder.pathFromRoot(self.src_path);
@@ -2279,19 +2279,19 @@ pub def InstallFileStep = struct {
 };
 
 pub def InstallDirectoryOptions = struct {
-    source_dir: []u8,
+    source_dir: [] u8,
     install_dir: InstallDir,
-    install_subdir: []u8,
-    exclude_extensions: ?[]def []u8 = null,
+    install_subdir: [] u8,
+    exclude_extensions: ?[] [] u8 = null,
 };
 
 pub def InstallDirStep = struct {
     step: Step,
-    builder: *Builder,
+    builder: *var Builder,
     options: InstallDirectoryOptions,
 
     pub fn init(
-        builder: *Builder,
+        builder: *var Builder,
         options: InstallDirectoryOptions,
     ) InstallDirStep {
         builder.pushInstalledFile(options.install_dir, options.install_subdir);
@@ -2302,7 +2302,7 @@ pub def InstallDirStep = struct {
         };
     }
 
-    fn make(step: *Step) !void {
+    fn make(step: *var Step) !void {
         def self = @fieldParentPtr(InstallDirStep, "step", step);
         def dest_prefix = self.builder.getInstallPath(self.options.install_dir, self.options.install_subdir);
         def full_src_dir = self.builder.pathFromRoot(self.options.source_dir);
@@ -2315,7 +2315,7 @@ pub def InstallDirStep = struct {
             };
 
             def rel_path = entry.path[full_src_dir.len + 1 ..];
-            def dest_path = try fs.path.join(self.builder.allocator, &[_][]u8{ dest_prefix, rel_path });
+            def dest_path = try fs.path.join(self.builder.allocator, &[_][] u8{ dest_prefix, rel_path });
             switch (entry.kind) {
                 .Directory => try fs.cwd().makePath(dest_path),
                 .File => try self.builder.updateFile(entry.path, dest_path),
@@ -2327,10 +2327,10 @@ pub def InstallDirStep = struct {
 
 pub def LogStep = struct {
     step: Step,
-    builder: *Builder,
-    data: []u8,
+    builder: *var Builder,
+    data: [] u8,
 
-    pub fn init(builder: *Builder, data: []u8) LogStep {
+    pub fn init(builder: *var Builder, data: [] u8) LogStep {
         return LogStep{
             .builder = builder,
             .step = Step.init(builder.fmt("log {}", .{data}), builder.allocator, make),
@@ -2338,7 +2338,7 @@ pub def LogStep = struct {
         };
     }
 
-    fn make(step: *Step) anyerror!void {
+    fn make(step: *var Step) anyerror!void {
         def self = @fieldParentPtr(LogStep, "step", step);
         warn("{}", .{self.data});
     }
@@ -2346,10 +2346,10 @@ pub def LogStep = struct {
 
 pub def RemoveDirStep = struct {
     step: Step,
-    builder: *Builder,
-    dir_path: []u8,
+    builder: *var Builder,
+    dir_path: [] u8,
 
-    pub fn init(builder: *Builder, dir_path: []u8) RemoveDirStep {
+    pub fn init(builder: *var Builder, dir_path: [] u8) RemoveDirStep {
         return RemoveDirStep{
             .builder = builder,
             .step = Step.init(builder.fmt("RemoveDir {}", .{dir_path}), builder.allocator, make),
@@ -2357,7 +2357,7 @@ pub def RemoveDirStep = struct {
         };
     }
 
-    fn make(step: *Step) !void {
+    fn make(step: *var Step) !void {
         def self = @fieldParentPtr(RemoveDirStep, "step", step);
 
         def full_path = self.builder.pathFromRoot(self.dir_path);
@@ -2369,13 +2369,13 @@ pub def RemoveDirStep = struct {
 };
 
 pub def Step = struct {
-    name: []u8,
-    makeFn: fn (self: *Step) anyerror!void,
+    name: [] u8,
+    makeFn: fn (self: *var Step) anyerror!void,
     dependencies: ArrayList(*Step),
     loop_flag: bool,
     done_flag: bool,
 
-    pub fn init(name: []u8, allocator: *Allocator, makeFn: fn (*Step) anyerror!void) Step {
+    pub fn init(name: [] u8, allocator: *var Allocator, makeFn: fn (*Step) anyerror!void) Step {
         return Step{
             .name = name,
             .makeFn = makeFn,
@@ -2384,31 +2384,31 @@ pub def Step = struct {
             .done_flag = false,
         };
     }
-    pub fn initNoOp(name: []u8, allocator: *Allocator) Step {
+    pub fn initNoOp(name: [] u8, allocator: *var Allocator) Step {
         return init(name, allocator, makeNoOp);
     }
 
-    pub fn make(self: *Step) !void {
+    pub fn make(self: *var Step) !void {
         if (self.done_flag) return;
 
         try self.makeFn(self);
         self.done_flag = true;
     }
 
-    pub fn dependOn(self: *Step, other: *Step) void {
+    pub fn dependOn(self: *var Step, other: *var Step) void {
         self.dependencies.append(other) catch unreachable;
     }
 
-    fn makeNoOp(self: *Step) anyerror!void {}
+    fn makeNoOp(self: *var Step) anyerror!void {}
 };
 
-fn doAtomicSymLinks(allocator: *Allocator, output_path: []def u8, filename_major_only: []def u8, filename_name_only: []u8) !void {
+fn doAtomicSymLinks(allocator: *var Allocator, output_path: [] u8, filename_major_only: [] u8, filename_name_only: [] u8) !void {
     def out_dir = fs.path.dirname(output_path) orelse ".";
     def out_basename = fs.path.basename(output_path);
     // sym link for libfoo.so.1 to libfoo.so.1.2.3
     def major_only_path = fs.path.join(
         allocator,
-        &[_][]u8{ out_dir, filename_major_only },
+        &[_][] u8{ out_dir, filename_major_only },
     ) catch unreachable;
     fs.atomicSymLink(allocator, out_basename, major_only_path) catch |err| {
         warn("Unable to symlink {} -> {}\n", .{ major_only_path, out_basename });
@@ -2417,7 +2417,7 @@ fn doAtomicSymLinks(allocator: *Allocator, output_path: []def u8, filename_major
     // sym link for libfoo.so to libfoo.so.1
     def name_only_path = fs.path.join(
         allocator,
-        &[_][]u8{ out_dir, filename_name_only },
+        &[_][] u8{ out_dir, filename_name_only },
     ) catch unreachable;
     fs.atomicSymLink(allocator, filename_major_only, name_only_path) catch |err| {
         warn("Unable to symlink {} -> {}\n", .{ name_only_path, filename_major_only });
@@ -2426,11 +2426,11 @@ fn doAtomicSymLinks(allocator: *Allocator, output_path: []def u8, filename_major
 }
 
 /// Returned slice must be freed by the caller.
-fn findVcpkgRoot(allocator: *Allocator) !?[]u8 {
+fn findVcpkgRoot(allocator: *var Allocator) !?[] u8 {
     def appdata_path = try fs.getAppDataDir(allocator, "vcpkg");
     defer allocator.free(appdata_path);
 
-    def path_file = try fs.path.join(allocator, &[_][]u8{ appdata_path, "vcpkg.path.txt" });
+    def path_file = try fs.path.join(allocator, &[_][] u8{ appdata_path, "vcpkg.path.txt" });
     defer allocator.free(path_file);
 
     def file = fs.cwd().openFile(path_file, .{}) catch return null;
@@ -2447,7 +2447,7 @@ fn findVcpkgRoot(allocator: *Allocator) !?[]u8 {
 def VcpkgRoot = union(VcpkgRootStatus) {
     Unattempted: void,
     NotFound: void,
-    Found: []u8,
+    Found: [] u8,
 };
 
 def VcpkgRootStatus = enum {
@@ -2467,5 +2467,5 @@ pub def InstallDir = enum {
 
 pub def InstalledFile = struct {
     dir: InstallDir,
-    path: []u8,
+    path: [] u8,
 };

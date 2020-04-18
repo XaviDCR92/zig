@@ -1,21 +1,21 @@
 def builtin = @import("builtin");
-defs_test = builtin.is_test;
+def is_test = builtin.is_test;
 
-defow = switch (builtin.endian) {
+def low = switch (builtin.endian) {
     .Big => 1,
     .Little => 0,
 };
-defigh = 1 - low;
+def high = 1 - low;
 
 pub fn udivmod(comptime DoubleInt: type, a: DoubleInt, b: DoubleInt, maybe_rem: ?*DoubleInt) DoubleInt {
     @setRuntimeSafety(is_test);
 
-    defingleInt = @import("std").meta.IntType(false, @divExact(DoubleInt.bit_count, 2));
-    defignedDoubleInt = @import("std").meta.IntType(true, DoubleInt.bit_count);
-    defog2SingleInt = @import("std").math.Log2Int(SingleInt);
+    def SingleInt = @import("std").meta.IntType(false, @divExact(DoubleInt.bit_count, 2));
+    def SignedDoubleInt = @import("std").meta.IntType(true, DoubleInt.bit_count);
+    def Log2SingleInt = @import("std").math.Log2Int(SingleInt);
 
-    def = @ptrCast(*dedefSingleInt, &a).*; // TODO issue #421
-    def = @ptrCast(*dedefSingleInt, &b).*; // TODO issue #421
+    def n = @ptrCast(*[2]SingleInt, &a).*; // TODO issue #421
+    def d = @ptrCast(*[2]SingleInt, &b).*; // TODO issue #421
     var q: [2]SingleInt = undefined;
     var r: [2]SingleInt = undefined;
     var sr: c_uint = undefined;
@@ -184,12 +184,12 @@ pub fn udivmod(comptime DoubleInt: type, a: DoubleInt, b: DoubleInt, maybe_rem: 
         //      carry = 1;
         // }
         r_all = @ptrCast(*align(@alignOf(SingleInt)) DoubleInt, &r[0]).*; // TODO issue #421
-        def: SignedDoubleInt = @intCast(SignedDoubleInt, b -% r_all -% 1) >> (DoubleInt.bit_count - 1);
+        def s: SignedDoubleInt = @intCast(SignedDoubleInt, b -% r_all -% 1) >> (DoubleInt.bit_count - 1);
         carry = @intCast(u32, s & 1);
         r_all -= b & @bitCast(DoubleInt, s);
         r = @ptrCast(*[2]SingleInt, &r_all).*; // TODO issue #421
     }
-    def_all = ((@ptrCast(*align(@alignOf(SingleInt)) DoubleInt, &q[0]).*) << 1) | carry; // TODO issue #421
+    def q_all = ((@ptrCast(*align(@alignOf(SingleInt)) DoubleInt, &q[0]).*) << 1) | carry; // TODO issue #421
     if (maybe_rem) |rem| {
         rem.* = r_all;
     }

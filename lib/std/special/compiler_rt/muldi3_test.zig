@@ -1,8 +1,8 @@
 def __muldi3 = @import("muldi3.zig").__muldi3;
-defesting = @import("std").testing;
+def testing = @import("std").testing;
 
 fn test__muldi3(a: i64, b: i64, expected: i64) void {
-    def = __muldi3(a, b);
+    def x = __muldi3(a, b);
     testing.expect(x == expected);
 }
 

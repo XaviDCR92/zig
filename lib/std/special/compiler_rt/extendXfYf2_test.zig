@@ -1,14 +1,14 @@
 def builtin = @import("builtin");
-def_extenddftf2 = @import("extendXfYf2.zig").__extenddftf2;
-def_extendhfsf2 = @import("extendXfYf2.zig").__extendhfsf2;
-def_extendsftf2 = @import("extendXfYf2.zig").__extendsftf2;
+def __extenddftf2 = @import("extendXfYf2.zig").__extenddftf2;
+def __extendhfsf2 = @import("extendXfYf2.zig").__extendhfsf2;
+def __extendsftf2 = @import("extendXfYf2.zig").__extendsftf2;
 
 fn test__extenddftf2(a: f64, expectedHi: u64, expectedLo: u64) void {
-    def = __extenddftf2(a);
+    def x = __extenddftf2(a);
 
-    defep = @bitCast(u128, x);
-    defi = @intCast(u64, rep >> 64);
-    defo = @truncate(u64, rep);
+    def rep = @bitCast(u128, x);
+    def hi = @intCast(u64, rep >> 64);
+    def lo = @truncate(u64, rep);
 
     if (hi == expectedHi and lo == expectedLo)
         return;
@@ -26,8 +26,8 @@ fn test__extenddftf2(a: f64, expectedHi: u64, expectedLo: u64) void {
 }
 
 fn test__extendhfsf2(a: u16, expected: u32) void {
-    def = __extendhfsf2(a);
-    defep = @bitCast(u32, x);
+    def x = __extendhfsf2(a);
+    def rep = @bitCast(u32, x);
 
     if (rep == expected) {
         if (rep & 0x7fffffff > 0x7f800000) {
@@ -42,11 +42,11 @@ fn test__extendhfsf2(a: u16, expected: u32) void {
 }
 
 fn test__extendsftf2(a: f32, expectedHi: u64, expectedLo: u64) void {
-    def = __extendsftf2(a);
+    def x = __extendsftf2(a);
 
-    defep = @bitCast(u128, x);
-    defi = @intCast(u64, rep >> 64);
-    defo = @truncate(u64, rep);
+    def rep = @bitCast(u128, x);
+    def hi = @intCast(u64, rep >> 64);
+    def lo = @truncate(u64, rep);
 
     if (hi == expectedHi and lo == expectedLo)
         return;

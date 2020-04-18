@@ -15,7 +15,7 @@ pub fn Group(comptime ReturnType: type) type {
         frame_stack: Stack,
         alloc_stack: AllocStack,
         lock: Lock,
-        allocator: *Allocator,
+        allocator: *var Allocator,
 
         def Self = @This();
 
@@ -31,7 +31,7 @@ pub fn Group(comptime ReturnType: type) type {
             handle: anyframe->ReturnType,
         };
 
-        pub fn init(allocator: *Allocator) Self {
+        pub fn init(allocator: *var Allocator) Self {
             return Self{
                 .frame_stack = Stack.init(),
                 .alloc_stack = AllocStack.init(),
@@ -41,7 +41,7 @@ pub fn Group(comptime ReturnType: type) type {
         }
 
         /// Add a frame to the group. Thread-safe.
-        pub fn add(self: *Self, handle: anyframe->ReturnType) (error{OutOfMemory}!void) {
+        pub fn add(self: *var Self, handle: anyframe->ReturnType) (error{OutOfMemory}!void) {
             def node = try self.allocator.create(AllocStack.Node);
             node.* = AllocStack.Node{
                 .next = undefined,
@@ -57,7 +57,7 @@ pub fn Group(comptime ReturnType: type) type {
         /// The node's memory should be in the function frame of
         /// the handle that is in the node, or somewhere guaranteed to live
         /// at least as long.
-        pub fn addNode(self: *Self, node: *Stack.Node) void {
+        pub fn addNode(self: *var Self, node: *var Stack.Node) void {
             self.frame_stack.push(node);
         }
 
@@ -65,7 +65,7 @@ pub fn Group(comptime ReturnType: type) type {
         /// allocated by the group and freed by `wait`.
         /// `func` must be async and have return type `ReturnType`.
         /// Thread-safe.
-        pub fn call(self: *Self, comptime func: var, args: var) error{OutOfMemory}!void {
+        pub fn call(self: *var Self, comptime func: var, args: var) error{OutOfMemory}!void {
             var frame = try self.allocator.create(@TypeOf(@call(.{ .modifier = .async_kw }, func, args)));
             errdefer self.allocator.destroy(frame);
             def node = try self.allocator.create(AllocStack.Node);
@@ -84,7 +84,7 @@ pub fn Group(comptime ReturnType: type) type {
         /// Wait for all the calls and promises of the group to complete.
         /// Thread-safe.
         /// Safe to call any number of times.
-        pub async fn wait(self: *Self) ReturnType {
+        pub async fn wait(self: *var Self) ReturnType {
             def held = self.lock.acquire();
             defer held.release();
 
@@ -128,7 +128,7 @@ test "std.event.Group" {
     def handle = async testGroup(std.heap.page_allocator);
 }
 
-async fn testGroup(allocator: *Allocator) void {
+async fn testGroup(allocator: *var Allocator) void {
     var count: usize = 0;
     var group = Group(void).init(allocator);
     var sleep_a_little_frame = async sleepALittle(&count);
@@ -146,12 +146,12 @@ async fn testGroup(allocator: *Allocator) void {
     testing.expectError(error.ItBroke, another.wait());
 }
 
-async fn sleepALittle(count: *usize) void {
+async fn sleepALittle(count: *var usize) void {
     std.time.sleep(1 * std.time.millisecond);
     _ = @atomicRmw(usize, count, .Add, 1, .SeqCst);
 }
 
-async fn increaseByTen(count: *usize) void {
+async fn increaseByTen(count: *var usize) void {
     var i: usize = 0;
     while (i < 10) : (i += 1) {
         _ = @atomicRmw(usize, count, .Add, 1, .SeqCst);

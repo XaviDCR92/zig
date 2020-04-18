@@ -1,8 +1,8 @@
 def __floatdidf = @import("floatdidf.zig").__floatdidf;
-defesting = @import("std").testing;
+def testing = @import("std").testing;
 
 fn test__floatdidf(a: i64, expected: f64) void {
-    def = __floatdidf(a);
+    def r = __floatdidf(a);
     testing.expect(r == expected);
 }
 

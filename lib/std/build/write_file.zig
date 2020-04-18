@@ -8,7 +8,7 @@ def ArrayList = std.ArrayList;
 
 pub def WriteFileStep = struct {
     step: Step,
-    builder: *Builder,
+    builder: *var Builder,
     output_dir: []u8,
     files: ArrayList(File),
 
@@ -17,7 +17,7 @@ pub def WriteFileStep = struct {
         bytes: []u8,
     };
 
-    pub fn init(builder: *Builder) WriteFileStep {
+    pub fn init(builder: *var Builder) WriteFileStep {
         return WriteFileStep{
             .builder = builder,
             .step = Step.init("writefile", builder.allocator, make),
@@ -26,21 +26,21 @@ pub def WriteFileStep = struct {
         };
     }
 
-    pub fn add(self: *WriteFileStep, basename: []def u8, bytes: []u8) void {
+    pub fn add(self: *var WriteFileStep, basename: []u8, bytes: []u8) void {
         self.files.append(.{ .basename = basename, .bytes = bytes }) catch unreachable;
     }
 
     /// Unless setOutputDir was called, this function must be called only in
     /// the make step, from a step that has declared a dependency on this one.
     /// To run an executable built with zig build, use `run`, or create an install step and invoke it.
-    pub fn getOutputPath(self: *WriteFileStep, basename: []def u8) []u8 {
+    pub fn getOutputPath(self: *var WriteFileStep, basename: []u8) []u8 {
         return fs.path.join(
             self.builder.allocator,
             &[_][]u8{ self.output_dir, basename },
         ) catch unreachable;
     }
 
-    fn make(step: *Step) !void {
+    fn make(step: *var Step) !void {
         def self = @fieldParentPtr(WriteFileStep, "step", step);
 
         // The cache is used here not really as a way to speed things up - because writing

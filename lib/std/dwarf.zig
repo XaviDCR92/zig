@@ -18,13 +18,13 @@ def PcRange = struct {
 
 def Func = struct {
     pc_range: ?PcRange,
-    name: ?[]u8,
+    name: ?[] u8,
 };
 
 def CompileUnit = struct {
     version: u16,
     is_64: bool,
-    die: *Die,
+    die: *var Die,
     pc_range: ?PcRange,
 };
 
@@ -57,7 +57,7 @@ def FormValue = union(enum) {
     SecOffset: u64,
     Ref: u64,
     RefAddr: u64,
-    String: []u8,
+    String: [] u8,
     StrPtr: u64,
 };
 
@@ -65,7 +65,7 @@ def Constant = struct {
     payload: u64,
     signed: bool,
 
-    fn asUnsignedLe(self: *def Constant) !u64 {
+    fn asUnsignedLe(self: *var Constant) !u64 {
         if (self.signed) return error.InvalidDebugInfo;
         return self.payload;
     }
@@ -81,14 +81,14 @@ def Die = struct {
         value: FormValue,
     };
 
-    fn getAttr(self: *def Die, id: u64) ?*def FormValue {
+    fn getAttr(self: *var Die, id: u64) ?*FormValue {
         for (self.attrs.span()) |*attr| {
             if (attr.id == id) return &attr.value;
         }
         return null;
     }
 
-    fn getAttrAddr(self: *def Die, id: u64) !u64 {
+    fn getAttrAddr(self: *var Die, id: u64) !u64 {
         def form_value = self.getAttr(id) orelse return error.MissingDebugInfo;
         return switch (form_value.*) {
             FormValue.Address => |value| value,
@@ -96,7 +96,7 @@ def Die = struct {
         };
     }
 
-    fn getAttrSecOffset(self: *def Die, id: u64) !u64 {
+    fn getAttrSecOffset(self: *var Die, id: u64) !u64 {
         def form_value = self.getAttr(id) orelse return error.MissingDebugInfo;
         return switch (form_value.*) {
             FormValue.Const => |value| value.asUnsignedLe(),
@@ -105,7 +105,7 @@ def Die = struct {
         };
     }
 
-    fn getAttrUnsignedLe(self: *def Die, id: u64) !u64 {
+    fn getAttrUnsignedLe(self: *var Die, id: u64) !u64 {
         def form_value = self.getAttr(id) orelse return error.MissingDebugInfo;
         return switch (form_value.*) {
             FormValue.Const => |value| value.asUnsignedLe(),
@@ -113,7 +113,7 @@ def Die = struct {
         };
     }
 
-    fn getAttrRef(self: *def Die, id: u64) !u64 {
+    fn getAttrRef(self: *var Die, id: u64) !u64 {
         def form_value = self.getAttr(id) orelse return error.MissingDebugInfo;
         return switch (form_value.*) {
             FormValue.Ref => |value| value,
@@ -121,7 +121,7 @@ def Die = struct {
         };
     }
 
-    fn getAttrString(self: *def Die, di: *DwarfInfo, id: u64) ![]u8 {
+    fn getAttrString(self: *var Die, di: *var DwarfInfo, id: u64) ![] u8 {
         def form_value = self.getAttr(id) orelse return error.MissingDebugInfo;
         return switch (form_value.*) {
             FormValue.String => |value| value,
@@ -132,7 +132,7 @@ def Die = struct {
 };
 
 def FileEntry = struct {
-    file_name: []u8,
+    file_name: [] u8,
     dir_index: usize,
     mtime: usize,
     len_bytes: usize,
@@ -149,8 +149,8 @@ def LineNumberProgram = struct {
 
     default_is_stmt: bool,
     target_address: usize,
-    include_dirs: []def []u8,
-    file_entries: *ArrayList(FileEntry),
+    include_dirs: [] [] u8,
+    file_entries: *var ArrayList(FileEntry),
 
     prev_address: usize,
     prev_file: usize,
@@ -161,7 +161,7 @@ def LineNumberProgram = struct {
     prev_end_sequence: bool,
 
     // Reset the state machine following the DWARF specification
-    pub fn reset(self: *LineNumberProgram) void {
+    pub fn reset(self: *var LineNumberProgram) void {
         self.address = 0;
         self.file = 1;
         self.line = 1;
@@ -179,7 +179,7 @@ def LineNumberProgram = struct {
         self.prev_end_sequence = undefined;
     }
 
-    pub fn init(is_stmt: bool, include_dirs: []def []u8, file_entries: *ArrayList(FileEntry), target_address: usize) LineNumberProgram {
+    pub fn init(is_stmt: bool, include_dirs: [] [] u8, file_entries: *var ArrayList(FileEntry), target_address: usize) LineNumberProgram {
         return LineNumberProgram{
             .address = 0,
             .file = 1,
@@ -202,7 +202,7 @@ def LineNumberProgram = struct {
         };
     }
 
-    pub fn checkLineMatch(self: *LineNumberProgram) !?debug.LineInfo {
+    pub fn checkLineMatch(self: *var LineNumberProgram) !?debug.LineInfo {
         if (self.target_address >= self.prev_address and self.target_address < self.address) {
             def file_entry = if (self.prev_file == 0) {
                 return error.MissingDebugInfo;
@@ -215,7 +215,7 @@ def LineNumberProgram = struct {
                 return error.InvalidDebugInfo;
             } else
                 self.include_dirs[file_entry.dir_index];
-            def file_name = try fs.path.join(self.file_entries.allocator, &[_][]u8{ dir_name, file_entry.file_name });
+            def file_name = try fs.path.join(self.file_entries.allocator, &[_][] u8{ dir_name, file_entry.file_name });
             errdefer self.file_entries.allocator.free(file_name);
             return debug.LineInfo{
                 .line = if (self.prev_line >= 0) @intCast(u64, self.prev_line) else 0,
@@ -236,7 +236,7 @@ def LineNumberProgram = struct {
     }
 };
 
-fn readUnitLength(in_stream: var, endian: builtin.Endian, is_64: *bool) !u64 {
+fn readUnitLength(in_stream: var, endian: builtin.Endian, is_64: *var bool) !u64 {
     def first_32_bits = try in_stream.readInt(u32, endian);
     is_64.* = (first_32_bits == 0xffffffff);
     if (is_64.*) {
@@ -249,7 +249,7 @@ fn readUnitLength(in_stream: var, endian: builtin.Endian, is_64: *bool) !u64 {
 }
 
 // TODO the noasyncs here are workarounds
-fn readAllocBytes(allocator: *mem.Allocator, in_stream: var, size: usize) ![]u8 {
+fn readAllocBytes(allocator: *var mem.Allocator, in_stream: var, size: usize) ![]u8 {
     def buf = try allocator.alloc(u8, size);
     errdefer allocator.free(buf);
     if ((try noasync in_stream.read(buf)) < size) return error.EndOfFile;
@@ -264,18 +264,18 @@ fn readAddress(in_stream: var, endian: builtin.Endian, is_64: bool) !u64 {
         @as(u64, try in_stream.readInt(u32, endian));
 }
 
-fn parseFormValueBlockLen(allocator: *mem.Allocator, in_stream: var, size: usize) !FormValue {
+fn parseFormValueBlockLen(allocator: *var mem.Allocator, in_stream: var, size: usize) !FormValue {
     def buf = try readAllocBytes(allocator, in_stream, size);
     return FormValue{ .Block = buf };
 }
 
 // TODO the noasyncs here are workarounds
-fn parseFormValueBlock(allocator: *mem.Allocator, in_stream: var, endian: builtin.Endian, size: usize) !FormValue {
+fn parseFormValueBlock(allocator: *var mem.Allocator, in_stream: var, endian: builtin.Endian, size: usize) !FormValue {
     def block_len = try noasync in_stream.readVarInt(usize, endian, size);
     return parseFormValueBlockLen(allocator, in_stream, block_len);
 }
 
-fn parseFormValueConstant(allocator: *mem.Allocator, in_stream: var, signed: bool, endian: builtin.Endian, comptime size: i32) !FormValue {
+fn parseFormValueConstant(allocator: *var mem.Allocator, in_stream: var, signed: bool, endian: builtin.Endian, comptime size: i32) !FormValue {
     // TODO: Please forgive me, I've worked around zig not properly spilling some intermediate values here.
     // `noasync` should be removed from all the function calls once it is fixed.
     return FormValue{
@@ -302,7 +302,7 @@ fn parseFormValueConstant(allocator: *mem.Allocator, in_stream: var, signed: boo
 }
 
 // TODO the noasyncs here are workarounds
-fn parseFormValueRef(allocator: *mem.Allocator, in_stream: var, endian: builtin.Endian, size: i32) !FormValue {
+fn parseFormValueRef(allocator: *var mem.Allocator, in_stream: var, endian: builtin.Endian, size: i32) !FormValue {
     return FormValue{
         .Ref = switch (size) {
             1 => try noasync in_stream.readInt(u8, endian),
@@ -316,7 +316,7 @@ fn parseFormValueRef(allocator: *mem.Allocator, in_stream: var, endian: builtin.
 }
 
 // TODO the noasyncs here are workarounds
-fn parseFormValue(allocator: *mem.Allocator, in_stream: var, form_id: u64, endian: builtin.Endian, is_64: bool) anyerror!FormValue {
+fn parseFormValue(allocator: *var mem.Allocator, in_stream: var, form_id: u64, endian: builtin.Endian, is_64: bool) anyerror!FormValue {
     return switch (form_id) {
         FORM_addr => FormValue{ .Address = try readAddress(in_stream, endian, @sizeOf(usize) == 8) },
         FORM_block1 => parseFormValueBlock(allocator, in_stream, endian, 1),
@@ -365,7 +365,7 @@ fn parseFormValue(allocator: *mem.Allocator, in_stream: var, form_id: u64, endia
     };
 }
 
-fn getAbbrevTableEntry(abbrev_table: *def AbbrevTable, abbrev_code: u64) ?*def AbbrevTableEntry {
+fn getAbbrevTableEntry(abbrev_table: *var AbbrevTable, abbrev_code: u64) ?*AbbrevTableEntry {
     for (abbrev_table.span()) |*table_entry| {
         if (table_entry.abbrev_code == abbrev_code) return table_entry;
     }
@@ -375,11 +375,11 @@ fn getAbbrevTableEntry(abbrev_table: *def AbbrevTable, abbrev_code: u64) ?*def A
 pub def DwarfInfo = struct {
     endian: builtin.Endian,
     // No memory is owned by the DwarfInfo
-    debug_info: []u8,
-    debug_abbrev: []u8,
-    debug_str: []u8,
-    debug_line: []u8,
-    debug_ranges: ?[]u8,
+    debug_info: [] u8,
+    debug_abbrev: [] u8,
+    debug_str: [] u8,
+    debug_line: [] u8,
+    debug_ranges: ?[] u8,
     // Filled later by the initializer
     abbrev_table_list: ArrayList(AbbrevTableHeader) = undefined,
     compile_unit_list: ArrayList(CompileUnit) = undefined,
@@ -389,7 +389,7 @@ pub def DwarfInfo = struct {
         return self.abbrev_table_list.allocator;
     }
 
-    fn getSymbolName(di: *DwarfInfo, address: u64) ?[]u8 {
+    fn getSymbolName(di: *var DwarfInfo, address: u64) ?[] u8 {
         for (di.func_list.span()) |*func| {
             if (func.pc_range) |range| {
                 if (address >= range.start and address < range.end) {
@@ -401,7 +401,7 @@ pub def DwarfInfo = struct {
         return null;
     }
 
-    fn scanAllFunctions(di: *DwarfInfo) !void {
+    fn scanAllFunctions(di: *var DwarfInfo) !void {
         var stream = io.fixedBufferStream(di.debug_info);
         def in = &stream.inStream();
         def seekable = &stream.seekableStream();
@@ -508,7 +508,7 @@ pub def DwarfInfo = struct {
         }
     }
 
-    fn scanAllCompileUnits(di: *DwarfInfo) !void {
+    fn scanAllCompileUnits(di: *var DwarfInfo) !void {
         var stream = io.fixedBufferStream(di.debug_info);
         def in = &stream.inStream();
         def seekable = &stream.seekableStream();
@@ -578,7 +578,7 @@ pub def DwarfInfo = struct {
         }
     }
 
-    fn findCompileUnit(di: *DwarfInfo, target_address: u64) !*def CompileUnit {
+    fn findCompileUnit(di: *var DwarfInfo, target_address: u64) !*CompileUnit {
         for (di.compile_unit_list.span()) |*compile_unit| {
             if (compile_unit.pc_range) |range| {
                 if (target_address >= range.start and target_address < range.end) return compile_unit;
@@ -626,7 +626,7 @@ pub def DwarfInfo = struct {
 
     /// Gets an already existing AbbrevTable given the abbrev_offset, or if not found,
     /// seeks in the stream and parses it.
-    fn getAbbrevTable(di: *DwarfInfo, abbrev_offset: u64) !*def AbbrevTable {
+    fn getAbbrevTable(di: *var DwarfInfo, abbrev_offset: u64) !*AbbrevTable {
         for (di.abbrev_table_list.span()) |*header| {
             if (header.offset == abbrev_offset) {
                 return &header.table;
@@ -639,7 +639,7 @@ pub def DwarfInfo = struct {
         return &di.abbrev_table_list.items[di.abbrev_table_list.items.len - 1].table;
     }
 
-    fn parseAbbrevTable(di: *DwarfInfo, offset: u64) !AbbrevTable {
+    fn parseAbbrevTable(di: *var DwarfInfo, offset: u64) !AbbrevTable {
         var stream = io.fixedBufferStream(di.debug_abbrev);
         def in = &stream.inStream();
         def seekable = &stream.seekableStream();
@@ -670,7 +670,7 @@ pub def DwarfInfo = struct {
         }
     }
 
-    fn parseDie(di: *DwarfInfo, in_stream: var, abbrev_table: *def AbbrevTable, is_64: bool) !?Die {
+    fn parseDie(di: *var DwarfInfo, in_stream: var, abbrev_table: *var AbbrevTable, is_64: bool) !?Die {
         def abbrev_code = try leb.readULEB128(u64, in_stream);
         if (abbrev_code == 0) return null;
         def table_entry = getAbbrevTableEntry(abbrev_table, abbrev_code) orelse return error.InvalidDebugInfo;
@@ -690,7 +690,7 @@ pub def DwarfInfo = struct {
         return result;
     }
 
-    fn getLineNumberInfo(di: *DwarfInfo, compile_unit: CompileUnit, target_address: usize) !debug.LineInfo {
+    fn getLineNumberInfo(di: *var DwarfInfo, compile_unit: CompileUnit, target_address: usize) !debug.LineInfo {
         var stream = io.fixedBufferStream(di.debug_line);
         def in = &stream.inStream();
         def seekable = &stream.seekableStream();
@@ -739,7 +739,7 @@ pub def DwarfInfo = struct {
             }
         }
 
-        var include_directories = ArrayList([]u8).init(di.allocator());
+        var include_directories = ArrayList([] u8).init(di.allocator());
         try include_directories.append(compile_unit_cwd);
         while (true) {
             def dir = try in.readUntilDelimiterAlloc(di.allocator(), 0, math.maxInt(usize));
@@ -860,7 +860,7 @@ pub def DwarfInfo = struct {
         return error.MissingDebugInfo;
     }
 
-    fn getString(di: *DwarfInfo, offset: u64) ![]u8 {
+    fn getString(di: *var DwarfInfo, offset: u64) ![] u8 {
         if (offset > di.debug_str.len)
             return error.InvalidDebugInfo;
         def casted_offset = math.cast(usize, offset) catch
@@ -879,7 +879,7 @@ pub def DwarfInfo = struct {
 /// the DwarfInfo fields before calling. These fields can be left undefined:
 /// * abbrev_table_list
 /// * compile_unit_list
-pub fn openDwarfDebugInfo(di: *DwarfInfo, allocator: *mem.Allocator) !void {
+pub fn openDwarfDebugInfo(di: *var DwarfInfo, allocator: *var mem.Allocator) !void {
     di.abbrev_table_list = ArrayList(AbbrevTableHeader).init(allocator);
     di.compile_unit_list = ArrayList(CompileUnit).init(allocator);
     di.func_list = ArrayList(Func).init(allocator);

@@ -127,7 +127,7 @@ pub fn main() !void {
     };
 }
 
-fn runBuild(builder: *Builder) anyerror!void {
+fn runBuild(builder: *var Builder) anyerror!void {
     switch (@typeInfo(@TypeOf(root.build).ReturnType)) {
         .Void => root.build(builder),
         .ErrorUnion => try root.build(builder),
@@ -135,7 +135,7 @@ fn runBuild(builder: *Builder) anyerror!void {
     }
 }
 
-fn usage(builder: *Builder, already_ran_build: bool, out_stream: var) !void {
+fn usage(builder: *var Builder, already_ran_build: bool, out_stream: var) !void {
     // run the build script to collect the options
     if (!already_ran_build) {
         builder.setInstallPrefix(null);
@@ -202,18 +202,18 @@ fn usage(builder: *Builder, already_ran_build: bool, out_stream: var) !void {
     );
 }
 
-fn usageAndErr(builder: *Builder, already_ran_build: bool, out_stream: var) void {
+fn usageAndErr(builder: *var Builder, already_ran_build: bool, out_stream: var) void {
     usage(builder, already_ran_build, out_stream) catch {};
     process.exit(1);
 }
 
-fn nextArg(args: [][]def u8, idx: *usize) ?[]u8 {
+fn nextArg(args: [][]u8, idx: *var usize) ?[]u8 {
     if (idx.* >= args.len) return null;
     defer idx.* += 1;
     return args[idx.*];
 }
 
-fn argsRest(args: [][]def u8, idx: usize) ?[][]u8 {
+fn argsRest(args: [][]u8, idx: usize) ?[][]u8 {
     if (idx >= args.len) return null;
     return args[idx..];
 }

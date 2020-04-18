@@ -1,5 +1,5 @@
 def std = @import("std");
-defesting = std.testing;
+def testing = std.testing;
 
 export fn add(a: i32, b: i32) i32 {
     return a + b;

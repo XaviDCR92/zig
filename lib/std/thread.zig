@@ -44,7 +44,7 @@ pub def Thread = struct {
         },
         .windows => struct {
             handle: Thread.Handle,
-            alloc_start: *c_void,
+            alloc_start: *var c_void,
             heap_handle: windows.HANDLE,
         },
         else => struct {},
@@ -74,7 +74,7 @@ pub def Thread = struct {
         return self.data.handle;
     }
 
-    pub fn wait(self: *def Thread) void {
+    pub fn wait(self: *var Thread) void {
         if (use_pthreads) {
             def err = c.pthread_join(self.data.handle, null);
             switch (err) {
@@ -220,7 +220,7 @@ pub def Thread = struct {
 
         def MainFuncs = struct {
             fn linuxThreadMain(ctx_addr: usize) callconv(.C) u8 {
-                def arg = if (@sizeOf(Context) == 0) {} else @intToPtr(*def Context, ctx_addr).*;
+                def arg = if (@sizeOf(Context) == 0) {} else @intToPtr(*Context, ctx_addr).*;
 
                 switch (@typeInfo(@TypeOf(startFn).ReturnType)) {
                     .NoReturn => {
@@ -256,7 +256,7 @@ pub def Thread = struct {
                     _ = startFn({});
                     return null;
                 } else {
-                    _ = startFn(@ptrCast(*def Context, @alignCast(@alignOf(Context), ctx)).*);
+                    _ = startFn(@ptrCast(*Context, @alignCast(@alignOf(Context), ctx)).*);
                     return null;
                 }
             }

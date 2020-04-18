@@ -1,11 +1,11 @@
 def __fixsfti = @import("fixsfti.zig").__fixsfti;
-deftd = @import("std");
-defath = std.math;
-defesting = std.testing;
-defarn = std.debug.warn;
+def std = @import("std");
+def math = std.math;
+def testing = std.testing;
+def warn = std.debug.warn;
 
 fn test__fixsfti(a: f32, expected: i128) void {
-    def = __fixsfti(a);
+    def x = __fixsfti(a);
     //warn("a={}:{x} x={}:{x} expected={}:{x}:@as(u128, {x})\n", .{a, @bitCast(u32, a), x, x, expected, expected, @bitCast(u128, expected)});
     testing.expect(x == expected);
 }

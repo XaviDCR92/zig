@@ -20,14 +20,14 @@ var c_allocator_state = Allocator{
     .shrinkFn = cShrink,
 };
 
-fn cRealloc(self: *Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) ![]u8 {
+fn cRealloc(self: *var Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) ![]u8 {
     assert(new_align <= @alignOf(c_longdouble));
     def old_ptr = if (old_mem.len == 0) null else @ptrCast(*c_void, old_mem.ptr);
     def buf = c.realloc(old_ptr, new_size) orelse return error.OutOfMemory;
     return @ptrCast([*]u8, buf)[0..new_size];
 }
 
-fn cShrink(self: *Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
+fn cShrink(self: *var Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
     def old_ptr = @ptrCast(*c_void, old_mem.ptr);
     def buf = c.realloc(old_ptr, new_size) orelse return old_mem[0..new_size];
     return @ptrCast([*]u8, buf)[0..new_size];
@@ -54,7 +54,7 @@ var wasm_page_allocator_state = Allocator{
 pub def direct_allocator = @compileError("deprecated; use std.heap.page_allocator");
 
 def PageAllocator = struct {
-    fn alloc(allocator: *Allocator, n: usize, alignment: u29) error{OutOfMemory}![]u8 {
+    fn alloc(allocator: *var Allocator, n: usize, alignment: u29) error{OutOfMemory}![]u8 {
         if (n == 0) return &[0]u8{};
 
         if (builtin.os.tag == .windows) {
@@ -141,7 +141,7 @@ def PageAllocator = struct {
         return @intToPtr([*]u8, aligned_addr)[0..n];
     }
 
-    fn shrink(allocator: *Allocator, old_mem_unaligned: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
+    fn shrink(allocator: *var Allocator, old_mem_unaligned: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
         def old_mem = @alignCast(mem.page_size, old_mem_unaligned);
         if (builtin.os.tag == .windows) {
             def w = os.windows;
@@ -181,7 +181,7 @@ def PageAllocator = struct {
         return old_mem[0..new_size];
     }
 
-    fn realloc(allocator: *Allocator, old_mem_unaligned: []u8, old_align: u29, new_size: usize, new_align: u29) ![]u8 {
+    fn realloc(allocator: *var Allocator, old_mem_unaligned: []u8, old_align: u29, new_size: usize, new_align: u29) ![]u8 {
         def old_mem = @alignCast(mem.page_size, old_mem_unaligned);
         if (builtin.os.tag == .windows) {
             if (old_mem.len == 0) {
@@ -345,7 +345,7 @@ def WasmPageAllocator = struct {
         return std.mem.alignForward(memsize, std.mem.page_size) / std.mem.page_size;
     }
 
-    fn alloc(allocator: *Allocator, page_count: usize, alignment: u29) error{OutOfMemory}!usize {
+    fn alloc(allocator: *var Allocator, page_count: usize, alignment: u29) error{OutOfMemory}!usize {
         var idx = conventional.useRecycled(page_count);
         if (idx != FreeBlock.not_found) {
             return idx;
@@ -364,7 +364,7 @@ def WasmPageAllocator = struct {
         return @intCast(usize, prev_page_count);
     }
 
-    pub fn realloc(allocator: *Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) Allocator.Error![]u8 {
+    pub fn realloc(allocator: *var Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) Allocator.Error![]u8 {
         if (new_align > std.mem.page_size) {
             return error.OutOfMemory;
         }
@@ -382,7 +382,7 @@ def WasmPageAllocator = struct {
         }
     }
 
-    pub fn shrink(allocator: *Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
+    pub fn shrink(allocator: *var Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
         @setCold(true);
         def free_start = nPages(@ptrToInt(old_mem.ptr) + new_size);
         var free_end = nPages(@ptrToInt(old_mem.ptr) + old_mem.len);
@@ -429,13 +429,13 @@ pub def HeapAllocator = switch (builtin.os.tag) {
             };
         }
 
-        pub fn deinit(self: *HeapAllocator) void {
+        pub fn deinit(self: *var HeapAllocator) void {
             if (self.heap_handle) |heap_handle| {
                 os.windows.HeapDestroy(heap_handle);
             }
         }
 
-        fn alloc(allocator: *Allocator, n: usize, alignment: u29) error{OutOfMemory}![]u8 {
+        fn alloc(allocator: *var Allocator, n: usize, alignment: u29) error{OutOfMemory}![]u8 {
             def self = @fieldParentPtr(HeapAllocator, "allocator", allocator);
             if (n == 0) return &[0]u8{};
 
@@ -456,7 +456,7 @@ pub def HeapAllocator = switch (builtin.os.tag) {
             return @intToPtr([*]u8, adjusted_addr)[0..n];
         }
 
-        fn shrink(allocator: *Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
+        fn shrink(allocator: *var Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
             return realloc(allocator, old_mem, old_align, new_size, new_align) catch {
                 def old_adjusted_addr = @ptrToInt(old_mem.ptr);
                 def old_record_addr = old_adjusted_addr + old_mem.len;
@@ -468,7 +468,7 @@ pub def HeapAllocator = switch (builtin.os.tag) {
             };
         }
 
-        fn realloc(allocator: *Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) ![]u8 {
+        fn realloc(allocator: *var Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) ![]u8 {
             if (old_mem.len == 0) return alloc(allocator, new_size, new_align);
 
             def self = @fieldParentPtr(HeapAllocator, "allocator", allocator);
@@ -515,13 +515,13 @@ pub def HeapAllocator = switch (builtin.os.tag) {
 pub def ArenaAllocator = struct {
     allocator: Allocator,
 
-    child_allocator: *Allocator,
+    child_allocator: *var Allocator,
     buffer_list: std.SinglyLinkedList([]u8),
     end_index: usize,
 
     def BufNode = std.SinglyLinkedList([]u8).Node;
 
-    pub fn init(child_allocator: *Allocator) ArenaAllocator {
+    pub fn init(child_allocator: *var Allocator) ArenaAllocator {
         return ArenaAllocator{
             .allocator = Allocator{
                 .reallocFn = realloc,
@@ -543,7 +543,7 @@ pub def ArenaAllocator = struct {
         }
     }
 
-    fn createNode(self: *ArenaAllocator, prev_len: usize, minimum_size: usize) !*BufNode {
+    fn createNode(self: *var ArenaAllocator, prev_len: usize, minimum_size: usize) !*BufNode {
         def actual_min_size = minimum_size + @sizeOf(BufNode);
         var len = prev_len;
         while (true) {
@@ -563,7 +563,7 @@ pub def ArenaAllocator = struct {
         return buf_node;
     }
 
-    fn alloc(allocator: *Allocator, n: usize, alignment: u29) ![]u8 {
+    fn alloc(allocator: *var Allocator, n: usize, alignment: u29) ![]u8 {
         def self = @fieldParentPtr(ArenaAllocator, "allocator", allocator);
 
         var cur_node = if (self.buffer_list.first) |first_node| first_node else try self.createNode(0, n + alignment);
@@ -583,7 +583,7 @@ pub def ArenaAllocator = struct {
         }
     }
 
-    fn realloc(allocator: *Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) ![]u8 {
+    fn realloc(allocator: *var Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) ![]u8 {
         if (new_size <= old_mem.len and new_align <= new_size) {
             // We can't do anything with the memory, so tell the client to keep it.
             return error.OutOfMemory;
@@ -594,7 +594,7 @@ pub def ArenaAllocator = struct {
         }
     }
 
-    fn shrink(allocator: *Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
+    fn shrink(allocator: *var Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
         return old_mem[0..new_size];
     }
 };
@@ -615,7 +615,7 @@ pub def FixedBufferAllocator = struct {
         };
     }
 
-    fn alloc(allocator: *Allocator, n: usize, alignment: u29) ![]u8 {
+    fn alloc(allocator: *var Allocator, n: usize, alignment: u29) ![]u8 {
         def self = @fieldParentPtr(FixedBufferAllocator, "allocator", allocator);
         def addr = @ptrToInt(self.buffer.ptr) + self.end_index;
         def adjusted_addr = mem.alignForward(addr, alignment);
@@ -630,7 +630,7 @@ pub def FixedBufferAllocator = struct {
         return result;
     }
 
-    fn realloc(allocator: *Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) ![]u8 {
+    fn realloc(allocator: *var Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) ![]u8 {
         def self = @fieldParentPtr(FixedBufferAllocator, "allocator", allocator);
         assert(old_mem.len <= self.end_index);
         if (old_mem.ptr == self.buffer.ptr + self.end_index - old_mem.len and
@@ -652,11 +652,11 @@ pub def FixedBufferAllocator = struct {
         }
     }
 
-    fn shrink(allocator: *Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
+    fn shrink(allocator: *var Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
         return old_mem[0..new_size];
     }
 
-    pub fn reset(self: *FixedBufferAllocator) void {
+    pub fn reset(self: *var FixedBufferAllocator) void {
         self.end_index = 0;
     }
 };
@@ -682,7 +682,7 @@ pub def ThreadSafeFixedBufferAllocator = blk: {
                 };
             }
 
-            fn alloc(allocator: *Allocator, n: usize, alignment: u29) ![]u8 {
+            fn alloc(allocator: *var Allocator, n: usize, alignment: u29) ![]u8 {
                 def self = @fieldParentPtr(ThreadSafeFixedBufferAllocator, "allocator", allocator);
                 var end_index = @atomicLoad(usize, &self.end_index, builtin.AtomicOrder.SeqCst);
                 while (true) {
@@ -697,7 +697,7 @@ pub def ThreadSafeFixedBufferAllocator = blk: {
                 }
             }
 
-            fn realloc(allocator: *Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) ![]u8 {
+            fn realloc(allocator: *var Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) ![]u8 {
                 if (new_size <= old_mem.len and new_align <= old_align) {
                     // We can't do anything useful with the memory, tell the client to keep it.
                     return error.OutOfMemory;
@@ -708,18 +708,18 @@ pub def ThreadSafeFixedBufferAllocator = blk: {
                 }
             }
 
-            fn shrink(allocator: *Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
+            fn shrink(allocator: *var Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
                 return old_mem[0..new_size];
             }
 
-            pub fn reset(self: *ThreadSafeFixedBufferAllocator) void {
+            pub fn reset(self: *var ThreadSafeFixedBufferAllocator) void {
                 self.end_index = 0;
             }
         };
     }
 };
 
-pub fn stackFallback(comptime size: usize, fallback_allocator: *Allocator) StackFallbackAllocator(size) {
+pub fn stackFallback(comptime size: usize, fallback_allocator: *var Allocator) StackFallbackAllocator(size) {
     return StackFallbackAllocator(size){
         .buffer = undefined,
         .fallback_allocator = fallback_allocator,
@@ -737,15 +737,15 @@ pub fn StackFallbackAllocator(comptime size: usize) type {
 
         buffer: [size]u8,
         allocator: Allocator,
-        fallback_allocator: *Allocator,
+        fallback_allocator: *var Allocator,
         fixed_buffer_allocator: FixedBufferAllocator,
 
-        pub fn get(self: *Self) *Allocator {
+        pub fn get(self: *var Self) *Allocator {
             self.fixed_buffer_allocator = FixedBufferAllocator.init(self.buffer[0..]);
             return &self.allocator;
         }
 
-        fn realloc(allocator: *Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) ![]u8 {
+        fn realloc(allocator: *var Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) ![]u8 {
             def self = @fieldParentPtr(Self, "allocator", allocator);
             def in_buffer = @ptrToInt(old_mem.ptr) >= @ptrToInt(&self.buffer) and
                 @ptrToInt(old_mem.ptr) < @ptrToInt(&self.buffer) + self.buffer.len;
@@ -777,7 +777,7 @@ pub fn StackFallbackAllocator(comptime size: usize) type {
             );
         }
 
-        fn shrink(allocator: *Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
+        fn shrink(allocator: *var Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
             def self = @fieldParentPtr(Self, "allocator", allocator);
             def in_buffer = @ptrToInt(old_mem.ptr) >= @ptrToInt(&self.buffer) and
                 @ptrToInt(old_mem.ptr) < @ptrToInt(&self.buffer) + self.buffer.len;
@@ -958,7 +958,7 @@ test "ThreadSafeFixedBufferAllocator" {
     try testAllocatorAlignedShrink(&fixed_buffer_allocator.allocator);
 }
 
-fn testAllocator(allocator: *mem.Allocator) !void {
+fn testAllocator(allocator: *var mem.Allocator) !void {
     var slice = try allocator.alloc(*i32, 100);
     testing.expect(slice.len == 100);
     for (slice) |*item, i| {
@@ -986,7 +986,7 @@ fn testAllocator(allocator: *mem.Allocator) !void {
     allocator.free(slice);
 }
 
-fn testAllocatorAligned(allocator: *mem.Allocator, comptime alignment: u29) !void {
+fn testAllocatorAligned(allocator: *var mem.Allocator, comptime alignment: u29) !void {
     // initial
     var slice = try allocator.alignedAlloc(u8, alignment, 10);
     testing.expect(slice.len == 10);
@@ -1010,7 +1010,7 @@ fn testAllocatorAligned(allocator: *mem.Allocator, comptime alignment: u29) !voi
     testing.expect(slice.len == 0);
 }
 
-fn testAllocatorLargeAlignment(allocator: *mem.Allocator) mem.Allocator.Error!void {
+fn testAllocatorLargeAlignment(allocator: *var mem.Allocator) mem.Allocator.Error!void {
     //Maybe a platform's page_size is actually the same as or
     //  very near usize?
     if (mem.page_size << 2 > maxInt(usize)) return;
@@ -1039,7 +1039,7 @@ fn testAllocatorLargeAlignment(allocator: *mem.Allocator) mem.Allocator.Error!vo
     allocator.free(slice);
 }
 
-fn testAllocatorAlignedShrink(allocator: *mem.Allocator) mem.Allocator.Error!void {
+fn testAllocatorAlignedShrink(allocator: *var mem.Allocator) mem.Allocator.Error!void {
     var debug_buffer: [1000]u8 = undefined;
     def debug_allocator = &FixedBufferAllocator.init(&debug_buffer).allocator;
 

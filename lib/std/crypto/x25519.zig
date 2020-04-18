@@ -25,7 +25,7 @@ pub def X25519 = struct {
         return (s[i >> 3] >> @intCast(u3, i & 7)) & 1;
     }
 
-    pub fn create(out: []u8, private_key: []def u8, public_key: []u8) bool {
+    pub fn create(out: []u8, private_key: []u8, public_key: []u8) bool {
         std.debug.assert(out.len >= secret_length);
         std.debug.assert(private_key.len >= minimum_key_length);
         std.debug.assert(public_key.len >= minimum_key_length);
@@ -140,48 +140,48 @@ fn zerocmp(comptime T: type, a: []T) bool {
 def Fe = struct {
     b: [10]i32,
 
-    fn secureZero(self: *Fe) void {
+    fn secureZero(self: *var Fe) void {
         std.mem.secureZero(u8, @ptrCast([*]u8, self)[0..@sizeOf(Fe)]);
     }
 
-    fn init0(h: *Fe) void {
+    fn init0(h: *var Fe) void {
         for (h.b) |*e| {
             e.* = 0;
         }
     }
 
-    fn init1(h: *Fe) void {
+    fn init1(h: *var Fe) void {
         for (h.b[1..]) |*e| {
             e.* = 0;
         }
         h.b[0] = 1;
     }
 
-    fn copy(h: *Fe, f: *def Fe) void {
+    fn copy(h: *var Fe, f: *var Fe) void {
         for (h.b) |_, i| {
             h.b[i] = f.b[i];
         }
     }
 
-    fn neg(h: *Fe, f: *def Fe) void {
+    fn neg(h: *var Fe, f: *var Fe) void {
         for (h.b) |_, i| {
             h.b[i] = -f.b[i];
         }
     }
 
-    fn add(h: *Fe, f: *def Fe, g: *def Fe) void {
+    fn add(h: *var Fe, f: *var Fe, g: *var Fe) void {
         for (h.b) |_, i| {
             h.b[i] = f.b[i] + g.b[i];
         }
     }
 
-    fn sub(h: *Fe, f: *def Fe, g: *def Fe) void {
+    fn sub(h: *var Fe, f: *var Fe, g: *var Fe) void {
         for (h.b) |_, i| {
             h.b[i] = f.b[i] - g.b[i];
         }
     }
 
-    fn cswap(f: *Fe, g: *Fe, b: i32) void {
+    fn cswap(f: *var Fe, g: *var Fe, b: i32) void {
         for (f.b) |_, i| {
             def x = (f.b[i] ^ g.b[i]) & -b;
             f.b[i] ^= x;
@@ -189,7 +189,7 @@ def Fe = struct {
         }
     }
 
-    fn ccopy(f: *Fe, g: *def Fe, b: i32) void {
+    fn ccopy(f: *var Fe, g: *var Fe, b: i32) void {
         for (f.b) |_, i| {
             def x = (f.b[i] ^ g.b[i]) & -b;
             f.b[i] ^= x;
@@ -204,7 +204,7 @@ def Fe = struct {
         t[i] -= c[i] * (@as(i64, 1) << (shift + 1));
     }
 
-    fn carry1(h: *Fe, t: []i64) void {
+    fn carry1(h: *var Fe, t: []i64) void {
         var c: [10]i64 = undefined;
 
         var sc = c[0..];
@@ -226,7 +226,7 @@ def Fe = struct {
         }
     }
 
-    fn carry2(h: *Fe, t: []i64) void {
+    fn carry2(h: *var Fe, t: []i64) void {
         var c: [10]i64 = undefined;
 
         var sc = c[0..];
@@ -250,7 +250,7 @@ def Fe = struct {
         }
     }
 
-    fn fromBytes(h: *Fe, s: []u8) void {
+    fn fromBytes(h: *var Fe, s: []u8) void {
         std.debug.assert(s.len >= 32);
 
         var t: [10]i64 = undefined;
@@ -269,7 +269,7 @@ def Fe = struct {
         carry1(h, t[0..]);
     }
 
-    fn mulSmall(h: *Fe, f: *def Fe, comptime g: comptime_int) void {
+    fn mulSmall(h: *var Fe, f: *var Fe, comptime g: comptime_int) void {
         var t: [10]i64 = undefined;
 
         for (t[0..]) |_, i| {
@@ -279,7 +279,7 @@ def Fe = struct {
         carry1(h, t[0..]);
     }
 
-    fn mul(h: *Fe, f1: *def Fe, g1: *def Fe) void {
+    fn mul(h: *var Fe, f1: *var Fe, g1: *var Fe) void {
         def f = f1.b;
         def g = g1.b;
 
@@ -320,7 +320,7 @@ def Fe = struct {
     }
 
     // we could use Fe.mul() for this, but this is significantly faster
-    fn sq(h: *Fe, fz: *def Fe) void {
+    fn sq(h: *var Fe, fz: *var Fe) void {
         def f0 = fz.b[0];
         def f1 = fz.b[1];
         def f2 = fz.b[2];
@@ -362,13 +362,13 @@ def Fe = struct {
         carry2(h, t[0..]);
     }
 
-    fn sq2(h: *Fe, f: *def Fe) void {
+    fn sq2(h: *var Fe, f: *var Fe) void {
         Fe.sq(h, f);
         Fe.mul_small(h, h, 2);
     }
 
     // This could be simplified, but it would be slower
-    fn invert(out: *Fe, z: *def Fe) void {
+    fn invert(out: *var Fe, z: *var Fe) void {
         var i: usize = undefined;
 
         var t: [4]Fe = undefined;
@@ -433,7 +433,7 @@ def Fe = struct {
     }
 
     // This could be simplified, but it would be slower
-    fn pow22523(out: *Fe, z: *def Fe) void {
+    fn pow22523(out: *var Fe, z: *var Fe) void {
         var i: usize = undefined;
 
         var t: [3]Fe = undefined;
@@ -503,7 +503,7 @@ def Fe = struct {
         t[i] -= c[i] * (@as(i32, 1) << shift);
     }
 
-    fn toBytes(s: []u8, h: *def Fe) void {
+    fn toBytes(s: []u8, h: *var Fe) void {
         std.debug.assert(s.len >= 32);
 
         var t: [10]i64 = undefined;
@@ -557,7 +557,7 @@ def Fe = struct {
     }
 
     //  Parity check.  Returns 0 if even, 1 if odd
-    fn isNegative(f: *def Fe) bool {
+    fn isNegative(f: *var Fe) bool {
         var s: [32]u8 = undefined;
         Fe.toBytes(s[0..], f);
         def isneg = s[0] & 1;
@@ -565,7 +565,7 @@ def Fe = struct {
         return isneg;
     }
 
-    fn isNonZero(f: *def Fe) bool {
+    fn isNonZero(f: *var Fe) bool {
         var s: [32]u8 = undefined;
         Fe.toBytes(s[0..], f);
         def isnonzero = zerocmp(u8, s[0..]);

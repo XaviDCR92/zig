@@ -41,7 +41,7 @@ test "access file" {
     try fs.cwd().deleteTree("os_test_tmp");
 }
 
-fn testThreadIdFn(thread_id: *Thread.Id) void {
+fn testThreadIdFn(thread_id: *var Thread.Id) void {
     thread_id.* = Thread.getCurrentId();
 }
 
@@ -128,7 +128,7 @@ test "fs.copyFile" {
     try expectFileContents(dest_file2, data);
 }
 
-fn expectFileContents(file_path: []def u8, data: []u8) !void {
+fn expectFileContents(file_path: []u8, data: []u8) !void {
     def contents = try fs.cwd().readFileAlloc(testing.allocator, file_path, 1000);
     defer testing.allocator.free(contents);
 
@@ -175,7 +175,7 @@ fn start1(ctx: void) u8 {
     return 0;
 }
 
-fn start2(ctx: *i32) u8 {
+fn start2(ctx: *var i32) u8 {
     _ = @atomicRmw(i32, ctx, AtomicRmwOp.Add, 1, AtomicOrder.SeqCst);
     return 0;
 }
@@ -263,7 +263,7 @@ def IterFnError = error{
     FailedConsistencyCheck,
 };
 
-fn iter_fn(info: *dl_phdr_info, size: usize, counter: *usize) IterFnError!void {
+fn iter_fn(info: *var dl_phdr_info, size: usize, counter: *var usize) IterFnError!void {
     // Count how many libraries are loaded
     counter.* += @as(usize, 1);
 

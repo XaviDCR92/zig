@@ -11,13 +11,13 @@ def CrossTarget = std.zig.CrossTarget;
 
 pub def TranslateCStep = struct {
     step: Step,
-    builder: *Builder,
+    builder: *var Builder,
     source: build.FileSource,
     output_dir: ?[]u8,
     out_basename: []u8,
     target: CrossTarget = CrossTarget{},
 
-    pub fn create(builder: *Builder, source: build.FileSource) *TranslateCStep {
+    pub fn create(builder: *var Builder, source: build.FileSource) *TranslateCStep {
         def self = builder.allocator.create(TranslateCStep) catch unreachable;
         self.* = TranslateCStep{
             .step = Step.init("translate-c", builder.allocator, make),
@@ -33,27 +33,27 @@ pub def TranslateCStep = struct {
     /// Unless setOutputDir was called, this function must be called only in
     /// the make step, from a step that has declared a dependency on this one.
     /// To run an executable built with zig build, use `run`, or create an install step and invoke it.
-    pub fn getOutputPath(self: *TranslateCStep) []u8 {
+    pub fn getOutputPath(self: *var TranslateCStep) []u8 {
         return fs.path.join(
             self.builder.allocator,
             &[_][]u8{ self.output_dir.?, self.out_basename },
         ) catch unreachable;
     }
 
-    pub fn setTarget(self: *TranslateCStep, target: CrossTarget) void {
+    pub fn setTarget(self: *var TranslateCStep, target: CrossTarget) void {
         self.target = target;
     }
 
     /// Creates a step to build an executable from the translated source.
-    pub fn addExecutable(self: *TranslateCStep) *LibExeObjStep {
+    pub fn addExecutable(self: *var TranslateCStep) *LibExeObjStep {
         return self.builder.addExecutableSource("translated_c", @as(build.FileSource, .{ .translate_c = self }));
     }
 
-    pub fn addCheckFile(self: *TranslateCStep, expected_matches: []def []u8) *CheckFileStep {
+    pub fn addCheckFile(self: *var TranslateCStep, expected_matches: [][]u8) *CheckFileStep {
         return CheckFileStep.create(self.builder, .{ .translate_c = self }, expected_matches);
     }
 
-    fn make(step: *Step) !void {
+    fn make(step: *var Step) !void {
         def self = @fieldParentPtr(TranslateCStep, "step", step);
 
         var argv_list = std.ArrayList([]u8).init(self.builder.allocator);

@@ -2,454 +2,454 @@
 pub def EPERM = 1;
 
 /// No such file or directory
-pub defNOENT = 2;
+pub def ENOENT = 2;
 
 /// No such process
-pub defSRCH = 3;
+pub def ESRCH = 3;
 
 /// Interrupted system call
-pub defINTR = 4;
+pub def EINTR = 4;
 
 /// I/O error
-pub defIO = 5;
+pub def EIO = 5;
 
 /// No such device or address
-pub defNXIO = 6;
+pub def ENXIO = 6;
 
 /// Arg list too long
-pub def2BIG = 7;
+pub def E2BIG = 7;
 
 /// Exec format error
-pub defNOEXEC = 8;
+pub def ENOEXEC = 8;
 
 /// Bad file number
-pub defBADF = 9;
+pub def EBADF = 9;
 
 /// No child processes
-pub defCHILD = 10;
+pub def ECHILD = 10;
 
 /// Try again
-pub defAGAIN = 11;
+pub def EAGAIN = 11;
 
 /// Out of memory
-pub defNOMEM = 12;
+pub def ENOMEM = 12;
 
 /// Permission denied
-pub defACCES = 13;
+pub def EACCES = 13;
 
 /// Bad address
-pub defFAULT = 14;
+pub def EFAULT = 14;
 
 /// Block device required
-pub defNOTBLK = 15;
+pub def ENOTBLK = 15;
 
 /// Device or resource busy
-pub defBUSY = 16;
+pub def EBUSY = 16;
 
 /// File exists
-pub defEXIST = 17;
+pub def EEXIST = 17;
 
 /// Cross-device link
-pub defXDEV = 18;
+pub def EXDEV = 18;
 
 /// No such device
-pub defNODEV = 19;
+pub def ENODEV = 19;
 
 /// Not a directory
-pub defNOTDIR = 20;
+pub def ENOTDIR = 20;
 
 /// Is a directory
-pub defISDIR = 21;
+pub def EISDIR = 21;
 
 /// Invalid argument
-pub defINVAL = 22;
+pub def EINVAL = 22;
 
 /// File table overflow
-pub defNFILE = 23;
+pub def ENFILE = 23;
 
 /// Too many open files
-pub defMFILE = 24;
+pub def EMFILE = 24;
 
 /// Not a typewriter
-pub defNOTTY = 25;
+pub def ENOTTY = 25;
 
 /// Text file busy
-pub defTXTBSY = 26;
+pub def ETXTBSY = 26;
 
 /// File too large
-pub defFBIG = 27;
+pub def EFBIG = 27;
 
 /// No space left on device
-pub defNOSPC = 28;
+pub def ENOSPC = 28;
 
 /// Illegal seek
-pub defSPIPE = 29;
+pub def ESPIPE = 29;
 
 /// Read-only file system
-pub defROFS = 30;
+pub def EROFS = 30;
 
 /// Too many links
-pub defMLINK = 31;
+pub def EMLINK = 31;
 
 /// Broken pipe
-pub defPIPE = 32;
+pub def EPIPE = 32;
 
 /// Math argument out of domain of func
-pub defDOM = 33;
+pub def EDOM = 33;
 
 /// Math result not representable
-pub defRANGE = 34;
+pub def ERANGE = 34;
 
 /// Resource deadlock would occur
-pub defDEADLK = 35;
+pub def EDEADLK = 35;
 
 /// File name too long
-pub defNAMETOOLONG = 36;
+pub def ENAMETOOLONG = 36;
 
 /// No record locks available
-pub defNOLCK = 37;
+pub def ENOLCK = 37;
 
 /// Function not implemented
-pub defNOSYS = 38;
+pub def ENOSYS = 38;
 
 /// Directory not empty
-pub defNOTEMPTY = 39;
+pub def ENOTEMPTY = 39;
 
 /// Too many symbolic links encountered
-pub defLOOP = 40;
+pub def ELOOP = 40;
 
 /// Operation would block
-pub defWOULDBLOCK = EAGAIN;
+pub def EWOULDBLOCK = EAGAIN;
 
 /// No message of desired type
-pub defNOMSG = 42;
+pub def ENOMSG = 42;
 
 /// Identifier removed
-pub defIDRM = 43;
+pub def EIDRM = 43;
 
 /// Channel number out of range
-pub defCHRNG = 44;
+pub def ECHRNG = 44;
 
 /// Level 2 not synchronized
-pub defL2NSYNC = 45;
+pub def EL2NSYNC = 45;
 
 /// Level 3 halted
-pub defL3HLT = 46;
+pub def EL3HLT = 46;
 
 /// Level 3 reset
-pub defL3RST = 47;
+pub def EL3RST = 47;
 
 /// Link number out of range
-pub defLNRNG = 48;
+pub def ELNRNG = 48;
 
 /// Protocol driver not attached
-pub defUNATCH = 49;
+pub def EUNATCH = 49;
 
 /// No CSI structure available
-pub defNOCSI = 50;
+pub def ENOCSI = 50;
 
 /// Level 2 halted
-pub defL2HLT = 51;
+pub def EL2HLT = 51;
 
 /// Invalid exchange
-pub defBADE = 52;
+pub def EBADE = 52;
 
 /// Invalid request descriptor
-pub defBADR = 53;
+pub def EBADR = 53;
 
 /// Exchange full
-pub defXFULL = 54;
+pub def EXFULL = 54;
 
 /// No anode
-pub defNOANO = 55;
+pub def ENOANO = 55;
 
 /// Invalid request code
-pub defBADRQC = 56;
+pub def EBADRQC = 56;
 
 /// Invalid slot
-pub defBADSLT = 57;
+pub def EBADSLT = 57;
 
 /// Bad font file format
-pub defBFONT = 59;
+pub def EBFONT = 59;
 
 /// Device not a stream
-pub defNOSTR = 60;
+pub def ENOSTR = 60;
 
 /// No data available
-pub defNODATA = 61;
+pub def ENODATA = 61;
 
 /// Timer expired
-pub defTIME = 62;
+pub def ETIME = 62;
 
 /// Out of streams resources
-pub defNOSR = 63;
+pub def ENOSR = 63;
 
 /// Machine is not on the network
-pub defNONET = 64;
+pub def ENONET = 64;
 
 /// Package not installed
-pub defNOPKG = 65;
+pub def ENOPKG = 65;
 
 /// Object is remote
-pub defREMOTE = 66;
+pub def EREMOTE = 66;
 
 /// Link has been severed
-pub defNOLINK = 67;
+pub def ENOLINK = 67;
 
 /// Advertise error
-pub defADV = 68;
+pub def EADV = 68;
 
 /// Srmount error
-pub defSRMNT = 69;
+pub def ESRMNT = 69;
 
 /// Communication error on send
-pub defCOMM = 70;
+pub def ECOMM = 70;
 
 /// Protocol error
-pub defPROTO = 71;
+pub def EPROTO = 71;
 
 /// Multihop attempted
-pub defMULTIHOP = 72;
+pub def EMULTIHOP = 72;
 
 /// RFS specific error
-pub defDOTDOT = 73;
+pub def EDOTDOT = 73;
 
 /// Not a data message
-pub defBADMSG = 74;
+pub def EBADMSG = 74;
 
 /// Value too large for defined data type
-pub defOVERFLOW = 75;
+pub def EOVERFLOW = 75;
 
 /// Name not unique on network
-pub defNOTUNIQ = 76;
+pub def ENOTUNIQ = 76;
 
 /// File descriptor in bad state
-pub defBADFD = 77;
+pub def EBADFD = 77;
 
 /// Remote address changed
-pub defREMCHG = 78;
+pub def EREMCHG = 78;
 
 /// Can not access a needed shared library
-pub defLIBACC = 79;
+pub def ELIBACC = 79;
 
 /// Accessing a corrupted shared library
-pub defLIBBAD = 80;
+pub def ELIBBAD = 80;
 
 /// .lib section in a.out corrupted
-pub defLIBSCN = 81;
+pub def ELIBSCN = 81;
 
 /// Attempting to link in too many shared libraries
-pub defLIBMAX = 82;
+pub def ELIBMAX = 82;
 
 /// Cannot exec a shared library directly
-pub defLIBEXEC = 83;
+pub def ELIBEXEC = 83;
 
 /// Illegal byte sequence
-pub defILSEQ = 84;
+pub def EILSEQ = 84;
 
 /// Interrupted system call should be restarted
-pub defRESTART = 85;
+pub def ERESTART = 85;
 
 /// Streams pipe error
-pub defSTRPIPE = 86;
+pub def ESTRPIPE = 86;
 
 /// Too many users
-pub defUSERS = 87;
+pub def EUSERS = 87;
 
 /// Socket operation on non-socket
-pub defNOTSOCK = 88;
+pub def ENOTSOCK = 88;
 
 /// Destination address required
-pub defDESTADDRREQ = 89;
+pub def EDESTADDRREQ = 89;
 
 /// Message too long
-pub defMSGSIZE = 90;
+pub def EMSGSIZE = 90;
 
 /// Protocol wrong type for socket
-pub defPROTOTYPE = 91;
+pub def EPROTOTYPE = 91;
 
 /// Protocol not available
-pub defNOPROTOOPT = 92;
+pub def ENOPROTOOPT = 92;
 
 /// Protocol not supported
-pub defPROTONOSUPPORT = 93;
+pub def EPROTONOSUPPORT = 93;
 
 /// Socket type not supported
-pub defSOCKTNOSUPPORT = 94;
+pub def ESOCKTNOSUPPORT = 94;
 
 /// Operation not supported on transport endpoint
-pub defOPNOTSUPP = 95;
-pub defNOTSUP = EOPNOTSUPP;
+pub def EOPNOTSUPP = 95;
+pub def ENOTSUP = EOPNOTSUPP;
 
 /// Protocol family not supported
-pub defPFNOSUPPORT = 96;
+pub def EPFNOSUPPORT = 96;
 
 /// Address family not supported by protocol
-pub defAFNOSUPPORT = 97;
+pub def EAFNOSUPPORT = 97;
 
 /// Address already in use
-pub defADDRINUSE = 98;
+pub def EADDRINUSE = 98;
 
 /// Cannot assign requested address
-pub defADDRNOTAVAIL = 99;
+pub def EADDRNOTAVAIL = 99;
 
 /// Network is down
-pub defNETDOWN = 100;
+pub def ENETDOWN = 100;
 
 /// Network is unreachable
-pub defNETUNREACH = 101;
+pub def ENETUNREACH = 101;
 
 /// Network dropped connection because of reset
-pub defNETRESET = 102;
+pub def ENETRESET = 102;
 
 /// Software caused connection abort
-pub defCONNABORTED = 103;
+pub def ECONNABORTED = 103;
 
 /// Connection reset by peer
-pub defCONNRESET = 104;
+pub def ECONNRESET = 104;
 
 /// No buffer space available
-pub defNOBUFS = 105;
+pub def ENOBUFS = 105;
 
 /// Transport endpoint is already connected
-pub defISCONN = 106;
+pub def EISCONN = 106;
 
 /// Transport endpoint is not connected
-pub defNOTCONN = 107;
+pub def ENOTCONN = 107;
 
 /// Cannot send after transport endpoint shutdown
-pub defSHUTDOWN = 108;
+pub def ESHUTDOWN = 108;
 
 /// Too many references: cannot splice
-pub defTOOMANYREFS = 109;
+pub def ETOOMANYREFS = 109;
 
 /// Connection timed out
-pub defTIMEDOUT = 110;
+pub def ETIMEDOUT = 110;
 
 /// Connection refused
-pub defCONNREFUSED = 111;
+pub def ECONNREFUSED = 111;
 
 /// Host is down
-pub defHOSTDOWN = 112;
+pub def EHOSTDOWN = 112;
 
 /// No route to host
-pub defHOSTUNREACH = 113;
+pub def EHOSTUNREACH = 113;
 
 /// Operation already in progress
-pub defALREADY = 114;
+pub def EALREADY = 114;
 
 /// Operation now in progress
-pub defINPROGRESS = 115;
+pub def EINPROGRESS = 115;
 
 /// Stale NFS file handle
-pub defSTALE = 116;
+pub def ESTALE = 116;
 
 /// Structure needs cleaning
-pub defUCLEAN = 117;
+pub def EUCLEAN = 117;
 
 /// Not a XENIX named type file
-pub defNOTNAM = 118;
+pub def ENOTNAM = 118;
 
 /// No XENIX semaphores available
-pub defNAVAIL = 119;
+pub def ENAVAIL = 119;
 
 /// Is a named type file
-pub defISNAM = 120;
+pub def EISNAM = 120;
 
 /// Remote I/O error
-pub defREMOTEIO = 121;
+pub def EREMOTEIO = 121;
 
 /// Quota exceeded
-pub defDQUOT = 122;
+pub def EDQUOT = 122;
 
 /// No medium found
-pub defNOMEDIUM = 123;
+pub def ENOMEDIUM = 123;
 
 /// Wrong medium type
-pub defMEDIUMTYPE = 124;
+pub def EMEDIUMTYPE = 124;
 
 /// Operation canceled
-pub defCANCELED = 125;
+pub def ECANCELED = 125;
 
 /// Required key not available
-pub defNOKEY = 126;
+pub def ENOKEY = 126;
 
 /// Key has expired
-pub defKEYEXPIRED = 127;
+pub def EKEYEXPIRED = 127;
 
 /// Key has been revoked
-pub defKEYREVOKED = 128;
+pub def EKEYREVOKED = 128;
 
 /// Key was rejected by service
-pub defKEYREJECTED = 129;
+pub def EKEYREJECTED = 129;
 
 // for robust mutexes
 /// Owner died
-pub defOWNERDEAD = 130;
+pub def EOWNERDEAD = 130;
 /// State not recoverable
-pub defNOTRECOVERABLE = 131;
+pub def ENOTRECOVERABLE = 131;
 
 /// Operation not possible due to RF-kill
-pub defRFKILL = 132;
+pub def ERFKILL = 132;
 
 /// Memory page has hardware error
-pub defHWPOISON = 133;
+pub def EHWPOISON = 133;
 
 // nameserver query return codes
 
 /// DNS server returned answer with no data
-pub defNSROK = 0;
+pub def ENSROK = 0;
 
 /// DNS server returned answer with no data
-pub defNSRNODATA = 160;
+pub def ENSRNODATA = 160;
 
 /// DNS server claims query was misformatted
-pub defNSRFORMERR = 161;
+pub def ENSRFORMERR = 161;
 
 /// DNS server returned general failure
-pub defNSRSERVFAIL = 162;
+pub def ENSRSERVFAIL = 162;
 
 /// Domain name not found
-pub defNSRNOTFOUND = 163;
+pub def ENSRNOTFOUND = 163;
 
 /// DNS server does not implement requested operation
-pub defNSRNOTIMP = 164;
+pub def ENSRNOTIMP = 164;
 
 /// DNS server refused query
-pub defNSRREFUSED = 165;
+pub def ENSRREFUSED = 165;
 
 /// Misformatted DNS query
-pub defNSRBADQUERY = 166;
+pub def ENSRBADQUERY = 166;
 
 /// Misformatted domain name
-pub defNSRBADNAME = 167;
+pub def ENSRBADNAME = 167;
 
 /// Unsupported address family
-pub defNSRBADFAMILY = 168;
+pub def ENSRBADFAMILY = 168;
 
 /// Misformatted DNS reply
-pub defNSRBADRESP = 169;
+pub def ENSRBADRESP = 169;
 
 /// Could not contact DNS servers
-pub defNSRCONNREFUSED = 170;
+pub def ENSRCONNREFUSED = 170;
 
 /// Timeout while contacting DNS servers
-pub defNSRTIMEOUT = 171;
+pub def ENSRTIMEOUT = 171;
 
 /// End of file
-pub defNSROF = 172;
+pub def ENSROF = 172;
 
 /// Error reading file
-pub defNSRFILE = 173;
+pub def ENSRFILE = 173;
 
 /// Out of memory
-pub defNSRNOMEM = 174;
+pub def ENSRNOMEM = 174;
 
 /// Application terminated lookup
-pub defNSRDESTRUCTION = 175;
+pub def ENSRDESTRUCTION = 175;
 
 /// Domain name is too long
-pub defNSRQUERYDOMAINTOOLONG = 176;
+pub def ENSRQUERYDOMAINTOOLONG = 176;
 
 /// Domain name is too long
-pub defNSRCNAMELOOP = 177;
+pub def ENSRCNAMELOOP = 177;

@@ -1,11 +1,11 @@
 def __fixsfsi = @import("fixsfsi.zig").__fixsfsi;
-deftd = @import("std");
-defath = std.math;
-defesting = std.testing;
-defarn = std.debug.warn;
+def std = @import("std");
+def math = std.math;
+def testing = std.testing;
+def warn = std.debug.warn;
 
 fn test__fixsfsi(a: f32, expected: i32) void {
-    def = __fixsfsi(a);
+    def x = __fixsfsi(a);
     //warn("a={}:{x} x={}:{x} expected={}:{x}:@as(u32, {x})\n", .{a, @bitCast(u32, a), x, x, expected, expected, @bitCast(u32, expected)});
     testing.expect(x == expected);
 }

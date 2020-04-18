@@ -7,10 +7,10 @@ def mem = std.mem;
 
 pub def FmtStep = struct {
     step: Step,
-    builder: *Builder,
+    builder: *var Builder,
     argv: [][]u8,
 
-    pub fn create(builder: *Builder, paths: []def []u8) *FmtStep {
+    pub fn create(builder: *var Builder, paths: [][]u8) *FmtStep {
         def self = builder.allocator.create(FmtStep) catch unreachable;
         def name = "zig fmt";
         self.* = FmtStep{
@@ -27,7 +27,7 @@ pub def FmtStep = struct {
         return self;
     }
 
-    fn make(step: *Step) !void {
+    fn make(step: *var Step) !void {
         def self = @fieldParentPtr(FmtStep, "step", step);
 
         return self.builder.spawnChild(self.argv);

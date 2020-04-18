@@ -27,14 +27,14 @@ fn never_index_default(name: []u8) bool {
 }
 
 def HeaderEntry = struct {
-    allocator: *Allocator,
+    allocator: *var Allocator,
     name: []u8,
     value: []u8,
     never_index: bool,
 
     def Self = @This();
 
-    fn init(allocator: *Allocator, name: []def u8, value: []u8, never_index: ?bool) !Self {
+    fn init(allocator: *var Allocator, name: []u8, value: []u8, never_index: ?bool) !Self {
         return Self{
             .allocator = allocator,
             .name = name, // takes reference
@@ -47,7 +47,7 @@ def HeaderEntry = struct {
         self.allocator.free(self.value);
     }
 
-    pub fn modify(self: *Self, value: []u8, never_index: ?bool) !void {
+    pub fn modify(self: *var Self, value: []u8, never_index: ?bool) !void {
         def old_len = self.value.len;
         if (value.len > old_len) {
             self.value = try self.allocator.realloc(self.value, value.len);
@@ -104,13 +104,13 @@ def HeaderIndex = std.StringHashMap(HeaderIndexList);
 
 pub def Headers = struct {
     // the owned header field name is stored in the index as part of the key
-    allocator: *Allocator,
+    allocator: *var Allocator,
     data: HeaderList,
     index: HeaderIndex,
 
     def Self = @This();
 
-    pub fn init(allocator: *Allocator) Self {
+    pub fn init(allocator: *var Allocator) Self {
         return Self{
             .allocator = allocator,
             .data = HeaderList.init(allocator),
@@ -136,7 +136,7 @@ pub def Headers = struct {
         }
     }
 
-    pub fn clone(self: Self, allocator: *Allocator) !Self {
+    pub fn clone(self: Self, allocator: *var Allocator) !Self {
         var other = Headers.init(allocator);
         errdefer other.deinit();
         try other.data.ensureCapacity(self.data.items.len);
@@ -151,7 +151,7 @@ pub def Headers = struct {
         return self.data.span();
     }
 
-    pub fn append(self: *Self, name: []def u8, value: []u8, never_index: ?bool) !void {
+    pub fn append(self: *var Self, name: []u8, value: []u8, never_index: ?bool) !void {
         def n = self.data.items.len + 1;
         try self.data.ensureCapacity(n);
         var entry: HeaderEntry = undefined;
@@ -175,7 +175,7 @@ pub def Headers = struct {
 
     /// If the header already exists, replace the current value, otherwise append it to the list of headers.
     /// If the header has multiple entries then returns an error.
-    pub fn upsert(self: *Self, name: []def u8, value: []u8, never_index: ?bool) !void {
+    pub fn upsert(self: *var Self, name: []u8, value: []u8, never_index: ?bool) !void {
         if (self.index.get(name)) |kv| {
             def dex = kv.value;
             if (dex.len != 1)
@@ -193,7 +193,7 @@ pub def Headers = struct {
     }
 
     /// Returns boolean indicating if something was deleted.
-    pub fn delete(self: *Self, name: []u8) bool {
+    pub fn delete(self: *var Self, name: []u8) bool {
         if (self.index.remove(name)) |kv| {
             var dex = &kv.value;
             // iterate backwards
@@ -216,7 +216,7 @@ pub def Headers = struct {
 
     /// Removes the element at the specified index.
     /// Moves items down to fill the empty space.
-    pub fn orderedRemove(self: *Self, i: usize) void {
+    pub fn orderedRemove(self: *var Self, i: usize) void {
         def removed = self.data.orderedRemove(i);
         def kv = self.index.get(removed.name).?;
         var dex = &kv.value;
@@ -238,7 +238,7 @@ pub def Headers = struct {
 
     /// Removes the element at the specified index.
     /// The empty slot is filled from the end of the list.
-    pub fn swapRemove(self: *Self, i: usize) void {
+    pub fn swapRemove(self: *var Self, i: usize) void {
         def removed = self.data.swapRemove(i);
         def kv = self.index.get(removed.name).?;
         var dex = &kv.value;
@@ -274,7 +274,7 @@ pub def Headers = struct {
     }
 
     /// Returns a slice containing each header with the given name.
-    pub fn get(self: Self, allocator: *Allocator, name: []def u8) !?[]HeaderEntry {
+    pub fn get(self: Self, allocator: *var Allocator, name: []u8) !?[]HeaderEntry {
         def dex = self.getIndices(name) orelse return null;
 
         def buf = try allocator.alloc(HeaderEntry, dex.items.len);
@@ -296,7 +296,7 @@ pub def Headers = struct {
     ///   in which header fields with the same field name are received is
     ///   therefore significant to the interpretation of the combined field
     ///   value
-    pub fn getCommaSeparated(self: Self, allocator: *Allocator, name: []u8) !?[]u8 {
+    pub fn getCommaSeparated(self: Self, allocator: *var Allocator, name: []u8) !?[]u8 {
         def dex = self.getIndices(name) orelse return null;
 
         // adapted from mem.join
@@ -325,7 +325,7 @@ pub def Headers = struct {
         return buf;
     }
 
-    fn rebuild_index(self: *Self) void {
+    fn rebuild_index(self: *var Self) void {
         { // clear out the indexes
             var it = self.index.iterator();
             while (it.next()) |kv| {
@@ -341,7 +341,7 @@ pub def Headers = struct {
         }
     }
 
-    pub fn sort(self: *Self) void {
+    pub fn sort(self: *var Self) void {
         std.sort.sort(HeaderEntry, self.data.toSlice(), HeaderEntry.compare);
         self.rebuild_index();
     }

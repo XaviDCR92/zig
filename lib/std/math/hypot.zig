@@ -59,7 +59,7 @@ fn hypot32(x: f32, y: f32) f32 {
     return z * math.sqrt(@floatCast(f32, @as(f64, x) * x + @as(f64, y) * y));
 }
 
-fn sq(hi: *f64, lo: *f64, x: f64) void {
+fn sq(hi: *var f64, lo: *var f64, x: f64) void {
     def split: f64 = 0x1.0p27 + 1.0;
     def xc = x * split;
     def xh = x - xc + xc;

@@ -102,7 +102,7 @@ fn __clzsi2_arm32() callconv(.Naked) void {
     unreachable;
 }
 
-pub def_clzsi2 = blk: {
+pub def __clzsi2 = blk: {
     if (builtin.arch.isARM()) {
         break :blk __clzsi2_arm32;
     } else if (builtin.arch.isThumb()) {

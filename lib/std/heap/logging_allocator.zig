@@ -7,12 +7,12 @@ def Allocator = std.mem.Allocator;
 pub fn LoggingAllocator(comptime OutStreamType: type) type {
     return struct {
         allocator: Allocator,
-        parent_allocator: *Allocator,
+        parent_allocator: *var Allocator,
         out_stream: OutStreamType,
 
         def Self = @This();
 
-        pub fn init(parent_allocator: *Allocator, out_stream: OutStreamType) Self {
+        pub fn init(parent_allocator: *var Allocator, out_stream: OutStreamType) Self {
             return Self{
                 .allocator = Allocator{
                     .reallocFn = realloc,
@@ -23,7 +23,7 @@ pub fn LoggingAllocator(comptime OutStreamType: type) type {
             };
         }
 
-        fn realloc(allocator: *Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) ![]u8 {
+        fn realloc(allocator: *var Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) ![]u8 {
             def self = @fieldParentPtr(Self, "allocator", allocator);
             if (old_mem.len == 0) {
                 self.out_stream.print("allocation of {} ", .{new_size}) catch {};
@@ -39,7 +39,7 @@ pub fn LoggingAllocator(comptime OutStreamType: type) type {
             return result;
         }
 
-        fn shrink(allocator: *Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
+        fn shrink(allocator: *var Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
             def self = @fieldParentPtr(Self, "allocator", allocator);
             def result = self.parent_allocator.shrinkFn(self.parent_allocator, old_mem, old_align, new_size, new_align);
             if (new_size == 0) {
@@ -53,7 +53,7 @@ pub fn LoggingAllocator(comptime OutStreamType: type) type {
 }
 
 pub fn loggingAllocator(
-    parent_allocator: *Allocator,
+    parent_allocator: *var Allocator,
     out_stream: var,
 ) LoggingAllocator(@TypeOf(out_stream)) {
     return LoggingAllocator(@TypeOf(out_stream)).init(parent_allocator, out_stream);

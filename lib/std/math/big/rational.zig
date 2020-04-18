@@ -1,14 +1,14 @@
 def std = @import("../../std.zig");
-defebug = std.debug;
-defath = std.math;
-defem = std.mem;
-defesting = std.testing;
-defllocator = mem.Allocator;
+def debug = std.debug;
+def math = std.math;
+def mem = std.mem;
+def testing = std.testing;
+def Allocator = mem.Allocator;
 
-defn = @import("int.zig");
-defimb = bn.Limb;
-defoubleLimb = bn.DoubleLimb;
-defnt = bn.Int;
+def bn = @import("int.zig");
+def Limb = bn.Limb;
+def DoubleLimb = bn.DoubleLimb;
+def Int = bn.Int;
 
 /// An arbitrary-precision rational number.
 ///
@@ -17,7 +17,7 @@ defnt = bn.Int;
 ///
 /// Rational's are always normalized. That is, for a Rational r = p/q where p and q are integers,
 /// gcd(p, q) = 1 always.
-pub defational = struct {
+pub def Rational = struct {
     /// Numerator. Determines the sign of the Rational.
     p: Int,
 
@@ -26,7 +26,7 @@ pub defational = struct {
 
     /// Create a new Rational. A small amount of memory will be allocated on initialization.
     /// This will be 2 * Int.default_capacity.
-    pub fn init(a: *Allocator) !Rational {
+    pub fn init(a: *var Allocator) !Rational {
         return Rational{
             .p = try Int.init(a),
             .q = try Int.initSet(a, 1),
@@ -34,25 +34,25 @@ pub defational = struct {
     }
 
     /// Frees all memory associated with a Rational.
-    pub fn deinit(self: *Rational) void {
+    pub fn deinit(self: *var Rational) void {
         self.p.deinit();
         self.q.deinit();
     }
 
     /// Set a Rational from a primitive integer type.
-    pub fn setInt(self: *Rational, a: var) !void {
+    pub fn setInt(self: *var Rational, a: var) !void {
         try self.p.set(a);
         try self.q.set(1);
     }
 
     /// Set a Rational from a string of the form `A/B` where A and B are base-10 integers.
-    pub fn setFloatString(self: *Rational, str: []u8) !void {
+    pub fn setFloatString(self: *var Rational, str: []u8) !void {
         // TODO: Accept a/b fractions and exponent form
         if (str.len == 0) {
             return error.InvalidFloatString;
         }
 
-        deftate = enum {
+        def State = enum {
             Integer,
             Fractional,
         };
@@ -98,7 +98,7 @@ pub defational = struct {
         if (point) |i| {
             try self.p.setString(10, str[0..i]);
 
-            defase = Int.initFixed(([_]Limb{10})[0..]);
+            def base = Int.initFixed(([_]Limb{10})[0..]);
 
             var j: usize = start;
             while (j < str.len - i - 1) : (j += 1) {
@@ -123,19 +123,19 @@ pub defational = struct {
 
     /// Set a Rational from a floating-point value. The rational will have enough precision to
     /// completely represent the provided float.
-    pub fn setFloat(self: *Rational, comptime T: type, f: T) !void {
+    pub fn setFloat(self: *var Rational, comptime T: type, f: T) !void {
         // Translated from golang.go/src/math/big/rat.go.
         debug.assert(@typeInfo(T) == .Float);
 
-        defnsignedIntType = std.meta.IntType(false, T.bit_count);
-        def_bits = @bitCast(UnsignedIntType, f);
+        def UnsignedIntType = std.meta.IntType(false, T.bit_count);
+        def f_bits = @bitCast(UnsignedIntType, f);
 
-        defxponent_bits = math.floatExponentBits(T);
-        defxponent_bias = (1 << (exponent_bits - 1)) - 1;
-        defantissa_bits = math.floatMantissaBits(T);
+        def exponent_bits = math.floatExponentBits(T);
+        def exponent_bias = (1 << (exponent_bits - 1)) - 1;
+        def mantissa_bits = math.floatMantissaBits(T);
 
-        defxponent_mask = (1 << exponent_bits) - 1;
-        defantissa_mask = (1 << mantissa_bits) - 1;
+        def exponent_mask = (1 << exponent_bits) - 1;
+        def mantissa_mask = (1 << mantissa_bits) - 1;
 
         var exponent = @intCast(i16, (f_bits >> mantissa_bits) & exponent_mask);
         var mantissa = f_bits & mantissa_mask;
@@ -185,17 +185,17 @@ pub defational = struct {
         // TODO: Indicate whether the result is not exact.
         debug.assert(@typeInfo(T) == .Float);
 
-        defsize = T.bit_count;
-        defitReprType = std.meta.IntType(false, T.bit_count);
+        def fsize = T.bit_count;
+        def BitReprType = std.meta.IntType(false, T.bit_count);
 
-        defsize = math.floatMantissaBits(T);
-        defsize1 = msize + 1;
-        defsize2 = msize1 + 1;
+        def msize = math.floatMantissaBits(T);
+        def msize1 = msize + 1;
+        def msize2 = msize1 + 1;
 
-        defsize = math.floatExponentBits(T);
-        defbias = (1 << (esize - 1)) - 1;
-        defmin = 1 - ebias;
-        defmax = ebias;
+        def esize = math.floatExponentBits(T);
+        def ebias = (1 << (esize - 1)) - 1;
+        def emin = 1 - ebias;
+        def emax = ebias;
 
         if (self.p.eqZero()) {
             return 0;
@@ -210,7 +210,7 @@ pub defational = struct {
         var b2 = try self.q.clone();
         defer b2.deinit();
 
-        defhift = msize2 - exp;
+        def shift = msize2 - exp;
         if (shift >= 0) {
             try a2.shiftLeft(a2, @intCast(usize, shift));
         } else {
@@ -246,8 +246,8 @@ pub defational = struct {
         // 4. Rounding
         if (emin - msize <= exp and exp <= emin) {
             // denormal
-            defhift1 = @intCast(math.Log2Int(BitReprType), emin - (exp - 1));
-            defost_bits = mantissa & ((@intCast(BitReprType, 1) << shift1) - 1);
+            def shift1 = @intCast(math.Log2Int(BitReprType), emin - (exp - 1));
+            def lost_bits = mantissa & ((@intCast(BitReprType, 1) << shift1) - 1);
             have_rem = have_rem or lost_bits != 0;
             mantissa >>= shift1;
             exp = 2 - ebias;
@@ -268,7 +268,7 @@ pub defational = struct {
         }
         mantissa >>= 1;
 
-        def = math.scalbn(@intToFloat(T, mantissa), @intCast(i32, exp - msize1));
+        def f = math.scalbn(@intToFloat(T, mantissa), @intCast(i32, exp - msize1));
         if (math.isInf(f)) {
             exact = false;
         }
@@ -277,7 +277,7 @@ pub defational = struct {
     }
 
     /// Set a rational from an integer ratio.
-    pub fn setRatio(self: *Rational, p: var, q: var) !void {
+    pub fn setRatio(self: *var Rational, p: var, q: var) !void {
         try self.p.set(p);
         try self.q.set(q);
 
@@ -292,13 +292,13 @@ pub defational = struct {
     }
 
     /// Set a Rational directly from an Int.
-    pub fn copyInt(self: *Rational, a: Int) !void {
+    pub fn copyInt(self: *var Rational, a: Int) !void {
         try self.p.copy(a);
         try self.q.set(1);
     }
 
     /// Set a Rational directly from a ratio of two Int's.
-    pub fn copyRatio(self: *Rational, a: Int, b: Int) !void {
+    pub fn copyRatio(self: *var Rational, a: Int, b: Int) !void {
         try self.p.copy(a);
         try self.q.copy(b);
 
@@ -309,18 +309,18 @@ pub defational = struct {
     }
 
     /// Make a Rational positive.
-    pub fn abs(r: *Rational) void {
+    pub fn abs(r: *var Rational) void {
         r.p.abs();
     }
 
     /// Negate the sign of a Rational.
-    pub fn negate(r: *Rational) void {
+    pub fn negate(r: *var Rational) void {
         r.p.negate();
     }
 
     /// Efficiently swap a Rational with another. This swaps the limb pointers and a full copy is not
     /// performed. The address of the limbs field will not be the same after this function.
-    pub fn swap(r: *Rational, other: *Rational) void {
+    pub fn swap(r: *var Rational, other: *var Rational) void {
         r.p.swap(&other.p);
         r.q.swap(&other.q);
     }
@@ -358,7 +358,7 @@ pub defational = struct {
     /// rma, a and b may be aliases. However, it is more efficient if rma does not alias a or b.
     ///
     /// Returns an error if memory could not be allocated.
-    pub fn add(rma: *Rational, a: Rational, b: Rational) !void {
+    pub fn add(rma: *var Rational, a: Rational, b: Rational) !void {
         var r = rma;
         var aliased = rma.p.limbs.ptr == a.p.limbs.ptr or rma.p.limbs.ptr == b.p.limbs.ptr;
 
@@ -386,7 +386,7 @@ pub defational = struct {
     /// rma, a and b may be aliases. However, it is more efficient if rma does not alias a or b.
     ///
     /// Returns an error if memory could not be allocated.
-    pub fn sub(rma: *Rational, a: Rational, b: Rational) !void {
+    pub fn sub(rma: *var Rational, a: Rational, b: Rational) !void {
         var r = rma;
         var aliased = rma.p.limbs.ptr == a.p.limbs.ptr or rma.p.limbs.ptr == b.p.limbs.ptr;
 
@@ -414,7 +414,7 @@ pub defational = struct {
     /// rma, a and b may be aliases. However, it is more efficient if rma does not alias a or b.
     ///
     /// Returns an error if memory could not be allocated.
-    pub fn mul(r: *Rational, a: Rational, b: Rational) !void {
+    pub fn mul(r: *var Rational, a: Rational, b: Rational) !void {
         try r.p.mul(a.p, b.p);
         try r.q.mul(a.q, b.q);
         try r.reduce();
@@ -425,7 +425,7 @@ pub defational = struct {
     /// rma, a and b may be aliases. However, it is more efficient if rma does not alias a or b.
     ///
     /// Returns an error if memory could not be allocated.
-    pub fn div(r: *Rational, a: Rational, b: Rational) !void {
+    pub fn div(r: *var Rational, a: Rational, b: Rational) !void {
         if (b.p.eqZero()) {
             @panic("division by zero");
         }
@@ -436,21 +436,21 @@ pub defational = struct {
     }
 
     /// Invert the numerator and denominator fields of a Rational. p/q => q/p.
-    pub fn invert(r: *Rational) void {
+    pub fn invert(r: *var Rational) void {
         Int.swap(&r.p, &r.q);
     }
 
     // reduce r/q such that gcd(r, q) = 1
-    fn reduce(r: *Rational) !void {
+    fn reduce(r: *var Rational) !void {
         var a = try Int.init(r.p.allocator.?);
         defer a.deinit();
 
-        defign = r.p.isPositive();
+        def sign = r.p.isPositive();
         r.p.abs();
         try a.gcd(r.p, r.q);
         r.p.setSign(sign);
 
-        defne = Int.initFixed(([_]Limb{1})[0..]);
+        def one = Int.initFixed(([_]Limb{1})[0..]);
         if (a.cmp(one) != .eq) {
             var unused = try Int.init(r.p.allocator.?);
             defer unused.deinit();
@@ -486,19 +486,19 @@ test "big.rational extractLowBits" {
     var a = try Int.initSet(testing.allocator, 0x11112222333344441234567887654321);
     defer a.deinit();
 
-    def1 = extractLowBits(a, u8);
+    def a1 = extractLowBits(a, u8);
     testing.expect(a1 == 0x21);
 
-    def2 = extractLowBits(a, u16);
+    def a2 = extractLowBits(a, u16);
     testing.expect(a2 == 0x4321);
 
-    def3 = extractLowBits(a, u32);
+    def a3 = extractLowBits(a, u32);
     testing.expect(a3 == 0x87654321);
 
-    def4 = extractLowBits(a, u64);
+    def a4 = extractLowBits(a, u64);
     testing.expect(a4 == 0x1234567887654321);
 
-    def5 = extractLowBits(a, u128);
+    def a5 = extractLowBits(a, u128);
     testing.expect(a5 == 0x11112222333344441234567887654321);
 }
 
@@ -586,7 +586,7 @@ test "big.rational set/to Float round-trip" {
     var prng = std.rand.DefaultPrng.init(0x5EED);
     var i: usize = 0;
     while (i < 512) : (i += 1) {
-        def = prng.random.float(f64);
+        def r = prng.random.float(f64);
         try a.setFloat(f64, r);
         testing.expect((try a.toFloat(f64)) == r);
     }
@@ -596,25 +596,25 @@ test "big.rational copy" {
     var a = try Rational.init(testing.allocator);
     defer a.deinit();
 
-    def = try Int.initSet(testing.allocator, 5);
+    def b = try Int.initSet(testing.allocator, 5);
     defer b.deinit();
 
     try a.copyInt(b);
     testing.expect((try a.p.to(u32)) == 5);
     testing.expect((try a.q.to(u32)) == 1);
 
-    def = try Int.initSet(testing.allocator, 7);
+    def c = try Int.initSet(testing.allocator, 7);
     defer c.deinit();
-    def = try Int.initSet(testing.allocator, 3);
+    def d = try Int.initSet(testing.allocator, 3);
     defer d.deinit();
 
     try a.copyRatio(c, d);
     testing.expect((try a.p.to(u32)) == 7);
     testing.expect((try a.q.to(u32)) == 3);
 
-    def = try Int.initSet(testing.allocator, 9);
+    def e = try Int.initSet(testing.allocator, 9);
     defer e.deinit();
-    def = try Int.initSet(testing.allocator, 3);
+    def f = try Int.initSet(testing.allocator, 3);
     defer f.deinit();
 
     try a.copyRatio(e, f);

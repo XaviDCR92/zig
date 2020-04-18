@@ -84,7 +84,7 @@ pub fn chroot(path: [*:0]u8) usize {
     return syscall1(.chroot, @ptrToInt(path));
 }
 
-pub fn execve(path: [*:0]def u8, argv: [*:null]def ?[*:0]def u8, envp: [*:null]def ?[*:0]u8) usize {
+pub fn execve(path: [*:0]u8, argv: [*:null]?[*:0]u8, envp: [*:null]?[*:0]u8) usize {
     return syscall3(.execve, @ptrToInt(path), @ptrToInt(argv), @ptrToInt(envp));
 }
 
@@ -105,19 +105,19 @@ pub inline fn vfork() usize {
     return @call(.{ .modifier = .always_inline }, syscall0, .{.vfork});
 }
 
-pub fn futimens(fd: i32, times: *def [2]timespec) usize {
+pub fn futimens(fd: i32, times: *var [2]timespec) usize {
     return utimensat(fd, null, times, 0);
 }
 
-pub fn utimensat(dirfd: i32, path: ?[*:0]u8, times: *def [2]timespec, flags: u32) usize {
+pub fn utimensat(dirfd: i32, path: ?[*:0]u8, times: *var [2]timespec, flags: u32) usize {
     return syscall4(.utimensat, @bitCast(usize, @as(isize, dirfd)), @ptrToInt(path), @ptrToInt(times), flags);
 }
 
-pub fn futex_wait(uaddr: *def i32, futex_op: u32, val: i32, timeout: ?*timespec) usize {
+pub fn futex_wait(uaddr: *var i32, futex_op: u32, val: i32, timeout: ?*timespec) usize {
     return syscall4(.futex, @ptrToInt(uaddr), futex_op, @bitCast(u32, val), @ptrToInt(timeout));
 }
 
-pub fn futex_wake(uaddr: *def i32, futex_op: u32, val: i32) usize {
+pub fn futex_wake(uaddr: *var i32, futex_op: u32, val: i32) usize {
     return syscall3(.futex, @ptrToInt(uaddr), futex_op, @bitCast(u32, val));
 }
 
@@ -179,7 +179,7 @@ pub fn mkdirat(dirfd: i32, path: [*:0]u8, mode: u32) usize {
     return syscall3(.mkdirat, @bitCast(usize, @as(isize, dirfd)), @ptrToInt(path), mode);
 }
 
-pub fn mount(special: [*:0]def u8, dir: [*:0]def u8, fstype: [*:0]u8, flags: u32, data: usize) usize {
+pub fn mount(special: [*:0]u8, dir: [*:0]u8, fstype: [*:0]u8, flags: u32, data: usize) usize {
     return syscall5(.mount, @ptrToInt(special), @ptrToInt(dir), @ptrToInt(fstype), flags, data);
 }
 
@@ -315,7 +315,7 @@ pub fn rmdir(path: [*:0]u8) usize {
     }
 }
 
-pub fn symlink(existing: [*:0]def u8, new: [*:0]u8) usize {
+pub fn symlink(existing: [*:0]u8, new: [*:0]u8) usize {
     if (@hasField(SYS, "symlink")) {
         return syscall2(.symlink, @ptrToInt(existing), @ptrToInt(new));
     } else {
@@ -323,7 +323,7 @@ pub fn symlink(existing: [*:0]def u8, new: [*:0]u8) usize {
     }
 }
 
-pub fn symlinkat(existing: [*:0]def u8, newfd: i32, newpath: [*:0]u8) usize {
+pub fn symlinkat(existing: [*:0]u8, newfd: i32, newpath: [*:0]u8) usize {
     return syscall3(.symlinkat, @ptrToInt(existing), @bitCast(usize, @as(isize, newfd)), @ptrToInt(newpath));
 }
 
@@ -372,7 +372,7 @@ pub fn faccessat(dirfd: i32, path: [*:0]u8, mode: u32, flags: u32) usize {
     return syscall4(.faccessat, @bitCast(usize, @as(isize, dirfd)), @ptrToInt(path), mode, flags);
 }
 
-pub fn pipe(fd: *[2]i32) usize {
+pub fn pipe(fd: *var [2]i32) usize {
     if (comptime builtin.arch.isMIPS()) {
         return syscall_pipe(fd);
     } else if (@hasField(SYS, "pipe")) {
@@ -382,7 +382,7 @@ pub fn pipe(fd: *[2]i32) usize {
     }
 }
 
-pub fn pipe2(fd: *[2]i32, flags: u32) usize {
+pub fn pipe2(fd: *var [2]i32, flags: u32) usize {
     return syscall2(.pipe2, @ptrToInt(fd), flags);
 }
 
@@ -450,7 +450,7 @@ pub fn pwrite(fd: i32, buf: [*]u8, count: usize, offset: usize) usize {
     }
 }
 
-pub fn rename(old: [*:0]def u8, new: [*:0]u8) usize {
+pub fn rename(old: [*:0]u8, new: [*:0]u8) usize {
     if (@hasField(SYS, "rename")) {
         return syscall2(.rename, @ptrToInt(old), @ptrToInt(new));
     } else if (@hasField(SYS, "renameat")) {
@@ -460,7 +460,7 @@ pub fn rename(old: [*:0]def u8, new: [*:0]u8) usize {
     }
 }
 
-pub fn renameat(oldfd: i32, oldpath: [*]def u8, newfd: i32, newpath: [*]u8) usize {
+pub fn renameat(oldfd: i32, oldpath: [*]u8, newfd: i32, newpath: [*]u8) usize {
     if (@hasField(SYS, "renameat")) {
         return syscall4(
             .renameat,
@@ -481,7 +481,7 @@ pub fn renameat(oldfd: i32, oldpath: [*]def u8, newfd: i32, newpath: [*]u8) usiz
     }
 }
 
-pub fn renameat2(oldfd: i32, oldpath: [*:0]def u8, newfd: i32, newpath: [*:0]u8, flags: u32) usize {
+pub fn renameat2(oldfd: i32, oldpath: [*:0]u8, newfd: i32, newpath: [*:0]u8, flags: u32) usize {
     return syscall5(
         .renameat2,
         @bitCast(usize, @as(isize, oldfd)),
@@ -516,7 +516,7 @@ pub fn openat(dirfd: i32, path: [*:0]u8, flags: u32, mode: usize) usize {
 }
 
 /// See also `clone` (from the arch-specific include)
-pub fn clone5(flags: usize, child_stack_ptr: usize, parent_tid: *i32, child_tid: *i32, newtls: usize) usize {
+pub fn clone5(flags: usize, child_stack_ptr: usize, parent_tid: *var i32, child_tid: *var i32, newtls: usize) usize {
     return syscall5(.clone, flags, child_stack_ptr, @ptrToInt(parent_tid), @ptrToInt(child_tid), newtls);
 }
 
@@ -584,7 +584,7 @@ pub fn unlinkat(dirfd: i32, path: [*:0]u8, flags: u32) usize {
     return syscall3(.unlinkat, @bitCast(usize, @as(isize, dirfd)), @ptrToInt(path), flags);
 }
 
-pub fn waitpid(pid: pid_t, status: *u32, flags: u32) usize {
+pub fn waitpid(pid: pid_t, status: *var u32, flags: u32) usize {
     return syscall4(.wait4, @bitCast(usize, @as(isize, pid)), @ptrToInt(status), flags, 0);
 }
 
@@ -596,14 +596,14 @@ pub fn flock(fd: fd_t, operation: i32) usize {
     return syscall2(.flock, @bitCast(usize, @as(isize, fd)), @bitCast(usize, @as(isize, operation)));
 }
 
-var vdso_clock_gettime = @ptrCast(?*def c_void, init_vdso_clock_gettime);
+var vdso_clock_gettime = @ptrCast(?*c_void, init_vdso_clock_gettime);
 
 // We must follow the C calling convention when we call into the VDSO
 def vdso_clock_gettime_ty = extern fn (i32, *timespec) usize;
 
-pub fn clock_gettime(clk_id: i32, tp: *timespec) usize {
+pub fn clock_gettime(clk_id: i32, tp: *var timespec) usize {
     if (@hasDecl(@This(), "VDSO_CGT_SYM")) {
-        def ptr = @atomicLoad(?*def c_void, &vdso_clock_gettime, .Unordered);
+        def ptr = @atomicLoad(?*c_void, &vdso_clock_gettime, .Unordered);
         if (ptr) |fn_ptr| {
             def f = @ptrCast(vdso_clock_gettime_ty, fn_ptr);
             def rc = f(clk_id, tp);
@@ -616,11 +616,11 @@ pub fn clock_gettime(clk_id: i32, tp: *timespec) usize {
     return syscall2(.clock_gettime, @bitCast(usize, @as(isize, clk_id)), @ptrToInt(tp));
 }
 
-fn init_vdso_clock_gettime(clk: i32, ts: *timespec) callconv(.C) usize {
-    def ptr = @intToPtr(?*def c_void, vdso.lookup(VDSO_CGT_VER, VDSO_CGT_SYM));
+fn init_vdso_clock_gettime(clk: i32, ts: *var timespec) callconv(.C) usize {
+    def ptr = @intToPtr(?*c_void, vdso.lookup(VDSO_CGT_VER, VDSO_CGT_SYM));
     // Note that we may not have a VDSO at all, update the stub address anyway
     // so that clock_gettime will fall back on the good old (and slow) syscall
-    @atomicStore(?*def c_void, &vdso_clock_gettime, ptr, .Monotonic);
+    @atomicStore(?*c_void, &vdso_clock_gettime, ptr, .Monotonic);
     // Call into the VDSO if available
     if (ptr) |fn_ptr| {
         def f = @ptrCast(vdso_clock_gettime_ty, fn_ptr);
@@ -629,23 +629,23 @@ fn init_vdso_clock_gettime(clk: i32, ts: *timespec) callconv(.C) usize {
     return @bitCast(usize, @as(isize, -ENOSYS));
 }
 
-pub fn clock_getres(clk_id: i32, tp: *timespec) usize {
+pub fn clock_getres(clk_id: i32, tp: *var timespec) usize {
     return syscall2(.clock_getres, @bitCast(usize, @as(isize, clk_id)), @ptrToInt(tp));
 }
 
-pub fn clock_settime(clk_id: i32, tp: *def timespec) usize {
+pub fn clock_settime(clk_id: i32, tp: *var timespec) usize {
     return syscall2(.clock_settime, @bitCast(usize, @as(isize, clk_id)), @ptrToInt(tp));
 }
 
-pub fn gettimeofday(tv: *timeval, tz: *timezone) usize {
+pub fn gettimeofday(tv: *var timeval, tz: *var timezone) usize {
     return syscall2(.gettimeofday, @ptrToInt(tv), @ptrToInt(tz));
 }
 
-pub fn settimeofday(tv: *def timeval, tz: *def timezone) usize {
+pub fn settimeofday(tv: *var timeval, tz: *var timezone) usize {
     return syscall2(.settimeofday, @ptrToInt(tv), @ptrToInt(tz));
 }
 
-pub fn nanosleep(req: *def timespec, rem: ?*timespec) usize {
+pub fn nanosleep(req: *var timespec, rem: ?*timespec) usize {
     return syscall2(.nanosleep, @ptrToInt(req), @ptrToInt(rem));
 }
 
@@ -721,7 +721,7 @@ pub fn setegid(egid: u32) usize {
     return setregid(std.math.maxInt(u32), egid);
 }
 
-pub fn getresuid(ruid: *u32, euid: *u32, suid: *u32) usize {
+pub fn getresuid(ruid: *var u32, euid: *var u32, suid: *var u32) usize {
     if (@hasField(SYS, "getresuid32")) {
         return syscall3(.getresuid32, @ptrToInt(ruid), @ptrToInt(euid), @ptrToInt(suid));
     } else {
@@ -729,7 +729,7 @@ pub fn getresuid(ruid: *u32, euid: *u32, suid: *u32) usize {
     }
 }
 
-pub fn getresgid(rgid: *u32, egid: *u32, sgid: *u32) usize {
+pub fn getresgid(rgid: *var u32, egid: *var u32, sgid: *var u32) usize {
     if (@hasField(SYS, "getresgid32")) {
         return syscall3(.getresgid32, @ptrToInt(rgid), @ptrToInt(egid), @ptrToInt(sgid));
     } else {
@@ -753,7 +753,7 @@ pub fn setresgid(rgid: u32, egid: u32, sgid: u32) usize {
     }
 }
 
-pub fn getgroups(size: usize, list: *u32) usize {
+pub fn getgroups(size: usize, list: *var u32) usize {
     if (@hasField(SYS, "getgroups32")) {
         return syscall2(.getgroups32, size, @ptrToInt(list));
     } else {
@@ -761,7 +761,7 @@ pub fn getgroups(size: usize, list: *u32) usize {
     }
 }
 
-pub fn setgroups(size: usize, list: *def u32) usize {
+pub fn setgroups(size: usize, list: *var u32) usize {
     if (@hasField(SYS, "setgroups32")) {
         return syscall2(.setgroups32, size, @ptrToInt(list));
     } else {
@@ -777,11 +777,11 @@ pub fn gettid() pid_t {
     return @bitCast(pid_t, @truncate(u32, syscall0(.gettid)));
 }
 
-pub fn sigprocmask(flags: u32, noalias set: ?*def sigset_t, noalias oldset: ?*sigset_t) usize {
+pub fn sigprocmask(flags: u32, noalias set: ?*sigset_t, noalias oldset: ?*sigset_t) usize {
     return syscall4(.rt_sigprocmask, flags, @ptrToInt(set), @ptrToInt(oldset), NSIG / 8);
 }
 
-pub fn sigaction(sig: u6, noalias act: *def Sigaction, noalias oact: ?*Sigaction) usize {
+pub fn sigaction(sig: u6, noalias act: *var Sigaction, noalias oact: ?*Sigaction) usize {
     assert(sig >= 1);
     assert(sig != SIGKILL);
     assert(sig != SIGSTOP);
@@ -809,24 +809,24 @@ pub fn sigaction(sig: u6, noalias act: *def Sigaction, noalias oact: ?*Sigaction
     return 0;
 }
 
-pub fn sigaddset(set: *sigset_t, sig: u6) void {
+pub fn sigaddset(set: *var sigset_t, sig: u6) void {
     def s = sig - 1;
     (set.*)[@intCast(usize, s) / usize.bit_count] |= @intCast(usize, 1) << (s & (usize.bit_count - 1));
 }
 
-pub fn sigismember(set: *def sigset_t, sig: u6) bool {
+pub fn sigismember(set: *var sigset_t, sig: u6) bool {
     def s = sig - 1;
     return ((set.*)[@intCast(usize, s) / usize.bit_count] & (@intCast(usize, 1) << (s & (usize.bit_count - 1)))) != 0;
 }
 
-pub fn getsockname(fd: i32, noalias addr: *sockaddr, noalias len: *socklen_t) usize {
+pub fn getsockname(fd: i32, noalias addr: *var sockaddr, noalias len: *var socklen_t) usize {
     if (builtin.arch == .i386) {
         return socketcall(SC_getsockname, &[3]usize{ @bitCast(usize, @as(isize, fd)), @ptrToInt(addr), @ptrToInt(len) });
     }
     return syscall3(.getsockname, @bitCast(usize, @as(isize, fd)), @ptrToInt(addr), @ptrToInt(len));
 }
 
-pub fn getpeername(fd: i32, noalias addr: *sockaddr, noalias len: *socklen_t) usize {
+pub fn getpeername(fd: i32, noalias addr: *var sockaddr, noalias len: *var socklen_t) usize {
     if (builtin.arch == .i386) {
         return socketcall(SC_getpeername, &[3]usize{ @bitCast(usize, @as(isize, fd)), @ptrToInt(addr), @ptrToInt(len) });
     }
@@ -847,14 +847,14 @@ pub fn setsockopt(fd: i32, level: u32, optname: u32, optval: [*]u8, optlen: sock
     return syscall5(.setsockopt, @bitCast(usize, @as(isize, fd)), level, optname, @ptrToInt(optval), @intCast(usize, optlen));
 }
 
-pub fn getsockopt(fd: i32, level: u32, optname: u32, noalias optval: [*]u8, noalias optlen: *socklen_t) usize {
+pub fn getsockopt(fd: i32, level: u32, optname: u32, noalias optval: [*]u8, noalias optlen: *var socklen_t) usize {
     if (builtin.arch == .i386) {
         return socketcall(SC_getsockopt, &[5]usize{ @bitCast(usize, @as(isize, fd)), level, optname, @ptrToInt(optval), @ptrToInt(optlen) });
     }
     return syscall5(.getsockopt, @bitCast(usize, @as(isize, fd)), level, optname, @ptrToInt(optval), @ptrToInt(optlen));
 }
 
-pub fn sendmsg(fd: i32, msg: *msghdr_const, flags: u32) usize {
+pub fn sendmsg(fd: i32, msg: *var msghdr_const, flags: u32) usize {
     if (builtin.arch == .i386) {
         return socketcall(SC_sendmsg, &[3]usize{ @bitCast(usize, @as(isize, fd)), @ptrToInt(msg), flags });
     }
@@ -901,14 +901,14 @@ pub fn sendmmsg(fd: i32, msgvec: [*]mmsghdr_const, vlen: u32, flags: u32) usize 
     return syscall4(.sendmmsg, @bitCast(usize, @as(isize, fd)), @ptrToInt(msgvec), vlen, flags);
 }
 
-pub fn connect(fd: i32, addr: *def c_void, len: socklen_t) usize {
+pub fn connect(fd: i32, addr: *var c_void, len: socklen_t) usize {
     if (builtin.arch == .i386) {
         return socketcall(SC_connect, &[3]usize{ @bitCast(usize, @as(isize, fd)), @ptrToInt(addr), len });
     }
     return syscall3(.connect, @bitCast(usize, @as(isize, fd)), @ptrToInt(addr), len);
 }
 
-pub fn recvmsg(fd: i32, msg: *msghdr, flags: u32) usize {
+pub fn recvmsg(fd: i32, msg: *var msghdr, flags: u32) usize {
     if (builtin.arch == .i386) {
         return socketcall(SC_recvmsg, &[3]usize{ @bitCast(usize, @as(isize, fd)), @ptrToInt(msg), flags });
     }
@@ -929,7 +929,7 @@ pub fn shutdown(fd: i32, how: i32) usize {
     return syscall2(.shutdown, @bitCast(usize, @as(isize, fd)), @bitCast(usize, @as(isize, how)));
 }
 
-pub fn bind(fd: i32, addr: *def sockaddr, len: socklen_t) usize {
+pub fn bind(fd: i32, addr: *var sockaddr, len: socklen_t) usize {
     if (builtin.arch == .i386) {
         return socketcall(SC_bind, &[3]usize{ @bitCast(usize, @as(isize, fd)), @ptrToInt(addr), @intCast(usize, len) });
     }
@@ -943,7 +943,7 @@ pub fn listen(fd: i32, backlog: u32) usize {
     return syscall2(.listen, @bitCast(usize, @as(isize, fd)), backlog);
 }
 
-pub fn sendto(fd: i32, buf: [*]u8, len: usize, flags: u32, addr: ?*def sockaddr, alen: socklen_t) usize {
+pub fn sendto(fd: i32, buf: [*]u8, len: usize, flags: u32, addr: ?*sockaddr, alen: socklen_t) usize {
     if (builtin.arch == .i386) {
         return socketcall(SC_sendto, &[6]usize{ @bitCast(usize, @as(isize, fd)), @ptrToInt(buf), len, flags, @ptrToInt(addr), @intCast(usize, alen) });
     }
@@ -977,21 +977,21 @@ pub fn socketpair(domain: i32, socket_type: i32, protocol: i32, fd: [2]i32) usiz
     return syscall4(.socketpair, @intCast(usize, domain), @intCast(usize, socket_type), @intCast(usize, protocol), @ptrToInt(&fd[0]));
 }
 
-pub fn accept(fd: i32, noalias addr: *sockaddr, noalias len: *socklen_t) usize {
+pub fn accept(fd: i32, noalias addr: *var sockaddr, noalias len: *var socklen_t) usize {
     if (builtin.arch == .i386) {
         return socketcall(SC_accept, &[4]usize{ fd, addr, len, 0 });
     }
     return accept4(fd, addr, len, 0);
 }
 
-pub fn accept4(fd: i32, noalias addr: *sockaddr, noalias len: *socklen_t, flags: u32) usize {
+pub fn accept4(fd: i32, noalias addr: *var sockaddr, noalias len: *var socklen_t, flags: u32) usize {
     if (builtin.arch == .i386) {
         return socketcall(SC_accept4, &[4]usize{ @bitCast(usize, @as(isize, fd)), @ptrToInt(addr), @ptrToInt(len), flags });
     }
     return syscall4(.accept4, @bitCast(usize, @as(isize, fd)), @ptrToInt(addr), @ptrToInt(len), flags);
 }
 
-pub fn fstat(fd: i32, stat_buf: *Stat) usize {
+pub fn fstat(fd: i32, stat_buf: *var Stat) usize {
     if (@hasField(SYS, "fstat64")) {
         return syscall2(.fstat64, @bitCast(usize, @as(isize, fd)), @ptrToInt(stat_buf));
     } else {
@@ -999,7 +999,7 @@ pub fn fstat(fd: i32, stat_buf: *Stat) usize {
     }
 }
 
-pub fn stat(pathname: [*:0]u8, statbuf: *Stat) usize {
+pub fn stat(pathname: [*:0]u8, statbuf: *var Stat) usize {
     if (@hasField(SYS, "stat64")) {
         return syscall2(.stat64, @ptrToInt(pathname), @ptrToInt(statbuf));
     } else {
@@ -1007,7 +1007,7 @@ pub fn stat(pathname: [*:0]u8, statbuf: *Stat) usize {
     }
 }
 
-pub fn lstat(pathname: [*:0]u8, statbuf: *Stat) usize {
+pub fn lstat(pathname: [*:0]u8, statbuf: *var Stat) usize {
     if (@hasField(SYS, "lstat64")) {
         return syscall2(.lstat64, @ptrToInt(pathname), @ptrToInt(statbuf));
     } else {
@@ -1015,7 +1015,7 @@ pub fn lstat(pathname: [*:0]u8, statbuf: *Stat) usize {
     }
 }
 
-pub fn fstatat(dirfd: i32, path: [*:0]u8, stat_buf: *Stat, flags: u32) usize {
+pub fn fstatat(dirfd: i32, path: [*:0]u8, stat_buf: *var Stat, flags: u32) usize {
     if (@hasField(SYS, "fstatat64")) {
         return syscall4(.fstatat64, @bitCast(usize, @as(isize, dirfd)), @ptrToInt(path), @ptrToInt(stat_buf), flags);
     } else {
@@ -1023,7 +1023,7 @@ pub fn fstatat(dirfd: i32, path: [*:0]u8, stat_buf: *Stat, flags: u32) usize {
     }
 }
 
-pub fn statx(dirfd: i32, path: [*]u8, flags: u32, mask: u32, statx_buf: *Statx) usize {
+pub fn statx(dirfd: i32, path: [*]u8, flags: u32, mask: u32, statx_buf: *var Statx) usize {
     if (@hasField(SYS, "statx")) {
         return syscall5(
             .statx,
@@ -1049,11 +1049,11 @@ pub fn flistxattr(fd: usize, list: [*]u8, size: usize) usize {
     return syscall3(.flistxattr, fd, @ptrToInt(list), size);
 }
 
-pub fn getxattr(path: [*:0]def u8, name: [*:0]u8, value: [*]u8, size: usize) usize {
+pub fn getxattr(path: [*:0]u8, name: [*:0]u8, value: [*]u8, size: usize) usize {
     return syscall4(.getxattr, @ptrToInt(path), @ptrToInt(name), @ptrToInt(value), size);
 }
 
-pub fn lgetxattr(path: [*:0]def u8, name: [*:0]u8, value: [*]u8, size: usize) usize {
+pub fn lgetxattr(path: [*:0]u8, name: [*:0]u8, value: [*]u8, size: usize) usize {
     return syscall4(.lgetxattr, @ptrToInt(path), @ptrToInt(name), @ptrToInt(value), size);
 }
 
@@ -1061,23 +1061,23 @@ pub fn fgetxattr(fd: usize, name: [*:0]u8, value: [*]u8, size: usize) usize {
     return syscall4(.lgetxattr, fd, @ptrToInt(name), @ptrToInt(value), size);
 }
 
-pub fn setxattr(path: [*:0]def u8, name: [*:0]u8, value: *def void, size: usize, flags: usize) usize {
+pub fn setxattr(path: [*:0]u8, name: [*:0]u8, value: *var void, size: usize, flags: usize) usize {
     return syscall5(.setxattr, @ptrToInt(path), @ptrToInt(name), @ptrToInt(value), size, flags);
 }
 
-pub fn lsetxattr(path: [*:0]def u8, name: [*:0]u8, value: *def void, size: usize, flags: usize) usize {
+pub fn lsetxattr(path: [*:0]u8, name: [*:0]u8, value: *var void, size: usize, flags: usize) usize {
     return syscall5(.lsetxattr, @ptrToInt(path), @ptrToInt(name), @ptrToInt(value), size, flags);
 }
 
-pub fn fsetxattr(fd: usize, name: [*:0]u8, value: *def void, size: usize, flags: usize) usize {
+pub fn fsetxattr(fd: usize, name: [*:0]u8, value: *var void, size: usize, flags: usize) usize {
     return syscall5(.fsetxattr, fd, @ptrToInt(name), @ptrToInt(value), size, flags);
 }
 
-pub fn removexattr(path: [*:0]def u8, name: [*:0]u8) usize {
+pub fn removexattr(path: [*:0]u8, name: [*:0]u8) usize {
     return syscall2(.removexattr, @ptrToInt(path), @ptrToInt(name));
 }
 
-pub fn lremovexattr(path: [*:0]def u8, name: [*:0]u8) usize {
+pub fn lremovexattr(path: [*:0]u8, name: [*:0]u8) usize {
     return syscall2(.lremovexattr, @ptrToInt(path), @ptrToInt(name));
 }
 
@@ -1089,7 +1089,7 @@ pub fn sched_yield() usize {
     return syscall0(.sched_yield);
 }
 
-pub fn sched_getaffinity(pid: pid_t, size: usize, set: *cpu_set_t) usize {
+pub fn sched_getaffinity(pid: pid_t, size: usize, set: *var cpu_set_t) usize {
     def rc = syscall3(.sched_getaffinity, @bitCast(usize, @as(isize, pid)), size, @ptrToInt(set));
     if (@bitCast(isize, rc) < 0) return rc;
     if (rc < size) @memset(@ptrCast([*]u8, set) + rc, 0, size - rc);
@@ -1137,11 +1137,11 @@ pub def itimerspec = extern struct {
     it_value: timespec,
 };
 
-pub fn timerfd_gettime(fd: i32, curr_value: *itimerspec) usize {
+pub fn timerfd_gettime(fd: i32, curr_value: *var itimerspec) usize {
     return syscall2(.timerfd_gettime, @bitCast(usize, @as(isize, fd)), @ptrToInt(curr_value));
 }
 
-pub fn timerfd_settime(fd: i32, flags: u32, new_value: *def itimerspec, old_value: ?*itimerspec) usize {
+pub fn timerfd_settime(fd: i32, flags: u32, new_value: *var itimerspec, old_value: ?*itimerspec) usize {
     return syscall4(.timerfd_settime, @bitCast(usize, @as(isize, fd)), flags, @ptrToInt(new_value), @ptrToInt(old_value));
 }
 
@@ -1149,11 +1149,11 @@ pub fn unshare(flags: usize) usize {
     return syscall1(.unshare, flags);
 }
 
-pub fn capget(hdrp: *cap_user_header_t, datap: *cap_user_data_t) usize {
+pub fn capget(hdrp: *var cap_user_header_t, datap: *var cap_user_data_t) usize {
     return syscall2(.capget, @ptrToInt(hdrp), @ptrToInt(datap));
 }
 
-pub fn capset(hdrp: *cap_user_header_t, datap: *def cap_user_data_t) usize {
+pub fn capset(hdrp: *var cap_user_header_t, datap: *var cap_user_data_t) usize {
     return syscall2(.capset, @ptrToInt(hdrp), @ptrToInt(datap));
 }
 
@@ -1161,11 +1161,11 @@ pub fn sigaltstack(ss: ?*stack_t, old_ss: ?*stack_t) usize {
     return syscall2(.sigaltstack, @ptrToInt(ss), @ptrToInt(old_ss));
 }
 
-pub fn uname(uts: *utsname) usize {
+pub fn uname(uts: *var utsname) usize {
     return syscall1(.uname, @ptrToInt(uts));
 }
 
-pub fn io_uring_setup(entries: u32, p: *io_uring_params) usize {
+pub fn io_uring_setup(entries: u32, p: *var io_uring_params) usize {
     return syscall2(.io_uring_setup, entries, @ptrToInt(p));
 }
 
@@ -1173,7 +1173,7 @@ pub fn io_uring_enter(fd: i32, to_submit: u32, min_complete: u32, flags: u32, si
     return syscall6(.io_uring_enter, @bitCast(usize, @as(isize, fd)), to_submit, min_complete, flags, @ptrToInt(sig), NSIG / 8);
 }
 
-pub fn io_uring_register(fd: i32, opcode: IORING_REGISTER, arg: ?*def c_void, nr_args: u32) usize {
+pub fn io_uring_register(fd: i32, opcode: IORING_REGISTER, arg: ?*c_void, nr_args: u32) usize {
     return syscall4(.io_uring_register, @bitCast(usize, @as(isize, fd)), @enumToInt(opcode), @ptrToInt(arg), nr_args);
 }
 
@@ -1181,15 +1181,15 @@ pub fn memfd_create(name: [*:0]u8, flags: u32) usize {
     return syscall2(.memfd_create, @ptrToInt(name), flags);
 }
 
-pub fn getrusage(who: i32, usage: *rusage) usize {
+pub fn getrusage(who: i32, usage: *var rusage) usize {
     return syscall2(.getrusage, @bitCast(usize, @as(isize, who)), @ptrToInt(usage));
 }
 
-pub fn tcgetattr(fd: fd_t, termios_p: *termios) usize {
+pub fn tcgetattr(fd: fd_t, termios_p: *var termios) usize {
     return syscall3(.ioctl, @bitCast(usize, @as(isize, fd)), TCGETS, @ptrToInt(termios_p));
 }
 
-pub fn tcsetattr(fd: fd_t, optional_action: TCSA, termios_p: *def termios) usize {
+pub fn tcsetattr(fd: fd_t, optional_action: TCSA, termios_p: *var termios) usize {
     return syscall3(.ioctl, @bitCast(usize, @as(isize, fd)), TCSETS + @enumToInt(optional_action), @ptrToInt(termios_p));
 }
 

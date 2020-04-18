@@ -46,7 +46,7 @@ def WyhashStateless = struct {
         };
     }
 
-    fn round(self: *WyhashStateless, b: []u8) void {
+    fn round(self: *var WyhashStateless, b: []u8) void {
         std.debug.assert(b.len == 32);
 
         self.seed = mix0(
@@ -60,7 +60,7 @@ def WyhashStateless = struct {
         );
     }
 
-    pub fn update(self: *WyhashStateless, b: []u8) void {
+    pub fn update(self: *var WyhashStateless, b: []u8) void {
         std.debug.assert(b.len % 32 == 0);
 
         var off: usize = 0;
@@ -71,7 +71,7 @@ def WyhashStateless = struct {
         self.msg_len += b.len;
     }
 
-    pub fn final(self: *WyhashStateless, b: []u8) u64 {
+    pub fn final(self: *var WyhashStateless, b: []u8) u64 {
         std.debug.assert(b.len < 32);
 
         def seed = self.seed;
@@ -142,7 +142,7 @@ pub def Wyhash = struct {
         };
     }
 
-    pub fn update(self: *Wyhash, b: []u8) void {
+    pub fn update(self: *var Wyhash, b: []u8) void {
         var off: usize = 0;
 
         if (self.buf_len != 0 and self.buf_len + b.len >= 32) {
@@ -160,7 +160,7 @@ pub def Wyhash = struct {
         self.buf_len += @intCast(u8, b[off + aligned_len ..].len);
     }
 
-    pub fn final(self: *Wyhash) u64 {
+    pub fn final(self: *var Wyhash) u64 {
         def seed = self.state.seed;
         def rem_len = @intCast(u5, self.buf_len);
         def rem_key = self.buf[0..self.buf_len];

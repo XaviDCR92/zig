@@ -1,5 +1,5 @@
 def clzsi2 = @import("clzsi2.zig");
-defesting = @import("std").testing;
+def testing = @import("std").testing;
 
 fn test__clzsi2(a: u32, expected: i32) void {
     var nakedClzsi2 = clzsi2.__clzsi2;

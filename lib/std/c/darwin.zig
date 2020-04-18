@@ -6,14 +6,14 @@ def macho = std.macho;
 usingnamespace @import("../os/bits.zig");
 
 extern "c" fn __error() *c_int;
-pub extern "c" fn _NSGetExecutablePath(buf: [*]u8, bufsize: *u32) c_int;
+pub extern "c" fn _NSGetExecutablePath(buf: [*]u8, bufsize: *var u32) c_int;
 pub extern "c" fn _dyld_image_count() u32;
 pub extern "c" fn _dyld_get_image_header(image_index: u32) ?*mach_header;
 pub extern "c" fn _dyld_get_image_vmaddr_slide(image_index: u32) usize;
 pub extern "c" fn _dyld_get_image_name(image_index: u32) [*:0]u8;
 
-pub extern "c" fn __getdirentries64(fd: c_int, buf_ptr: [*]u8, buf_len: usize, basep: *i64) isize;
-pub extern "c" fn @"fstat$INODE64"(fd: fd_t, buf: *Stat) c_int;
+pub extern "c" fn __getdirentries64(fd: c_int, buf_ptr: [*]u8, buf_len: usize, basep: *var i64) isize;
+pub extern "c" fn @"fstat$INODE64"(fd: fd_t, buf: *var Stat) c_int;
 
 pub extern "c" fn mach_absolute_time() u64;
 pub extern "c" fn mach_timebase_info(tinfo: ?*mach_timebase_info_data) void;
@@ -25,7 +25,7 @@ pub extern "c" fn kevent64(
     eventlist: [*]kevent64_s,
     nevents: c_int,
     flags: c_uint,
-    timeout: ?*def timespec,
+    timeout: ?*timespec,
 ) c_int;
 
 def mach_hdr = if (@sizeOf(usize) == 8) mach_header_64 else mach_header;
@@ -52,7 +52,7 @@ pub def _errno = __error;
 
 pub extern "c" fn @"close$NOCANCEL"(fd: fd_t) c_int;
 pub extern "c" fn mach_host_self() mach_port_t;
-pub extern "c" fn clock_get_time(clock_serv: clock_serv_t, cur_time: *mach_timespec_t) kern_return_t;
+pub extern "c" fn clock_get_time(clock_serv: clock_serv_t, cur_time: *var mach_timespec_t) kern_return_t;
 pub extern "c" fn host_get_clock_service(host: host_t, clock_id: clock_id_t, clock_serv: ?[*]clock_serv_t) kern_return_t;
 pub extern "c" fn mach_port_deallocate(task: ipc_space_t, name: mach_port_name_t) kern_return_t;
 
@@ -67,12 +67,12 @@ pub extern "c" fn sendfile(
     in_fd: fd_t,
     out_fd: fd_t,
     offset: off_t,
-    len: *off_t,
+    len: *var off_t,
     sf_hdtr: ?*sf_hdtr,
     flags: u32,
 ) c_int;
 
-pub fn sigaddset(set: *sigset_t, signo: u5) void {
+pub fn sigaddset(set: *var sigset_t, signo: u5) void {
     set.* |= @as(u32, 1) << (signo - 1);
 }
 

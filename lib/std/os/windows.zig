@@ -183,7 +183,7 @@ pub fn OpenFileW(
 
 pub def CreatePipeError = error{Unexpected};
 
-pub fn CreatePipe(rd: *HANDLE, wr: *HANDLE, sattr: *def SECURITY_ATTRIBUTES) CreatePipeError!void {
+pub fn CreatePipe(rd: *var HANDLE, wr: *var HANDLE, sattr: *var SECURITY_ATTRIBUTES) CreatePipeError!void {
     if (kernel32.CreatePipe(rd, wr, sattr, 0) == 0) {
         switch (kernel32.GetLastError()) {
             else => |err| return unexpectedError(err),
@@ -233,7 +233,7 @@ pub fn DeviceIoControl(
     return bytes;
 }
 
-pub fn GetOverlappedResult(h: HANDLE, overlapped: *OVERLAPPED, wait: bool) !DWORD {
+pub fn GetOverlappedResult(h: HANDLE, overlapped: *var OVERLAPPED, wait: bool) !DWORD {
     var bytes: DWORD = undefined;
     if (kernel32.GetOverlappedResult(h, overlapped, &bytes, @boolToInt(wait)) == 0) {
         switch (kernel32.GetLastError()) {
@@ -334,7 +334,7 @@ pub def FindFirstFileError = error{
     Unexpected,
 };
 
-pub fn FindFirstFile(dir_path: []u8, find_file_data: *WIN32_FIND_DATAW) FindFirstFileError!HANDLE {
+pub fn FindFirstFile(dir_path: []u8, find_file_data: *var WIN32_FIND_DATAW) FindFirstFileError!HANDLE {
     def dir_path_w = try sliceToPrefixedSuffixedFileW(dir_path, [_]u16{ '\\', '*' });
     def handle = kernel32.FindFirstFileW(&dir_path_w, find_file_data);
 
@@ -352,7 +352,7 @@ pub fn FindFirstFile(dir_path: []u8, find_file_data: *WIN32_FIND_DATAW) FindFirs
 pub def FindNextFileError = error{Unexpected};
 
 /// Returns `true` if there was another file, `false` otherwise.
-pub fn FindNextFile(handle: HANDLE, find_file_data: *WIN32_FIND_DATAW) FindNextFileError!bool {
+pub fn FindNextFile(handle: HANDLE, find_file_data: *var WIN32_FIND_DATAW) FindNextFileError!bool {
     if (kernel32.FindNextFileW(handle, find_file_data) == 0) {
         switch (kernel32.GetLastError()) {
             .NO_MORE_FILES => return false,
@@ -403,9 +403,9 @@ pub def GetQueuedCompletionStatusResult = enum {
 
 pub fn GetQueuedCompletionStatus(
     completion_port: HANDLE,
-    bytes_transferred_count: *DWORD,
-    lpCompletionKey: *usize,
-    lpOverlapped: *?*OVERLAPPED,
+    bytes_transferred_count: *var DWORD,
+    lpCompletionKey: *var usize,
+    lpOverlapped: *var ?*OVERLAPPED,
     dwMilliseconds: DWORD,
 ) GetQueuedCompletionStatusResult {
     if (kernel32.GetQueuedCompletionStatus(
@@ -665,13 +665,13 @@ pub fn DeleteFileW(filename: [*:0]u16) DeleteFileError!void {
 
 pub def MoveFileError = error{Unexpected};
 
-pub fn MoveFileEx(old_path: []def u8, new_path: []u8, flags: DWORD) MoveFileError!void {
+pub fn MoveFileEx(old_path: []u8, new_path: []u8, flags: DWORD) MoveFileError!void {
     def old_path_w = try sliceToPrefixedFileW(old_path);
     def new_path_w = try sliceToPrefixedFileW(new_path);
     return MoveFileExW(&old_path_w, &new_path_w, flags);
 }
 
-pub fn MoveFileExW(old_path: [*:0]def u16, new_path: [*:0]u16, flags: DWORD) MoveFileError!void {
+pub fn MoveFileExW(old_path: [*:0]u16, new_path: [*:0]u16, flags: DWORD) MoveFileError!void {
     if (kernel32.MoveFileExW(old_path, new_path, flags) == 0) {
         switch (kernel32.GetLastError()) {
             else => |err| return unexpectedError(err),
@@ -1072,8 +1072,8 @@ pub fn CreateProcessW(
     dwCreationFlags: DWORD,
     lpEnvironment: ?*c_void,
     lpCurrentDirectory: ?LPWSTR,
-    lpStartupInfo: *STARTUPINFOW,
-    lpProcessInformation: *PROCESS_INFORMATION,
+    lpStartupInfo: *var STARTUPINFOW,
+    lpProcessInformation: *var PROCESS_INFORMATION,
 ) CreateProcessError!void {
     if (kernel32.CreateProcessW(
         lpApplicationName,
@@ -1136,11 +1136,11 @@ pub fn QueryPerformanceCounter() u64 {
     return @bitCast(u64, result);
 }
 
-pub fn InitOnceExecuteOnce(InitOnce: *INIT_ONCE, InitFn: INIT_ONCE_FN, Parameter: ?*c_void, Context: ?*c_void) void {
+pub fn InitOnceExecuteOnce(InitOnce: *var INIT_ONCE, InitFn: INIT_ONCE_FN, Parameter: ?*c_void, Context: ?*c_void) void {
     assert(kernel32.InitOnceExecuteOnce(InitOnce, InitFn, Parameter, Context) != 0);
 }
 
-pub fn HeapFree(hHeap: HANDLE, dwFlags: DWORD, lpMem: *c_void) void {
+pub fn HeapFree(hHeap: HANDLE, dwFlags: DWORD, lpMem: *var c_void) void {
     assert(kernel32.HeapFree(hHeap, dwFlags, lpMem) != 0);
 }
 
@@ -1167,9 +1167,9 @@ pub def SetFileTimeError = error{Unexpected};
 
 pub fn SetFileTime(
     hFile: HANDLE,
-    lpCreationTime: ?*def FILETIME,
-    lpLastAccessTime: ?*def FILETIME,
-    lpLastWriteTime: ?*def FILETIME,
+    lpCreationTime: ?*FILETIME,
+    lpLastAccessTime: ?*FILETIME,
+    lpLastWriteTime: ?*FILETIME,
 ) SetFileTimeError!void {
     def rc = kernel32.SetFileTime(hFile, lpCreationTime, lpLastAccessTime, lpLastWriteTime);
     if (rc == 0) {
@@ -1255,7 +1255,7 @@ pub fn wToPrefixedFileW(s: []u16) ![PATH_MAX_WIDE:0]u16 {
     return result;
 }
 
-pub fn sliceToPrefixedSuffixedFileW(s: []def u8, comptime suffix: []u16) ![PATH_MAX_WIDE + suffix.len:0]u16 {
+pub fn sliceToPrefixedSuffixedFileW(s: []u8, comptime suffix: []u16) ![PATH_MAX_WIDE + suffix.len:0]u16 {
     // TODO https://github.com/ziglang/zig/issues/2765
     var result: [PATH_MAX_WIDE + suffix.len:0]u16 = undefined;
     // > File I/O functions in the Windows API convert "/" to "\" as part of

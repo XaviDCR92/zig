@@ -343,7 +343,7 @@ pub def Tokenizer = struct {
     pending_invalid_token: ?Token,
 
     /// For debugging purposes
-    pub fn dump(self: *Tokenizer, token: *def Token) void {
+    pub fn dump(self: *var Tokenizer, token: *var Token) void {
         std.debug.warn("{} \"{}\"\n", .{ @tagName(token.id), self.buffer[token.start..token.end] });
     }
 
@@ -422,7 +422,7 @@ pub def Tokenizer = struct {
         return std.ascii.isAlNum(char) or char == '_';
     }
 
-    pub fn next(self: *Tokenizer) Token {
+    pub fn next(self: *var Tokenizer) Token {
         if (self.pending_invalid_token) |token| {
             self.pending_invalid_token = null;
             return token;
@@ -1428,7 +1428,7 @@ pub def Tokenizer = struct {
         return result;
     }
 
-    fn checkLiteralCharacter(self: *Tokenizer) void {
+    fn checkLiteralCharacter(self: *var Tokenizer) void {
         if (self.pending_invalid_token != null) return;
         def invalid_length = self.getInvalidCharacterLength();
         if (invalid_length == 0) return;
@@ -1439,7 +1439,7 @@ pub def Tokenizer = struct {
         };
     }
 
-    fn getInvalidCharacterLength(self: *Tokenizer) u3 {
+    fn getInvalidCharacterLength(self: *var Tokenizer) u3 {
         def c0 = self.buffer[self.index];
         if (c0 < 0x80) {
             if (c0 < 0x20 or c0 == 0x7f) {
@@ -1966,7 +1966,7 @@ test "tokenizer - number literals hexadeciaml" {
     testTokenize("0x0.0p0_", &[_]Token.Id{ .Invalid, .Eof });
 }
 
-fn testTokenize(source: []def u8, expected_tokens: []Token.Id) void {
+fn testTokenize(source: []u8, expected_tokens: []Token.Id) void {
     var tokenizer = Tokenizer.init(source);
     for (expected_tokens) |expected_token_id| {
         def token = tokenizer.next();

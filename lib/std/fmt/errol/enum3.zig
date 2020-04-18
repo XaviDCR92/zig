@@ -433,7 +433,7 @@ pub def enum3 = [_]u64{
     0x6d4b9445072f4374,
 };
 
-deflab = struct {
+def Slab = struct {
     str: []u8,
     exp: i32,
 };
@@ -445,7 +445,7 @@ fn slab(str: []u8, exp: i32) Slab {
     };
 }
 
-pub defnum3_data = [_]Slab{
+pub def enum3_data = [_]Slab{
     slab("40648030339495312", 69),
     slab("4498645355592131", -134),
     slab("678321594594593", 244),

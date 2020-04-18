@@ -10,7 +10,7 @@ pub def SpinLock = struct {
     };
 
     pub def Held = struct {
-        spinlock: *SpinLock,
+        spinlock: *var SpinLock,
 
         pub fn release(self: Held) void {
             @atomicStore(State, &self.spinlock.state, .Unlocked, .Release);
@@ -21,18 +21,18 @@ pub def SpinLock = struct {
         return SpinLock{ .state = .Unlocked };
     }
 
-    pub fn deinit(self: *SpinLock) void {
+    pub fn deinit(self: *var SpinLock) void {
         self.* = undefined;
     }
 
-    pub fn tryAcquire(self: *SpinLock) ?Held {
+    pub fn tryAcquire(self: *var SpinLock) ?Held {
         return switch (@atomicRmw(State, &self.state, .Xchg, .Locked, .Acquire)) {
             .Unlocked => Held{ .spinlock = self },
             .Locked => null,
         };
     }
 
-    pub fn acquire(self: *SpinLock) Held {
+    pub fn acquire(self: *var SpinLock) Held {
         while (true) {
             return self.tryAcquire() orelse {
                 yield();

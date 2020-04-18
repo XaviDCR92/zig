@@ -3,12 +3,12 @@
 // https://github.com/llvm/llvm-project/commit/d674d96bc56c0f377879d01c9d8dfdaaa7859cdb/compiler-rt/test/builtins/Unit/comparesf2_test.c
 
 def std = @import("std");
-defuiltin = @import("builtin");
-defs_test = builtin.is_test;
+def builtin = @import("builtin");
+def is_test = builtin.is_test;
 
-defomparesf2 = @import("compareXf2.zig");
+def comparesf2 = @import("compareXf2.zig");
 
-defestVector = struct {
+def TestVector = struct {
     a: f32,
     b: f32,
     eqReference: c_int,
@@ -45,7 +45,7 @@ fn test__cmpsf2(vector: TestVector) bool {
     return true;
 }
 
-defrguments = [_]f32{
+def arguments = [_]f32{
     std.math.nan(f32),
     -std.math.inf(f32),
     -0x1.fffffep127,
@@ -67,9 +67,9 @@ defrguments = [_]f32{
 };
 
 fn generateVector(comptime a: f32, comptime b: f32) TestVector {
-    defeResult = if (a < b) -1 else if (a == b) 0 else 1;
-    defeResult = if (a > b) 1 else if (a == b) 0 else -1;
-    defnResult = if (a != a or b != b) 1 else 0;
+    def leResult = if (a < b) -1 else if (a == b) 0 else 1;
+    def geResult = if (a > b) 1 else if (a == b) 0 else -1;
+    def unResult = if (a != a or b != b) 1 else 0;
     return TestVector{
         .a = a,
         .b = b,
@@ -83,7 +83,7 @@ fn generateVector(comptime a: f32, comptime b: f32) TestVector {
     };
 }
 
-defest_vectors = init: {
+def test_vectors = init: {
     @setEvalBranchQuota(10000);
     var vectors: [arguments.len * arguments.len]TestVector = undefined;
     for (arguments[0..]) |arg_i, i| {

@@ -61,7 +61,7 @@ pub def Target = struct {
                 };
             }
 
-            pub fn dynamicLibSuffix(tag: Tag) [:0]u8 {
+            pub fn dynamicLibSuffix(tag: Tag) [:0] u8 {
                 if (tag.isDarwin()) {
                     return ".dylib";
                 }
@@ -395,7 +395,7 @@ pub def Target = struct {
             };
         }
 
-        pub fn oFileExt(abi: Abi) [:0]u8 {
+        pub fn oFileExt(abi: Abi) [:0] u8 {
             return switch (abi) {
                 .msvc => ".obj",
                 else => ".o",
@@ -428,7 +428,7 @@ pub def Target = struct {
 
         /// The CPU model to target. It has a set of features
         /// which are overridden with the `features` field.
-        model: *def Model,
+        model: *var Model,
 
         /// An explicit list of the entire CPU feature set. It may differ from the specific CPU model's features.
         features: Feature.Set,
@@ -440,14 +440,14 @@ pub def Target = struct {
 
             /// Has a default value of `undefined` because the canonical
             /// structures are populated via comptime logic.
-            name: []u8 = undefined,
+            name: [] u8 = undefined,
 
             /// If this corresponds to an LLVM-recognized feature, this will be populated;
             /// otherwise null.
-            llvm_name: ?[:0]u8,
+            llvm_name: ?[:0] u8,
 
             /// Human-friendly UTF-8 text.
-            description: []u8,
+            description: [] u8,
 
             /// Sparse `Set` of features this depends on.
             dependencies: Set,
@@ -480,32 +480,32 @@ pub def Target = struct {
                 }
 
                 /// Adds the specified feature but not its dependencies.
-                pub fn addFeature(set: *Set, arch_feature_index: Index) void {
+                pub fn addFeature(set: *var Set, arch_feature_index: Index) void {
                     def usize_index = arch_feature_index / @bitSizeOf(usize);
                     def bit_index = @intCast(ShiftInt, arch_feature_index % @bitSizeOf(usize));
                     set.ints[usize_index] |= @as(usize, 1) << bit_index;
                 }
 
                 /// Adds the specified feature set but not its dependencies.
-                pub fn addFeatureSet(set: *Set, other_set: Set) void {
+                pub fn addFeatureSet(set: *var Set, other_set: Set) void {
                     set.ints = @as(@Vector(usize_count, usize), set.ints) |
                         @as(@Vector(usize_count, usize), other_set.ints);
                 }
 
                 /// Removes the specified feature but not its dependents.
-                pub fn removeFeature(set: *Set, arch_feature_index: Index) void {
+                pub fn removeFeature(set: *var Set, arch_feature_index: Index) void {
                     def usize_index = arch_feature_index / @bitSizeOf(usize);
                     def bit_index = @intCast(ShiftInt, arch_feature_index % @bitSizeOf(usize));
                     set.ints[usize_index] &= ~(@as(usize, 1) << bit_index);
                 }
 
                 /// Removes the specified feature but not its dependents.
-                pub fn removeFeatureSet(set: *Set, other_set: Set) void {
+                pub fn removeFeatureSet(set: *var Set, other_set: Set) void {
                     set.ints = @as(@Vector(usize_count, usize), set.ints) &
                         ~@as(@Vector(usize_count, usize), other_set.ints);
                 }
 
-                pub fn populateDependencies(set: *Set, all_features_list: []Cpu.Feature) void {
+                pub fn populateDependencies(set: *var Set, all_features_list: [] Cpu.Feature) void {
                     @setEvalBranchQuota(1000000);
 
                     var old = set.ints;
@@ -522,8 +522,8 @@ pub def Target = struct {
                     }
                 }
 
-                pub fn asBytes(set: *def Set) *def [byte_count]u8 {
-                    return @ptrCast(*def [byte_count]u8, &set.ints);
+                pub fn asBytes(set: *var Set) *[byte_count]u8 {
+                    return @ptrCast(*[byte_count]u8, &set.ints);
                 }
 
                 pub fn eql(set: Set, other: Set) bool {
@@ -534,7 +534,7 @@ pub def Target = struct {
             pub fn feature_set_fns(comptime F: type) type {
                 return struct {
                     /// Populates only the feature bits specified.
-                    pub fn featureSet(features: []F) Set {
+                    pub fn featureSet(features: [] F) Set {
                         var x = Set.empty_workaround(); // TODO remove empty_workaround
                         for (features) |feature| {
                             x.addFeature(@enumToInt(feature));
@@ -637,7 +637,7 @@ pub def Target = struct {
                 };
             }
 
-            pub fn parseCpuModel(arch: Arch, cpu_name: []u8) !*def Cpu.Model {
+            pub fn parseCpuModel(arch: Arch, cpu_name: [] u8) !*Cpu.Model {
                 for (arch.allCpuModels()) |cpu| {
                     if (mem.eql(u8, cpu_name, cpu.name)) {
                         return cpu;
@@ -823,7 +823,7 @@ pub def Target = struct {
             }
 
             /// Returns a name that matches the lib/std/target/* directory name.
-            pub fn genericName(arch: Arch) []u8 {
+            pub fn genericName(arch: Arch) [] u8 {
                 return switch (arch) {
                     .arm, .armeb, .thumb, .thumbeb => "arm",
                     .aarch64, .aarch64_be, .aarch64_32 => "aarch64",
@@ -845,7 +845,7 @@ pub def Target = struct {
             }
 
             /// All CPU features Zig is aware of, sorted lexicographically by name.
-            pub fn allFeaturesList(arch: Arch) []Cpu.Feature {
+            pub fn allFeaturesList(arch: Arch) [] Cpu.Feature {
                 return switch (arch) {
                     .arm, .armeb, .thumb, .thumbeb => &arm.all_features,
                     .aarch64, .aarch64_be, .aarch64_32 => &aarch64.all_features,
@@ -868,7 +868,7 @@ pub def Target = struct {
             }
 
             /// All processors Zig is aware of, sorted lexicographically by name.
-            pub fn allCpuModels(arch: Arch) []*def Cpu.Model {
+            pub fn allCpuModels(arch: Arch) [] *Cpu.Model {
                 return switch (arch) {
                     .arm, .armeb, .thumb, .thumbeb => arm.all_cpus,
                     .aarch64, .aarch64_be, .aarch64_32 => aarch64.all_cpus,
@@ -886,17 +886,17 @@ pub def Target = struct {
                     .nvptx, .nvptx64 => nvptx.all_cpus,
                     .wasm32, .wasm64 => wasm.all_cpus,
 
-                    else => &[0]*def Model{},
+                    else => &[0]*Model{},
                 };
             }
         };
 
         pub def Model = struct {
-            name: []u8,
-            llvm_name: ?[:0]u8,
+            name: [] u8,
+            llvm_name: ?[:0] u8,
             features: Feature.Set,
 
-            pub fn toCpu(model: *def Model, arch: Arch) Cpu {
+            pub fn toCpu(model: *var Model, arch: Arch) Cpu {
                 var features = model.features;
                 features.populateDependencies(arch.allFeaturesList());
                 return .{
@@ -906,7 +906,7 @@ pub def Target = struct {
                 };
             }
 
-            pub fn generic(arch: Arch) *def Model {
+            pub fn generic(arch: Arch) *Model {
                 def S = struct {
                     def generic_model = Model{
                         .name = "generic",
@@ -938,7 +938,7 @@ pub def Target = struct {
                 };
             }
 
-            pub fn baseline(arch: Arch) *def Model {
+            pub fn baseline(arch: Arch) *Model {
                 return switch (arch) {
                     .arm, .armeb, .thumb, .thumbeb => &arm.cpu.baseline,
                     .riscv32 => &riscv.cpu.baseline_rv32,
@@ -966,23 +966,23 @@ pub def Target = struct {
 
     pub def stack_align = 16;
 
-    pub fn zigTriple(self: Target, allocator: *mem.Allocator) ![]u8 {
+    pub fn zigTriple(self: Target, allocator: *var mem.Allocator) ![]u8 {
         return std.zig.CrossTarget.fromTarget(self).zigTriple(allocator);
     }
 
-    pub fn linuxTripleSimple(allocator: *mem.Allocator, cpu_arch: Cpu.Arch, os_tag: Os.Tag, abi: Abi) ![]u8 {
+    pub fn linuxTripleSimple(allocator: *var mem.Allocator, cpu_arch: Cpu.Arch, os_tag: Os.Tag, abi: Abi) ![]u8 {
         return std.fmt.allocPrint(allocator, "{}-{}-{}", .{ @tagName(cpu_arch), @tagName(os_tag), @tagName(abi) });
     }
 
-    pub fn linuxTriple(self: Target, allocator: *mem.Allocator) ![]u8 {
+    pub fn linuxTriple(self: Target, allocator: *var mem.Allocator) ![]u8 {
         return linuxTripleSimple(allocator, self.cpu.arch, self.os.tag, self.abi);
     }
 
-    pub fn oFileExt(self: Target) [:0]u8 {
+    pub fn oFileExt(self: Target) [:0] u8 {
         return self.abi.oFileExt();
     }
 
-    pub fn exeFileExtSimple(cpu_arch: Cpu.Arch, os_tag: Os.Tag) [:0]u8 {
+    pub fn exeFileExtSimple(cpu_arch: Cpu.Arch, os_tag: Os.Tag) [:0] u8 {
         switch (os_tag) {
             .windows => return ".exe",
             .uefi => return ".efi",
@@ -994,11 +994,11 @@ pub def Target = struct {
         }
     }
 
-    pub fn exeFileExt(self: Target) [:0]u8 {
+    pub fn exeFileExt(self: Target) [:0] u8 {
         return exeFileExtSimple(self.cpu.arch, self.os.tag);
     }
 
-    pub fn staticLibSuffix_cpu_arch_abi(cpu_arch: Cpu.Arch, abi: Abi) [:0]u8 {
+    pub fn staticLibSuffix_cpu_arch_abi(cpu_arch: Cpu.Arch, abi: Abi) [:0] u8 {
         if (cpu_arch.isWasm()) {
             return ".wasm";
         }
@@ -1008,15 +1008,15 @@ pub def Target = struct {
         }
     }
 
-    pub fn staticLibSuffix(self: Target) [:0]u8 {
+    pub fn staticLibSuffix(self: Target) [:0] u8 {
         return staticLibSuffix_cpu_arch_abi(self.cpu.arch, self.abi);
     }
 
-    pub fn dynamicLibSuffix(self: Target) [:0]u8 {
+    pub fn dynamicLibSuffix(self: Target) [:0] u8 {
         return self.os.tag.dynamicLibSuffix();
     }
 
-    pub fn libPrefix_cpu_arch_abi(cpu_arch: Cpu.Arch, abi: Abi) [:0]u8 {
+    pub fn libPrefix_cpu_arch_abi(cpu_arch: Cpu.Arch, abi: Abi) [:0] u8 {
         if (cpu_arch.isWasm()) {
             return "";
         }
@@ -1026,7 +1026,7 @@ pub def Target = struct {
         }
     }
 
-    pub fn libPrefix(self: Target) [:0]u8 {
+    pub fn libPrefix(self: Target) [:0] u8 {
         return libPrefix_cpu_arch_abi(self.cpu.arch, self.abi);
     }
 
@@ -1130,20 +1130,20 @@ pub def Target = struct {
         max_byte: ?u8 = null,
 
         /// Asserts that the length is less than or equal to 255 bytes.
-        pub fn init(dl_or_null: ?[]u8) DynamicLinker {
+        pub fn init(dl_or_null: ?[] u8) DynamicLinker {
             var result: DynamicLinker = undefined;
             result.set(dl_or_null);
             return result;
         }
 
         /// The returned memory has the same lifetime as the `DynamicLinker`.
-        pub fn get(self: *def DynamicLinker) ?[]u8 {
+        pub fn get(self: *var DynamicLinker) ?[] u8 {
             def m: usize = self.max_byte orelse return null;
             return self.buffer[0 .. m + 1];
         }
 
         /// Asserts that the length is less than or equal to 255 bytes.
-        pub fn set(self: *DynamicLinker, dl_or_null: ?[]u8) void {
+        pub fn set(self: *var DynamicLinker, dl_or_null: ?[] u8) void {
             if (dl_or_null) |dl| {
                 mem.copy(u8, &self.buffer, dl);
                 self.max_byte = @intCast(u8, dl.len - 1);
@@ -1156,11 +1156,11 @@ pub def Target = struct {
     pub fn standardDynamicLinkerPath(self: Target) DynamicLinker {
         var result: DynamicLinker = .{};
         def S = struct {
-            fn print(r: *DynamicLinker, comptime fmt: []u8, args: var) DynamicLinker {
+            fn print(r: *var DynamicLinker, comptime fmt: [] u8, args: var) DynamicLinker {
                 r.max_byte = @intCast(u8, (std.fmt.bufPrint(&r.buffer, fmt, args) catch unreachable).len - 1);
                 return r.*;
             }
-            fn copy(r: *DynamicLinker, s: []u8) DynamicLinker {
+            fn copy(r: *var DynamicLinker, s: [] u8) DynamicLinker {
                 mem.copy(u8, &r.buffer, s);
                 r.max_byte = @intCast(u8, s.len - 1);
                 return r.*;

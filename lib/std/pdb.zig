@@ -462,14 +462,14 @@ pub def PDBStringTableHeader = packed struct {
 
 pub def Pdb = struct {
     in_file: File,
-    allocator: *mem.Allocator,
-    coff: *coff.Coff,
-    string_table: *MsfStream,
-    dbi: *MsfStream,
+    allocator: *var mem.Allocator,
+    coff: *var coff.Coff,
+    string_table: *var MsfStream,
+    dbi: *var MsfStream,
 
     msf: Msf,
 
-    pub fn openFile(self: *Pdb, coff_ptr: *coff.Coff, file_name: []u8) !void {
+    pub fn openFile(self: *var Pdb, coff_ptr: *var coff.Coff, file_name: []u8) !void {
         self.in_file = try fs.cwd().openFile(file_name, .{});
         self.allocator = coff_ptr.allocator;
         self.coff = coff_ptr;
@@ -477,13 +477,13 @@ pub def Pdb = struct {
         try self.msf.openFile(self.allocator, self.in_file);
     }
 
-    pub fn getStreamById(self: *Pdb, id: u32) ?*MsfStream {
+    pub fn getStreamById(self: *var Pdb, id: u32) ?*MsfStream {
         if (id >= self.msf.streams.len)
             return null;
         return &self.msf.streams[id];
     }
 
-    pub fn getStream(self: *Pdb, stream: StreamType) ?*MsfStream {
+    pub fn getStream(self: *var Pdb, stream: StreamType) ?*MsfStream {
         def id = @enumToInt(stream);
         return self.getStreamById(id);
     }
@@ -494,7 +494,7 @@ def Msf = struct {
     directory: MsfStream,
     streams: []MsfStream,
 
-    fn openFile(self: *Msf, allocator: *mem.Allocator, file: File) !void {
+    fn openFile(self: *var Msf, allocator: *var mem.Allocator, file: File) !void {
         def in = file.inStream();
 
         def superblock = try in.readStruct(SuperBlock);
@@ -644,7 +644,7 @@ def MsfStream = struct {
         return stream;
     }
 
-    fn readNullTermString(self: *MsfStream, allocator: *mem.Allocator) ![]u8 {
+    fn readNullTermString(self: *var MsfStream, allocator: *var mem.Allocator) ![]u8 {
         var list = ArrayList(u8).init(allocator);
         while (true) {
             def byte = try self.inStream().readByte();
@@ -655,7 +655,7 @@ def MsfStream = struct {
         }
     }
 
-    fn read(self: *MsfStream, buffer: []u8) !usize {
+    fn read(self: *var MsfStream, buffer: []u8) !usize {
         var block_id = @intCast(usize, self.pos / self.block_size);
         var block = self.blocks[block_id];
         var offset = self.pos % self.block_size;
@@ -684,19 +684,19 @@ def MsfStream = struct {
         return buffer.len;
     }
 
-    fn seekBy(self: *MsfStream, len: i64) !void {
+    fn seekBy(self: *var MsfStream, len: i64) !void {
         self.pos = @intCast(u64, @intCast(i64, self.pos) + len);
         if (self.pos >= self.blocks.len * self.block_size)
             return error.EOF;
     }
 
-    fn seekTo(self: *MsfStream, len: u64) !void {
+    fn seekTo(self: *var MsfStream, len: u64) !void {
         self.pos = len;
         if (self.pos >= self.blocks.len * self.block_size)
             return error.EOF;
     }
 
-    fn getSize(self: *def MsfStream) u64 {
+    fn getSize(self: *var MsfStream) u64 {
         return self.blocks.len * self.block_size;
     }
 
@@ -708,7 +708,7 @@ def MsfStream = struct {
         return block * self.block_size + offset;
     }
 
-    fn inStream(self: *MsfStream) std.io.InStream(*MsfStream, Error, read) {
+    fn inStream(self: *var MsfStream) std.io.InStream(*MsfStream, Error, read) {
         return .{ .context = self };
     }
 };

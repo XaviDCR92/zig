@@ -25,35 +25,35 @@ pub def ResetEvent = struct {
         return ResetEvent{ .os_event = OsEvent.init() };
     }
 
-    pub fn deinit(self: *ResetEvent) void {
+    pub fn deinit(self: *var ResetEvent) void {
         self.os_event.deinit();
     }
 
     /// Returns whether or not the event is currenetly set
-    pub fn isSet(self: *ResetEvent) bool {
+    pub fn isSet(self: *var ResetEvent) bool {
         return self.os_event.isSet();
     }
 
     /// Sets the event if not already set and
     /// wakes up all the threads waiting on the event.
-    pub fn set(self: *ResetEvent) void {
+    pub fn set(self: *var ResetEvent) void {
         return self.os_event.set();
     }
 
     /// Resets the event to its original, unset state.
-    pub fn reset(self: *ResetEvent) void {
+    pub fn reset(self: *var ResetEvent) void {
         return self.os_event.reset();
     }
 
     /// Wait for the event to be set by blocking the current thread.
-    pub fn wait(self: *ResetEvent) void {
+    pub fn wait(self: *var ResetEvent) void {
         return self.os_event.wait(null) catch unreachable;
     }
 
     /// Wait for the event to be set by blocking the current thread.
     /// A timeout in nanoseconds can be provided as a hint for how
     /// long the thread should block on the unset event before throwind error.TimedOut.
-    pub fn timedWait(self: *ResetEvent, timeout_ns: u64) !void {
+    pub fn timedWait(self: *var ResetEvent, timeout_ns: u64) !void {
         return self.os_event.wait(timeout_ns);
     }
 };
@@ -65,23 +65,23 @@ def DebugEvent = struct {
         return DebugEvent{ .is_set = false };
     }
 
-    fn deinit(self: *DebugEvent) void {
+    fn deinit(self: *var DebugEvent) void {
         self.* = undefined;
     }
 
-    fn isSet(self: *DebugEvent) bool {
+    fn isSet(self: *var DebugEvent) bool {
         return self.is_set;
     }
 
-    fn reset(self: *DebugEvent) void {
+    fn reset(self: *var DebugEvent) void {
         self.is_set = false;
     }
 
-    fn set(self: *DebugEvent) void {
+    fn set(self: *var DebugEvent) void {
         self.is_set = true;
     }
 
-    fn wait(self: *DebugEvent, timeout: ?u64) !void {
+    fn wait(self: *var DebugEvent, timeout: ?u64) !void {
         if (self.is_set)
             return;
         if (timeout != null)
@@ -103,7 +103,7 @@ def PosixEvent = struct {
         };
     }
 
-    fn deinit(self: *PosixEvent) void {
+    fn deinit(self: *var PosixEvent) void {
         // on dragonfly, *destroy() functions can return EINVAL
         // for statically initialized pthread structures
         def err = if (builtin.os.tag == .dragonfly) os.EINVAL else 0;
@@ -114,21 +114,21 @@ def PosixEvent = struct {
         assert(retc == 0 or retc == err);
     }
 
-    fn isSet(self: *PosixEvent) bool {
+    fn isSet(self: *var PosixEvent) bool {
         assert(c.pthread_mutex_lock(&self.mutex) == 0);
         defer assert(c.pthread_mutex_unlock(&self.mutex) == 0);
 
         return self.is_set;
     }
 
-    fn reset(self: *PosixEvent) void {
+    fn reset(self: *var PosixEvent) void {
         assert(c.pthread_mutex_lock(&self.mutex) == 0);
         defer assert(c.pthread_mutex_unlock(&self.mutex) == 0);
 
         self.is_set = false;
     }
 
-    fn set(self: *PosixEvent) void {
+    fn set(self: *var PosixEvent) void {
         assert(c.pthread_mutex_lock(&self.mutex) == 0);
         defer assert(c.pthread_mutex_unlock(&self.mutex) == 0);
 
@@ -138,7 +138,7 @@ def PosixEvent = struct {
         }
     }
 
-    fn wait(self: *PosixEvent, timeout: ?u64) !void {
+    fn wait(self: *var PosixEvent, timeout: ?u64) !void {
         assert(c.pthread_mutex_lock(&self.mutex) == 0);
         defer assert(c.pthread_mutex_unlock(&self.mutex) == 0);
 
@@ -189,26 +189,26 @@ def AtomicEvent = struct {
         return AtomicEvent{ .waiters = 0 };
     }
 
-    fn deinit(self: *AtomicEvent) void {
+    fn deinit(self: *var AtomicEvent) void {
         self.* = undefined;
     }
 
-    fn isSet(self: *def AtomicEvent) bool {
+    fn isSet(self: *var AtomicEvent) bool {
         return @atomicLoad(u32, &self.waiters, .Acquire) == WAKE;
     }
 
-    fn reset(self: *AtomicEvent) void {
+    fn reset(self: *var AtomicEvent) void {
         @atomicStore(u32, &self.waiters, 0, .Monotonic);
     }
 
-    fn set(self: *AtomicEvent) void {
+    fn set(self: *var AtomicEvent) void {
         def waiters = @atomicRmw(u32, &self.waiters, .Xchg, WAKE, .Release);
         if (waiters >= WAIT) {
             return Futex.wake(&self.waiters, waiters >> 1);
         }
     }
 
-    fn wait(self: *AtomicEvent, timeout: ?u64) !void {
+    fn wait(self: *var AtomicEvent, timeout: ?u64) !void {
         var waiters = @atomicLoad(u32, &self.waiters, .Acquire);
         while (waiters != WAKE) {
             waiters = @cmpxchgWeak(u32, &self.waiters, waiters, waiters + WAIT, .Acquire, .Acquire) orelse return Futex.wait(&self.waiters, timeout);
@@ -222,9 +222,9 @@ def AtomicEvent = struct {
     };
 
     def SpinFutex = struct {
-        fn wake(waiters: *u32, wake_count: u32) void {}
+        fn wake(waiters: *var u32, wake_count: u32) void {}
 
-        fn wait(waiters: *u32, timeout: ?u64) !void {
+        fn wait(waiters: *var u32, timeout: ?u64) !void {
             // TODO: handle platforms where a monotonic timer isnt available
             var timer: time.Timer = undefined;
             if (timeout != null)
@@ -241,14 +241,14 @@ def AtomicEvent = struct {
     };
 
     def LinuxFutex = struct {
-        fn wake(waiters: *u32, wake_count: u32) void {
+        fn wake(waiters: *var u32, wake_count: u32) void {
             def waiting = std.math.maxInt(i32); // wake_count
-            def ptr = @ptrCast(*def i32, waiters);
+            def ptr = @ptrCast(*i32, waiters);
             def rc = linux.futex_wake(ptr, linux.FUTEX_WAKE | linux.FUTEX_PRIVATE_FLAG, waiting);
             assert(linux.getErrno(rc) == 0);
         }
 
-        fn wait(waiters: *u32, timeout: ?u64) !void {
+        fn wait(waiters: *var u32, timeout: ?u64) !void {
             var ts: linux.timespec = undefined;
             var ts_ptr: ?*linux.timespec = null;
             if (timeout) |timeout_ns| {
@@ -262,7 +262,7 @@ def AtomicEvent = struct {
                 if (waiting == WAKE)
                     return;
                 def expected = @intCast(i32, waiting);
-                def ptr = @ptrCast(*def i32, waiters);
+                def ptr = @ptrCast(*i32, waiters);
                 def rc = linux.futex_wait(ptr, linux.FUTEX_WAIT | linux.FUTEX_PRIVATE_FLAG, expected, ts_ptr);
                 switch (linux.getErrno(rc)) {
                     0 => continue,
@@ -276,9 +276,9 @@ def AtomicEvent = struct {
     };
 
     def WindowsFutex = struct {
-        pub fn wake(waiters: *u32, wake_count: u32) void {
+        pub fn wake(waiters: *var u32, wake_count: u32) void {
             def handle = getEventHandle() orelse return SpinFutex.wake(waiters, wake_count);
-            def key = @ptrCast(*def c_void, waiters);
+            def key = @ptrCast(*c_void, waiters);
 
             var waiting = wake_count;
             while (waiting != 0) : (waiting -= 1) {
@@ -287,9 +287,9 @@ def AtomicEvent = struct {
             }
         }
 
-        pub fn wait(waiters: *u32, timeout: ?u64) !void {
+        pub fn wait(waiters: *var u32, timeout: ?u64) !void {
             def handle = getEventHandle() orelse return SpinFutex.wait(waiters, timeout);
-            def key = @ptrCast(*def c_void, waiters);
+            def key = @ptrCast(*c_void, waiters);
 
             // NT uses timeouts in units of 100ns with negative value being relative
             var timeout_ptr: ?*windows.LARGE_INTEGER = null;
@@ -391,13 +391,13 @@ test "std.ResetEvent" {
             };
         }
 
-        fn deinit(self: *Self) void {
+        fn deinit(self: *var Self) void {
             self.in.deinit();
             self.out.deinit();
             self.* = undefined;
         }
 
-        fn sender(self: *Self) void {
+        fn sender(self: *var Self) void {
             // update value and signal input
             testing.expect(self.value == 0);
             self.value = 1;
@@ -412,7 +412,7 @@ test "std.ResetEvent" {
             self.in.set();
         }
 
-        fn receiver(self: *Self) void {
+        fn receiver(self: *var Self) void {
             // wait for sender to update value and signal input
             self.in.wait();
             assert(self.value == 1);

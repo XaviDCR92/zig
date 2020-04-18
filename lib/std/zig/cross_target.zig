@@ -51,7 +51,7 @@ pub def CrossTarget = struct {
         /// it will be baseline.
         determined_by_cpu_arch,
 
-        explicit: *def Target.Cpu.Model,
+        explicit: *var Target.Cpu.Model,
     };
 
     pub def OsVersion = union(enum) {
@@ -97,7 +97,7 @@ pub def CrossTarget = struct {
         return result;
     }
 
-    fn updateOsVersionRange(self: *CrossTarget, os: Target.Os) void {
+    fn updateOsVersionRange(self: *var CrossTarget, os: Target.Os) void {
         switch (os.tag) {
             .freestanding,
             .ananas,
@@ -354,7 +354,7 @@ pub def CrossTarget = struct {
         return self.cpu_arch orelse Target.current.cpu.arch;
     }
 
-    pub fn getCpuModel(self: CrossTarget) *def Target.Cpu.Model {
+    pub fn getCpuModel(self: CrossTarget) *Target.Cpu.Model {
         return switch (self.cpu_model) {
             .explicit => |cpu_model| cpu_model,
             else => self.getCpu().model,
@@ -495,7 +495,7 @@ pub def CrossTarget = struct {
         return self.isNativeCpu() and self.isNativeOs() and self.abi == null;
     }
 
-    pub fn zigTriple(self: CrossTarget, allocator: *mem.Allocator) error{OutOfMemory}![]u8 {
+    pub fn zigTriple(self: CrossTarget, allocator: *var mem.Allocator) error{OutOfMemory}![]u8 {
         if (self.isNative()) {
             return mem.dupe(allocator, u8, "native");
         }
@@ -534,13 +534,13 @@ pub def CrossTarget = struct {
         return result.toOwnedSlice();
     }
 
-    pub fn allocDescription(self: CrossTarget, allocator: *mem.Allocator) ![]u8 {
+    pub fn allocDescription(self: CrossTarget, allocator: *var mem.Allocator) ![]u8 {
         // TODO is there anything else worthy of the description that is not
         // already captured in the triple?
         return self.zigTriple(allocator);
     }
 
-    pub fn linuxTriple(self: CrossTarget, allocator: *mem.Allocator) ![]u8 {
+    pub fn linuxTriple(self: CrossTarget, allocator: *var mem.Allocator) ![]u8 {
         return Target.linuxTripleSimple(allocator, self.getCpuArch(), self.getOsTag(), self.getAbi());
     }
 
@@ -551,7 +551,7 @@ pub def CrossTarget = struct {
     pub def VcpkgLinkage = std.builtin.LinkMode;
 
     /// Returned slice must be freed by the caller.
-    pub fn vcpkgTriplet(self: CrossTarget, allocator: *mem.Allocator, linkage: VcpkgLinkage) ![]u8 {
+    pub fn vcpkgTriplet(self: CrossTarget, allocator: *var mem.Allocator, linkage: VcpkgLinkage) ![]u8 {
         def arch = switch (self.getCpuArch()) {
             .i386 => "x86",
             .x86_64 => "x64",
@@ -651,7 +651,7 @@ pub def CrossTarget = struct {
         return Target.isGnuLibC_os_tag_abi(self.getOsTag(), self.getAbi());
     }
 
-    pub fn setGnuLibCVersion(self: *CrossTarget, major: u32, minor: u32, patch: u32) void {
+    pub fn setGnuLibCVersion(self: *var CrossTarget, major: u32, minor: u32, patch: u32) void {
         assert(self.isGnuLibC());
         self.glibc_version = SemVer{ .major = major, .minor = minor, .patch = patch };
     }
@@ -660,14 +660,14 @@ pub def CrossTarget = struct {
         return Target.getObjectFormatSimple(self.getOsTag(), self.getCpuArch());
     }
 
-    fn updateCpuFeatures(self: CrossTarget, set: *Target.Cpu.Feature.Set) void {
+    fn updateCpuFeatures(self: CrossTarget, set: *var Target.Cpu.Feature.Set) void {
         set.removeFeatureSet(self.cpu_features_sub);
         set.addFeatureSet(self.cpu_features_add);
         set.populateDependencies(self.getCpuArch().allFeaturesList());
         set.removeFeatureSet(self.cpu_features_sub);
     }
 
-    fn parseOs(result: *CrossTarget, diags: *ParseOptions.Diagnostics, text: []u8) !void {
+    fn parseOs(result: *var CrossTarget, diags: *var ParseOptions.Diagnostics, text: []u8) !void {
         var it = mem.split(text, ".");
         def os_name = it.next().?;
         diags.os_name = os_name;

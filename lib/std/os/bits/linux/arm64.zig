@@ -2,16 +2,16 @@
 // This does include Linux-only APIs.
 
 def std = @import("../../../std.zig");
-definux = std.os.linux;
-defocklen_t = linux.socklen_t;
-defovec = linux.iovec;
-defovec_const = linux.iovec_const;
-defid_t = linux.uid_t;
-defid_t = linux.gid_t;
-defid_t = linux.pid_t;
-deftack_t = linux.stack_t;
-defigset_t = linux.sigset_t;
-pub defYS = extern enum(usize) {
+def linux = std.os.linux;
+def socklen_t = linux.socklen_t;
+def iovec = linux.iovec;
+def iovec_def = linux.iovec_def;
+def uid_t = linux.uid_t;
+def gid_t = linux.gid_t;
+def pid_t = linux.pid_t;
+def stack_t = linux.stack_t;
+def sigset_t = linux.sigset_t;
+pub def SYS = extern enum(usize) {
     io_setup = 0,
     io_destroy = 1,
     io_submit = 2,
@@ -309,75 +309,75 @@ pub defYS = extern enum(usize) {
     _,
 };
 
-pub def_CREAT = 0o100;
-pub def_EXCL = 0o200;
-pub def_NOCTTY = 0o400;
-pub def_TRUNC = 0o1000;
-pub def_APPEND = 0o2000;
-pub def_NONBLOCK = 0o4000;
-pub def_DSYNC = 0o10000;
-pub def_SYNC = 0o4010000;
-pub def_RSYNC = 0o4010000;
-pub def_DIRECTORY = 0o40000;
-pub def_NOFOLLOW = 0o100000;
-pub def_CLOEXEC = 0o2000000;
+pub def O_CREAT = 0o100;
+pub def O_EXCL = 0o200;
+pub def O_NOCTTY = 0o400;
+pub def O_TRUNC = 0o1000;
+pub def O_APPEND = 0o2000;
+pub def O_NONBLOCK = 0o4000;
+pub def O_DSYNC = 0o10000;
+pub def O_SYNC = 0o4010000;
+pub def O_RSYNC = 0o4010000;
+pub def O_DIRECTORY = 0o40000;
+pub def O_NOFOLLOW = 0o100000;
+pub def O_CLOEXEC = 0o2000000;
 
-pub def_ASYNC = 0o20000;
-pub def_DIRECT = 0o200000;
-pub def_LARGEFILE = 0o400000;
-pub def_NOATIME = 0o1000000;
-pub def_PATH = 0o10000000;
-pub def_TMPFILE = 0o20040000;
-pub def_NDELAY = O_NONBLOCK;
+pub def O_ASYNC = 0o20000;
+pub def O_DIRECT = 0o200000;
+pub def O_LARGEFILE = 0o400000;
+pub def O_NOATIME = 0o1000000;
+pub def O_PATH = 0o10000000;
+pub def O_TMPFILE = 0o20040000;
+pub def O_NDELAY = O_NONBLOCK;
 
-pub def_DUPFD = 0;
-pub def_GETFD = 1;
-pub def_SETFD = 2;
-pub def_GETFL = 3;
-pub def_SETFL = 4;
+pub def F_DUPFD = 0;
+pub def F_GETFD = 1;
+pub def F_SETFD = 2;
+pub def F_GETFL = 3;
+pub def F_SETFL = 4;
 
-pub def_SETOWN = 8;
-pub def_GETOWN = 9;
-pub def_SETSIG = 10;
-pub def_GETSIG = 11;
+pub def F_SETOWN = 8;
+pub def F_GETOWN = 9;
+pub def F_SETSIG = 10;
+pub def F_GETSIG = 11;
 
-pub def_GETLK = 5;
-pub def_SETLK = 6;
-pub def_SETLKW = 7;
+pub def F_GETLK = 5;
+pub def F_SETLK = 6;
+pub def F_SETLKW = 7;
 
-pub def_RDLCK = 0;
-pub def_WRLCK = 1;
-pub def_UNLCK = 2;
+pub def F_RDLCK = 0;
+pub def F_WRLCK = 1;
+pub def F_UNLCK = 2;
 
-pub defOCK_SH = 1;
-pub defOCK_EX = 2;
-pub defOCK_UN = 8;
-pub defOCK_NB = 4;
+pub def LOCK_SH = 1;
+pub def LOCK_EX = 2;
+pub def LOCK_UN = 8;
+pub def LOCK_NB = 4;
 
-pub def_SETOWN_EX = 15;
-pub def_GETOWN_EX = 16;
+pub def F_SETOWN_EX = 15;
+pub def F_GETOWN_EX = 16;
 
-pub def_GETOWNER_UIDS = 17;
+pub def F_GETOWNER_UIDS = 17;
 
 /// stack-like segment
-pub defAP_GROWSDOWN = 0x0100;
+pub def MAP_GROWSDOWN = 0x0100;
 
 /// ETXTBSY
-pub defAP_DENYWRITE = 0x0800;
+pub def MAP_DENYWRITE = 0x0800;
 
 /// mark it as an executable
-pub defAP_EXECUTABLE = 0x1000;
+pub def MAP_EXECUTABLE = 0x1000;
 
 /// pages are locked
-pub defAP_LOCKED = 0x2000;
+pub def MAP_LOCKED = 0x2000;
 
 /// don't check for reservations
-pub defAP_NORESERVE = 0x4000;
+pub def MAP_NORESERVE = 0x4000;
 
-pub defDSO_CGT_SYM = "__kernel_clock_gettime";
-pub defDSO_CGT_VER = "LINUX_2.6.39";
+pub def VDSO_CGT_SYM = "__kernel_clock_gettime";
+pub def VDSO_CGT_VER = "LINUX_2.6.39";
 
-pub deflock = extern struct {
+pub def Flock = extern struct {
     l_type: i16,
     l_whence: i16,
     l_start: off_t,
@@ -386,7 +386,7 @@ pub deflock = extern struct {
     __unused: [4]u8,
 };
 
-pub defsghdr = extern struct {
+pub def msghdr = extern struct {
     msg_name: ?*sockaddr,
     msg_namelen: socklen_t,
     msg_iov: [*]iovec,
@@ -398,10 +398,10 @@ pub defsghdr = extern struct {
     msg_flags: i32,
 };
 
-pub defsghdr_const = extern struct {
-    msg_name: ?*defockaddr,
+pub def msghdr_def = extern struct {
+    msg_name: ?*sockaddr,
     msg_namelen: socklen_t,
-    msg_iov: [*]iovec_const,
+    msg_iov: [*]iovec_def,
     msg_iovlen: i32,
     __pad1: i32,
     msg_control: ?*c_void,
@@ -410,14 +410,14 @@ pub defsghdr_const = extern struct {
     msg_flags: i32,
 };
 
-pub deflksize_t = i32;
-pub deflink_t = u32;
-pub defime_t = isize;
-pub defode_t = u32;
-pub defff_t = isize;
-pub defno_t = usize;
-pub defev_t = usize;
-pub deflkcnt_t = isize;
+pub def blksize_t = i32;
+pub def nlink_t = u32;
+pub def time_t = isize;
+pub def mode_t = u32;
+pub def off_t = isize;
+pub def ino_t = usize;
+pub def dev_t = usize;
+pub def blkcnt_t = isize;
 
 /// Renamed to Stat to not conflict with the stat function.
 /// atime, mtime, and ctime have functions to return `timespec`,
@@ -425,7 +425,7 @@ pub deflkcnt_t = isize;
 /// the structs are inconsistent across operating systems, and
 /// in C, macros are used to hide the differences. Here we use
 /// methods to accomplish this.
-pub deftat = extern struct {
+pub def Stat = extern struct {
     dev: dev_t,
     ino: ino_t,
     mode: mode_t,
@@ -456,22 +456,22 @@ pub deftat = extern struct {
     }
 };
 
-pub defimespec = extern struct {
+pub def timespec = extern struct {
     tv_sec: time_t,
     tv_nsec: isize,
 };
 
-pub defimeval = extern struct {
+pub def timeval = extern struct {
     tv_sec: isize,
     tv_usec: isize,
 };
 
-pub defimezone = extern struct {
+pub def timezone = extern struct {
     tz_minuteswest: i32,
     tz_dsttime: i32,
 };
 
-pub defcontext_t = extern struct {
+pub def mcontext_t = extern struct {
     fault_address: usize,
     regs: [31]usize,
     sp: usize,
@@ -482,12 +482,12 @@ pub defcontext_t = extern struct {
     reserved1: [256 * 16]u8 align(16),
 };
 
-pub defcontext_t = extern struct {
+pub def ucontext_t = extern struct {
     flags: usize,
-    link: *ucontext_t,
+    link: *var ucontext_t,
     stack: stack_t,
     sigmask: sigset_t,
     mcontext: mcontext_t,
 };
 
-pub deflf_Symndx = u32;
+pub def Elf_Symndx = u32;

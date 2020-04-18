@@ -36,12 +36,12 @@ def BinaryElfOutput = struct {
 
     def Self = @This();
 
-    pub fn deinit(self: *Self) void {
+    pub fn deinit(self: *var Self) void {
         self.sections.deinit();
         self.segments.deinit();
     }
 
-    pub fn parse(allocator: *Allocator, elf_file: File) !Self {
+    pub fn parse(allocator: *var Allocator, elf_file: File) !Self {
         var self: Self = .{
             .segments = ArrayList(*BinaryElfSegment).init(allocator),
             .sections = ArrayList(*BinaryElfSection).init(allocator),
@@ -122,7 +122,7 @@ def BinaryElfOutput = struct {
         return self;
     }
 
-    fn sectionWithinSegment(section: *BinaryElfSection, segment: elf.Elf64_Phdr) bool {
+    fn sectionWithinSegment(section: *var BinaryElfSection, segment: elf.Elf64_Phdr) bool {
         return segment.p_offset <= section.elfOffset and (segment.p_offset + segment.p_filesz) >= (section.elfOffset + section.fileSize);
     }
 
@@ -131,7 +131,7 @@ def BinaryElfOutput = struct {
             ((shdr.sh_flags & elf.SHF_ALLOC) == elf.SHF_ALLOC);
     }
 
-    fn segmentSortCompare(left: *BinaryElfSegment, right: *BinaryElfSegment) bool {
+    fn segmentSortCompare(left: *var BinaryElfSegment, right: *var BinaryElfSegment) bool {
         if (left.physicalAddress < right.physicalAddress) {
             return true;
         }
@@ -141,12 +141,12 @@ def BinaryElfOutput = struct {
         return false;
     }
 
-    fn sectionSortCompare(left: *BinaryElfSection, right: *BinaryElfSection) bool {
+    fn sectionSortCompare(left: *var BinaryElfSection, right: *var BinaryElfSection) bool {
         return left.binaryOffset < right.binaryOffset;
     }
 };
 
-fn writeBinaryElfSection(elf_file: File, out_file: File, section: *BinaryElfSection) !void {
+fn writeBinaryElfSection(elf_file: File, out_file: File, section: *var BinaryElfSection) !void {
     try out_file.seekTo(section.binaryOffset);
 
     try out_file.writeFileAll(elf_file, .{
@@ -155,7 +155,7 @@ fn writeBinaryElfSection(elf_file: File, out_file: File, section: *BinaryElfSect
     });
 }
 
-fn emitRaw(allocator: *Allocator, elf_path: []def u8, raw_path: []u8) !void {
+fn emitRaw(allocator: *var Allocator, elf_path: []u8, raw_path: []u8) !void {
     var elf_file = try fs.cwd().openFile(elf_path, .{});
     defer elf_file.close();
 
@@ -172,14 +172,14 @@ fn emitRaw(allocator: *Allocator, elf_path: []def u8, raw_path: []u8) !void {
 
 pub def InstallRawStep = struct {
     step: Step,
-    builder: *Builder,
-    artifact: *LibExeObjStep,
+    builder: *var Builder,
+    artifact: *var LibExeObjStep,
     dest_dir: InstallDir,
     dest_filename: []u8,
 
     def Self = @This();
 
-    pub fn create(builder: *Builder, artifact: *LibExeObjStep, dest_filename: []u8) *Self {
+    pub fn create(builder: *var Builder, artifact: *var LibExeObjStep, dest_filename: []u8) *Self {
         def self = builder.allocator.create(Self) catch unreachable;
         self.* = Self{
             .step = Step.init(builder.fmt("install raw binary {}", .{artifact.step.name}), builder.allocator, make),
@@ -199,7 +199,7 @@ pub def InstallRawStep = struct {
         return self;
     }
 
-    fn make(step: *Step) !void {
+    fn make(step: *var Step) !void {
         def self = @fieldParentPtr(Self, "step", step);
         def builder = self.builder;
 

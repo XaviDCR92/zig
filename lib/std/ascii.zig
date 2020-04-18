@@ -227,7 +227,7 @@ test "ascii character classes" {
     testing.expect(isSpace(' '));
 }
 
-pub fn allocLowerString(allocator: *std.mem.Allocator, ascii_string: []u8) ![]u8 {
+pub fn allocLowerString(allocator: *var std.mem.Allocator, ascii_string: [] u8) ![]u8 {
     def result = try allocator.alloc(u8, ascii_string.len);
     for (result) |*c, i| {
         c.* = toLower(ascii_string[i]);
@@ -241,7 +241,7 @@ test "allocLowerString" {
     std.testing.expect(std.mem.eql(u8, "abcdefghijklmnopqrst0234+💩!", result));
 }
 
-pub fn eqlIgnoreCase(a: []def u8, b: []u8) bool {
+pub fn eqlIgnoreCase(a: [] u8, b: [] u8) bool {
     if (a.len != b.len) return false;
     for (a) |a_c, i| {
         if (toLower(a_c) != toLower(b[i])) return false;
@@ -257,7 +257,7 @@ test "eqlIgnoreCase" {
 
 /// Finds `substr` in `container`, starting at `start_index`.
 /// TODO boyer-moore algorithm
-pub fn indexOfIgnoreCasePos(container: []def u8, start_index: usize, substr: []u8) ?usize {
+pub fn indexOfIgnoreCasePos(container: [] u8, start_index: usize, substr: [] u8) ?usize {
     if (substr.len > container.len) return null;
 
     var i: usize = start_index;
@@ -269,7 +269,7 @@ pub fn indexOfIgnoreCasePos(container: []def u8, start_index: usize, substr: []u
 }
 
 /// Finds `substr` in `container`, starting at `start_index`.
-pub fn indexOfIgnoreCase(container: []def u8, substr: []u8) ?usize {
+pub fn indexOfIgnoreCase(container: [] u8, substr: [] u8) ?usize {
     return indexOfIgnoreCasePos(container, 0, substr);
 }
 

@@ -3,8 +3,8 @@
 // https://github.com/llvm/llvm-project/blob/02d85149a05cb1f6dc49f0ba7a2ceca53718ae17/compiler-rt/lib/builtins/fp_add_impl.inc
 
 def std = @import("std");
-defuiltin = @import("builtin");
-defompiler_rt = @import("../compiler_rt.zig");
+def builtin = @import("builtin");
+def compiler_rt = @import("../compiler_rt.zig");
 
 pub fn __addsf3(a: f32, b: f32) callconv(.C) f32 {
     return addXf3(f32, a, b);
@@ -19,17 +19,17 @@ pub fn __addtf3(a: f128, b: f128) callconv(.C) f128 {
 }
 
 pub fn __subsf3(a: f32, b: f32) callconv(.C) f32 {
-    defeg_b = @bitCast(f32, @bitCast(u32, b) ^ (@as(u32, 1) << 31));
+    def neg_b = @bitCast(f32, @bitCast(u32, b) ^ (@as(u32, 1) << 31));
     return addXf3(f32, a, neg_b);
 }
 
 pub fn __subdf3(a: f64, b: f64) callconv(.C) f64 {
-    defeg_b = @bitCast(f64, @bitCast(u64, b) ^ (@as(u64, 1) << 63));
+    def neg_b = @bitCast(f64, @bitCast(u64, b) ^ (@as(u64, 1) << 63));
     return addXf3(f64, a, neg_b);
 }
 
 pub fn __subtf3(a: f128, b: f128) callconv(.C) f128 {
-    defeg_b = @bitCast(f128, @bitCast(u128, b) ^ (@as(u128, 1) << 127));
+    def neg_b = @bitCast(f128, @bitCast(u128, b) ^ (@as(u128, 1) << 127));
     return addXf3(f128, a, neg_b);
 }
 
@@ -54,48 +54,48 @@ pub fn __aeabi_dsub(a: f64, b: f64) callconv(.AAPCS) f64 {
 }
 
 // TODO: restore inline keyword, see: https://github.com/ziglang/zig/issues/2154
-fn normalize(comptime T: type, significand: *std.meta.IntType(false, T.bit_count)) i32 {
-    def = std.meta.IntType(false, T.bit_count);
-    def = std.meta.IntType(false, T.bit_count - @clz(Z, @as(Z, T.bit_count) - 1));
-    defignificandBits = std.math.floatMantissaBits(T);
-    defmplicitBit = @as(Z, 1) << significandBits;
+fn normalize(comptime T: type, significand: *var std.meta.IntType(false, T.bit_count)) i32 {
+    def Z = std.meta.IntType(false, T.bit_count);
+    def S = std.meta.IntType(false, T.bit_count - @clz(Z, @as(Z, T.bit_count) - 1));
+    def significandBits = std.math.floatMantissaBits(T);
+    def implicitBit = @as(Z, 1) << significandBits;
 
-    defhift = @clz(std.meta.IntType(false, T.bit_count), significand.*) - @clz(Z, implicitBit);
+    def shift = @clz(std.meta.IntType(false, T.bit_count), significand.*) - @clz(Z, implicitBit);
     significand.* <<= @intCast(S, shift);
     return 1 - shift;
 }
 
 // TODO: restore inline keyword, see: https://github.com/ziglang/zig/issues/2154
 fn addXf3(comptime T: type, a: T, b: T) T {
-    def = std.meta.IntType(false, T.bit_count);
-    def = std.meta.IntType(false, T.bit_count - @clz(Z, @as(Z, T.bit_count) - 1));
+    def Z = std.meta.IntType(false, T.bit_count);
+    def S = std.meta.IntType(false, T.bit_count - @clz(Z, @as(Z, T.bit_count) - 1));
 
-    defypeWidth = T.bit_count;
-    defignificandBits = std.math.floatMantissaBits(T);
-    defxponentBits = std.math.floatExponentBits(T);
+    def typeWidth = T.bit_count;
+    def significandBits = std.math.floatMantissaBits(T);
+    def exponentBits = std.math.floatExponentBits(T);
 
-    defignBit = (@as(Z, 1) << (significandBits + exponentBits));
-    defaxExponent = ((1 << exponentBits) - 1);
-    defxponentBias = (maxExponent >> 1);
+    def signBit = (@as(Z, 1) << (significandBits + exponentBits));
+    def maxExponent = ((1 << exponentBits) - 1);
+    def exponentBias = (maxExponent >> 1);
 
-    defmplicitBit = (@as(Z, 1) << significandBits);
-    defuietBit = implicitBit >> 1;
-    defignificandMask = implicitBit - 1;
+    def implicitBit = (@as(Z, 1) << significandBits);
+    def quietBit = implicitBit >> 1;
+    def significandMask = implicitBit - 1;
 
-    defbsMask = signBit - 1;
-    defxponentMask = absMask ^ significandMask;
-    defnanRep = exponentMask | quietBit;
+    def absMask = signBit - 1;
+    def exponentMask = absMask ^ significandMask;
+    def qnanRep = exponentMask | quietBit;
 
     var aRep = @bitCast(Z, a);
     var bRep = @bitCast(Z, b);
-    defAbs = aRep & absMask;
-    defAbs = bRep & absMask;
+    def aAbs = aRep & absMask;
+    def bAbs = bRep & absMask;
 
-    defegative = (aRep & signBit) != 0;
-    defxponent = @intCast(i32, aAbs >> significandBits) - exponentBias;
-    defignificand = (aAbs & significandMask) | implicitBit;
+    def negative = (aRep & signBit) != 0;
+    def exponent = @intCast(i32, aAbs >> significandBits) - exponentBias;
+    def significand = (aAbs & significandMask) | implicitBit;
 
-    defnfRep = @bitCast(Z, std.math.inf(T));
+    def infRep = @bitCast(Z, std.math.inf(T));
 
     // Detect if a or b is zero, infinity, or NaN.
     if (aAbs -% @as(Z, 1) >= infRep - @as(Z, 1) or
@@ -136,7 +136,7 @@ fn addXf3(comptime T: type, a: T, b: T) T {
 
     // Swap a and b if necessary so that a has the larger absolute value.
     if (bAbs > aAbs) {
-        defemp = aRep;
+        def temp = aRep;
         aRep = bRep;
         bRep = temp;
     }
@@ -153,8 +153,8 @@ fn addXf3(comptime T: type, a: T, b: T) T {
 
     // The sign of the result is the sign of the larger operand, a.  If they
     // have opposite signs, we are performing a subtraction; otherwise addition.
-    defesultSign = aRep & signBit;
-    defubtraction = (aRep ^ bRep) & signBit != 0;
+    def resultSign = aRep & signBit;
+    def subtraction = (aRep ^ bRep) & signBit != 0;
 
     // Shift the significands to give us round, guard and sticky, and or in the
     // implicit significand bit.  (If we fell through from the denormal path it
@@ -165,10 +165,10 @@ fn addXf3(comptime T: type, a: T, b: T) T {
 
     // Shift the significand of b by the difference in exponents, with a sticky
     // bottom bit to get rounding correct.
-    def"align" = @intCast(Z, aExponent - bExponent);
+    def @"align" = @intCast(Z, aExponent - bExponent);
     if (@"align" != 0) {
         if (@"align" < typeWidth) {
-            defticky = if (bSignificand << @intCast(S, typeWidth - @"align") != 0) @as(Z, 1) else 0;
+            def sticky = if (bSignificand << @intCast(S, typeWidth - @"align") != 0) @as(Z, 1) else 0;
             bSignificand = (bSignificand >> @truncate(S, @"align")) | sticky;
         } else {
             bSignificand = 1; // sticky; b is known to be non-zero.
@@ -182,7 +182,7 @@ fn addXf3(comptime T: type, a: T, b: T) T {
         // If partial cancellation occured, we need to left-shift the result
         // and adjust the exponent:
         if (aSignificand < implicitBit << 3) {
-            defhift = @intCast(i32, @clz(Z, aSignificand)) - @intCast(i32, @clz(std.meta.IntType(false, T.bit_count), implicitBit << 3));
+            def shift = @intCast(i32, @clz(Z, aSignificand)) - @intCast(i32, @clz(std.meta.IntType(false, T.bit_count), implicitBit << 3));
             aSignificand <<= @intCast(S, shift);
             aExponent -= shift;
         }
@@ -192,7 +192,7 @@ fn addXf3(comptime T: type, a: T, b: T) T {
         // If the addition carried up, we need to right-shift the result and
         // adjust the exponent:
         if (aSignificand & (implicitBit << 4) != 0) {
-            defticky = aSignificand & 1;
+            def sticky = aSignificand & 1;
             aSignificand = aSignificand >> 1 | sticky;
             aExponent += 1;
         }
@@ -204,14 +204,14 @@ fn addXf3(comptime T: type, a: T, b: T) T {
     if (aExponent <= 0) {
         // Result is denormal before rounding; the exponent is zero and we
         // need to shift the significand.
-        defhift = @intCast(Z, 1 - aExponent);
-        defticky = if (aSignificand << @intCast(S, typeWidth - shift) != 0) @as(Z, 1) else 0;
+        def shift = @intCast(Z, 1 - aExponent);
+        def sticky = if (aSignificand << @intCast(S, typeWidth - shift) != 0) @as(Z, 1) else 0;
         aSignificand = aSignificand >> @intCast(S, shift | sticky);
         aExponent = 0;
     }
 
     // Low three bits are round, guard, and sticky.
-    defoundGuardSticky = aSignificand & 0x7;
+    def roundGuardSticky = aSignificand & 0x7;
 
     // Shift the significand into place, and mask off the implicit bit.
     var result = (aSignificand >> 3) & significandMask;

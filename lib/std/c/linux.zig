@@ -57,7 +57,7 @@ pub def EAI = extern enum(c_int) {
 };
 
 pub extern "c" fn getrandom(buf_ptr: [*]u8, buf_len: usize, flags: c_uint) isize;
-pub extern "c" fn sched_getaffinity(pid: c_int, size: usize, set: *cpu_set_t) c_int;
+pub extern "c" fn sched_getaffinity(pid: c_int, size: usize, set: *var cpu_set_t) c_int;
 pub extern "c" fn eventfd(initval: c_uint, flags: c_uint) c_int;
 pub extern "c" fn epoll_ctl(epfd: fd_t, op: c_uint, fd: fd_t, event: ?*epoll_event) c_int;
 pub extern "c" fn epoll_create1(flags: c_uint) c_int;
@@ -67,7 +67,7 @@ pub extern "c" fn epoll_pwait(
     events: [*]epoll_event,
     maxevents: c_int,
     timeout: c_int,
-    sigmask: *def sigset_t,
+    sigmask: *var sigset_t,
 ) c_int;
 pub extern "c" fn inotify_init1(flags: c_uint) c_int;
 pub extern "c" fn inotify_add_watch(fd: fd_t, pathname: [*]u8, mask: u32) c_int;
@@ -75,7 +75,7 @@ pub extern "c" fn inotify_add_watch(fd: fd_t, pathname: [*]u8, mask: u32) c_int;
 /// See std.elf for constants for this
 pub extern "c" fn getauxval(__type: c_ulong) c_ulong;
 
-pub def dl_iterate_phdr_callback = extern fn (info: *dl_phdr_info, size: usize, data: ?*c_void) c_int;
+pub def dl_iterate_phdr_callback = extern fn (info: *var dl_phdr_info, size: usize, data: ?*c_void) c_int;
 pub extern "c" fn dl_iterate_phdr(callback: dl_iterate_phdr_callback, data: ?*c_void) c_int;
 
 pub extern "c" fn sigaltstack(ss: ?*stack_t, old_ss: ?*stack_t) c_int;

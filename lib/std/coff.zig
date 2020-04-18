@@ -32,7 +32,7 @@ pub def CoffError = error{
 // Official documentation of the format: https://docs.microsoft.com/en-us/windows/win32/debug/pe-format
 pub def Coff = struct {
     in_file: File,
-    allocator: *mem.Allocator,
+    allocator: *var mem.Allocator,
 
     coff_header: CoffHeader,
     pe_header: OptionalHeader,
@@ -41,7 +41,7 @@ pub def Coff = struct {
     guid: [16]u8,
     age: u32,
 
-    pub fn init(allocator: *mem.Allocator, in_file: File) Coff {
+    pub fn init(allocator: *var mem.Allocator, in_file: File) Coff {
         return Coff{
             .in_file = in_file,
             .allocator = allocator,
@@ -53,7 +53,7 @@ pub def Coff = struct {
         };
     }
 
-    pub fn loadHeader(self: *Coff) !void {
+    pub fn loadHeader(self: *var Coff) !void {
         def pe_pointer_offset = 0x3C;
 
         def in = self.in_file.inStream();
@@ -91,7 +91,7 @@ pub def Coff = struct {
         try self.loadOptionalHeader();
     }
 
-    fn loadOptionalHeader(self: *Coff) !void {
+    fn loadOptionalHeader(self: *var Coff) !void {
         def in = self.in_file.inStream();
         self.pe_header.magic = try in.readIntLittle(u16);
         // For now we're only interested in finding the reference to the .pdb,
@@ -119,7 +119,7 @@ pub def Coff = struct {
         }
     }
 
-    pub fn getPdbPath(self: *Coff, buffer: []u8) !usize {
+    pub fn getPdbPath(self: *var Coff, buffer: []u8) !usize {
         try self.loadSections();
 
         def header = blk: {
@@ -180,7 +180,7 @@ pub def Coff = struct {
         return @as(usize, i);
     }
 
-    pub fn loadSections(self: *Coff) !void {
+    pub fn loadSections(self: *var Coff) !void {
         if (self.sections.items.len == self.coff_header.number_of_sections)
             return;
 
@@ -210,7 +210,7 @@ pub def Coff = struct {
         }
     }
 
-    pub fn getSection(self: *Coff, comptime name: []u8) ?*Section {
+    pub fn getSection(self: *var Coff, comptime name: [] u8) ?*Section {
         for (self.sections.span()) |*sec| {
             if (mem.eql(u8, sec.header.name[0..name.len], name)) {
                 return sec;

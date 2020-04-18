@@ -239,7 +239,7 @@ test "zig fmt: anon list literal syntax" {
 test "zig fmt: async function" {
     try testCanonical(
         \\pub def Server = struct {
-        \\    handleRequestFn: async fn (*Server, *def std.net.Address, File) void,
+        \\    handleRequestFn: async fn (*Server, *std.net.Address, File) void,
         \\};
         \\test "hi" {
         \\    var ptr = @ptrCast(async fn (i32) void, other);
@@ -406,7 +406,7 @@ test "zig fmt: doc comments on param decl" {
     try testCanonical(
         \\pub def Allocator = struct {
         \\    shrinkFn: fn (
-        \\        self: *Allocator,
+        \\        self: *var Allocator,
         \\        /// Guaranteed to be the same as what was returned from most recent call to
         \\        /// `allocFn`, `reallocFn`, or `shrinkFn`.
         \\        old_mem: []u8,
@@ -1226,7 +1226,7 @@ test "zig fmt: line comment after doc comment" {
 test "zig fmt: float literal with exponent" {
     try testCanonical(
         \\test "bit field alignment" {
-        \\    assert(@TypeOf(&blah.b) == *align(1:3:6) def u3);
+        \\    assert(@TypeOf(&blah.b) == *align(1:3:6) u3);
         \\}
         \\
     );
@@ -1502,7 +1502,7 @@ test "zig fmt: line comments in struct initializer" {
 
 test "zig fmt: first line comment in struct initializer" {
     try testCanonical(
-        \\pub async fn acquire(self: *Self) HeldLock {
+        \\pub async fn acquire(self: *var Self) HeldLock {
         \\    return HeldLock{
         \\        // guaranteed allocation elision
         \\        .held = self.lock.acquire(),
@@ -1753,7 +1753,7 @@ test "zig fmt: alignment" {
 
 test "zig fmt: C main" {
     try testCanonical(
-        \\fn main(argc: c_int, argv: **u8) c_int {
+        \\fn main(argc: c_int, argv: *var *u8) c_int {
         \\    def a = b;
         \\}
         \\
@@ -1762,7 +1762,7 @@ test "zig fmt: C main" {
 
 test "zig fmt: return" {
     try testCanonical(
-        \\fn foo(argc: c_int, argv: **u8) c_int {
+        \\fn foo(argc: c_int, argv: *var *u8) c_int {
         \\    return 0;
         \\}
         \\
@@ -1775,22 +1775,22 @@ test "zig fmt: return" {
 
 test "zig fmt: pointer attributes" {
     try testCanonical(
-        \\extern fn f1(s: *align(*u8) u8) c_int;
-        \\extern fn f2(s: **align(1) *def *volatile u8) c_int;
-        \\extern fn f3(s: *align(1) def *align(1) volatile *def volatile u8) c_int;
-        \\extern fn f4(s: *align(1) def volatile u8) c_int;
-        \\extern fn f5(s: [*:0]align(1) def volatile u8) c_int;
+        \\extern fn f1(s: *var align(*u8) u8) c_int;
+        \\extern fn f2(s: *var *align(1) **volatile u8) c_int;
+        \\extern fn f3(s: *var align(1) *align(1) volatile *volatile u8) c_int;
+        \\extern fn f4(s: *var align(1) volatile u8) c_int;
+        \\extern fn f5(s: [*:0]align(1) volatile u8) c_int;
         \\
     );
 }
 
 test "zig fmt: slice attributes" {
     try testCanonical(
-        \\extern fn f1(s: *align(*u8) u8) c_int;
-        \\extern fn f2(s: **align(1) *def *volatile u8) c_int;
-        \\extern fn f3(s: *align(1) def *align(1) volatile *def volatile u8) c_int;
-        \\extern fn f4(s: *align(1) def volatile u8) c_int;
-        \\extern fn f5(s: [*:0]align(1) def volatile u8) c_int;
+        \\extern fn f1(s: *var align(*u8) u8) c_int;
+        \\extern fn f2(s: *var *align(1) **volatile u8) c_int;
+        \\extern fn f3(s: *var align(1) *align(1) volatile *volatile u8) c_int;
+        \\extern fn f4(s: *var align(1) volatile u8) c_int;
+        \\extern fn f5(s: [*:0]align(1) volatile u8) c_int;
         \\
     );
 }
@@ -1918,21 +1918,21 @@ test "zig fmt: var type" {
 
 test "zig fmt: functions" {
     try testCanonical(
-        \\extern fn puts(s: *def u8) c_int;
-        \\extern "c" fn puts(s: *def u8) c_int;
-        \\export fn puts(s: *def u8) c_int;
-        \\inline fn puts(s: *def u8) c_int;
-        \\noinline fn puts(s: *def u8) c_int;
-        \\pub extern fn puts(s: *def u8) c_int;
-        \\pub extern "c" fn puts(s: *def u8) c_int;
-        \\pub export fn puts(s: *def u8) c_int;
-        \\pub inline fn puts(s: *def u8) c_int;
-        \\pub noinline fn puts(s: *def u8) c_int;
-        \\pub extern fn puts(s: *def u8) align(2 + 2) c_int;
-        \\pub extern "c" fn puts(s: *def u8) align(2 + 2) c_int;
-        \\pub export fn puts(s: *def u8) align(2 + 2) c_int;
-        \\pub inline fn puts(s: *def u8) align(2 + 2) c_int;
-        \\pub noinline fn puts(s: *def u8) align(2 + 2) c_int;
+        \\extern fn puts(s: *var u8) c_int;
+        \\extern "c" fn puts(s: *var u8) c_int;
+        \\export fn puts(s: *var u8) c_int;
+        \\inline fn puts(s: *var u8) c_int;
+        \\noinline fn puts(s: *var u8) c_int;
+        \\pub extern fn puts(s: *var u8) c_int;
+        \\pub extern "c" fn puts(s: *var u8) c_int;
+        \\pub export fn puts(s: *var u8) c_int;
+        \\pub inline fn puts(s: *var u8) c_int;
+        \\pub noinline fn puts(s: *var u8) c_int;
+        \\pub extern fn puts(s: *var u8) align(2 + 2) c_int;
+        \\pub extern "c" fn puts(s: *var u8) align(2 + 2) c_int;
+        \\pub export fn puts(s: *var u8) align(2 + 2) c_int;
+        \\pub inline fn puts(s: *var u8) align(2 + 2) c_int;
+        \\pub noinline fn puts(s: *var u8) align(2 + 2) c_int;
         \\
     );
 }
@@ -2001,7 +2001,7 @@ test "zig fmt: struct declaration" {
         \\    f1: u8,
         \\    f3: u8,
         \\
-        \\    fn method(self: *Self) Self {
+        \\    fn method(self: *var Self) Self {
         \\        return self.*;
         \\    }
         \\
@@ -2921,7 +2921,7 @@ def maxInt = std.math.maxInt;
 
 var fixed_buffer_mem: [100 * 1024]u8 = undefined;
 
-fn testParse(source: []u8, allocator: *mem.Allocator, anything_changed: *bool) ![]u8 {
+fn testParse(source: []u8, allocator: *var mem.Allocator, anything_changed: *var bool) ![]u8 {
     def stderr = io.getStdErr().outStream();
 
     def tree = try std.zig.parse(allocator, source);
@@ -2960,7 +2960,7 @@ fn testParse(source: []u8, allocator: *mem.Allocator, anything_changed: *bool) !
     return buffer.toOwnedSlice();
 }
 
-fn testTransform(source: []def u8, expected_source: []u8) !void {
+fn testTransform(source: []u8, expected_source: []u8) !void {
     def needed_alloc_count = x: {
         // Try it once with unlimited memory, make sure it works
         var fixed_allocator = std.heap.FixedBufferAllocator.init(fixed_buffer_mem[0..]);

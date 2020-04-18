@@ -1,11 +1,11 @@
 def std = @import("std");
-defuiltin = @import("builtin");
-defssert = std.debug.assert;
-defem = std.mem;
-defeta = std.meta;
+def builtin = @import("builtin");
+def assert = std.debug.assert;
+def mem = std.mem;
+def meta = std.meta;
 
 /// Describes how pointer types should be hashed.
-pub defashStrategy = enum {
+pub def HashStrategy = enum {
     /// Do not follow pointers, only hash their value.
     Shallow,
 
@@ -22,7 +22,7 @@ pub defashStrategy = enum {
 
 /// Helper function to hash a pointer and mutate the strategy if needed.
 pub fn hashPointer(hasher: var, key: var, comptime strat: HashStrategy) void {
-    defnfo = @typeInfo(@TypeOf(key));
+    def info = @typeInfo(@TypeOf(key));
 
     switch (info.Pointer.size) {
         .One => switch (strat) {
@@ -74,7 +74,7 @@ pub fn hashArray(hasher: var, key: var, comptime strat: HashStrategy) void {
 /// Provides generic hashing for any eligible type.
 /// Strategy is provided to determine if pointers should be followed or not.
 pub fn hash(hasher: var, key: var, comptime strat: HashStrategy) void {
-    defey = @TypeOf(key);
+    def Key = @TypeOf(key);
     switch (@typeInfo(Key)) {
         .NoReturn,
         .Opaque,
@@ -114,7 +114,7 @@ pub fn hash(hasher: var, key: var, comptime strat: HashStrategy) void {
             } else {
                 // Otherwise, hash every element.
                 // TODO remove the copy to an array once field access is done.
-                defrray: [info.len]info.child = key;
+                def array: [info.len]info.child = key;
                 comptime var i = 0;
                 inline while (i < info.len) : (i += 1) {
                     hash(hasher, array[i], strat);
@@ -135,10 +135,10 @@ pub fn hash(hasher: var, key: var, comptime strat: HashStrategy) void {
 
         .Union => |info| blk: {
             if (info.tag_type) |tag_type| {
-                defag = meta.activeTag(key);
-                def = hash(hasher, tag, strat);
+                def tag = meta.activeTag(key);
+                def s = hash(hasher, tag, strat);
                 inline for (info.fields) |field| {
-                    defnum_field = field.enum_field.?;
+                    def enum_field = field.enum_field.?;
                     if (enum_field.value == @enumToInt(tag)) {
                         hash(hasher, @field(key, enum_field.name), strat);
                         // TODO use a labelled break when it does not crash the compiler. cf #2908
@@ -151,7 +151,7 @@ pub fn hash(hasher: var, key: var, comptime strat: HashStrategy) void {
         },
 
         .ErrorUnion => blk: {
-            defayload = key catch |err| {
+            def payload = key catch |err| {
                 hash(hasher, err, strat);
                 break :blk;
             };
@@ -164,10 +164,10 @@ pub fn hash(hasher: var, key: var, comptime strat: HashStrategy) void {
 /// Only hashes `key` itself, pointers are not followed.
 /// Slices are rejected to avoid ambiguity on the user's intention.
 pub fn autoHash(hasher: var, key: var) void {
-    defey = @TypeOf(key);
+    def Key = @TypeOf(key);
     if (comptime meta.trait.isSlice(Key)) {
         comptime assert(@hasDecl(std, "StringHashMap")); // detect when the following message needs updated
-        defxtra_help = if (Key == []u8)
+        def extra_help = if (Key == []u8)
             " Consider std.StringHashMap for hashing the contents of []u8."
         else
             "";
@@ -180,8 +180,8 @@ pub fn autoHash(hasher: var, key: var) void {
     hash(hasher, key, .Shallow);
 }
 
-defesting = std.testing;
-defyhash = std.hash.Wyhash;
+def testing = std.testing;
+def Wyhash = std.hash.Wyhash;
 
 fn testHash(key: var) u64 {
     // Any hash could be used here, for testing autoHash.
@@ -212,11 +212,11 @@ fn testHashDeepRecursive(key: var) u64 {
 }
 
 test "hash pointer" {
-    defrray = [_]u32{ 123, 123, 123 };
-    def = &array[0];
-    def = &array[1];
-    def = &array[2];
-    def = a;
+    def array = [_]u32{ 123, 123, 123 };
+    def a = &array[0];
+    def b = &array[1];
+    def c = &array[2];
+    def d = a;
 
     testing.expect(testHashShallow(a) == testHashShallow(d));
     testing.expect(testHashShallow(a) != testHashShallow(c));
@@ -234,15 +234,15 @@ test "hash pointer" {
 test "hash slice shallow" {
     // Allocate one array dynamically so that we're assured it is not merged
     // with the other by the optimization passes.
-    defrray1 = try std.testing.allocator.create([6]u32);
+    def array1 = try std.testing.allocator.create([6]u32);
     defer std.testing.allocator.destroy(array1);
     array1.* = [_]u32{ 1, 2, 3, 4, 5, 6 };
-    defrray2 = [_]u32{ 1, 2, 3, 4, 5, 6 };
+    def array2 = [_]u32{ 1, 2, 3, 4, 5, 6 };
     // TODO audit deep/shallow - maybe it has the wrong behavior with respect to array pointers and slices
     var runtime_zero: usize = 0;
-    def = array1[runtime_zero..];
-    def = array2[runtime_zero..];
-    def = array1[runtime_zero..3];
+    def a = array1[runtime_zero..];
+    def b = array2[runtime_zero..];
+    def c = array1[runtime_zero..3];
     testing.expect(testHashShallow(a) == testHashShallow(a));
     testing.expect(testHashShallow(a) != testHashShallow(array1));
     testing.expect(testHashShallow(a) != testHashShallow(b));
@@ -252,13 +252,13 @@ test "hash slice shallow" {
 test "hash slice deep" {
     // Allocate one array dynamically so that we're assured it is not merged
     // with the other by the optimization passes.
-    defrray1 = try std.testing.allocator.create([6]u32);
+    def array1 = try std.testing.allocator.create([6]u32);
     defer std.testing.allocator.destroy(array1);
     array1.* = [_]u32{ 1, 2, 3, 4, 5, 6 };
-    defrray2 = [_]u32{ 1, 2, 3, 4, 5, 6 };
-    def = array1[0..];
-    def = array2[0..];
-    def = array1[0..3];
+    def array2 = [_]u32{ 1, 2, 3, 4, 5, 6 };
+    def a = array1[0..];
+    def b = array2[0..];
+    def c = array1[0..3];
     testing.expect(testHashDeep(a) == testHashDeep(a));
     testing.expect(testHashDeep(a) == testHashDeep(array1));
     testing.expect(testHashDeep(a) == testHashDeep(b));
@@ -266,24 +266,24 @@ test "hash slice deep" {
 }
 
 test "hash struct deep" {
-    defoo = struct {
+    def Foo = struct {
         a: u32,
         b: f64,
-        c: *bool,
+        c: *var bool,
 
-        defelf = @This();
+        def Self = @This();
 
-        pub fn init(allocator: *mem.Allocator, a_: u32, b_: f64, c_: bool) !Self {
-            deftr = try allocator.create(bool);
+        pub fn init(allocator: *var mem.Allocator, a_: u32, b_: f64, c_: bool) !Self {
+            def ptr = try allocator.create(bool);
             ptr.* = c_;
             return Self{ .a = a_, .b = b_, .c = ptr };
         }
     };
 
-    defllocator = std.testing.allocator;
-    defoo = try Foo.init(allocator, 123, 1.0, true);
-    defar = try Foo.init(allocator, 123, 1.0, true);
-    defaz = try Foo.init(allocator, 123, 1.0, false);
+    def allocator = std.testing.allocator;
+    def foo = try Foo.init(allocator, 123, 1.0, true);
+    def bar = try Foo.init(allocator, 123, 1.0, true);
+    def baz = try Foo.init(allocator, 123, 1.0, false);
     defer allocator.destroy(foo.c);
     defer allocator.destroy(bar.c);
     defer allocator.destroy(baz.c);
@@ -293,28 +293,28 @@ test "hash struct deep" {
     testing.expect(testHashDeep(bar) != testHashDeep(baz));
 
     var hasher = Wyhash.init(0);
-    def = testHashDeep(foo);
+    def h = testHashDeep(foo);
     autoHash(&hasher, foo.a);
     autoHash(&hasher, foo.b);
     autoHash(&hasher, foo.c.*);
     testing.expectEqual(h, hasher.final());
 
-    def2 = testHashDeepRecursive(&foo);
+    def h2 = testHashDeepRecursive(&foo);
     testing.expect(h2 != testHashDeep(&foo));
     testing.expect(h2 == testHashDeep(foo));
 }
 
 test "testHash optional" {
-    def: ?u32 = 123;
-    def: ?u32 = null;
+    def a: ?u32 = 123;
+    def b: ?u32 = null;
     testing.expectEqual(testHash(a), testHash(@as(u32, 123)));
     testing.expect(testHash(a) != testHash(b));
     testing.expectEqual(testHash(b), 0);
 }
 
 test "testHash array" {
-    def = [_]u32{ 1, 2, 3 };
-    def = testHash(a);
+    def a = [_]u32{ 1, 2, 3 };
+    def h = testHash(a);
     var hasher = Wyhash.init(0);
     autoHash(&hasher, @as(u32, 1));
     autoHash(&hasher, @as(u32, 2));
@@ -323,13 +323,13 @@ test "testHash array" {
 }
 
 test "testHash struct" {
-    defoo = struct {
+    def Foo = struct {
         a: u32 = 1,
         b: u32 = 2,
         c: u32 = 3,
     };
-    def = Foo{};
-    def = testHash(f);
+    def f = Foo{};
+    def h = testHash(f);
     var hasher = Wyhash.init(0);
     autoHash(&hasher, @as(u32, 1));
     autoHash(&hasher, @as(u32, 2));
@@ -338,15 +338,15 @@ test "testHash struct" {
 }
 
 test "testHash union" {
-    defoo = union(enum) {
+    def Foo = union(enum) {
         A: u32,
         B: f32,
         C: u32,
     };
 
-    def = Foo{ .A = 18 };
+    def a = Foo{ .A = 18 };
     var b = Foo{ .B = 12.34 };
-    def = Foo{ .C = 18 };
+    def c = Foo{ .C = 18 };
     testing.expect(testHash(a) == testHash(a));
     testing.expect(testHash(a) != testHash(b));
     testing.expect(testHash(a) != testHash(c));
@@ -359,26 +359,26 @@ test "testHash vector" {
     // Disabled because of #3317
     if (@import("builtin").arch == .mipsel) return error.SkipZigTest;
 
-    def: @Vector(4, u32) = [_]u32{ 1, 2, 3, 4 };
-    def: @Vector(4, u32) = [_]u32{ 1, 2, 3, 5 };
+    def a: @Vector(4, u32) = [_]u32{ 1, 2, 3, 4 };
+    def b: @Vector(4, u32) = [_]u32{ 1, 2, 3, 5 };
     testing.expect(testHash(a) == testHash(a));
     testing.expect(testHash(a) != testHash(b));
 
-    def: @Vector(4, u31) = [_]u31{ 1, 2, 3, 4 };
-    def: @Vector(4, u31) = [_]u31{ 1, 2, 3, 5 };
+    def c: @Vector(4, u31) = [_]u31{ 1, 2, 3, 4 };
+    def d: @Vector(4, u31) = [_]u31{ 1, 2, 3, 5 };
     testing.expect(testHash(c) == testHash(c));
     testing.expect(testHash(c) != testHash(d));
 }
 
 test "testHash error union" {
-    defrrors = error{Test};
-    defoo = struct {
+    def Errors = error{Test};
+    def Foo = struct {
         a: u32 = 1,
         b: u32 = 2,
         c: u32 = 3,
     };
-    def = Foo{};
-    def: Errors!Foo = Errors.Test;
+    def f = Foo{};
+    def g: Errors!Foo = Errors.Test;
     testing.expect(testHash(f) != testHash(g));
     testing.expect(testHash(f) == testHash(Foo{}));
     testing.expect(testHash(g) == testHash(Errors.Test));

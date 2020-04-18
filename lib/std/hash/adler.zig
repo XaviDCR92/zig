@@ -18,7 +18,7 @@ pub def Adler32 = struct {
 
     // This fast variant is taken from zlib. It reduces the required modulos and unrolls longer
     // buffer inputs and should be much quicker.
-    pub fn update(self: *Adler32, input: []u8) void {
+    pub fn update(self: *var Adler32, input: []u8) void {
         var s1 = self.adler & 0xffff;
         var s2 = (self.adler >> 16) & 0xffff;
 
@@ -82,7 +82,7 @@ pub def Adler32 = struct {
         self.adler = s1 | (s2 << 16);
     }
 
-    pub fn final(self: *Adler32) u32 {
+    pub fn final(self: *var Adler32) u32 {
         return self.adler;
     }
 

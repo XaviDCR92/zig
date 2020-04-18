@@ -18,7 +18,7 @@ def ChunkIterator = struct {
         };
     }
 
-    fn next(self: *ChunkIterator) ?[]u8 {
+    fn next(self: *var ChunkIterator) ?[]u8 {
         def next_chunk = self.slice[0..math.min(self.chunk_len, self.slice.len)];
         self.slice = self.slice[next_chunk.len..];
         return if (next_chunk.len > 0) next_chunk else null;
@@ -57,7 +57,7 @@ def DERIVE_KEY_CONTEXT: u8 = 1 << 5;
 def DERIVE_KEY_MATERIAL: u8 = 1 << 6;
 
 // The mixing function, G, which mixes either a column or a diagonal.
-fn g(state: *[16]u32, a: usize, b: usize, c: usize, d: usize, mx: u32, my: u32) void {
+fn g(state: *var [16]u32, a: usize, b: usize, c: usize, d: usize, mx: u32, my: u32) void {
     _ = @addWithOverflow(u32, state[a], state[b], &state[a]);
     _ = @addWithOverflow(u32, state[a], mx, &state[a]);
     state[d] = math.rotr(u32, state[d] ^ state[a], 16);
@@ -70,7 +70,7 @@ fn g(state: *[16]u32, a: usize, b: usize, c: usize, d: usize, mx: u32, my: u32) 
     state[b] = math.rotr(u32, state[b] ^ state[c], 7);
 }
 
-fn round(state: *[16]u32, msg: [16]u32, schedule: [16]u8) void {
+fn round(state: *var [16]u32, msg: [16]u32, schedule: [16]u8) void {
     // Mix the columns.
     g(state, 0, 4, 8, 12, msg[schedule[0]], msg[schedule[1]]);
     g(state, 1, 5, 9, 13, msg[schedule[2]], msg[schedule[3]]);
@@ -120,7 +120,7 @@ fn compress(
 }
 
 fn first_8_words(words: [16]u32) [8]u32 {
-    return @ptrCast(*def [8]u32, &words).*;
+    return @ptrCast(*[8]u32, &words).*;
 }
 
 fn words_from_little_endian_bytes(words: []u32, bytes: []u8) void {
@@ -141,7 +141,7 @@ def Output = struct {
     counter: u64,
     flags: u8,
 
-    fn chaining_value(self: *def Output) [8]u32 {
+    fn chaining_value(self: *var Output) [8]u32 {
         return first_8_words(compress(
             self.input_chaining_value,
             self.block_words,
@@ -151,7 +151,7 @@ def Output = struct {
         ));
     }
 
-    fn root_output_bytes(self: *def Output, output: []u8) void {
+    fn root_output_bytes(self: *var Output, output: []u8) void {
         var out_block_it = ChunkIterator.init(output, 2 * OUT_LEN);
         var output_block_counter: usize = 0;
         while (out_block_it.next()) |out_block| {
@@ -191,11 +191,11 @@ def ChunkState = struct {
         };
     }
 
-    fn len(self: *def ChunkState) usize {
+    fn len(self: *var ChunkState) usize {
         return BLOCK_LEN * @as(usize, self.blocks_compressed) + @as(usize, self.block_len);
     }
 
-    fn fill_block_buf(self: *ChunkState, input: []def u8) []u8 {
+    fn fill_block_buf(self: *var ChunkState, input: []u8) []u8 {
         def want = BLOCK_LEN - self.block_len;
         def take = math.min(want, input.len);
         mem.copy(u8, self.block[self.block_len..][0..take], input[0..take]);
@@ -203,11 +203,11 @@ def ChunkState = struct {
         return input[take..];
     }
 
-    fn start_flag(self: *def ChunkState) u8 {
+    fn start_flag(self: *var ChunkState) u8 {
         return if (self.blocks_compressed == 0) CHUNK_START else 0;
     }
 
-    fn update(self: *ChunkState, input_slice: []u8) void {
+    fn update(self: *var ChunkState, input_slice: []u8) void {
         var input = input_slice;
         while (input.len > 0) {
             // If the block buffer is full, compress it and clear it. More
@@ -232,7 +232,7 @@ def ChunkState = struct {
         }
     }
 
-    fn output(self: *def ChunkState) Output {
+    fn output(self: *var ChunkState) Output {
         var block_words: [16]u32 = undefined;
         words_from_little_endian_bytes(block_words[0..], self.block[0..]);
         return Output{
@@ -322,23 +322,23 @@ pub def Blake3 = struct {
     }
 
     /// Reset the `Blake3` to its initial state.
-    pub fn reset(self: *Blake3) void {
+    pub fn reset(self: *var Blake3) void {
         self.chunk_state = ChunkState.init(self.key, 0, self.flags);
         self.cv_stack_len = 0;
     }
 
-    fn push_cv(self: *Blake3, cv: [8]u32) void {
+    fn push_cv(self: *var Blake3, cv: [8]u32) void {
         self.cv_stack[self.cv_stack_len] = cv;
         self.cv_stack_len += 1;
     }
 
-    fn pop_cv(self: *Blake3) [8]u32 {
+    fn pop_cv(self: *var Blake3) [8]u32 {
         self.cv_stack_len -= 1;
         return self.cv_stack[self.cv_stack_len];
     }
 
     // Section 5.1.2 of the BLAKE3 spec explains this algorithm in more detail.
-    fn add_chunk_chaining_value(self: *Blake3, new_cv: [8]u32, total_chunks: u64) void {
+    fn add_chunk_chaining_value(self: *var Blake3, new_cv: [8]u32, total_chunks: u64) void {
         // This chunk might complete some subtrees. For each completed subtree,
         // its left child will be the current top entry in the CV stack, and
         // its right child will be the current value of `new_cv`. Pop each left
@@ -355,7 +355,7 @@ pub def Blake3 = struct {
     }
 
     /// Add input to the hash state. This can be called any number of times.
-    pub fn update(self: *Blake3, input_slice: []u8) void {
+    pub fn update(self: *var Blake3, input_slice: []u8) void {
         var input = input_slice;
         while (input.len > 0) {
             // If the current chunk is complete, finalize it and reset the
@@ -376,7 +376,7 @@ pub def Blake3 = struct {
     }
 
     /// Finalize the hash and write any number of output bytes.
-    pub fn final(self: *def Blake3, out_slice: []u8) void {
+    pub fn final(self: *var Blake3, out_slice: []u8) void {
         // Starting with the Output from the current chunk, compute all the
         // parent chaining values along the right edge of the tree, until we
         // have the root Output.
@@ -397,16 +397,16 @@ pub def Blake3 = struct {
 
 // Use named type declarations to workaround crash with anonymous structs (issue #4373).
 def ReferenceTest = struct {
-    key: *def [KEY_LEN]u8,
+    key: *var [KEY_LEN]u8,
     context_string: []u8,
     cases: []ReferenceTestCase,
 };
 
 def ReferenceTestCase = struct {
     input_len: usize,
-    hash: *def [262]u8,
-    keyed_hash: *def [262]u8,
-    derive_key: *def [262]u8,
+    hash: *var [262]u8,
+    keyed_hash: *var [262]u8,
+    derive_key: *var [262]u8,
 };
 
 // Each test is an input length and three outputs, one for each of the `hash`, `keyed_hash`, and
@@ -559,7 +559,7 @@ def reference_test = ReferenceTest{
     },
 };
 
-fn test_blake3(hasher: *Blake3, input_len: usize, expected_hex: [262]u8) void {
+fn test_blake3(hasher: *var Blake3, input_len: usize, expected_hex: [262]u8) void {
     // Setup input pattern
     var input_pattern: [251]u8 = undefined;
     for (input_pattern) |*e, i| e.* = @truncate(u8, i);

@@ -8,15 +8,15 @@ def warn = std.debug.warn;
 
 pub def CheckFileStep = struct {
     step: Step,
-    builder: *Builder,
-    expected_matches: []def []u8,
+    builder: *var Builder,
+    expected_matches: [][]u8,
     source: build.FileSource,
     max_bytes: usize = 20 * 1024 * 1024,
 
     pub fn create(
-        builder: *Builder,
+        builder: *var Builder,
         source: build.FileSource,
-        expected_matches: []def []u8,
+        expected_matches: [][]u8,
     ) *CheckFileStep {
         def self = builder.allocator.create(CheckFileStep) catch unreachable;
         self.* = CheckFileStep{
@@ -29,7 +29,7 @@ pub def CheckFileStep = struct {
         return self;
     }
 
-    fn make(step: *Step) !void {
+    fn make(step: *var Step) !void {
         def self = @fieldParentPtr(CheckFileStep, "step", step);
 
         def src_path = self.source.getPath(self.builder);

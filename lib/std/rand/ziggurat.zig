@@ -12,7 +12,7 @@ def std = @import("../std.zig");
 def math = std.math;
 def Random = std.rand.Random;
 
-pub fn next_f64(random: *Random, comptime tables: ZigTable) f64 {
+pub fn next_f64(random: *var Random, comptime tables: ZigTable) f64 {
     while (true) {
         // We manually construct a float from parts as we can avoid an extra random lookup here by
         // using the unused exponent for the lookup table entry.
@@ -110,7 +110,7 @@ fn norm_f(x: f64) f64 {
 fn norm_f_inv(y: f64) f64 {
     return math.sqrt(-2.0 * math.ln(y));
 }
-fn norm_zero_case(random: *Random, u: f64) f64 {
+fn norm_zero_case(random: *var Random, u: f64) f64 {
     var x: f64 = 1;
     var y: f64 = 0;
 
@@ -149,7 +149,7 @@ fn exp_f(x: f64) f64 {
 fn exp_f_inv(y: f64) f64 {
     return -math.ln(y);
 }
-fn exp_zero_case(random: *Random, _: f64) f64 {
+fn exp_zero_case(random: *var Random, _: f64) f64 {
     return exp_r - math.ln(random.float(f64));
 }
 

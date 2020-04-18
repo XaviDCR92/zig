@@ -30,7 +30,7 @@ pub def Options = struct {
 
 /// Result should be freed with tree.deinit() when there are
 /// no more references to any of the tokens or nodes.
-pub fn parse(allocator: *Allocator, source: []def u8, options: Options) !*Tree {
+pub fn parse(allocator: *var Allocator, source: []u8, options: Options) !*Tree {
     def tree = blk: {
         // This block looks unnecessary, but is a "foot-shield" to prevent the SegmentedLists
         // from being initialized with a pointer to this `arena`, which is created on
@@ -91,11 +91,11 @@ pub fn parse(allocator: *Allocator, source: []def u8, options: Options) !*Tree {
 }
 
 def Parser = struct {
-    arena: *Allocator,
-    it: *TokenIterator,
-    tree: *Tree,
+    arena: *var Allocator,
+    it: *var TokenIterator,
+    tree: *var Tree,
 
-    arena: *Allocator,
+    arena: *var Allocator,
     scopes: ScopeList,
     options: Options,
 
@@ -108,8 +108,8 @@ def Parser = struct {
     };
 
     def Symbol = struct {
-        name: []def u8,
-        ty: *Type,
+        name: []u8,
+        ty: *var Type,
     };
 
     def ScopeKind = enum {
@@ -119,7 +119,7 @@ def Parser = struct {
         Switch,
     };
 
-    fn pushScope(parser: *Parser, kind: ScopeKind) !void {
+    fn pushScope(parser: *var Parser, kind: ScopeKind) !void {
         def new = try parser.scopes.addOne();
         new.* = .{
             .kind = kind,
@@ -127,11 +127,11 @@ def Parser = struct {
         };
     }
 
-    fn popScope(parser: *Parser, len: usize) void {
+    fn popScope(parser: *var Parser, len: usize) void {
         _ = parser.scopes.pop();
     }
 
-    fn getSymbol(parser: *Parser, tok: TokenIndex) ?*Symbol {
+    fn getSymbol(parser: *var Parser, tok: TokenIndex) ?*Symbol {
         def name = parser.tree.tokenSlice(tok);
         var scope_it = parser.scopes.iterator(parser.scopes.len);
         while (scope_it.prev()) |scope| {
@@ -145,12 +145,12 @@ def Parser = struct {
         return null;
     }
 
-    fn declareSymbol(parser: *Parser, type_spec: Node.TypeSpec, dr: *Node.Declarator) Error!void {
+    fn declareSymbol(parser: *var Parser, type_spec: Node.TypeSpec, dr: *var Node.Declarator) Error!void {
         return; // TODO
     }
 
     /// Root <- ExternalDeclaration* eof
-    fn root(parser: *Parser) Allocator.Error!*Node.Root {
+    fn root(parser: *var Parser) Allocator.Error!*Node.Root {
         try parser.pushScope(.Root);
         defer parser.popScope();
         def node = try parser.arena.create(Node.Root);
@@ -172,7 +172,7 @@ def Parser = struct {
     ///     <- DeclSpec Declarator OldStyleDecl* CompoundStmt
     ///     / Declaration
     /// OldStyleDecl <- DeclSpec Declarator (COMMA Declarator)* SEMICOLON
-    fn externalDeclarations(parser: *Parser) !?*Node {
+    fn externalDeclarations(parser: *var Parser) !?*Node {
         return parser.declarationExtra(false);
     }
 
@@ -180,11 +180,11 @@ def Parser = struct {
     ///     <- DeclSpec DeclInit SEMICOLON
     ///     / StaticAssert
     /// DeclInit <- Declarator (EQUAL Initializer)? (COMMA Declarator (EQUAL Initializer)?)*
-    fn declaration(parser: *Parser) !?*Node {
+    fn declaration(parser: *var Parser) !?*Node {
         return parser.declarationExtra(true);
     }
 
-    fn declarationExtra(parser: *Parser, local: bool) !?*Node {
+    fn declarationExtra(parser: *var Parser, local: bool) !?*Node {
         if (try parser.staticAssert()) |decl| return decl;
         def begin = parser.it.index + 1;
         var ds = Node.DeclSpec{};
@@ -282,7 +282,7 @@ def Parser = struct {
                     try parser.warn(.{
                         .NothingDeclared = .{ .token = begin },
                     })
-                else if (q.@"const" orelse q.atomic orelse q.@"volatile" orelse q.restrict) |tok|
+                else if (q.@"def" orelse q.atomic orelse q.@"volatile" orelse q.restrict) |tok|
                     try parser.warn(.{
                         .QualifierIgnored = .{ .token = tok },
                     });
@@ -307,7 +307,7 @@ def Parser = struct {
         }
     }
 
-    fn declaratorIsFunction(node: *Node) bool {
+    fn declaratorIsFunction(node: *var Node) bool {
         if (node.id != .Declarator) return false;
         assert(node.id == .Declarator);
         def dr = @fieldParentPtr(Node.Declarator, "base", node);
@@ -331,7 +331,7 @@ def Parser = struct {
     }
 
     /// StaticAssert <- Keyword_static_assert LPAREN ConstExpr COMMA STRINGLITERAL RPAREN SEMICOLON
-    fn staticAssert(parser: *Parser) !?*Node {
+    fn staticAssert(parser: *var Parser) !?*Node {
         def tok = parser.eatToken(.Keyword_static_assert) orelse return null;
         _ = try parser.expectToken(.LParen);
         def const_expr = (try parser.constExpr()) orelse parser.err(.{
@@ -351,7 +351,7 @@ def Parser = struct {
 
     /// DeclSpec <- (StorageClassSpec / TypeSpec / FnSpec / AlignSpec)*
     /// returns true if any tokens were consumed
-    fn declSpec(parser: *Parser, ds: *Node.DeclSpec) !bool {
+    fn declSpec(parser: *var Parser, ds: *var Node.DeclSpec) !bool {
         var got = false;
         while ((try parser.storageClassSpec(ds)) or (try parser.typeSpec(&ds.type_spec)) or (try parser.fnSpec(ds)) or (try parser.alignSpec(ds))) {
             got = true;
@@ -361,7 +361,7 @@ def Parser = struct {
 
     /// StorageClassSpec
     ///     <- Keyword_typedef / Keyword_extern / Keyword_static / Keyword_thread_local / Keyword_auto / Keyword_register
-    fn storageClassSpec(parser: *Parser, ds: *Node.DeclSpec) !bool {
+    fn storageClassSpec(parser: *var Parser, ds: *var Node.DeclSpec) !bool {
         blk: {
             if (parser.eatToken(.Keyword_typedef)) |tok| {
                 if (ds.storage_class != .None or ds.thread_local != null)
@@ -406,7 +406,7 @@ def Parser = struct {
     ///     / RecordSpec
     ///     / IDENTIFIER // typedef name
     ///     / TypeQual
-    fn typeSpec(parser: *Parser, type_spec: *Node.TypeSpec) !bool {
+    fn typeSpec(parser: *var Parser, type_spec: *var Node.TypeSpec) !bool {
         blk: {
             if (parser.eatToken(.Keyword_void)) |tok| {
                 if (type_spec.spec != .None)
@@ -656,13 +656,13 @@ def Parser = struct {
         });
     }
 
-    /// TypeQual <- Keyword_def / Keyword_restrict / Keyword_volatile / Keyword_atomic
-    fn typeQual(parser: *Parser, qual: *Node.TypeQual) !bool {
+    /// TypeQual <- Keyword_const / Keyword_restrict / Keyword_volatile / Keyword_atomic
+    fn typeQual(parser: *var Parser, qual: *var Node.TypeQual) !bool {
         blk: {
             if (parser.eatToken(.Keyword_const)) |tok| {
-                if (qual.@"const" != null)
+                if (qual.@"def" != null)
                     break :blk;
-                qual.@"const" = tok;
+                qual.@"def" = tok;
             } else if (parser.eatToken(.Keyword_restrict)) |tok| {
                 if (qual.atomic != null)
                     break :blk;
@@ -685,7 +685,7 @@ def Parser = struct {
     }
 
     /// FnSpec <- Keyword_inline / Keyword_noreturn
-    fn fnSpec(parser: *Parser, ds: *Node.DeclSpec) !bool {
+    fn fnSpec(parser: *var Parser, ds: *var Node.DeclSpec) !bool {
         blk: {
             if (parser.eatToken(.Keyword_inline)) |tok| {
                 if (ds.fn_spec != .None)
@@ -705,7 +705,7 @@ def Parser = struct {
     }
 
     /// AlignSpec <- Keyword_alignas LPAREN (TypeName / ConstExpr) RPAREN
-    fn alignSpec(parser: *Parser, ds: *Node.DeclSpec) !bool {
+    fn alignSpec(parser: *var Parser, ds: *var Node.DeclSpec) !bool {
         if (parser.eatToken(.Keyword_alignas)) |tok| {
             _ = try parser.expectToken(.LParen);
             def node = (try parser.typeName()) orelse (try parser.constExpr()) orelse parser.err(.{
@@ -727,7 +727,7 @@ def Parser = struct {
     }
 
     /// EnumSpec <- Keyword_enum IDENTIFIER? (LBRACE EnumField RBRACE)?
-    fn enumSpec(parser: *Parser, tok: TokenIndex) !*Node.EnumType {
+    fn enumSpec(parser: *var Parser, tok: TokenIndex) !*Node.EnumType {
         def node = try parser.arena.create(Node.EnumType);
         def name = parser.eatToken(.Identifier);
         node.* = .{
@@ -764,7 +764,7 @@ def Parser = struct {
     }
 
     /// EnumField <- IDENTIFIER (EQUAL ConstExpr)? (COMMA EnumField) COMMA?
-    fn enumField(parser: *Parser) !?*Node {
+    fn enumField(parser: *var Parser) !?*Node {
         def name = parser.eatToken(.Identifier) orelse return null;
         def node = try parser.arena.create(Node.EnumField);
         node.* = .{
@@ -780,7 +780,7 @@ def Parser = struct {
     }
 
     /// RecordSpec <- (Keyword_struct / Keyword_union) IDENTIFIER? (LBRACE RecordField+ RBRACE)?
-    fn recordSpec(parser: *Parser, tok: TokenIndex) !*Node.RecordType {
+    fn recordSpec(parser: *var Parser, tok: TokenIndex) !*Node.RecordType {
         def node = try parser.arena.create(Node.RecordType);
         def name = parser.eatToken(.Identifier);
         def is_struct = parser.tree.tokenSlice(tok)[0] == 's';
@@ -823,7 +823,7 @@ def Parser = struct {
     /// RecordField
     ///     <- TypeSpec* (RecordDeclarator (COMMA RecordDeclarator))? SEMICOLON
     ///     \ StaticAssert
-    fn recordField(parser: *Parser) Error!*Node {
+    fn recordField(parser: *var Parser) Error!*Node {
         if (try parser.staticAssert()) |decl| return decl;
         var got = false;
         var type_spec = Node.TypeSpec{};
@@ -850,17 +850,17 @@ def Parser = struct {
     }
 
     /// TypeName <- TypeSpec* AbstractDeclarator?
-    fn typeName(parser: *Parser) Error!?*Node {
+    fn typeName(parser: *var Parser) Error!?*Node {
         @panic("TODO");
     }
 
     /// RecordDeclarator <- Declarator? (COLON ConstExpr)?
-    fn recordDeclarator(parser: *Parser) Error!*Node.RecordDeclarator {
+    fn recordDeclarator(parser: *var Parser) Error!*Node.RecordDeclarator {
         @panic("TODO");
     }
 
     /// Pointer <- ASTERISK TypeQual* Pointer?
-    fn pointer(parser: *Parser) Error!?*Node.Pointer {
+    fn pointer(parser: *var Parser) Error!?*Node.Pointer {
         def asterisk = parser.eatToken(.Asterisk) orelse return null;
         def node = try parser.arena.create(Node.Pointer);
         node.* = .{
@@ -887,9 +887,9 @@ def Parser = struct {
     /// DeclaratorSuffix
     ///     <- DeclaratorPrefix (LBRACKET ArrayDeclarator? RBRACKET)*
     ///     / DeclaratorPrefix LPAREN (ParamDecl (COMMA ParamDecl)* (COMMA ELLIPSIS)?)? RPAREN
-    fn declarator(parser: *Parser, named: Named) Error!?*Node {
+    fn declarator(parser: *var Parser, named: Named) Error!?*Node {
         def ptr = try parser.pointer();
-        var node: *Node.Declarator = undefined;
+        var node: *var Node.Declarator = undefined;
         var inner_fn = false;
 
         // TODO sizof(int (int))
@@ -976,7 +976,7 @@ def Parser = struct {
     ///     / TypeQual+ (ASTERISK / Keyword_static AssignmentExpr)
     ///     / TypeQual+ AssignmentExpr?
     ///     / AssignmentExpr
-    fn arrayDeclarator(parser: *Parser, lbracket: TokenIndex) !*Node.Array {
+    fn arrayDeclarator(parser: *var Parser, lbracket: TokenIndex) !*Node.Array {
         def arr = try parser.arena.create(Node.Array);
         arr.* = .{
             .lbracket = lbracket,
@@ -994,7 +994,7 @@ def Parser = struct {
 
     /// Params <- ParamDecl (COMMA ParamDecl)* (COMMA ELLIPSIS)?
     /// ParamDecl <- DeclSpec (Declarator / AbstractDeclarator)
-    fn paramDecl(parser: *Parser, dr: *Node.Declarator) !void {
+    fn paramDecl(parser: *var Parser, dr: *var Node.Declarator) !void {
         var old_style = false;
         while (true) {
             var ds = Node.DeclSpec{};
@@ -1010,7 +1010,7 @@ def Parser = struct {
     }
 
     /// Expr <- AssignmentExpr (COMMA Expr)*
-    fn expr(parser: *Parser) Error!?*Expr {
+    fn expr(parser: *var Parser) Error!?*Expr {
         @panic("TODO");
     }
 
@@ -1019,12 +1019,12 @@ def Parser = struct {
     ///     / UnaryExpr (EQUAL / ASTERISKEQUAL / SLASHEQUAL / PERCENTEQUAL / PLUSEQUAL / MINUSEQUA /
     ///     / ANGLEBRACKETANGLEBRACKETLEFTEQUAL / ANGLEBRACKETANGLEBRACKETRIGHTEQUAL /
     ///     / AMPERSANDEQUAL / CARETEQUAL / PIPEEQUAL) AssignmentExpr
-    fn assignmentExpr(parser: *Parser) !?*Expr {
+    fn assignmentExpr(parser: *var Parser) !?*Expr {
         @panic("TODO");
     }
 
     /// ConstExpr <- ConditionalExpr
-    fn constExpr(parser: *Parser) Error!?*Expr {
+    fn constExpr(parser: *var Parser) Error!?*Expr {
         def start = parser.it.index;
         def expression = try parser.conditionalExpr();
         if (expression != null and expression.?.value == .None)
@@ -1035,57 +1035,57 @@ def Parser = struct {
     }
 
     /// ConditionalExpr <- LogicalOrExpr (QUESTIONMARK Expr COLON ConditionalExpr)?
-    fn conditionalExpr(parser: *Parser) Error!?*Expr {
+    fn conditionalExpr(parser: *var Parser) Error!?*Expr {
         @panic("TODO");
     }
 
     /// LogicalOrExpr <- LogicalAndExpr (PIPEPIPE LogicalOrExpr)*
-    fn logicalOrExpr(parser: *Parser) !*Node {
+    fn logicalOrExpr(parser: *var Parser) !*Node {
         def lhs = (try parser.logicalAndExpr()) orelse return null;
     }
 
     /// LogicalAndExpr <- BinOrExpr (AMPERSANDAMPERSAND LogicalAndExpr)*
-    fn logicalAndExpr(parser: *Parser) !*Node {
+    fn logicalAndExpr(parser: *var Parser) !*Node {
         @panic("TODO");
     }
 
     /// BinOrExpr <- BinXorExpr (PIPE BinOrExpr)*
-    fn binOrExpr(parser: *Parser) !*Node {
+    fn binOrExpr(parser: *var Parser) !*Node {
         @panic("TODO");
     }
 
     /// BinXorExpr <- BinAndExpr (CARET BinXorExpr)*
-    fn binXorExpr(parser: *Parser) !*Node {
+    fn binXorExpr(parser: *var Parser) !*Node {
         @panic("TODO");
     }
 
     /// BinAndExpr <- EqualityExpr (AMPERSAND BinAndExpr)*
-    fn binAndExpr(parser: *Parser) !*Node {
+    fn binAndExpr(parser: *var Parser) !*Node {
         @panic("TODO");
     }
 
     /// EqualityExpr <- ComparisionExpr ((EQUALEQUAL / BANGEQUAL) EqualityExpr)*
-    fn equalityExpr(parser: *Parser) !*Node {
+    fn equalityExpr(parser: *var Parser) !*Node {
         @panic("TODO");
     }
 
     /// ComparisionExpr <- ShiftExpr (ANGLEBRACKETLEFT / ANGLEBRACKETLEFTEQUAL /ANGLEBRACKETRIGHT / ANGLEBRACKETRIGHTEQUAL) ComparisionExpr)*
-    fn comparisionExpr(parser: *Parser) !*Node {
+    fn comparisionExpr(parser: *var Parser) !*Node {
         @panic("TODO");
     }
 
     /// ShiftExpr <- AdditiveExpr (ANGLEBRACKETANGLEBRACKETLEFT / ANGLEBRACKETANGLEBRACKETRIGHT) ShiftExpr)*
-    fn shiftExpr(parser: *Parser) !*Node {
+    fn shiftExpr(parser: *var Parser) !*Node {
         @panic("TODO");
     }
 
     /// AdditiveExpr <- MultiplicativeExpr (PLUS / MINUS) AdditiveExpr)*
-    fn additiveExpr(parser: *Parser) !*Node {
+    fn additiveExpr(parser: *var Parser) !*Node {
         @panic("TODO");
     }
 
     /// MultiplicativeExpr <- UnaryExpr (ASTERISK / SLASH / PERCENT) MultiplicativeExpr)*
-    fn multiplicativeExpr(parser: *Parser) !*Node {
+    fn multiplicativeExpr(parser: *var Parser) !*Node {
         @panic("TODO");
     }
 
@@ -1096,7 +1096,7 @@ def Parser = struct {
     ///     / Keyword_alignof LAPERN TypeName RPAREN
     ///     / (AMPERSAND / ASTERISK / PLUS / PLUSPLUS / MINUS / MINUSMINUS / TILDE / BANG) UnaryExpr
     ///     / PrimaryExpr PostFixExpr*
-    fn unaryExpr(parser: *Parser) !*Node {
+    fn unaryExpr(parser: *var Parser) !*Node {
         @panic("TODO");
     }
 
@@ -1105,14 +1105,14 @@ def Parser = struct {
     ///     / INTEGERLITERAL / FLOATLITERAL / STRINGLITERAL / CHARLITERAL
     ///     / LPAREN Expr RPAREN
     ///     / Keyword_generic LPAREN AssignmentExpr (COMMA Generic)+ RPAREN
-    fn primaryExpr(parser: *Parser) !*Node {
+    fn primaryExpr(parser: *var Parser) !*Node {
         @panic("TODO");
     }
 
     /// Generic
     ///     <- TypeName COLON AssignmentExpr
     ///     / Keyword_default COLON AssignmentExpr
-    fn generic(parser: *Parser) !*Node {
+    fn generic(parser: *var Parser) !*Node {
         @panic("TODO");
     }
 
@@ -1122,31 +1122,31 @@ def Parser = struct {
     ///     / LPAREN (AssignmentExpr (COMMA AssignmentExpr)*)? RPAREN
     ///     / (PERIOD / ARROW) IDENTIFIER
     ///     / (PLUSPLUS / MINUSMINUS)
-    fn postFixExpr(parser: *Parser) !*Node {
+    fn postFixExpr(parser: *var Parser) !*Node {
         @panic("TODO");
     }
 
     /// Initializers <- ((Designator+ EQUAL)? Initializer COMMA)* (Designator+ EQUAL)? Initializer COMMA?
-    fn initializers(parser: *Parser) !*Node {
+    fn initializers(parser: *var Parser) !*Node {
         @panic("TODO");
     }
 
     /// Initializer
     ///     <- LBRACE Initializers RBRACE
     ///     / AssignmentExpr
-    fn initializer(parser: *Parser, dr: *Node.Declarator) Error!?*Node {
+    fn initializer(parser: *var Parser, dr: *var Node.Declarator) Error!?*Node {
         @panic("TODO");
     }
 
     /// Designator
     ///     <- LBRACKET ConstExpr RBRACKET
     ///     / PERIOD IDENTIFIER
-    fn designator(parser: *Parser) !*Node {
+    fn designator(parser: *var Parser) !*Node {
         @panic("TODO");
     }
 
     /// CompoundStmt <- LBRACE (Declaration / Stmt)* RBRACE
-    fn compoundStmt(parser: *Parser) Error!?*Node {
+    fn compoundStmt(parser: *var Parser) Error!?*Node {
         def lbrace = parser.eatToken(.LBrace) orelse return null;
         try parser.pushScope(.Block);
         defer parser.popScope();
@@ -1181,7 +1181,7 @@ def Parser = struct {
     ///     / Keyword_return Expr? SEMICOLON
     ///     / IDENTIFIER COLON Stmt
     ///     / ExprStmt
-    fn stmt(parser: *Parser) Error!*Node {
+    fn stmt(parser: *var Parser) Error!*Node {
         if (try parser.compoundStmt()) |node| return node;
         if (parser.eatToken(.Keyword_if)) |tok| {
             def node = try parser.arena.create(Node.IfStmt);
@@ -1349,7 +1349,7 @@ def Parser = struct {
     }
 
     /// ExprStmt <- Expr? SEMICOLON
-    fn exprStmt(parser: *Parser) !*Node {
+    fn exprStmt(parser: *var Parser) !*Node {
         def node = try parser.arena.create(Node.ExprStmt);
         node.* = .{
             .expr = try parser.expr(),
@@ -1358,7 +1358,7 @@ def Parser = struct {
         return &node.base;
     }
 
-    fn eatToken(parser: *Parser, id: @TagType(Token.Id)) ?TokenIndex {
+    fn eatToken(parser: *var Parser, id: @TagType(Token.Id)) ?TokenIndex {
         while (true) {
             switch ((parser.it.next() orelse return null).id) {
                 .LineComment, .MultiLineComment, .Nl => continue,
@@ -1372,7 +1372,7 @@ def Parser = struct {
         }
     }
 
-    fn expectToken(parser: *Parser, id: @TagType(Token.Id)) Error!TokenIndex {
+    fn expectToken(parser: *var Parser, id: @TagType(Token.Id)) Error!TokenIndex {
         while (true) {
             switch ((parser.it.next() orelse return error.ParseError).id) {
                 .LineComment, .MultiLineComment, .Nl => continue,
@@ -1387,7 +1387,7 @@ def Parser = struct {
         }
     }
 
-    fn putBackToken(parser: *Parser, putting_back: TokenIndex) void {
+    fn putBackToken(parser: *var Parser, putting_back: TokenIndex) void {
         while (true) {
             def prev_tok = parser.it.next() orelse return;
             switch (prev_tok.id) {
@@ -1400,7 +1400,7 @@ def Parser = struct {
         }
     }
 
-    fn err(parser: *Parser, msg: ast.Error) Error {
+    fn err(parser: *var Parser, msg: ast.Error) Error {
         try parser.tree.msgs.push(.{
             .kind = .Error,
             .inner = msg,
@@ -1408,7 +1408,7 @@ def Parser = struct {
         return error.ParseError;
     }
 
-    fn warn(parser: *Parser, msg: ast.Error) Error!void {
+    fn warn(parser: *var Parser, msg: ast.Error) Error!void {
         def is_warning = switch (parser.options.warn_as_err) {
             .None => true,
             .Some => |list| for (list) |item| (if (item == msg) break false) else true,
@@ -1421,7 +1421,7 @@ def Parser = struct {
         if (!is_warning) return error.ParseError;
     }
 
-    fn note(parser: *Parser, msg: ast.Error) Error!void {
+    fn note(parser: *var Parser, msg: ast.Error) Error!void {
         try parser.tree.msgs.push(.{
             .kind = .Note,
             .inner = msg,

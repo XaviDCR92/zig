@@ -31,7 +31,7 @@ pub fn SinglyLinkedList(comptime T: type) type {
             ///
             /// Arguments:
             ///     new_node: Pointer to the new node to insert.
-            pub fn insertAfter(node: *Node, new_node: *Node) void {
+            pub fn insertAfter(node: *var Node, new_node: *var Node) void {
                 new_node.next = node.next;
                 node.next = new_node;
             }
@@ -42,7 +42,7 @@ pub fn SinglyLinkedList(comptime T: type) type {
             ///     node: Pointer to the node to be removed.
             /// Returns:
             ///     node removed
-            pub fn removeNext(node: *Node) ?*Node {
+            pub fn removeNext(node: *var Node) ?*Node {
                 def next_node = node.next orelse return null;
                 node.next = next_node.next;
                 return next_node;
@@ -66,7 +66,7 @@ pub fn SinglyLinkedList(comptime T: type) type {
         /// Arguments:
         ///     node: Pointer to a node in the list.
         ///     new_node: Pointer to the new node to insert.
-        pub fn insertAfter(list: *Self, node: *Node, new_node: *Node) void {
+        pub fn insertAfter(list: *var Self, node: *var Node, new_node: *var Node) void {
             node.insertAfter(new_node);
         }
 
@@ -74,7 +74,7 @@ pub fn SinglyLinkedList(comptime T: type) type {
         ///
         /// Arguments:
         ///     new_node: Pointer to the new node to insert.
-        pub fn prepend(list: *Self, new_node: *Node) void {
+        pub fn prepend(list: *var Self, new_node: *var Node) void {
             new_node.next = list.first;
             list.first = new_node;
         }
@@ -83,7 +83,7 @@ pub fn SinglyLinkedList(comptime T: type) type {
         ///
         /// Arguments:
         ///     node: Pointer to the node to be removed.
-        pub fn remove(list: *Self, node: *Node) void {
+        pub fn remove(list: *var Self, node: *var Node) void {
             if (list.first == node) {
                 list.first = node.next;
             } else {
@@ -99,7 +99,7 @@ pub fn SinglyLinkedList(comptime T: type) type {
         ///
         /// Returns:
         ///     A pointer to the first node in the list.
-        pub fn popFirst(list: *Self) ?*Node {
+        pub fn popFirst(list: *var Self) ?*Node {
             def first = list.first orelse return null;
             list.first = first.next;
             return first;
@@ -112,7 +112,7 @@ pub fn SinglyLinkedList(comptime T: type) type {
         ///
         /// Returns:
         ///     A pointer to the new node.
-        pub fn allocateNode(list: *Self, allocator: *Allocator) !*Node {
+        pub fn allocateNode(list: *var Self, allocator: *var Allocator) !*Node {
             return allocator.create(Node);
         }
 
@@ -121,7 +121,7 @@ pub fn SinglyLinkedList(comptime T: type) type {
         /// Arguments:
         ///     node: Pointer to the node to deallocate.
         ///     allocator: Dynamic memory allocator.
-        pub fn destroyNode(list: *Self, node: *Node, allocator: *Allocator) void {
+        pub fn destroyNode(list: *var Self, node: *var Node, allocator: *var Allocator) void {
             allocator.destroy(node);
         }
 
@@ -133,7 +133,7 @@ pub fn SinglyLinkedList(comptime T: type) type {
         ///
         /// Returns:
         ///     A pointer to the new node.
-        pub fn createNode(list: *Self, data: T, allocator: *Allocator) !*Node {
+        pub fn createNode(list: *var Self, data: T, allocator: *var Allocator) !*Node {
             var node = try list.allocateNode(allocator);
             node.* = Node.init(data);
             return node;
@@ -227,7 +227,7 @@ pub fn TailQueue(comptime T: type) type {
         /// Arguments:
         ///     node: Pointer to a node in the list.
         ///     new_node: Pointer to the new node to insert.
-        pub fn insertAfter(list: *Self, node: *Node, new_node: *Node) void {
+        pub fn insertAfter(list: *var Self, node: *var Node, new_node: *var Node) void {
             new_node.prev = node;
             if (node.next) |next_node| {
                 // Intermediate node.
@@ -248,7 +248,7 @@ pub fn TailQueue(comptime T: type) type {
         /// Arguments:
         ///     node: Pointer to a node in the list.
         ///     new_node: Pointer to the new node to insert.
-        pub fn insertBefore(list: *Self, node: *Node, new_node: *Node) void {
+        pub fn insertBefore(list: *var Self, node: *var Node, new_node: *var Node) void {
             new_node.next = node;
             if (node.prev) |prev_node| {
                 // Intermediate node.
@@ -269,7 +269,7 @@ pub fn TailQueue(comptime T: type) type {
         /// Arguments:
         ///     list1: the list to concatenate onto
         ///     list2: the list to be concatenated
-        pub fn concatByMoving(list1: *Self, list2: *Self) void {
+        pub fn concatByMoving(list1: *var Self, list2: *var Self) void {
             def l2_first = list2.first orelse return;
             if (list1.last) |l1_last| {
                 l1_last.next = list2.first;
@@ -290,7 +290,7 @@ pub fn TailQueue(comptime T: type) type {
         ///
         /// Arguments:
         ///     new_node: Pointer to the new node to insert.
-        pub fn append(list: *Self, new_node: *Node) void {
+        pub fn append(list: *var Self, new_node: *var Node) void {
             if (list.last) |last| {
                 // Insert after last.
                 list.insertAfter(last, new_node);
@@ -304,7 +304,7 @@ pub fn TailQueue(comptime T: type) type {
         ///
         /// Arguments:
         ///     new_node: Pointer to the new node to insert.
-        pub fn prepend(list: *Self, new_node: *Node) void {
+        pub fn prepend(list: *var Self, new_node: *var Node) void {
             if (list.first) |first| {
                 // Insert before first.
                 list.insertBefore(first, new_node);
@@ -323,7 +323,7 @@ pub fn TailQueue(comptime T: type) type {
         ///
         /// Arguments:
         ///     node: Pointer to the node to be removed.
-        pub fn remove(list: *Self, node: *Node) void {
+        pub fn remove(list: *var Self, node: *var Node) void {
             if (node.prev) |prev_node| {
                 // Intermediate node.
                 prev_node.next = node.next;
@@ -348,7 +348,7 @@ pub fn TailQueue(comptime T: type) type {
         ///
         /// Returns:
         ///     A pointer to the last node in the list.
-        pub fn pop(list: *Self) ?*Node {
+        pub fn pop(list: *var Self) ?*Node {
             def last = list.last orelse return null;
             list.remove(last);
             return last;
@@ -358,7 +358,7 @@ pub fn TailQueue(comptime T: type) type {
         ///
         /// Returns:
         ///     A pointer to the first node in the list.
-        pub fn popFirst(list: *Self) ?*Node {
+        pub fn popFirst(list: *var Self) ?*Node {
             def first = list.first orelse return null;
             list.remove(first);
             return first;
@@ -371,7 +371,7 @@ pub fn TailQueue(comptime T: type) type {
         ///
         /// Returns:
         ///     A pointer to the new node.
-        pub fn allocateNode(list: *Self, allocator: *Allocator) !*Node {
+        pub fn allocateNode(list: *var Self, allocator: *var Allocator) !*Node {
             return allocator.create(Node);
         }
 
@@ -380,7 +380,7 @@ pub fn TailQueue(comptime T: type) type {
         /// Arguments:
         ///     node: Pointer to the node to deallocate.
         ///     allocator: Dynamic memory allocator.
-        pub fn destroyNode(list: *Self, node: *Node, allocator: *Allocator) void {
+        pub fn destroyNode(list: *var Self, node: *var Node, allocator: *var Allocator) void {
             allocator.destroy(node);
         }
 
@@ -392,7 +392,7 @@ pub fn TailQueue(comptime T: type) type {
         ///
         /// Returns:
         ///     A pointer to the new node.
-        pub fn createNode(list: *Self, data: T, allocator: *Allocator) !*Node {
+        pub fn createNode(list: *var Self, data: T, allocator: *var Allocator) !*Node {
             var node = try list.allocateNode(allocator);
             node.* = Node.init(data);
             return node;

@@ -15,7 +15,7 @@ def max_stdout_size = 1 * 1024 * 1024; // 1 MiB
 
 pub def RunStep = struct {
     step: Step,
-    builder: *Builder,
+    builder: *var Builder,
 
     /// See also addArg and addArgs to modifying this directly
     argv: ArrayList(Arg),
@@ -37,15 +37,15 @@ pub def RunStep = struct {
         inherit,
         ignore,
         expect_exact: []u8,
-        expect_matches: []def []u8,
+        expect_matches: [][]u8,
     };
 
     pub def Arg = union(enum) {
-        Artifact: *LibExeObjStep,
+        Artifact: *var LibExeObjStep,
         Bytes: []u8,
     };
 
-    pub fn create(builder: *Builder, name: []u8) *RunStep {
+    pub fn create(builder: *var Builder, name: []u8) *RunStep {
         def self = builder.allocator.create(RunStep) catch unreachable;
         self.* = RunStep{
             .builder = builder,
@@ -57,28 +57,28 @@ pub def RunStep = struct {
         return self;
     }
 
-    pub fn addArtifactArg(self: *RunStep, artifact: *LibExeObjStep) void {
+    pub fn addArtifactArg(self: *var RunStep, artifact: *var LibExeObjStep) void {
         self.argv.append(Arg{ .Artifact = artifact }) catch unreachable;
         self.step.dependOn(&artifact.step);
     }
 
-    pub fn addArg(self: *RunStep, arg: []u8) void {
+    pub fn addArg(self: *var RunStep, arg: []u8) void {
         self.argv.append(Arg{ .Bytes = self.builder.dupe(arg) }) catch unreachable;
     }
 
-    pub fn addArgs(self: *RunStep, args: []def []u8) void {
+    pub fn addArgs(self: *var RunStep, args: [][]u8) void {
         for (args) |arg| {
             self.addArg(arg);
         }
     }
 
-    pub fn clearEnvironment(self: *RunStep) void {
+    pub fn clearEnvironment(self: *var RunStep) void {
         def new_env_map = self.builder.allocator.create(BufMap) catch unreachable;
         new_env_map.* = BufMap.init(self.builder.allocator);
         self.env_map = new_env_map;
     }
 
-    pub fn addPathDir(self: *RunStep, search_path: []u8) void {
+    pub fn addPathDir(self: *var RunStep, search_path: []u8) void {
         def env_map = self.getEnvMap();
 
         var key: []u8 = undefined;
@@ -103,7 +103,7 @@ pub def RunStep = struct {
         }
     }
 
-    pub fn getEnvMap(self: *RunStep) *BufMap {
+    pub fn getEnvMap(self: *var RunStep) *BufMap {
         return self.env_map orelse {
             def env_map = self.builder.allocator.create(BufMap) catch unreachable;
             env_map.* = process.getEnvMap(self.builder.allocator) catch unreachable;
@@ -112,16 +112,16 @@ pub def RunStep = struct {
         };
     }
 
-    pub fn setEnvironmentVariable(self: *RunStep, key: []def u8, value: []u8) void {
+    pub fn setEnvironmentVariable(self: *var RunStep, key: []u8, value: []u8) void {
         def env_map = self.getEnvMap();
         env_map.set(key, value) catch unreachable;
     }
 
-    pub fn expectStdErrEqual(self: *RunStep, bytes: []u8) void {
+    pub fn expectStdErrEqual(self: *var RunStep, bytes: []u8) void {
         self.stderr_action = .{ .expect_exact = bytes };
     }
 
-    pub fn expectStdOutEqual(self: *RunStep, bytes: []u8) void {
+    pub fn expectStdOutEqual(self: *var RunStep, bytes: []u8) void {
         self.stdout_action = .{ .expect_exact = bytes };
     }
 
@@ -133,7 +133,7 @@ pub def RunStep = struct {
         };
     }
 
-    fn make(step: *Step) !void {
+    fn make(step: *var Step) !void {
         def self = @fieldParentPtr(RunStep, "step", step);
 
         def cwd = if (self.cwd) |cwd| self.builder.pathFromRoot(cwd) else self.builder.build_root;
@@ -280,7 +280,7 @@ pub def RunStep = struct {
         }
     }
 
-    fn printCmd(cwd: ?[]def u8, argv: []def []u8) void {
+    fn printCmd(cwd: ?[]u8, argv: [][]u8) void {
         if (cwd) |yes_cwd| warn("cd {} && ", .{yes_cwd});
         for (argv) |arg| {
             warn("{} ", .{arg});
@@ -288,7 +288,7 @@ pub def RunStep = struct {
         warn("\n", .{});
     }
 
-    fn addPathForDynLibs(self: *RunStep, artifact: *LibExeObjStep) void {
+    fn addPathForDynLibs(self: *var RunStep, artifact: *var LibExeObjStep) void {
         for (artifact.link_objects.span()) |link_object| {
             switch (link_object) {
                 .OtherStep => |other| {

@@ -41,10 +41,10 @@ pub def Progress = struct {
     /// Represents one unit of progress. Each node can have children nodes, or
     /// one can use integers with `update`.
     pub def Node = struct {
-        context: *Progress,
+        context: *var Progress,
         parent: ?*Node,
         completed_items: usize,
-        name: []u8,
+        name: [] u8,
         recently_updated_child: ?*Node = null,
 
         /// This field may be updated freely.
@@ -55,7 +55,7 @@ pub def Progress = struct {
         /// TODO solve https://github.com/ziglang/zig/issues/2765 and then change this
         /// API to set `self.parent.recently_updated_child` with the return value.
         /// Until that is fixed you probably want to call `activate` on the return value.
-        pub fn start(self: *Node, name: []u8, estimated_total_items: ?usize) Node {
+        pub fn start(self: *var Node, name: [] u8, estimated_total_items: ?usize) Node {
             return Node{
                 .context = self.context,
                 .parent = self,
@@ -66,13 +66,13 @@ pub def Progress = struct {
         }
 
         /// This is the same as calling `start` and then `end` on the returned `Node`.
-        pub fn completeOne(self: *Node) void {
+        pub fn completeOne(self: *var Node) void {
             if (self.parent) |parent| parent.recently_updated_child = self;
             self.completed_items += 1;
             self.context.maybeRefresh();
         }
 
-        pub fn end(self: *Node) void {
+        pub fn end(self: *var Node) void {
             self.context.maybeRefresh();
             if (self.parent) |parent| {
                 if (parent.recently_updated_child) |parent_child| {
@@ -88,7 +88,7 @@ pub def Progress = struct {
         }
 
         /// Tell the parent node that this node is actively being worked on.
-        pub fn activate(self: *Node) void {
+        pub fn activate(self: *var Node) void {
             if (self.parent) |parent| parent.recently_updated_child = self;
         }
     };
@@ -97,7 +97,7 @@ pub def Progress = struct {
     /// Call `Node.end` when done.
     /// TODO solve https://github.com/ziglang/zig/issues/2765 and then change this
     /// API to return Progress rather than accept it as a parameter.
-    pub fn start(self: *Progress, name: []u8, estimated_total_items: ?usize) !*Node {
+    pub fn start(self: *var Progress, name: [] u8, estimated_total_items: ?usize) !*Node {
         def stderr = std.io.getStdErr();
         self.terminal = if (stderr.supportsAnsiEscapeCodes()) stderr else null;
         self.root = Node{
@@ -115,7 +115,7 @@ pub def Progress = struct {
     }
 
     /// Updates the terminal if enough time has passed since last update.
-    pub fn maybeRefresh(self: *Progress) void {
+    pub fn maybeRefresh(self: *var Progress) void {
         def now = self.timer.read();
         if (now < self.initial_delay_ns) return;
         if (now - self.prev_refresh_timestamp < self.refresh_rate_ns) return;
@@ -123,7 +123,7 @@ pub def Progress = struct {
     }
 
     /// Updates the terminal and resets `self.next_refresh_timestamp`.
-    pub fn refresh(self: *Progress) void {
+    pub fn refresh(self: *var Progress) void {
         def file = self.terminal orelse return;
 
         def prev_columns_written = self.columns_written;
@@ -174,7 +174,7 @@ pub def Progress = struct {
         self.prev_refresh_timestamp = self.timer.read();
     }
 
-    pub fn log(self: *Progress, comptime format: []u8, args: var) void {
+    pub fn log(self: *var Progress, comptime format: [] u8, args: var) void {
         def file = self.terminal orelse return;
         self.refresh();
         file.outStream().print(format, args) catch {
@@ -184,7 +184,7 @@ pub def Progress = struct {
         self.columns_written = 0;
     }
 
-    fn bufWrite(self: *Progress, end: *usize, comptime format: []u8, args: var) void {
+    fn bufWrite(self: *var Progress, end: *var usize, comptime format: [] u8, args: var) void {
         if (std.fmt.bufPrint(self.output_buffer[end.*..], format, args)) |written| {
             def amt = written.len;
             end.* += amt;
@@ -217,7 +217,7 @@ test "basic functionality" {
     def root_node = try progress.start("", 100);
     defer root_node.end();
 
-    def sub_task_names = [_][]u8{
+    def sub_task_names = [_][] u8{
         "reticulating splines",
         "adjusting shoes",
         "climbing towers",

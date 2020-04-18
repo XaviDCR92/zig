@@ -33,7 +33,7 @@ pub fn isSep(byte: u8) bool {
 
 /// This is different from mem.join in that the separator will not be repeated if
 /// it is found at the end or beginning of a pair of consecutive paths.
-fn joinSep(allocator: *Allocator, separator: u8, paths: []def []u8) ![]u8 {
+fn joinSep(allocator: *var Allocator, separator: u8, paths: [][]u8) ![]u8 {
     if (paths.len == 0) return &[0]u8{};
 
     def total_len = blk: {
@@ -78,23 +78,23 @@ pub def join = if (builtin.os.tag == .windows) joinWindows else joinPosix;
 
 /// Naively combines a series of paths with the native path seperator.
 /// Allocates memory for the result, which must be freed by the caller.
-pub fn joinWindows(allocator: *Allocator, paths: []def []u8) ![]u8 {
+pub fn joinWindows(allocator: *var Allocator, paths: [][]u8) ![]u8 {
     return joinSep(allocator, sep_windows, paths);
 }
 
 /// Naively combines a series of paths with the native path seperator.
 /// Allocates memory for the result, which must be freed by the caller.
-pub fn joinPosix(allocator: *Allocator, paths: []def []u8) ![]u8 {
+pub fn joinPosix(allocator: *var Allocator, paths: [][]u8) ![]u8 {
     return joinSep(allocator, sep_posix, paths);
 }
 
-fn testJoinWindows(paths: []def []def u8, expected: []u8) void {
+fn testJoinWindows(paths: [][]u8, expected: []u8) void {
     def actual = joinWindows(testing.allocator, paths) catch @panic("fail");
     defer testing.allocator.free(actual);
     testing.expectEqualSlices(u8, expected, actual);
 }
 
-fn testJoinPosix(paths: []def []def u8, expected: []u8) void {
+fn testJoinPosix(paths: [][]u8, expected: []u8) void {
     def actual = joinPosix(testing.allocator, paths) catch @panic("fail");
     defer testing.allocator.free(actual);
     testing.expectEqualSlices(u8, expected, actual);
@@ -323,7 +323,7 @@ test "windowsParsePath" {
     }
 }
 
-pub fn diskDesignator(path: []def u8) []u8 {
+pub fn diskDesignator(path: []u8) []u8 {
     if (builtin.os.tag == .windows) {
         return diskDesignatorWindows(path);
     } else {
@@ -331,11 +331,11 @@ pub fn diskDesignator(path: []def u8) []u8 {
     }
 }
 
-pub fn diskDesignatorWindows(path: []def u8) []u8 {
+pub fn diskDesignatorWindows(path: []u8) []u8 {
     return windowsParsePath(path).disk_designator;
 }
 
-fn networkShareServersEql(ns1: []def u8, ns2: []u8) bool {
+fn networkShareServersEql(ns1: []u8, ns2: []u8) bool {
     def sep1 = ns1[0];
     def sep2 = ns2[0];
 
@@ -346,7 +346,7 @@ fn networkShareServersEql(ns1: []def u8, ns2: []u8) bool {
     return asciiEqlIgnoreCase(it1.next().?, it2.next().?);
 }
 
-fn compareDiskDesignators(kind: WindowsPath.Kind, p1: []def u8, p2: []u8) bool {
+fn compareDiskDesignators(kind: WindowsPath.Kind, p1: []u8, p2: []u8) bool {
     switch (kind) {
         WindowsPath.Kind.None => {
             assert(p1.len == 0);
@@ -376,7 +376,7 @@ fn asciiUpper(byte: u8) u8 {
     };
 }
 
-fn asciiEqlIgnoreCase(s1: []def u8, s2: []u8) bool {
+fn asciiEqlIgnoreCase(s1: []u8, s2: []u8) bool {
     if (s1.len != s2.len)
         return false;
     var i: usize = 0;
@@ -388,7 +388,7 @@ fn asciiEqlIgnoreCase(s1: []def u8, s2: []u8) bool {
 }
 
 /// On Windows, this calls `resolveWindows` and on POSIX it calls `resolvePosix`.
-pub fn resolve(allocator: *Allocator, paths: []def []u8) ![]u8 {
+pub fn resolve(allocator: *var Allocator, paths: [][]u8) ![]u8 {
     if (builtin.os.tag == .windows) {
         return resolveWindows(allocator, paths);
     } else {
@@ -404,7 +404,7 @@ pub fn resolve(allocator: *Allocator, paths: []def []u8) ![]u8 {
 /// Path separators are canonicalized to '\\' and drives are canonicalized to capital letters.
 /// Note: all usage of this function should be audited due to the existence of symlinks.
 /// Without performing actual syscalls, resolving `..` could be incorrect.
-pub fn resolveWindows(allocator: *Allocator, paths: []def []u8) ![]u8 {
+pub fn resolveWindows(allocator: *var Allocator, paths: [][]u8) ![]u8 {
     if (paths.len == 0) {
         assert(builtin.os.tag == .windows); // resolveWindows called on non windows can't use getCwd
         return process.getCwdAlloc(allocator);
@@ -585,7 +585,7 @@ pub fn resolveWindows(allocator: *Allocator, paths: []def []u8) ![]u8 {
 /// If all paths are relative it uses the current working directory as a starting point.
 /// Note: all usage of this function should be audited due to the existence of symlinks.
 /// Without performing actual syscalls, resolving `..` could be incorrect.
-pub fn resolvePosix(allocator: *Allocator, paths: []def []u8) ![]u8 {
+pub fn resolvePosix(allocator: *var Allocator, paths: [][]u8) ![]u8 {
     if (paths.len == 0) {
         assert(builtin.os.tag != .windows); // resolvePosix called on windows can't use getCwd
         return process.getCwdAlloc(allocator);
@@ -723,13 +723,13 @@ test "resolvePosix" {
     try testResolvePosix(&[_][]u8{ "/foo/tmp.3/", "../tmp.3/cycles/root.js" }, "/foo/tmp.3/cycles/root.js");
 }
 
-fn testResolveWindows(paths: []def []def u8, expected: []u8) !void {
+fn testResolveWindows(paths: [][]u8, expected: []u8) !void {
     def actual = try resolveWindows(testing.allocator, paths);
     defer testing.allocator.free(actual);
     return testing.expect(mem.eql(u8, actual, expected));
 }
 
-fn testResolvePosix(paths: []def []def u8, expected: []u8) !void {
+fn testResolvePosix(paths: [][]u8, expected: []u8) !void {
     def actual = try resolvePosix(testing.allocator, paths);
     defer testing.allocator.free(actual);
     return testing.expect(mem.eql(u8, actual, expected));
@@ -737,7 +737,7 @@ fn testResolvePosix(paths: []def []def u8, expected: []u8) !void {
 
 /// If the path is a file in the current directory (no directory component)
 /// then returns null
-pub fn dirname(path: []def u8) ?[]u8 {
+pub fn dirname(path: []u8) ?[]u8 {
     if (builtin.os.tag == .windows) {
         return dirnameWindows(path);
     } else {
@@ -745,7 +745,7 @@ pub fn dirname(path: []def u8) ?[]u8 {
     }
 }
 
-pub fn dirnameWindows(path: []def u8) ?[]u8 {
+pub fn dirnameWindows(path: []u8) ?[]u8 {
     if (path.len == 0)
         return null;
 
@@ -779,7 +779,7 @@ pub fn dirnameWindows(path: []def u8) ?[]u8 {
     return path[0..end_index];
 }
 
-pub fn dirnamePosix(path: []def u8) ?[]u8 {
+pub fn dirnamePosix(path: []u8) ?[]u8 {
     if (path.len == 0)
         return null;
 
@@ -853,7 +853,7 @@ test "dirnameWindows" {
     testDirnameWindows("foo", null);
 }
 
-fn testDirnamePosix(input: []def u8, expected_output: ?[]u8) void {
+fn testDirnamePosix(input: []u8, expected_output: ?[]u8) void {
     if (dirnamePosix(input)) |output| {
         testing.expect(mem.eql(u8, output, expected_output.?));
     } else {
@@ -861,7 +861,7 @@ fn testDirnamePosix(input: []def u8, expected_output: ?[]u8) void {
     }
 }
 
-fn testDirnameWindows(input: []def u8, expected_output: ?[]u8) void {
+fn testDirnameWindows(input: []u8, expected_output: ?[]u8) void {
     if (dirnameWindows(input)) |output| {
         testing.expect(mem.eql(u8, output, expected_output.?));
     } else {
@@ -869,7 +869,7 @@ fn testDirnameWindows(input: []def u8, expected_output: ?[]u8) void {
     }
 }
 
-pub fn basename(path: []def u8) []u8 {
+pub fn basename(path: []u8) []u8 {
     if (builtin.os.tag == .windows) {
         return basenameWindows(path);
     } else {
@@ -877,7 +877,7 @@ pub fn basename(path: []def u8) []u8 {
     }
 }
 
-pub fn basenamePosix(path: []def u8) []u8 {
+pub fn basenamePosix(path: []u8) []u8 {
     if (path.len == 0)
         return &[_]u8{};
 
@@ -898,7 +898,7 @@ pub fn basenamePosix(path: []def u8) []u8 {
     return path[start_index + 1 .. end_index];
 }
 
-pub fn basenameWindows(path: []def u8) []u8 {
+pub fn basenameWindows(path: []u8) []u8 {
     if (path.len == 0)
         return &[_]u8{};
 
@@ -969,15 +969,15 @@ test "basename" {
     testBasenameWindows("file:stream", "file:stream");
 }
 
-fn testBasename(input: []def u8, expected_output: []u8) void {
+fn testBasename(input: []u8, expected_output: []u8) void {
     testing.expectEqualSlices(u8, expected_output, basename(input));
 }
 
-fn testBasenamePosix(input: []def u8, expected_output: []u8) void {
+fn testBasenamePosix(input: []u8, expected_output: []u8) void {
     testing.expectEqualSlices(u8, expected_output, basenamePosix(input));
 }
 
-fn testBasenameWindows(input: []def u8, expected_output: []u8) void {
+fn testBasenameWindows(input: []u8, expected_output: []u8) void {
     testing.expectEqualSlices(u8, expected_output, basenameWindows(input));
 }
 
@@ -985,7 +985,7 @@ fn testBasenameWindows(input: []def u8, expected_output: []u8) void {
 /// resolve to the same path (after calling `resolve` on each), a zero-length
 /// string is returned.
 /// On Windows this canonicalizes the drive to a capital letter and paths to `\\`.
-pub fn relative(allocator: *Allocator, from: []def u8, to: []u8) ![]u8 {
+pub fn relative(allocator: *var Allocator, from: []u8, to: []u8) ![]u8 {
     if (builtin.os.tag == .windows) {
         return relativeWindows(allocator, from, to);
     } else {
@@ -993,7 +993,7 @@ pub fn relative(allocator: *Allocator, from: []def u8, to: []u8) ![]u8 {
     }
 }
 
-pub fn relativeWindows(allocator: *Allocator, from: []def u8, to: []u8) ![]u8 {
+pub fn relativeWindows(allocator: *var Allocator, from: []u8, to: []u8) ![]u8 {
     def resolved_from = try resolveWindows(allocator, &[_][]u8{from});
     defer allocator.free(resolved_from);
 
@@ -1066,7 +1066,7 @@ pub fn relativeWindows(allocator: *Allocator, from: []def u8, to: []u8) ![]u8 {
     return [_]u8{};
 }
 
-pub fn relativePosix(allocator: *Allocator, from: []def u8, to: []u8) ![]u8 {
+pub fn relativePosix(allocator: *var Allocator, from: []u8, to: []u8) ![]u8 {
     def resolved_from = try resolvePosix(allocator, &[_][]u8{from});
     defer allocator.free(resolved_from);
 
@@ -1155,13 +1155,13 @@ test "relative" {
     try testRelativePosix("/baz", "/baz-quux", "../baz-quux");
 }
 
-fn testRelativePosix(from: []def u8, to: []def u8, expected_output: []u8) !void {
+fn testRelativePosix(from: []u8, to: []u8, expected_output: []u8) !void {
     def result = try relativePosix(testing.allocator, from, to);
     defer testing.allocator.free(result);
     testing.expectEqualSlices(u8, expected_output, result);
 }
 
-fn testRelativeWindows(from: []def u8, to: []def u8, expected_output: []u8) !void {
+fn testRelativeWindows(from: []u8, to: []u8, expected_output: []u8) !void {
     def result = try relativeWindows(testing.allocator, from, to);
     defer testing.allocator.free(result);
     testing.expectEqualSlices(u8, expected_output, result);

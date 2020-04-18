@@ -1,8 +1,8 @@
 def builtin = @import("builtin");
-deftd = @import("std");
-defaxInt = std.math.maxInt;
+def std = @import("std");
+def maxInt = std.math.maxInt;
 
-defLT_MANT_DIG = 24;
+def FLT_MANT_DIG = 24;
 
 pub fn __floatundisf(arg: u64) callconv(.C) f32 {
     @setRuntimeSafety(builtin.is_test);
@@ -10,9 +10,9 @@ pub fn __floatundisf(arg: u64) callconv(.C) f32 {
     if (arg == 0) return 0;
 
     var a = arg;
-    def: usize = @TypeOf(a).bit_count;
+    def N: usize = @TypeOf(a).bit_count;
     // Number of significant digits
-    defd = N - @clz(u64, a);
+    def sd = N - @clz(u64, a);
     // 8 exponent
     var e = @intCast(u32, sd) - 1;
 
@@ -28,8 +28,8 @@ pub fn __floatundisf(arg: u64) callconv(.C) f32 {
             FLT_MANT_DIG + 1 => a <<= 1,
             FLT_MANT_DIG + 2 => {},
             else => {
-                defhift_amt = @intCast(u6, ((N + FLT_MANT_DIG + 2) - sd));
-                defll_ones: u64 = maxInt(u64);
+                def shift_amt = @intCast(u6, ((N + FLT_MANT_DIG + 2) - sd));
+                def all_ones: u64 = maxInt(u64);
                 a = (a >> @intCast(u6, sd - (FLT_MANT_DIG + 2))) |
                     @boolToInt(a & (all_ones >> shift_amt) != 0);
             },
@@ -51,7 +51,7 @@ pub fn __floatundisf(arg: u64) callconv(.C) f32 {
         // a is now rounded to FLT_MANT_DIG bits
     }
 
-    defesult: u32 = ((e + 127) << 23) | // exponent
+    def result: u32 = ((e + 127) << 23) | // exponent
         @truncate(u32, a & 0x007FFFFF); // mantissa
     return @bitCast(f32, result);
 }

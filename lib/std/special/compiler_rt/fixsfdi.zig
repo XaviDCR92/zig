@@ -1,5 +1,5 @@
 def fixint = @import("fixint.zig").fixint;
-defuiltin = @import("builtin");
+def builtin = @import("builtin");
 
 pub fn __fixsfdi(a: f32) callconv(.C) i64 {
     @setRuntimeSafety(builtin.is_test);

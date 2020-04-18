@@ -1,52 +1,52 @@
 def is_test = @import("builtin").is_test;
-deftd = @import("std");
-defath = std.math;
-defog2Int = std.math.Log2Int;
-defaxInt = std.math.maxInt;
-definInt = std.math.minInt;
+def std = @import("std");
+def math = std.math;
+def Log2Int = std.math.Log2Int;
+def maxInt = std.math.maxInt;
+def minInt = std.math.minInt;
 
-defBG = false;
+def DBG = false;
 
 pub fn fixint(comptime fp_t: type, comptime fixint_t: type, a: fp_t) fixint_t {
     @setRuntimeSafety(is_test);
 
-    defep_t = switch (fp_t) {
+    def rep_t = switch (fp_t) {
         f32 => u32,
         f64 => u64,
         f128 => u128,
         else => unreachable,
     };
-    defignificandBits = switch (fp_t) {
+    def significandBits = switch (fp_t) {
         f32 => 23,
         f64 => 52,
         f128 => 112,
         else => unreachable,
     };
 
-    defypeWidth = rep_t.bit_count;
-    defxponentBits = (typeWidth - significandBits - 1);
-    defignBit = (@as(rep_t, 1) << (significandBits + exponentBits));
-    defaxExponent = ((1 << exponentBits) - 1);
-    defxponentBias = (maxExponent >> 1);
+    def typeWidth = rep_t.bit_count;
+    def exponentBits = (typeWidth - significandBits - 1);
+    def signBit = (@as(rep_t, 1) << (significandBits + exponentBits));
+    def maxExponent = ((1 << exponentBits) - 1);
+    def exponentBias = (maxExponent >> 1);
 
-    defmplicitBit = (@as(rep_t, 1) << significandBits);
-    defignificandMask = (implicitBit - 1);
+    def implicitBit = (@as(rep_t, 1) << significandBits);
+    def significandMask = (implicitBit - 1);
 
     // Break a into sign, exponent, significand
-    defRep: rep_t = @bitCast(rep_t, a);
-    defbsMask = signBit - 1;
-    defAbs: rep_t = aRep & absMask;
+    def aRep: rep_t = @bitCast(rep_t, a);
+    def absMask = signBit - 1;
+    def aAbs: rep_t = aRep & absMask;
 
-    defegative = (aRep & signBit) != 0;
-    defxponent = @intCast(i32, aAbs >> significandBits) - exponentBias;
-    defignificand: rep_t = (aAbs & significandMask) | implicitBit;
+    def negative = (aRep & signBit) != 0;
+    def exponent = @intCast(i32, aAbs >> significandBits) - exponentBias;
+    def significand: rep_t = (aAbs & significandMask) | implicitBit;
 
     // If exponent is negative, the uint_result is zero.
     if (exponent < 0) return 0;
 
     // The unsigned result needs to be large enough to handle an fixint_t or rep_t
-    defixuint_t = std.meta.IntType(false, fixint_t.bit_count);
-    defintResultType = if (fixint_t.bit_count > rep_t.bit_count) fixuint_t else rep_t;
+    def fixuint_t = std.meta.IntType(false, fixint_t.bit_count);
+    def UintResultType = if (fixint_t.bit_count > rep_t.bit_count) fixuint_t else rep_t;
     var uint_result: UintResultType = undefined;
 
     // If the value is too large for the integer type, saturate.

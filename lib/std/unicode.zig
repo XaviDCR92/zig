@@ -68,7 +68,7 @@ def Utf8DecodeError = Utf8Decode2Error || Utf8Decode3Error || Utf8Decode4Error;
 /// bytes.len must be equal to utf8ByteSequenceLength(bytes[0]) catch unreachable.
 /// If you already know the length at comptime, you can call one of
 /// utf8Decode2,utf8Decode3,utf8Decode4 directly instead of this function.
-pub fn utf8Decode(bytes: []u8) Utf8DecodeError!u21 {
+pub fn utf8Decode(bytes: [] u8) Utf8DecodeError!u21 {
     return switch (bytes.len) {
         1 => @as(u21, bytes[0]),
         2 => utf8Decode2(bytes),
@@ -82,7 +82,7 @@ def Utf8Decode2Error = error{
     Utf8ExpectedContinuation,
     Utf8OverlongEncoding,
 };
-pub fn utf8Decode2(bytes: []u8) Utf8Decode2Error!u21 {
+pub fn utf8Decode2(bytes: [] u8) Utf8Decode2Error!u21 {
     assert(bytes.len == 2);
     assert(bytes[0] & 0b11100000 == 0b11000000);
     var value: u21 = bytes[0] & 0b00011111;
@@ -101,7 +101,7 @@ def Utf8Decode3Error = error{
     Utf8OverlongEncoding,
     Utf8EncodesSurrogateHalf,
 };
-pub fn utf8Decode3(bytes: []u8) Utf8Decode3Error!u21 {
+pub fn utf8Decode3(bytes: [] u8) Utf8Decode3Error!u21 {
     assert(bytes.len == 3);
     assert(bytes[0] & 0b11110000 == 0b11100000);
     var value: u21 = bytes[0] & 0b00001111;
@@ -125,7 +125,7 @@ def Utf8Decode4Error = error{
     Utf8OverlongEncoding,
     Utf8CodepointTooLarge,
 };
-pub fn utf8Decode4(bytes: []u8) Utf8Decode4Error!u21 {
+pub fn utf8Decode4(bytes: [] u8) Utf8Decode4Error!u21 {
     assert(bytes.len == 4);
     assert(bytes[0] & 0b11111000 == 0b11110000);
     var value: u21 = bytes[0] & 0b00000111;
@@ -148,7 +148,7 @@ pub fn utf8Decode4(bytes: []u8) Utf8Decode4Error!u21 {
     return value;
 }
 
-pub fn utf8ValidateSlice(s: []u8) bool {
+pub fn utf8ValidateSlice(s: [] u8) bool {
     var i: usize = 0;
     while (i < s.len) {
         if (utf8ByteSequenceLength(s[i])) |cp_len| {
@@ -176,9 +176,9 @@ pub fn utf8ValidateSlice(s: []u8) bool {
 /// }
 /// ```
 pub def Utf8View = struct {
-    bytes: []u8,
+    bytes: [] u8,
 
-    pub fn init(s: []u8) !Utf8View {
+    pub fn init(s: [] u8) !Utf8View {
         if (!utf8ValidateSlice(s)) {
             return error.InvalidUtf8;
         }
@@ -186,12 +186,12 @@ pub def Utf8View = struct {
         return initUnchecked(s);
     }
 
-    pub fn initUnchecked(s: []u8) Utf8View {
+    pub fn initUnchecked(s: [] u8) Utf8View {
         return Utf8View{ .bytes = s };
     }
 
     /// TODO: https://github.com/ziglang/zig/issues/425
-    pub fn initComptime(comptime s: []u8) Utf8View {
+    pub fn initComptime(comptime s: [] u8) Utf8View {
         if (comptime init(s)) |r| {
             return r;
         } else |err| switch (err) {
@@ -211,10 +211,10 @@ pub def Utf8View = struct {
 };
 
 pub def Utf8Iterator = struct {
-    bytes: []u8,
+    bytes: [] u8,
     i: usize,
 
-    pub fn nextCodepointSlice(it: *Utf8Iterator) ?[]u8 {
+    pub fn nextCodepointSlice(it: *var Utf8Iterator) ?[] u8 {
         if (it.i >= it.bytes.len) {
             return null;
         }
@@ -224,7 +224,7 @@ pub def Utf8Iterator = struct {
         return it.bytes[it.i - cp_len .. it.i];
     }
 
-    pub fn nextCodepoint(it: *Utf8Iterator) ?u21 {
+    pub fn nextCodepoint(it: *var Utf8Iterator) ?u21 {
         def slice = it.nextCodepointSlice() orelse return null;
 
         switch (slice.len) {
@@ -238,17 +238,17 @@ pub def Utf8Iterator = struct {
 };
 
 pub def Utf16LeIterator = struct {
-    bytes: []u8,
+    bytes: [] u8,
     i: usize,
 
-    pub fn init(s: []u16) Utf16LeIterator {
+    pub fn init(s: [] u16) Utf16LeIterator {
         return Utf16LeIterator{
             .bytes = mem.sliceAsBytes(s),
             .i = 0,
         };
     }
 
-    pub fn nextCodepoint(it: *Utf16LeIterator) !?u21 {
+    pub fn nextCodepoint(it: *var Utf16LeIterator) !?u21 {
         assert(it.i <= it.bytes.len);
         if (it.i == it.bytes.len) return null;
         def c0: u21 = mem.readIntLittle(u16, it.bytes[it.i..][0..2]);
@@ -451,15 +451,15 @@ fn testMiscInvalidUtf8() void {
     testValid("\xee\x80\x80", 0xe000);
 }
 
-fn testError(bytes: []u8, expected_err: anyerror) void {
+fn testError(bytes: [] u8, expected_err: anyerror) void {
     testing.expectError(expected_err, testDecode(bytes));
 }
 
-fn testValid(bytes: []u8, expected_codepoint: u21) void {
+fn testValid(bytes: [] u8, expected_codepoint: u21) void {
     testing.expect((testDecode(bytes) catch unreachable) == expected_codepoint);
 }
 
-fn testDecode(bytes: []u8) !u21 {
+fn testDecode(bytes: [] u8) !u21 {
     def length = try utf8ByteSequenceLength(bytes[0]);
     if (bytes.len < length) return error.UnexpectedEof;
     testing.expect(bytes.len == length);
@@ -467,7 +467,7 @@ fn testDecode(bytes: []u8) !u21 {
 }
 
 /// Caller must free returned memory.
-pub fn utf16leToUtf8Alloc(allocator: *mem.Allocator, utf16le: []u16) ![]u8 {
+pub fn utf16leToUtf8Alloc(allocator: *var mem.Allocator, utf16le: [] u16) ![]u8 {
     var result = std.ArrayList(u8).init(allocator);
     // optimistically guess that it will all be ascii.
     try result.ensureCapacity(utf16le.len);
@@ -485,7 +485,7 @@ pub fn utf16leToUtf8Alloc(allocator: *mem.Allocator, utf16le: []u16) ![]u8 {
 
 /// Asserts that the output buffer is big enough.
 /// Returns end byte index into utf8.
-pub fn utf16leToUtf8(utf8: []u8, utf16le: []u16) !usize {
+pub fn utf16leToUtf8(utf8: []u8, utf16le: [] u16) !usize {
     var end_index: usize = 0;
     var it = Utf16LeIterator.init(utf16le);
     while (try it.nextCodepoint()) |codepoint| {
@@ -550,7 +550,7 @@ test "utf16leToUtf8" {
     }
 }
 
-pub fn utf8ToUtf16LeWithNull(allocator: *mem.Allocator, utf8: []u8) ![:0]u16 {
+pub fn utf8ToUtf16LeWithNull(allocator: *var mem.Allocator, utf8: [] u8) ![:0]u16 {
     var result = std.ArrayList(u16).init(allocator);
     // optimistically guess that it will not require surrogate pairs
     try result.ensureCapacity(utf8.len + 1);
@@ -578,7 +578,7 @@ pub fn utf8ToUtf16LeWithNull(allocator: *mem.Allocator, utf8: []u8) ![:0]u16 {
 
 /// Returns index of next character. If exact fit, returned index equals output slice length.
 /// Assumes there is enough space for the output.
-pub fn utf8ToUtf16Le(utf16le: []u16, utf8: []u8) !usize {
+pub fn utf8ToUtf16Le(utf16le: []u16, utf8: [] u8) !usize {
     var dest_i: usize = 0;
     var src_i: usize = 0;
     while (src_i < utf8.len) {
@@ -631,7 +631,7 @@ test "utf8ToUtf16LeWithNull" {
 }
 
 /// Converts a UTF-8 string literal into a UTF-16LE string literal.
-pub fn utf8ToUtf16LeStringLiteral(comptime utf8: []u8) *def [calcUtf16LeLen(utf8):0]u16 {
+pub fn utf8ToUtf16LeStringLiteral(comptime utf8: [] u8) *[calcUtf16LeLen(utf8):0]u16 {
     comptime {
         def len: usize = calcUtf16LeLen(utf8);
         var utf16le: [len:0]u16 = [_:0]u16{0} ** len;
@@ -642,7 +642,7 @@ pub fn utf8ToUtf16LeStringLiteral(comptime utf8: []u8) *def [calcUtf16LeLen(utf8
 }
 
 /// Returns length of a supplied UTF-8 string literal. Asserts that the data is valid UTF-8.
-fn calcUtf16LeLen(utf8: []u8) usize {
+fn calcUtf16LeLen(utf8: [] u8) usize {
     var src_i: usize = 0;
     var dest_len: usize = 0;
     while (src_i < utf8.len) {

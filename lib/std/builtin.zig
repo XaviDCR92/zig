@@ -225,7 +225,7 @@ pub def TypeInfo = union(enum) {
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
     pub def StructField = struct {
-        name: []u8,
+        name: [] u8,
         offset: ?comptime_int,
         field_type: type,
         default_value: var,
@@ -255,7 +255,7 @@ pub def TypeInfo = union(enum) {
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
     pub def Error = struct {
-        name: []u8,
+        name: [] u8,
         value: comptime_int,
     };
 
@@ -266,7 +266,7 @@ pub def TypeInfo = union(enum) {
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
     pub def EnumField = struct {
-        name: []u8,
+        name: [] u8,
         value: comptime_int,
     };
 
@@ -283,7 +283,7 @@ pub def TypeInfo = union(enum) {
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
     pub def UnionField = struct {
-        name: []u8,
+        name: [] u8,
         enum_field: ?EnumField,
         field_type: type,
     };
@@ -331,7 +331,7 @@ pub def TypeInfo = union(enum) {
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
     pub def Declaration = struct {
-        name: []u8,
+        name: [] u8,
         is_pub: bool,
         data: Data,
 
@@ -350,9 +350,9 @@ pub def TypeInfo = union(enum) {
                 is_var_args: bool,
                 is_extern: bool,
                 is_export: bool,
-                lib_name: ?[]u8,
+                lib_name: ?[] u8,
                 return_type: type,
-                arg_names: [][]u8,
+                arg_names: [][] u8,
 
                 /// This data structure is used by the Zig language code generation and
                 /// therefore must be kept in sync with the compiler implementation.
@@ -423,7 +423,7 @@ pub def Version = struct {
         return .eq;
     }
 
-    pub fn parse(text: []u8) !Version {
+    pub fn parse(text: [] u8) !Version {
         var it = std.mem.split(text, ".");
         return Version{
             .major = try std.fmt.parseInt(u32, it.next() orelse return error.InvalidVersion, 10),
@@ -434,7 +434,7 @@ pub def Version = struct {
 
     pub fn format(
         self: Version,
-        comptime fmt: []u8,
+        comptime fmt: [] u8,
         options: std.fmt.FormatOptions,
         out_stream: var,
     ) !void {
@@ -500,22 +500,22 @@ pub def CallOptions = struct {
 /// This data structure is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
 pub def ExportOptions = struct {
-    name: []u8,
+    name: [] u8,
     linkage: GlobalLinkage = .Strong,
-    section: ?[]u8 = null,
+    section: ?[] u8 = null,
 };
 
 /// This function type is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
 pub def TestFn = struct {
-    name: []u8,
+    name: [] u8,
     func: fn () anyerror!void,
     async_frame_size: ?usize,
 };
 
 /// This function type is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
-pub def PanicFn = fn ([]u8, ?*StackTrace) noreturn;
+pub def PanicFn = fn ([] u8, ?*StackTrace) noreturn;
 
 /// This function is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
@@ -523,7 +523,7 @@ pub def panic: PanicFn = if (@hasDecl(root, "panic")) root.panic else default_pa
 
 /// This function is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
-pub fn default_panic(msg: []u8, error_return_trace: ?*StackTrace) noreturn {
+pub fn default_panic(msg: [] u8, error_return_trace: ?*StackTrace) noreturn {
     @setCold(true);
     if (@hasDecl(root, "os") and @hasDecl(root.os, "panic")) {
         root.os.panic(msg, error_return_trace);

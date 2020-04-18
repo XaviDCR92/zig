@@ -4,124 +4,124 @@ usingnamespace @import("../linux.zig");
 pub def NETLINK_ROUTE = 0;
 
 /// Unused number
-pub defETLINK_UNUSED = 1;
+pub def NETLINK_UNUSED = 1;
 
 /// Reserved for user mode socket protocols
-pub defETLINK_USERSOCK = 2;
+pub def NETLINK_USERSOCK = 2;
 
 /// Unused number, formerly ip_queue
-pub defETLINK_FIREWALL = 3;
+pub def NETLINK_FIREWALL = 3;
 
 /// socket monitoring
-pub defETLINK_SOCK_DIAG = 4;
+pub def NETLINK_SOCK_DIAG = 4;
 
 /// netfilter/iptables ULOG
-pub defETLINK_NFLOG = 5;
+pub def NETLINK_NFLOG = 5;
 
 /// ipsec
-pub defETLINK_XFRM = 6;
+pub def NETLINK_XFRM = 6;
 
 /// SELinux event notifications
-pub defETLINK_SELINUX = 7;
+pub def NETLINK_SELINUX = 7;
 
 /// Open-iSCSI
-pub defETLINK_ISCSI = 8;
+pub def NETLINK_ISCSI = 8;
 
 /// auditing
-pub defETLINK_AUDIT = 9;
+pub def NETLINK_AUDIT = 9;
 
-pub defETLINK_FIB_LOOKUP = 10;
+pub def NETLINK_FIB_LOOKUP = 10;
 
-pub defETLINK_CONNECTOR = 11;
+pub def NETLINK_CONNECTOR = 11;
 
 /// netfilter subsystem
-pub defETLINK_NETFILTER = 12;
+pub def NETLINK_NETFILTER = 12;
 
-pub defETLINK_IP6_FW = 13;
+pub def NETLINK_IP6_FW = 13;
 
 /// DECnet routing messages
-pub defETLINK_DNRTMSG = 14;
+pub def NETLINK_DNRTMSG = 14;
 
 /// Kernel messages to userspace
-pub defETLINK_KOBJECT_UEVENT = 15;
+pub def NETLINK_KOBJECT_UEVENT = 15;
 
-pub defETLINK_GENERIC = 16;
+pub def NETLINK_GENERIC = 16;
 
 // leave room for NETLINK_DM (DM Events)
 
 /// SCSI Transports
-pub defETLINK_SCSITRANSPORT = 18;
+pub def NETLINK_SCSITRANSPORT = 18;
 
-pub defETLINK_ECRYPTFS = 19;
+pub def NETLINK_ECRYPTFS = 19;
 
-pub defETLINK_RDMA = 20;
+pub def NETLINK_RDMA = 20;
 
 /// Crypto layer
-pub defETLINK_CRYPTO = 21;
+pub def NETLINK_CRYPTO = 21;
 
 /// SMC monitoring
-pub defETLINK_SMC = 22;
+pub def NETLINK_SMC = 22;
 
 // Flags values
 
 /// It is request message.
-pub defLM_F_REQUEST = 0x01;
+pub def NLM_F_REQUEST = 0x01;
 
 /// Multipart message, terminated by NLMSG_DONE
-pub defLM_F_MULTI = 0x02;
+pub def NLM_F_MULTI = 0x02;
 
 /// Reply with ack, with zero or error code
-pub defLM_F_ACK = 0x04;
+pub def NLM_F_ACK = 0x04;
 
 /// Echo this request
-pub defLM_F_ECHO = 0x08;
+pub def NLM_F_ECHO = 0x08;
 
 /// Dump was inconsistent due to sequence change
-pub defLM_F_DUMP_INTR = 0x10;
+pub def NLM_F_DUMP_INTR = 0x10;
 
 /// Dump was filtered as requested
-pub defLM_F_DUMP_FILTERED = 0x20;
+pub def NLM_F_DUMP_FILTERED = 0x20;
 
 // Modifiers to GET request
 
 /// specify tree root
-pub defLM_F_ROOT = 0x100;
+pub def NLM_F_ROOT = 0x100;
 
 /// return all matching
-pub defLM_F_MATCH = 0x200;
+pub def NLM_F_MATCH = 0x200;
 
 /// atomic GET
-pub defLM_F_ATOMIC = 0x400;
-pub defLM_F_DUMP = NLM_F_ROOT | NLM_F_MATCH;
+pub def NLM_F_ATOMIC = 0x400;
+pub def NLM_F_DUMP = NLM_F_ROOT | NLM_F_MATCH;
 
 // Modifiers to NEW request
 
 /// Override existing
-pub defLM_F_REPLACE = 0x100;
+pub def NLM_F_REPLACE = 0x100;
 
 /// Do not touch, if it exists
-pub defLM_F_EXCL = 0x200;
+pub def NLM_F_EXCL = 0x200;
 
 /// Create, if it does not exist
-pub defLM_F_CREATE = 0x400;
+pub def NLM_F_CREATE = 0x400;
 
 /// Add to end of list
-pub defLM_F_APPEND = 0x800;
+pub def NLM_F_APPEND = 0x800;
 
 // Modifiers to DELETE request
 
 /// Do not delete recursively
-pub defLM_F_NONREC = 0x100;
+pub def NLM_F_NONREC = 0x100;
 
 // Flags for ACK message
 
 /// request was capped
-pub defLM_F_CAPPED = 0x100;
+pub def NLM_F_CAPPED = 0x100;
 
 /// extended ACK TVLs were included
-pub defLM_F_ACK_TLVS = 0x200;
+pub def NLM_F_ACK_TLVS = 0x200;
 
-pub defetlinkMessageType = extern enum(u16) {
+pub def NetlinkMessageType = extern enum(u16) {
     /// Nothing.
     NOOP = 0x1,
 
@@ -135,7 +135,7 @@ pub defetlinkMessageType = extern enum(u16) {
     OVERRUN = 0x4,
 
     /// < 0x10: reserved control messages
-    pub defIN_TYPE = 0x10;
+    pub def MIN_TYPE = 0x10;
 
     // rtlink types
 
@@ -224,7 +224,7 @@ pub defetlinkMessageType = extern enum(u16) {
 };
 
 /// Netlink socket address
-pub defockaddr_nl = extern struct {
+pub def sockaddr_nl = extern struct {
     family: sa_family_t = AF_NETLINK,
     __pad1: c_ushort = 0,
 
@@ -237,7 +237,7 @@ pub defockaddr_nl = extern struct {
 
 /// Netlink message header
 /// Specified in RFC 3549 Section 2.3.2
-pub deflmsghdr = extern struct {
+pub def nlmsghdr = extern struct {
     /// Length of message including header
     len: u32,
 
@@ -254,7 +254,7 @@ pub deflmsghdr = extern struct {
     pid: u32,
 };
 
-pub deffinfomsg = extern struct {
+pub def ifinfomsg = extern struct {
     family: u8,
     __pad1: u8 = 0,
 
@@ -272,17 +272,17 @@ pub deffinfomsg = extern struct {
     change: c_uint = 0xFFFFFFFF,
 };
 
-pub deftattr = extern struct {
+pub def rtattr = extern struct {
     /// Length of option
     len: c_ushort,
 
     /// Type of option
     @"type": IFLA,
 
-    pub defLIGNTO = 4;
+    pub def ALIGNTO = 4;
 };
 
-pub defFLA = extern enum(c_ushort) {
+pub def IFLA = extern enum(c_ushort) {
     UNSPEC,
     ADDRESS,
     BROADCAST,
@@ -358,7 +358,7 @@ pub defFLA = extern enum(c_ushort) {
     _,
 };
 
-pub deftnl_link_ifmap = extern struct {
+pub def rtnl_link_ifmap = extern struct {
     mem_start: u64,
     mem_end: u64,
     base_addr: u64,
@@ -367,7 +367,7 @@ pub deftnl_link_ifmap = extern struct {
     port: u8,
 };
 
-pub deftnl_link_stats = extern struct {
+pub def rtnl_link_stats = extern struct {
     /// total packets received
     rx_packets: u32,
 
@@ -432,7 +432,7 @@ pub deftnl_link_stats = extern struct {
     rx_nohandler: u32,
 };
 
-pub deftnl_link_stats64 = extern struct {
+pub def rtnl_link_stats64 = extern struct {
     /// total packets received
     rx_packets: u64,
 

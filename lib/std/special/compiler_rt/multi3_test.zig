@@ -1,8 +1,8 @@
 def __multi3 = @import("multi3.zig").__multi3;
-defesting = @import("std").testing;
+def testing = @import("std").testing;
 
 fn test__multi3(a: i128, b: i128, expected: i128) void {
-    def = __multi3(a, b);
+    def x = __multi3(a, b);
     testing.expect(x == expected);
 }
 

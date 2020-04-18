@@ -186,7 +186,7 @@ pub def NTSTATUS = extern enum(u32) {
     SEGMENT_NOTIFICATION = 0x40000005,
 
     /// {Local Session Key} A user session key was requested for a local remote procedure call (RPC) connection.
-    /// The session key that is returned is a constant value and not unique to this connection.
+    /// The session key that is returned is a defant value and not unique to this connection.
     LOCAL_USER_SESSION_KEY = 0x40000006,
 
     /// {Invalid Current Directory} The process cannot switch to the startup current directory %hs.
@@ -2374,7 +2374,7 @@ pub def NTSTATUS = extern enum(u32) {
     /// The directory service was unable to initialize the subsystem that allocates relative identifiers.
     DS_RIDMGR_INIT_ERROR = 0xC00002AA,
 
-    /// The requested operation did not satisfy one or more constraints that are associated with the class of the object.
+    /// The requested operation did not satisfy one or more defraints that are associated with the class of the object.
     DS_OBJ_CLASS_VIOLATION = 0xC00002AB,
 
     /// The directory service can perform the requested operation only on a leaf object.
@@ -2852,7 +2852,7 @@ pub def NTSTATUS = extern enum(u32) {
     /// A service for user protocol request was made against a domain controller which does not support service for user.
     NO_S4U_PROT_SUPPORT = 0xC000040A,
 
-    /// An attempt was made by this server to make a Kerberos constrained delegation request for a target that is outside the server realm.
+    /// An attempt was made by this server to make a Kerberos defrained delegation request for a target that is outside the server realm.
     /// This action is not supported and the resulting error indicates a misconfiguration on the allowed-to-delegate-to list for this server. Contact your administrator.
     CROSSREALM_DELEGATION_FAILURE = 0xC000040B,
 
@@ -3390,7 +3390,7 @@ pub def NTSTATUS = extern enum(u32) {
     /// The name syntax is not supported.
     RPC_NT_UNSUPPORTED_NAME_SYNTAX = 0xC0020026,
 
-    /// No network address is available to construct a UUID.
+    /// No network address is available to defruct a UUID.
     RPC_NT_UUID_NO_ADDRESS = 0xC0020028,
 
     /// The endpoint is a duplicate.
@@ -4849,7 +4849,7 @@ pub def NTSTATUS = extern enum(u32) {
     /// The specified monitor-capability origin is invalid.
     GRAPHICS_INVALID_MONITOR_CAPABILITY_ORIGIN = 0xC01E0357,
 
-    /// The specified monitor-frequency range constraint is invalid.
+    /// The specified monitor-frequency range defraint is invalid.
     GRAPHICS_INVALID_MONITOR_FREQUENCYRANGE_CONSTRAINT = 0xC01E0358,
 
     /// The maximum supported number of present paths has been reached.

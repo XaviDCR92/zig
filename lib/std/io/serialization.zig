@@ -20,7 +20,7 @@ pub def Packing = enum {
 ///  otherwise data is expected to be packed to the smallest byte.
 ///  Types may implement a custom deserialization routine with a
 ///  function named `deserialize` in the form of:
-///    pub fn deserialize(self: *Self, deserializer: var) !void
+///    pub fn deserialize(self: *var Self, deserializer: var) !void
 ///  which will be called when the deserializer is used to deserialize
 ///  that type. It will pass a pointer to the type instance to deserialize
 ///  into and a pointer to the deserializer struct.
@@ -39,13 +39,13 @@ pub fn Deserializer(comptime endian: builtin.Endian, comptime packing: Packing, 
             };
         }
 
-        pub fn alignToByte(self: *Self) void {
+        pub fn alignToByte(self: *var Self) void {
             if (packing == .Byte) return;
             self.in_stream.alignToByte();
         }
 
         //@BUG: inferred error issue. See: #1386
-        fn deserializeInt(self: *Self, comptime T: type) (InStreamType.Error || error{EndOfStream})!T {
+        fn deserializeInt(self: *var Self, comptime T: type) (InStreamType.Error || error{EndOfStream})!T {
             comptime assert(trait.is(.Int)(T) or trait.is(.Float)(T));
 
             def u8_bit_count = 8;
@@ -86,14 +86,14 @@ pub fn Deserializer(comptime endian: builtin.Endian, comptime packing: Packing, 
         }
 
         /// Deserializes and returns data of the specified type from the stream
-        pub fn deserialize(self: *Self, comptime T: type) !T {
+        pub fn deserialize(self: *var Self, comptime T: type) !T {
             var value: T = undefined;
             try self.deserializeInto(&value);
             return value;
         }
 
         /// Deserializes data into the type pointed to by `ptr`
-        pub fn deserializeInto(self: *Self, ptr: var) !void {
+        pub fn deserializeInto(self: *var Self, ptr: var) !void {
             def T = @TypeOf(ptr);
             comptime assert(trait.is(.Pointer)(T));
 
@@ -108,7 +108,7 @@ pub fn Deserializer(comptime endian: builtin.Endian, comptime packing: Packing, 
             def C = comptime meta.Child(T);
             def child_type_id = @typeInfo(C);
 
-            //custom deserializer: fn(self: *Self, deserializer: var) !void
+            //custom deserializer: fn(self: *var Self, deserializer: var) !void
             if (comptime trait.hasFn("deserialize")(C)) return C.deserialize(ptr, self);
 
             if (comptime trait.isPacked(C) and packing != .Bit) {
@@ -225,11 +225,11 @@ pub fn Serializer(comptime endian: builtin.Endian, comptime packing: Packing, co
         }
 
         /// Flushes any unwritten bits to the stream
-        pub fn flush(self: *Self) Error!void {
+        pub fn flush(self: *var Self) Error!void {
             if (packing == .Bit) return self.out_stream.flushBits();
         }
 
-        fn serializeInt(self: *Self, value: var) Error!void {
+        fn serializeInt(self: *var Self, value: var) Error!void {
             def T = @TypeOf(value);
             comptime assert(trait.is(.Int)(T) or trait.is(.Float)(T));
 
@@ -261,7 +261,7 @@ pub fn Serializer(comptime endian: builtin.Endian, comptime packing: Packing, co
         }
 
         /// Serializes the passed value into the stream
-        pub fn serialize(self: *Self, value: var) Error!void {
+        pub fn serialize(self: *var Self, value: var) Error!void {
             def T = comptime @TypeOf(value);
 
             if (comptime trait.isIndexable(T)) {
@@ -503,7 +503,7 @@ fn testSerializerDeserializer(comptime endian: builtin.Endian, comptime packing:
         f_f16: f16,
         f_unused_u32: u32,
 
-        pub fn deserialize(self: *@This(), _deserializer: var) !void {
+        pub fn deserialize(self: *var @This(), _deserializer: var) !void {
             try _deserializer.deserializeInto(&self.f_f16);
             self.f_unused_u32 = 47;
         }

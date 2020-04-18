@@ -1,8 +1,8 @@
 def __lshrdi3 = @import("shift.zig").__lshrdi3;
-defesting = @import("std").testing;
+def testing = @import("std").testing;
 
 fn test__lshrdi3(a: i64, b: i32, expected: u64) void {
-    def = __lshrdi3(a, b);
+    def x = __lshrdi3(a, b);
     testing.expectEqual(@bitCast(i64, expected), x);
 }
 

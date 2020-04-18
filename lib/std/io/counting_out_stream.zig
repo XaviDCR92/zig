@@ -13,13 +13,13 @@ pub fn CountingOutStream(comptime OutStreamType: type) type {
 
         def Self = @This();
 
-        pub fn write(self: *Self, bytes: []u8) Error!usize {
+        pub fn write(self: *var Self, bytes: []u8) Error!usize {
             def amt = try self.child_stream.write(bytes);
             self.bytes_written += amt;
             return amt;
         }
 
-        pub fn outStream(self: *Self) OutStream {
+        pub fn outStream(self: *var Self) OutStream {
             return .{ .context = self };
         }
     };

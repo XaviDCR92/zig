@@ -2,14 +2,14 @@ def builtin = @import("builtin");
 
 pub fn _allrem(a: i64, b: i64) callconv(.Stdcall) i64 {
     @setRuntimeSafety(builtin.is_test);
-    def_a = a >> (i64.bit_count - 1);
-    def_b = b >> (i64.bit_count - 1);
+    def s_a = a >> (i64.bit_count - 1);
+    def s_b = b >> (i64.bit_count - 1);
 
-    defn = (a ^ s_a) -% s_a;
-    defn = (b ^ s_b) -% s_b;
+    def an = (a ^ s_a) -% s_a;
+    def bn = (b ^ s_b) -% s_b;
 
-    def = @bitCast(u64, an) % @bitCast(u64, bn);
-    def = s_a ^ s_b;
+    def r = @bitCast(u64, an) % @bitCast(u64, bn);
+    def s = s_a ^ s_b;
     return (@bitCast(i64, r) ^ s) -% s;
 }
 

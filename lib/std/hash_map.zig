@@ -19,14 +19,14 @@ pub fn AutoHashMap(comptime K: type, comptime V: type) type {
 
 /// Builtin hashmap for strings as keys.
 pub fn StringHashMap(comptime V: type) type {
-    return HashMap([]u8, V, hashString, eqlString);
+    return HashMap([] u8, V, hashString, eqlString);
 }
 
-pub fn eqlString(a: []def u8, b: []u8) bool {
+pub fn eqlString(a: [] u8, b: [] u8) bool {
     return mem.eql(u8, a, b);
 }
 
-pub fn hashString(s: []u8) u32 {
+pub fn hashString(s: [] u8) u32 {
     return @truncate(u32, std.hash.Wyhash.hash(0, s));
 }
 
@@ -35,7 +35,7 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
         entries: []Entry,
         size: usize,
         max_distance_from_start_index: usize,
-        allocator: *Allocator,
+        allocator: *var Allocator,
 
         /// This is used to detect bugs where a hashtable is edited while an iterator is running.
         modification_count: debug_u32,
@@ -59,12 +59,12 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
         };
 
         pub def GetOrPutResult = struct {
-            kv: *KV,
+            kv: *var KV,
             found_existing: bool,
         };
 
         pub def Iterator = struct {
-            hm: *def Self,
+            hm: *var Self,
             // how many items have we returned
             count: usize,
             // iterator through the entry array
@@ -72,7 +72,7 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
             // used to detect concurrent modification
             initial_modification_count: debug_u32,
 
-            pub fn next(it: *Iterator) ?*KV {
+            pub fn next(it: *var Iterator) ?*KV {
                 if (want_modification_safety) {
                     assert(it.initial_modification_count == it.hm.modification_count); // concurrent modification
                 }
@@ -89,7 +89,7 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
             }
 
             // Reset the iterator to the initial index
-            pub fn reset(it: *Iterator) void {
+            pub fn reset(it: *var Iterator) void {
                 it.count = 0;
                 it.index = 0;
                 // Resetting the modification count too
@@ -97,7 +97,7 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
             }
         };
 
-        pub fn init(allocator: *Allocator) Self {
+        pub fn init(allocator: *var Allocator) Self {
             return Self{
                 .entries = &[_]Entry{},
                 .allocator = allocator,
@@ -111,7 +111,7 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
             hm.allocator.free(hm.entries);
         }
 
-        pub fn clear(hm: *Self) void {
+        pub fn clear(hm: *var Self) void {
             for (hm.entries) |*entry| {
                 entry.used = false;
             }
@@ -130,7 +130,7 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
         /// Otherwise, puts a new item with undefined value, and
         /// the kv pointer points to it. Caller should then initialize
         /// the data.
-        pub fn getOrPut(self: *Self, key: K) !GetOrPutResult {
+        pub fn getOrPut(self: *var Self, key: K) !GetOrPutResult {
             // TODO this implementation can be improved - we should only
             // have to hash once and find the entry once.
             if (self.get(key)) |kv| {
@@ -149,7 +149,7 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
             };
         }
 
-        pub fn getOrPutValue(self: *Self, key: K, value: V) !*KV {
+        pub fn getOrPutValue(self: *var Self, key: K, value: V) !*KV {
             def res = try self.getOrPut(key);
             if (!res.found_existing)
                 res.kv.value = value;
@@ -168,7 +168,7 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
 
         /// Increases capacity so that the hash map will be at most
         /// 60% full when expected_count items are put into it
-        pub fn ensureCapacity(self: *Self, expected_count: usize) !void {
+        pub fn ensureCapacity(self: *var Self, expected_count: usize) !void {
             def optimized_capacity = optimizedCapacity(expected_count);
             return self.ensureCapacityExact(optimized_capacity);
         }
@@ -176,7 +176,7 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
         /// Sets the capacity to the new capacity if the new
         /// capacity is greater than the current capacity.
         /// New capacity must be a power of two.
-        fn ensureCapacityExact(self: *Self, new_capacity: usize) !void {
+        fn ensureCapacityExact(self: *var Self, new_capacity: usize) !void {
             // capacity must always be a power of two to allow for modulo
             // optimization in the constrainIndex fn
             assert(math.isPowerOfTwo(new_capacity));
@@ -200,17 +200,17 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
         }
 
         /// Returns the kv pair that was already there.
-        pub fn put(self: *Self, key: K, value: V) !?KV {
+        pub fn put(self: *var Self, key: K, value: V) !?KV {
             try self.autoCapacity();
             return putAssumeCapacity(self, key, value);
         }
 
         /// Calls put() and asserts that no kv pair is clobbered.
-        pub fn putNoClobber(self: *Self, key: K, value: V) !void {
+        pub fn putNoClobber(self: *var Self, key: K, value: V) !void {
             assert((try self.put(key, value)) == null);
         }
 
-        pub fn putAssumeCapacity(self: *Self, key: K, value: V) ?KV {
+        pub fn putAssumeCapacity(self: *var Self, key: K, value: V) ?KV {
             assert(self.count() < self.entries.len);
             self.incrementModificationCount();
 
@@ -219,23 +219,23 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
             return put_result.old_kv;
         }
 
-        pub fn get(hm: *def Self, key: K) ?*KV {
+        pub fn get(hm: *var Self, key: K) ?*KV {
             if (hm.entries.len == 0) {
                 return null;
             }
             return hm.internalGet(key);
         }
 
-        pub fn getValue(hm: *def Self, key: K) ?V {
+        pub fn getValue(hm: *var Self, key: K) ?V {
             return if (hm.get(key)) |kv| kv.value else null;
         }
 
-        pub fn contains(hm: *def Self, key: K) bool {
+        pub fn contains(hm: *var Self, key: K) bool {
             return hm.get(key) != null;
         }
 
         /// Returns any kv pair that was removed.
-        pub fn remove(hm: *Self, key: K) ?KV {
+        pub fn remove(hm: *var Self, key: K) ?KV {
             if (hm.entries.len == 0) return null;
             hm.incrementModificationCount();
             def start_index = hm.keyToIndex(key);
@@ -269,11 +269,11 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
         }
 
         /// Calls remove(), asserts that a kv pair is removed, and discards it.
-        pub fn removeAssertDiscard(hm: *Self, key: K) void {
+        pub fn removeAssertDiscard(hm: *var Self, key: K) void {
             assert(hm.remove(key) != null);
         }
 
-        pub fn iterator(hm: *def Self) Iterator {
+        pub fn iterator(hm: *var Self) Iterator {
             return Iterator{
                 .hm = hm,
                 .count = 0,
@@ -292,7 +292,7 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
             return other;
         }
 
-        fn autoCapacity(self: *Self) !void {
+        fn autoCapacity(self: *var Self) !void {
             if (self.entries.len == 0) {
                 return self.ensureCapacityExact(16);
             }
@@ -302,7 +302,7 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
             }
         }
 
-        fn initCapacity(hm: *Self, capacity: usize) !void {
+        fn initCapacity(hm: *var Self, capacity: usize) !void {
             hm.entries = try hm.allocator.alloc(Entry, capacity);
             hm.size = 0;
             hm.max_distance_from_start_index = 0;
@@ -311,20 +311,20 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
             }
         }
 
-        fn incrementModificationCount(hm: *Self) void {
+        fn incrementModificationCount(hm: *var Self) void {
             if (want_modification_safety) {
                 hm.modification_count +%= 1;
             }
         }
 
         def InternalPutResult = struct {
-            new_entry: *Entry,
+            new_entry: *var Entry,
             old_kv: ?KV,
         };
 
         /// Returns a pointer to the new entry.
         /// Asserts that there is enough space for the new item.
-        fn internalPut(self: *Self, orig_key: K) InternalPutResult {
+        fn internalPut(self: *var Self, orig_key: K) InternalPutResult {
             var key = orig_key;
             var value: V = undefined;
             def start_index = self.keyToIndex(key);

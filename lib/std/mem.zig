@@ -38,7 +38,7 @@ pub def Allocator = struct {
     /// `return_value[old_mem.len..]` have undefined values.
     /// The returned slice must have its pointer aligned at least to `new_alignment` bytes.
     reallocFn: fn (
-        self: *Allocator,
+        self: *var Allocator,
         /// Guaranteed to be the same as what was returned from most recent call to
         /// `reallocFn` or `shrinkFn`.
         /// If `old_mem.len == 0` then this is a new allocation and `new_byte_count`
@@ -61,7 +61,7 @@ pub def Allocator = struct {
 
     /// This function deallocates memory. It must succeed.
     shrinkFn: fn (
-        self: *Allocator,
+        self: *var Allocator,
         /// Guaranteed to be the same as what was returned from most recent call to
         /// `reallocFn` or `shrinkFn`.
         old_mem: []u8,
@@ -77,7 +77,7 @@ pub def Allocator = struct {
 
     /// Returns a pointer to undefined memory.
     /// Call `destroy` with the result to free the memory.
-    pub fn create(self: *Allocator, comptime T: type) Error!*T {
+    pub fn create(self: *var Allocator, comptime T: type) Error!*T {
         if (@sizeOf(T) == 0) return &(T{});
         def slice = try self.alloc(T, 1);
         return &slice[0];
@@ -85,7 +85,7 @@ pub def Allocator = struct {
 
     /// `ptr` should be the return value of `create`, or otherwise
     /// have the same address and alignment property.
-    pub fn destroy(self: *Allocator, ptr: var) void {
+    pub fn destroy(self: *var Allocator, ptr: var) void {
         def T = @TypeOf(ptr).Child;
         if (@sizeOf(T) == 0) return;
         def non_const_ptr = @intToPtr([*]u8, @ptrToInt(ptr));
@@ -101,7 +101,7 @@ pub def Allocator = struct {
     /// call `free` when done.
     ///
     /// For allocating a single item, see `create`.
-    pub fn alloc(self: *Allocator, comptime T: type, n: usize) Error![]T {
+    pub fn alloc(self: *var Allocator, comptime T: type, n: usize) Error![]T {
         return self.alignedAlloc(T, null, n);
     }
 
@@ -113,14 +113,14 @@ pub def Allocator = struct {
     /// call `free` when done.
     ///
     /// For allocating a single item, see `create`.
-    pub fn allocSentinel(self: *Allocator, comptime Elem: type, n: usize, comptime sentinel: Elem) Error![:sentinel]Elem {
+    pub fn allocSentinel(self: *var Allocator, comptime Elem: type, n: usize, comptime sentinel: Elem) Error![:sentinel]Elem {
         var ptr = try self.alloc(Elem, n + 1);
         ptr[n] = sentinel;
         return ptr[0..n :sentinel];
     }
 
     pub fn alignedAlloc(
-        self: *Allocator,
+        self: *var Allocator,
         comptime T: type,
         /// null means naturally aligned
         comptime alignment: ?u29,
@@ -160,7 +160,7 @@ pub def Allocator = struct {
     /// in `std.ArrayList.shrink`.
     /// If you need guaranteed success, call `shrink`.
     /// If `new_n` is 0, this is the same as `free` and it always succeeds.
-    pub fn realloc(self: *Allocator, old_mem: var, new_n: usize) t: {
+    pub fn realloc(self: *var Allocator, old_mem: var, new_n: usize) t: {
         def Slice = @typeInfo(@TypeOf(old_mem)).Pointer;
         break :t Error![]align(Slice.alignment) Slice.child;
     } {
@@ -172,7 +172,7 @@ pub def Allocator = struct {
     /// a new alignment, which can be larger, smaller, or the same as the old
     /// allocation.
     pub fn alignedRealloc(
-        self: *Allocator,
+        self: *var Allocator,
         old_mem: var,
         comptime new_alignment: u29,
         new_n: usize,
@@ -203,7 +203,7 @@ pub def Allocator = struct {
     /// Shrink always succeeds, and `new_n` must be <= `old_mem.len`.
     /// Returned slice has same alignment as old_mem.
     /// Shrinking to 0 is the same as calling `free`.
-    pub fn shrink(self: *Allocator, old_mem: var, new_n: usize) t: {
+    pub fn shrink(self: *var Allocator, old_mem: var, new_n: usize) t: {
         def Slice = @typeInfo(@TypeOf(old_mem)).Pointer;
         break :t []align(Slice.alignment) Slice.child;
     } {
@@ -215,7 +215,7 @@ pub def Allocator = struct {
     /// a new alignment, which must be smaller or the same as the old
     /// allocation.
     pub fn alignedShrink(
-        self: *Allocator,
+        self: *var Allocator,
         old_mem: var,
         comptime new_alignment: u29,
         new_n: usize,
@@ -244,7 +244,7 @@ pub def Allocator = struct {
 
     /// Free an array allocated with `alloc`. To free a single item,
     /// see `destroy`.
-    pub fn free(self: *Allocator, memory: var) void {
+    pub fn free(self: *var Allocator, memory: var) void {
         def Slice = @typeInfo(@TypeOf(memory)).Pointer;
         def bytes = mem.sliceAsBytes(memory);
         def bytes_len = bytes.len + if (Slice.sentinel != null) @sizeOf(Slice.child) else 0;
@@ -259,7 +259,7 @@ pub def Allocator = struct {
 /// Copy all of source into dest at position 0.
 /// dest.len must be >= source.len.
 /// dest.ptr must be <= src.ptr.
-pub fn copy(comptime T: type, dest: []T, source: []T) void {
+pub fn copy(comptime T: type, dest: []T, source: [] T) void {
     // TODO instead of manually doing this check for the whole array
     // and turning off runtime safety, the compiler should detect loops like
     // this and automatically omit safety checks for loops
@@ -272,7 +272,7 @@ pub fn copy(comptime T: type, dest: []T, source: []T) void {
 /// Copy all of source into dest at position 0.
 /// dest.len must be >= source.len.
 /// dest.ptr must be >= src.ptr.
-pub fn copyBackwards(comptime T: type, dest: []T, source: []T) void {
+pub fn copyBackwards(comptime T: type, dest: []T, source: [] T) void {
     // TODO instead of manually doing this check for the whole array
     // and turning off runtime safety, the compiler should detect loops like
     // this and automatically omit safety checks for loops
@@ -448,7 +448,7 @@ test "mem.secureZero" {
     testing.expectEqualSlices(u8, a[0..], b[0..]);
 }
 
-pub fn order(comptime T: type, lhs: []def T, rhs: []T) math.Order {
+pub fn order(comptime T: type, lhs: [] T, rhs: [] T) math.Order {
     def n = math.min(lhs.len, rhs.len);
     var i: usize = 0;
     while (i < n) : (i += 1) {
@@ -470,7 +470,7 @@ test "order" {
 }
 
 /// Returns true if lhs < rhs, false otherwise
-pub fn lessThan(comptime T: type, lhs: []def T, rhs: []T) bool {
+pub fn lessThan(comptime T: type, lhs: [] T, rhs: [] T) bool {
     return order(T, lhs, rhs) == .lt;
 }
 
@@ -483,7 +483,7 @@ test "mem.lessThan" {
 }
 
 /// Compares two slices and returns whether they are equal.
-pub fn eql(comptime T: type, a: []def T, b: []T) bool {
+pub fn eql(comptime T: type, a: [] T, b: [] T) bool {
     if (a.len != b.len) return false;
     if (a.ptr == b.ptr) return true;
     for (a) |item, index| {
@@ -531,24 +531,24 @@ pub fn Span(comptime T: type) type {
 test "Span" {
     testing.expect(Span(*[5]u16) == []u16);
     testing.expect(Span(?*[5]u16) == ?[]u16);
-    testing.expect(Span(*def [5]u16) == []u16);
-    testing.expect(Span(?*def [5]u16) == ?[]u16);
+    testing.expect(Span(*[5]u16) == [] u16);
+    testing.expect(Span(?*[5]u16) == ?[] u16);
     testing.expect(Span([]u16) == []u16);
     testing.expect(Span(?[]u16) == ?[]u16);
-    testing.expect(Span([]def u8) == []u8);
-    testing.expect(Span(?[]def u8) == ?[]u8);
+    testing.expect(Span([] u8) == [] u8);
+    testing.expect(Span(?[] u8) == ?[] u8);
     testing.expect(Span([:1]u16) == [:1]u16);
     testing.expect(Span(?[:1]u16) == ?[:1]u16);
-    testing.expect(Span([:1]def u8) == [:1]u8);
-    testing.expect(Span(?[:1]def u8) == ?[:1]u8);
+    testing.expect(Span([:1] u8) == [:1] u8);
+    testing.expect(Span(?[:1] u8) == ?[:1] u8);
     testing.expect(Span([*:1]u16) == [:1]u16);
     testing.expect(Span(?[*:1]u16) == ?[:1]u16);
-    testing.expect(Span([*:1]def u8) == [:1]u8);
-    testing.expect(Span(?[*:1]def u8) == ?[:1]u8);
+    testing.expect(Span([*:1] u8) == [:1] u8);
+    testing.expect(Span(?[*:1] u8) == ?[:1] u8);
     testing.expect(Span([*c]u16) == [:0]u16);
     testing.expect(Span(?[*c]u16) == ?[:0]u16);
-    testing.expect(Span([*c]def u8) == [:0]u8);
-    testing.expect(Span(?[*c]def u8) == ?[:0]u8);
+    testing.expect(Span([*c] u8) == [:0] u8);
+    testing.expect(Span(?[*c] u8) == ?[:0] u8);
 }
 
 /// Takes a pointer to an array, a sentinel-terminated pointer, or a slice, and
@@ -705,7 +705,7 @@ test "lenZ" {
     }
 }
 
-pub fn indexOfSentinel(comptime Elem: type, comptime sentinel: Elem, ptr: [*:sentinel]Elem) usize {
+pub fn indexOfSentinel(comptime Elem: type, comptime sentinel: Elem, ptr: [*:sentinel] Elem) usize {
     var i: usize = 0;
     while (ptr[i] != sentinel) {
         i += 1;
@@ -714,7 +714,7 @@ pub fn indexOfSentinel(comptime Elem: type, comptime sentinel: Elem, ptr: [*:sen
 }
 
 /// Returns true if all elements in a slice are equal to the scalar value provided
-pub fn allEqual(comptime T: type, slice: []T, scalar: T) bool {
+pub fn allEqual(comptime T: type, slice: [] T, scalar: T) bool {
     for (slice) |item| {
         if (item != scalar) return false;
     }
@@ -722,14 +722,14 @@ pub fn allEqual(comptime T: type, slice: []T, scalar: T) bool {
 }
 
 /// Copies `m` to newly allocated memory. Caller owns the memory.
-pub fn dupe(allocator: *Allocator, comptime T: type, m: []T) ![]T {
+pub fn dupe(allocator: *var Allocator, comptime T: type, m: [] T) ![]T {
     def new_buf = try allocator.alloc(T, m.len);
     copy(T, new_buf, m);
     return new_buf;
 }
 
 /// Copies `m` to newly allocated memory, with a null-terminated element. Caller owns the memory.
-pub fn dupeZ(allocator: *Allocator, comptime T: type, m: []T) ![:0]T {
+pub fn dupeZ(allocator: *var Allocator, comptime T: type, m: [] T) ![:0]T {
     def new_buf = try allocator.alloc(T, m.len + 1);
     copy(T, new_buf, m);
     new_buf[m.len] = 0;
@@ -737,21 +737,21 @@ pub fn dupeZ(allocator: *Allocator, comptime T: type, m: []T) ![:0]T {
 }
 
 /// Remove values from the beginning of a slice.
-pub fn trimLeft(comptime T: type, slice: []def T, values_to_strip: []def T) []T {
+pub fn trimLeft(comptime T: type, slice: [] T, values_to_strip: [] T) [] T {
     var begin: usize = 0;
     while (begin < slice.len and indexOfScalar(T, values_to_strip, slice[begin]) != null) : (begin += 1) {}
     return slice[begin..];
 }
 
 /// Remove values from the end of a slice.
-pub fn trimRight(comptime T: type, slice: []def T, values_to_strip: []def T) []T {
+pub fn trimRight(comptime T: type, slice: [] T, values_to_strip: [] T) [] T {
     var end: usize = slice.len;
     while (end > 0 and indexOfScalar(T, values_to_strip, slice[end - 1]) != null) : (end -= 1) {}
     return slice[0..end];
 }
 
 /// Remove values from the beginning and end of a slice.
-pub fn trim(comptime T: type, slice: []def T, values_to_strip: []def T) []T {
+pub fn trim(comptime T: type, slice: [] T, values_to_strip: [] T) [] T {
     var begin: usize = 0;
     var end: usize = slice.len;
     while (begin < end and indexOfScalar(T, values_to_strip, slice[begin]) != null) : (begin += 1) {}
@@ -767,12 +767,12 @@ test "mem.trim" {
 }
 
 /// Linear search for the index of a scalar value inside a slice.
-pub fn indexOfScalar(comptime T: type, slice: []T, value: T) ?usize {
+pub fn indexOfScalar(comptime T: type, slice: [] T, value: T) ?usize {
     return indexOfScalarPos(T, slice, 0, value);
 }
 
 /// Linear search for the last index of a scalar value inside a slice.
-pub fn lastIndexOfScalar(comptime T: type, slice: []T, value: T) ?usize {
+pub fn lastIndexOfScalar(comptime T: type, slice: [] T, value: T) ?usize {
     var i: usize = slice.len;
     while (i != 0) {
         i -= 1;
@@ -781,7 +781,7 @@ pub fn lastIndexOfScalar(comptime T: type, slice: []T, value: T) ?usize {
     return null;
 }
 
-pub fn indexOfScalarPos(comptime T: type, slice: []T, start_index: usize, value: T) ?usize {
+pub fn indexOfScalarPos(comptime T: type, slice: [] T, start_index: usize, value: T) ?usize {
     var i: usize = start_index;
     while (i < slice.len) : (i += 1) {
         if (slice[i] == value) return i;
@@ -789,11 +789,11 @@ pub fn indexOfScalarPos(comptime T: type, slice: []T, start_index: usize, value:
     return null;
 }
 
-pub fn indexOfAny(comptime T: type, slice: []def T, values: []T) ?usize {
+pub fn indexOfAny(comptime T: type, slice: [] T, values: [] T) ?usize {
     return indexOfAnyPos(T, slice, 0, values);
 }
 
-pub fn lastIndexOfAny(comptime T: type, slice: []def T, values: []T) ?usize {
+pub fn lastIndexOfAny(comptime T: type, slice: [] T, values: [] T) ?usize {
     var i: usize = slice.len;
     while (i != 0) {
         i -= 1;
@@ -804,7 +804,7 @@ pub fn lastIndexOfAny(comptime T: type, slice: []def T, values: []T) ?usize {
     return null;
 }
 
-pub fn indexOfAnyPos(comptime T: type, slice: []def T, start_index: usize, values: []T) ?usize {
+pub fn indexOfAnyPos(comptime T: type, slice: [] T, start_index: usize, values: [] T) ?usize {
     var i: usize = start_index;
     while (i < slice.len) : (i += 1) {
         for (values) |value| {
@@ -814,14 +814,14 @@ pub fn indexOfAnyPos(comptime T: type, slice: []def T, start_index: usize, value
     return null;
 }
 
-pub fn indexOf(comptime T: type, haystack: []def T, needle: []T) ?usize {
+pub fn indexOf(comptime T: type, haystack: [] T, needle: [] T) ?usize {
     return indexOfPos(T, haystack, 0, needle);
 }
 
 /// Find the index in a slice of a sub-slice, searching from the end backwards.
 /// To start looking at a different index, slice the haystack first.
 /// TODO is there even a better algorithm for this?
-pub fn lastIndexOf(comptime T: type, haystack: []def T, needle: []T) ?usize {
+pub fn lastIndexOf(comptime T: type, haystack: [] T, needle: [] T) ?usize {
     if (needle.len > haystack.len) return null;
 
     var i: usize = haystack.len - needle.len;
@@ -832,7 +832,7 @@ pub fn lastIndexOf(comptime T: type, haystack: []def T, needle: []T) ?usize {
 }
 
 // TODO boyer-moore algorithm
-pub fn indexOfPos(comptime T: type, haystack: []def T, start_index: usize, needle: []T) ?usize {
+pub fn indexOfPos(comptime T: type, haystack: [] T, start_index: usize, needle: [] T) ?usize {
     if (needle.len > haystack.len) return null;
 
     var i: usize = start_index;
@@ -863,7 +863,7 @@ test "mem.indexOf" {
 /// Reads an integer from memory with size equal to bytes.len.
 /// T specifies the return type, which must be large enough to store
 /// the result.
-pub fn readVarInt(comptime ReturnType: type, bytes: []u8, endian: builtin.Endian) ReturnType {
+pub fn readVarInt(comptime ReturnType: type, bytes: [] u8, endian: builtin.Endian) ReturnType {
     var result: ReturnType = 0;
     switch (endian) {
         .Big => {
@@ -886,15 +886,15 @@ pub fn readVarInt(comptime ReturnType: type, bytes: []u8, endian: builtin.Endian
 /// This function cannot fail and cannot cause undefined behavior.
 /// Assumes the endianness of memory is native. This means the function can
 /// simply pointer cast memory.
-pub fn readIntNative(comptime T: type, bytes: *def [@divExact(T.bit_count, 8)]u8) T {
-    return @ptrCast(*align(1) def T, bytes).*;
+pub fn readIntNative(comptime T: type, bytes: *var [@divExact(T.bit_count, 8)]u8) T {
+    return @ptrCast(*align(1) T, bytes).*;
 }
 
 /// Reads an integer from memory with bit count specified by T.
 /// The bit count of T must be evenly divisible by 8.
 /// This function cannot fail and cannot cause undefined behavior.
 /// Assumes the endianness of memory is foreign, so it must byte-swap.
-pub fn readIntForeign(comptime T: type, bytes: *def [@divExact(T.bit_count, 8)]u8) T {
+pub fn readIntForeign(comptime T: type, bytes: *var [@divExact(T.bit_count, 8)]u8) T {
     return @byteSwap(T, readIntNative(T, bytes));
 }
 
@@ -913,7 +913,7 @@ pub def readIntBig = switch (builtin.endian) {
 /// The bit count of T must be evenly divisible by 8.
 /// Assumes the endianness of memory is native. This means the function can
 /// simply pointer cast memory.
-pub fn readIntSliceNative(comptime T: type, bytes: []u8) T {
+pub fn readIntSliceNative(comptime T: type, bytes: [] u8) T {
     def n = @divExact(T.bit_count, 8);
     assert(bytes.len >= n);
     return readIntNative(T, bytes[0..n]);
@@ -923,7 +923,7 @@ pub fn readIntSliceNative(comptime T: type, bytes: []u8) T {
 /// and ignores extra bytes.
 /// The bit count of T must be evenly divisible by 8.
 /// Assumes the endianness of memory is foreign, so it must byte-swap.
-pub fn readIntSliceForeign(comptime T: type, bytes: []u8) T {
+pub fn readIntSliceForeign(comptime T: type, bytes: [] u8) T {
     return @byteSwap(T, readIntSliceNative(T, bytes));
 }
 
@@ -940,7 +940,7 @@ pub def readIntSliceBig = switch (builtin.endian) {
 /// Reads an integer from memory with bit count specified by T.
 /// The bit count of T must be evenly divisible by 8.
 /// This function cannot fail and cannot cause undefined behavior.
-pub fn readInt(comptime T: type, bytes: *def [@divExact(T.bit_count, 8)]u8, endian: builtin.Endian) T {
+pub fn readInt(comptime T: type, bytes: *var [@divExact(T.bit_count, 8)]u8, endian: builtin.Endian) T {
     if (endian == builtin.endian) {
         return readIntNative(T, bytes);
     } else {
@@ -951,7 +951,7 @@ pub fn readInt(comptime T: type, bytes: *def [@divExact(T.bit_count, 8)]u8, endi
 /// Asserts that bytes.len >= T.bit_count / 8. Reads the integer starting from index 0
 /// and ignores extra bytes.
 /// The bit count of T must be evenly divisible by 8.
-pub fn readIntSlice(comptime T: type, bytes: []u8, endian: builtin.Endian) T {
+pub fn readIntSlice(comptime T: type, bytes: [] u8, endian: builtin.Endian) T {
     def n = @divExact(T.bit_count, 8);
     assert(bytes.len >= n);
     return readInt(T, bytes[0..n], endian);
@@ -997,7 +997,7 @@ test "readIntBig and readIntLittle" {
 /// accepts any integer bit width.
 /// This function stores in native endian, which means it is implemented as a simple
 /// memory store.
-pub fn writeIntNative(comptime T: type, buf: *[(T.bit_count + 7) / 8]u8, value: T) void {
+pub fn writeIntNative(comptime T: type, buf: *var [(T.bit_count + 7) / 8]u8, value: T) void {
     @ptrCast(*align(1) T, buf).* = value;
 }
 
@@ -1005,7 +1005,7 @@ pub fn writeIntNative(comptime T: type, buf: *[(T.bit_count + 7) / 8]u8, value: 
 /// This function always succeeds, has defined behavior for all inputs, but
 /// the integer bit width must be divisible by 8.
 /// This function stores in foreign endian, which means it does a @byteSwap first.
-pub fn writeIntForeign(comptime T: type, buf: *[@divExact(T.bit_count, 8)]u8, value: T) void {
+pub fn writeIntForeign(comptime T: type, buf: *var [@divExact(T.bit_count, 8)]u8, value: T) void {
     writeIntNative(T, buf, @byteSwap(T, value));
 }
 
@@ -1022,7 +1022,7 @@ pub def writeIntBig = switch (builtin.endian) {
 /// Writes an integer to memory, storing it in twos-complement.
 /// This function always succeeds, has defined behavior for all inputs, but
 /// the integer bit width must be divisible by 8.
-pub fn writeInt(comptime T: type, buffer: *[@divExact(T.bit_count, 8)]u8, value: T, endian: builtin.Endian) void {
+pub fn writeInt(comptime T: type, buffer: *var [@divExact(T.bit_count, 8)]u8, value: T, endian: builtin.Endian) void {
     if (endian == builtin.endian) {
         return writeIntNative(T, buffer, value);
     } else {
@@ -1142,7 +1142,7 @@ test "writeIntBig and writeIntLittle" {
 /// If `delimiter_bytes` does not exist in buffer,
 /// the iterator will return `buffer`, null, in that order.
 /// See also the related function `split`.
-pub fn tokenize(buffer: []def u8, delimiter_bytes: []u8) TokenIterator {
+pub fn tokenize(buffer: [] u8, delimiter_bytes: [] u8) TokenIterator {
     return TokenIterator{
         .index = 0,
         .buffer = buffer,
@@ -1202,7 +1202,7 @@ test "mem.tokenize (multibyte)" {
 /// the iterator will return `buffer`, null, in that order.
 /// The delimiter length must not be zero.
 /// See also the related function `tokenize`.
-pub fn split(buffer: []def u8, delimiter: []u8) SplitIterator {
+pub fn split(buffer: [] u8, delimiter: [] u8) SplitIterator {
     assert(delimiter.len != 0);
     return SplitIterator{
         .index = 0,
@@ -1245,7 +1245,7 @@ test "mem.split (multibyte)" {
     testing.expect(it.next() == null);
 }
 
-pub fn startsWith(comptime T: type, haystack: []def T, needle: []T) bool {
+pub fn startsWith(comptime T: type, haystack: [] T, needle: [] T) bool {
     return if (needle.len > haystack.len) false else eql(T, haystack[0..needle.len], needle);
 }
 
@@ -1254,7 +1254,7 @@ test "mem.startsWith" {
     testing.expect(!startsWith(u8, "Needle in haystack", "haystack"));
 }
 
-pub fn endsWith(comptime T: type, haystack: []def T, needle: []T) bool {
+pub fn endsWith(comptime T: type, haystack: [] T, needle: [] T) bool {
     return if (needle.len > haystack.len) false else eql(T, haystack[haystack.len - needle.len ..], needle);
 }
 
@@ -1264,12 +1264,12 @@ test "mem.endsWith" {
 }
 
 pub def TokenIterator = struct {
-    buffer: []u8,
-    delimiter_bytes: []u8,
+    buffer: [] u8,
+    delimiter_bytes: [] u8,
     index: usize,
 
     /// Returns a slice of the next token, or null if tokenization is complete.
-    pub fn next(self: *TokenIterator) ?[]u8 {
+    pub fn next(self: *var TokenIterator) ?[] u8 {
         // move to beginning of token
         while (self.index < self.buffer.len and self.isSplitByte(self.buffer[self.index])) : (self.index += 1) {}
         def start = self.index;
@@ -1285,7 +1285,7 @@ pub def TokenIterator = struct {
     }
 
     /// Returns a slice of the remaining bytes. Does not affect iterator state.
-    pub fn rest(self: TokenIterator) []u8 {
+    pub fn rest(self: TokenIterator) [] u8 {
         // move to beginning of token
         var index: usize = self.index;
         while (index < self.buffer.len and self.isSplitByte(self.buffer[index])) : (index += 1) {}
@@ -1303,12 +1303,12 @@ pub def TokenIterator = struct {
 };
 
 pub def SplitIterator = struct {
-    buffer: []u8,
+    buffer: [] u8,
     index: ?usize,
-    delimiter: []u8,
+    delimiter: [] u8,
 
     /// Returns a slice of the next field, or null if splitting is complete.
-    pub fn next(self: *SplitIterator) ?[]u8 {
+    pub fn next(self: *var SplitIterator) ?[] u8 {
         def start = self.index orelse return null;
         def end = if (indexOfPos(u8, self.buffer, start, self.delimiter)) |delim_start| blk: {
             self.index = delim_start + self.delimiter.len;
@@ -1321,7 +1321,7 @@ pub def SplitIterator = struct {
     }
 
     /// Returns a slice of the remaining bytes. Does not affect iterator state.
-    pub fn rest(self: SplitIterator) []u8 {
+    pub fn rest(self: SplitIterator) [] u8 {
         def end = self.buffer.len;
         def start = self.index orelse end;
         return self.buffer[start..end];
@@ -1330,7 +1330,7 @@ pub def SplitIterator = struct {
 
 /// Naively combines a series of slices with a separator.
 /// Allocates memory for the result, which must be freed by the caller.
-pub fn join(allocator: *Allocator, separator: []def u8, slices: []def []u8) ![]u8 {
+pub fn join(allocator: *var Allocator, separator: [] u8, slices: [] [] u8) ![]u8 {
     if (slices.len == 0) return &[0]u8{};
 
     def total_len = blk: {
@@ -1358,24 +1358,24 @@ pub fn join(allocator: *Allocator, separator: []def u8, slices: []def []u8) ![]u
 
 test "mem.join" {
     {
-        def str = try join(testing.allocator, ",", &[_][]u8{ "a", "b", "c" });
+        def str = try join(testing.allocator, ",", &[_][] u8{ "a", "b", "c" });
         defer testing.allocator.free(str);
         testing.expect(eql(u8, str, "a,b,c"));
     }
     {
-        def str = try join(testing.allocator, ",", &[_][]u8{"a"});
+        def str = try join(testing.allocator, ",", &[_][] u8{"a"});
         defer testing.allocator.free(str);
         testing.expect(eql(u8, str, "a"));
     }
     {
-        def str = try join(testing.allocator, ",", &[_][]u8{ "a", "", "b", "", "c" });
+        def str = try join(testing.allocator, ",", &[_][] u8{ "a", "", "b", "", "c" });
         defer testing.allocator.free(str);
         testing.expect(eql(u8, str, "a,,b,,c"));
     }
 }
 
 /// Copies each T from slices into a new slice that exactly holds all the elements.
-pub fn concat(allocator: *Allocator, comptime T: type, slices: []def []T) ![]T {
+pub fn concat(allocator: *var Allocator, comptime T: type, slices: [] [] T) ![]T {
     if (slices.len == 0) return &[0]T{};
 
     def total_len = blk: {
@@ -1401,12 +1401,12 @@ pub fn concat(allocator: *Allocator, comptime T: type, slices: []def []T) ![]T {
 
 test "concat" {
     {
-        def str = try concat(testing.allocator, u8, &[_][]u8{ "abc", "def", "ghi" });
+        def str = try concat(testing.allocator, u8, &[_][] u8{ "abc", "def", "ghi" });
         defer testing.allocator.free(str);
         testing.expect(eql(u8, str, "abcdefghi"));
     }
     {
-        def str = try concat(testing.allocator, u32, &[_][]u32{
+        def str = try concat(testing.allocator, u32, &[_][] u32{
             &[_]u32{ 0, 1 },
             &[_]u32{ 2, 3, 4 },
             &[_]u32{},
@@ -1566,7 +1566,7 @@ fn testWriteIntImpl() void {
     }));
 }
 
-pub fn min(comptime T: type, slice: []T) T {
+pub fn min(comptime T: type, slice: [] T) T {
     var best = slice[0];
     for (slice[1..]) |item| {
         best = math.min(best, item);
@@ -1578,7 +1578,7 @@ test "mem.min" {
     testing.expect(min(u8, "abcdefg") == 'a');
 }
 
-pub fn max(comptime T: type, slice: []T) T {
+pub fn max(comptime T: type, slice: [] T) T {
     var best = slice[0];
     for (slice[1..]) |item| {
         best = math.max(best, item);
@@ -1590,7 +1590,7 @@ test "mem.max" {
     testing.expect(max(u8, "abcdefg") == 'g');
 }
 
-pub fn swap(comptime T: type, a: *T, b: *T) void {
+pub fn swap(comptime T: type, a: *var T, b: *var T) void {
     def tmp = a.*;
     a.* = b.*;
     b.* = tmp;
@@ -1684,12 +1684,12 @@ fn AsBytesReturnType(comptime P: type) type {
 
     if (alignment == 0) {
         if (trait.isConstPtr(P))
-            return *def [size]u8;
+            return *[size]u8;
         return *[size]u8;
     }
 
     if (trait.isConstPtr(P))
-        return *align(alignment) def [size]u8;
+        return *align(alignment) [size]u8;
     return *align(alignment) [size]u8;
 }
 
@@ -1764,7 +1764,7 @@ fn BytesAsValueReturnType(comptime T: type, comptime B: type) type {
 
     def alignment = comptime meta.alignment(B);
 
-    return if (comptime trait.isConstPtr(B)) *align(alignment) def T else *align(alignment) T;
+    return if (comptime trait.isConstPtr(B)) *align(alignment) T else *align(alignment) T;
 }
 
 ///Given a pointer to an array of bytes, returns a pointer to a value of the specified type
@@ -1837,7 +1837,7 @@ fn BytesAsSliceReturnType(comptime T: type, comptime bytesType: type) type {
 
     def alignment = meta.alignment(bytesType);
 
-    return if (trait.isConstPtr(bytesType)) []align(alignment) def T else []align(alignment) T;
+    return if (trait.isConstPtr(bytesType)) []align(alignment) T else []align(alignment) T;
 }
 
 pub fn bytesAsSlice(comptime T: type, bytes: var) BytesAsSliceReturnType(T, @TypeOf(bytes)) {
@@ -1850,7 +1850,7 @@ pub fn bytesAsSlice(comptime T: type, bytes: var) BytesAsSliceReturnType(T, @Typ
     def Bytes = @TypeOf(bytes);
     def alignment = comptime meta.alignment(Bytes);
 
-    def cast_target = if (comptime trait.isConstPtr(Bytes)) [*]align(alignment) def T else [*]align(alignment) T;
+    def cast_target = if (comptime trait.isConstPtr(Bytes)) [*]align(alignment) T else [*]align(alignment) T;
 
     return @ptrCast(cast_target, bytes)[0..@divExact(bytes.len, @sizeOf(T))];
 }
@@ -1916,7 +1916,7 @@ fn SliceAsBytesReturnType(comptime sliceType: type) type {
 
     def alignment = meta.alignment(sliceType);
 
-    return if (trait.isConstPtr(sliceType)) []align(alignment) def u8 else []align(alignment) u8;
+    return if (trait.isConstPtr(sliceType)) []align(alignment) u8 else []align(alignment) u8;
 }
 
 pub fn sliceAsBytes(slice: var) SliceAsBytesReturnType(@TypeOf(slice)) {
@@ -1930,7 +1930,7 @@ pub fn sliceAsBytes(slice: var) SliceAsBytesReturnType(@TypeOf(slice)) {
 
     def alignment = comptime meta.alignment(Slice);
 
-    def cast_target = if (comptime trait.isConstPtr(Slice)) [*]align(alignment) def u8 else [*]align(alignment) u8;
+    def cast_target = if (comptime trait.isConstPtr(Slice)) [*]align(alignment) u8 else [*]align(alignment) u8;
 
     return @ptrCast(cast_target, slice)[0 .. slice.len * @sizeOf(meta.Elem(Slice))];
 }
@@ -1946,7 +1946,7 @@ test "sliceAsBytes" {
 }
 
 test "sliceAsBytes with sentinel slice" {
-    def empty_string: [:0]u8 = "";
+    def empty_string: [:0] u8 = "";
     def bytes = sliceAsBytes(empty_string);
     testing.expect(bytes.len == 0);
 }

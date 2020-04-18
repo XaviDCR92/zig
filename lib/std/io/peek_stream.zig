@@ -38,7 +38,7 @@ pub fn PeekStream(
                 }
             },
             .Dynamic => struct {
-                pub fn init(base: InStreamType, allocator: *mem.Allocator) Self {
+                pub fn init(base: InStreamType, allocator: *var mem.Allocator) Self {
                     return .{
                         .unbuffered_in_stream = base,
                         .fifo = FifoType.init(allocator),
@@ -47,15 +47,15 @@ pub fn PeekStream(
             },
         };
 
-        pub fn putBackByte(self: *Self, byte: u8) !void {
+        pub fn putBackByte(self: *var Self, byte: u8) !void {
             try self.putBack(&[_]u8{byte});
         }
 
-        pub fn putBack(self: *Self, bytes: []u8) !void {
+        pub fn putBack(self: *var Self, bytes: []u8) !void {
             try self.fifo.unget(bytes);
         }
 
-        pub fn read(self: *Self, dest: []u8) Error!usize {
+        pub fn read(self: *var Self, dest: []u8) Error!usize {
             // copy over anything putBack()'d
             var dest_index = self.fifo.read(dest);
             if (dest_index == dest.len) return dest_index;
@@ -65,7 +65,7 @@ pub fn PeekStream(
             return dest_index;
         }
 
-        pub fn inStream(self: *Self) InStream {
+        pub fn inStream(self: *var Self) InStream {
             return .{ .context = self };
         }
     };

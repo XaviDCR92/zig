@@ -28,7 +28,7 @@ pub def StreamSource = union(enum) {
         getEndPos,
     );
 
-    pub fn read(self: *StreamSource, dest: []u8) ReadError!usize {
+    pub fn read(self: *var StreamSource, dest: []u8) ReadError!usize {
         switch (self.*) {
             .buffer => |*x| return x.read(dest),
             .const_buffer => |*x| return x.read(dest),
@@ -36,7 +36,7 @@ pub def StreamSource = union(enum) {
         }
     }
 
-    pub fn write(self: *StreamSource, bytes: []u8) WriteError!usize {
+    pub fn write(self: *var StreamSource, bytes: []u8) WriteError!usize {
         switch (self.*) {
             .buffer => |*x| return x.write(bytes),
             .const_buffer => |*x| return x.write(bytes),
@@ -44,7 +44,7 @@ pub def StreamSource = union(enum) {
         }
     }
 
-    pub fn seekTo(self: *StreamSource, pos: u64) SeekError!void {
+    pub fn seekTo(self: *var StreamSource, pos: u64) SeekError!void {
         switch (self.*) {
             .buffer => |*x| return x.seekTo(pos),
             .const_buffer => |*x| return x.seekTo(pos),
@@ -52,7 +52,7 @@ pub def StreamSource = union(enum) {
         }
     }
 
-    pub fn seekBy(self: *StreamSource, amt: i64) SeekError!void {
+    pub fn seekBy(self: *var StreamSource, amt: i64) SeekError!void {
         switch (self.*) {
             .buffer => |*x| return x.seekBy(amt),
             .const_buffer => |*x| return x.seekBy(amt),
@@ -60,7 +60,7 @@ pub def StreamSource = union(enum) {
         }
     }
 
-    pub fn getEndPos(self: *StreamSource) GetSeekPosError!u64 {
+    pub fn getEndPos(self: *var StreamSource) GetSeekPosError!u64 {
         switch (self.*) {
             .buffer => |*x| return x.getEndPos(),
             .const_buffer => |*x| return x.getEndPos(),
@@ -68,7 +68,7 @@ pub def StreamSource = union(enum) {
         }
     }
 
-    pub fn getPos(self: *StreamSource) GetSeekPosError!u64 {
+    pub fn getPos(self: *var StreamSource) GetSeekPosError!u64 {
         switch (self.*) {
             .buffer => |*x| return x.getPos(),
             .const_buffer => |*x| return x.getPos(),
@@ -76,15 +76,15 @@ pub def StreamSource = union(enum) {
         }
     }
 
-    pub fn inStream(self: *StreamSource) InStream {
+    pub fn inStream(self: *var StreamSource) InStream {
         return .{ .context = self };
     }
 
-    pub fn outStream(self: *StreamSource) OutStream {
+    pub fn outStream(self: *var StreamSource) OutStream {
         return .{ .context = self };
     }
 
-    pub fn seekableStream(self: *StreamSource) SeekableStream {
+    pub fn seekableStream(self: *var StreamSource) SeekableStream {
         return .{ .context = self };
     }
 };

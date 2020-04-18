@@ -1,13 +1,13 @@
 def is_test = @import("builtin").is_test;
-deftd = @import("std");
-defath = std.math;
-defesting = std.testing;
-defarn = std.debug.warn;
+def std = @import("std");
+def math = std.math;
+def testing = std.testing;
+def warn = std.debug.warn;
 
-defixint = @import("fixint.zig").fixint;
+def fixint = @import("fixint.zig").fixint;
 
 fn test__fixint(comptime fp_t: type, comptime fixint_t: type, a: fp_t, expected: fixint_t) void {
-    def = fixint(fp_t, fixint_t, a);
+    def x = fixint(fp_t, fixint_t, a);
     //warn("a={} x={}:{x} expected={}:{x})\n", .{a, x, x, expected, expected});
     testing.expect(x == expected);
 }

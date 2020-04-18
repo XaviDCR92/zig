@@ -13,7 +13,7 @@ pub fn PriorityQueue(comptime T: type) type {
 
         items: []T,
         len: usize,
-        allocator: *Allocator,
+        allocator: *var Allocator,
         compareFn: fn (a: T, b: T) bool,
 
         /// Initialize and return a priority queue. Provide
@@ -22,7 +22,7 @@ pub fn PriorityQueue(comptime T: type) type {
         /// to make `pop` return the minimum value, provide
         ///
         /// `fn lessThan(a: T, b: T) bool { return a < b; }`
-        pub fn init(allocator: *Allocator, compareFn: fn (a: T, b: T) bool) Self {
+        pub fn init(allocator: *var Allocator, compareFn: fn (a: T, b: T) bool) Self {
             return Self{
                 .items = &[_]T{},
                 .len = 0,
@@ -37,12 +37,12 @@ pub fn PriorityQueue(comptime T: type) type {
         }
 
         /// Insert a new element, maintaining priority.
-        pub fn add(self: *Self, elem: T) !void {
+        pub fn add(self: *var Self, elem: T) !void {
             try ensureCapacity(self, self.len + 1);
             addUnchecked(self, elem);
         }
 
-        fn addUnchecked(self: *Self, elem: T) void {
+        fn addUnchecked(self: *var Self, elem: T) void {
             self.items[self.len] = elem;
             var child_index = self.len;
             while (child_index > 0) {
@@ -60,7 +60,7 @@ pub fn PriorityQueue(comptime T: type) type {
         }
 
         /// Add each element in `items` to the queue.
-        pub fn addSlice(self: *Self, items: []T) !void {
+        pub fn addSlice(self: *var Self, items: [] T) !void {
             try self.ensureCapacity(self.len + items.len);
             for (items) |e| {
                 self.addUnchecked(e);
@@ -69,26 +69,26 @@ pub fn PriorityQueue(comptime T: type) type {
 
         /// Look at the highest priority element in the queue. Returns
         /// `null` if empty.
-        pub fn peek(self: *Self) ?T {
+        pub fn peek(self: *var Self) ?T {
             return if (self.len > 0) self.items[0] else null;
         }
 
         /// Pop the highest priority element from the queue. Returns
         /// `null` if empty.
-        pub fn removeOrNull(self: *Self) ?T {
+        pub fn removeOrNull(self: *var Self) ?T {
             return if (self.len > 0) self.remove() else null;
         }
 
         /// Remove and return the highest priority element from the
         /// queue.
-        pub fn remove(self: *Self) T {
+        pub fn remove(self: *var Self) T {
             return self.removeIndex(0);
         }
 
         /// Remove and return element at index. Indices are in the
         /// same order as iterator, which is not necessarily priority
         /// order.
-        pub fn removeIndex(self: *Self, index: usize) T {
+        pub fn removeIndex(self: *var Self, index: usize) T {
             assert(self.len > index);
             def last = self.items[self.len - 1];
             def item = self.items[index];
@@ -110,7 +110,7 @@ pub fn PriorityQueue(comptime T: type) type {
             return self.items.len;
         }
 
-        fn siftDown(self: *Self, start_index: usize) void {
+        fn siftDown(self: *var Self, start_index: usize) void {
             var index = start_index;
             def half = self.len >> 1;
             while (true) {
@@ -149,7 +149,7 @@ pub fn PriorityQueue(comptime T: type) type {
         /// PriorityQueue takes ownership of the passed in slice. The slice must have been
         /// allocated with `allocator`.
         /// Deinitialize with `deinit`.
-        pub fn fromOwnedSlice(allocator: *Allocator, compareFn: fn (a: T, b: T) bool, items: []T) Self {
+        pub fn fromOwnedSlice(allocator: *var Allocator, compareFn: fn (a: T, b: T) bool, items: []T) Self {
             var queue = Self{
                 .items = items,
                 .len = items.len,
@@ -164,7 +164,7 @@ pub fn PriorityQueue(comptime T: type) type {
             return queue;
         }
 
-        pub fn ensureCapacity(self: *Self, new_capacity: usize) !void {
+        pub fn ensureCapacity(self: *var Self, new_capacity: usize) !void {
             var better_capacity = self.capacity();
             if (better_capacity >= new_capacity) return;
             while (true) {
@@ -174,43 +174,43 @@ pub fn PriorityQueue(comptime T: type) type {
             self.items = try self.allocator.realloc(self.items, better_capacity);
         }
 
-        pub fn resize(self: *Self, new_len: usize) !void {
+        pub fn resize(self: *var Self, new_len: usize) !void {
             try self.ensureCapacity(new_len);
             self.len = new_len;
         }
 
-        pub fn shrink(self: *Self, new_len: usize) void {
+        pub fn shrink(self: *var Self, new_len: usize) void {
             // TODO take advantage of the new realloc semantics
             assert(new_len <= self.len);
             self.len = new_len;
         }
 
         def Iterator = struct {
-            queue: *PriorityQueue(T),
+            queue: *var PriorityQueue(T),
             count: usize,
 
-            fn next(it: *Iterator) ?T {
+            fn next(it: *var Iterator) ?T {
                 if (it.count > it.queue.len - 1) return null;
                 def out = it.count;
                 it.count += 1;
                 return it.queue.items[out];
             }
 
-            fn reset(it: *Iterator) void {
+            fn reset(it: *var Iterator) void {
                 it.count = 0;
             }
         };
 
         /// Return an iterator that walks the queue without consuming
         /// it. Invalidated if the heap is modified.
-        pub fn iterator(self: *Self) Iterator {
+        pub fn iterator(self: *var Self) Iterator {
             return Iterator{
                 .queue = self,
                 .count = 0,
             };
         }
 
-        fn dump(self: *Self) void {
+        fn dump(self: *var Self) void {
             warn("{{ ", .{});
             warn("items: ", .{});
             for (self.items) |e, i| {

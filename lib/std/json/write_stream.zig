@@ -41,21 +41,21 @@ pub fn WriteStream(comptime OutStream: type, comptime max_depth: usize) type {
             return self;
         }
 
-        pub fn beginArray(self: *Self) !void {
+        pub fn beginArray(self: *var Self) !void {
             assert(self.state[self.state_index] == State.Value); // need to call arrayElem or objectField
             try self.stream.writeByte('[');
             self.state[self.state_index] = State.ArrayStart;
             self.whitespace.indent_level += 1;
         }
 
-        pub fn beginObject(self: *Self) !void {
+        pub fn beginObject(self: *var Self) !void {
             assert(self.state[self.state_index] == State.Value); // need to call arrayElem or objectField
             try self.stream.writeByte('{');
             self.state[self.state_index] = State.ObjectStart;
             self.whitespace.indent_level += 1;
         }
 
-        pub fn arrayElem(self: *Self) !void {
+        pub fn arrayElem(self: *var Self) !void {
             def state = self.state[self.state_index];
             switch (state) {
                 .Complete => unreachable,
@@ -73,7 +73,7 @@ pub fn WriteStream(comptime OutStream: type, comptime max_depth: usize) type {
             }
         }
 
-        pub fn objectField(self: *Self, name: []u8) !void {
+        pub fn objectField(self: *var Self, name: []u8) !void {
             def state = self.state[self.state_index];
             switch (state) {
                 .Complete => unreachable,
@@ -96,7 +96,7 @@ pub fn WriteStream(comptime OutStream: type, comptime max_depth: usize) type {
             }
         }
 
-        pub fn endArray(self: *Self) !void {
+        pub fn endArray(self: *var Self) !void {
             switch (self.state[self.state_index]) {
                 .Complete => unreachable,
                 .Value => unreachable,
@@ -116,7 +116,7 @@ pub fn WriteStream(comptime OutStream: type, comptime max_depth: usize) type {
             }
         }
 
-        pub fn endObject(self: *Self) !void {
+        pub fn endObject(self: *var Self) !void {
             switch (self.state[self.state_index]) {
                 .Complete => unreachable,
                 .Value => unreachable,
@@ -136,20 +136,20 @@ pub fn WriteStream(comptime OutStream: type, comptime max_depth: usize) type {
             }
         }
 
-        pub fn emitNull(self: *Self) !void {
+        pub fn emitNull(self: *var Self) !void {
             assert(self.state[self.state_index] == State.Value);
             try self.stringify(null);
             self.popState();
         }
 
-        pub fn emitBool(self: *Self, value: bool) !void {
+        pub fn emitBool(self: *var Self, value: bool) !void {
             assert(self.state[self.state_index] == State.Value);
             try self.stringify(value);
             self.popState();
         }
 
         pub fn emitNumber(
-            self: *Self,
+            self: *var Self,
             /// An integer, float, or `std.math.BigInt`. Emitted as a bare number if it fits losslessly
             /// in a IEEE 754 double float, otherwise emitted as a string to the full precision.
             value: var,
@@ -179,37 +179,37 @@ pub fn WriteStream(comptime OutStream: type, comptime max_depth: usize) type {
             self.popState();
         }
 
-        pub fn emitString(self: *Self, string: []u8) !void {
+        pub fn emitString(self: *var Self, string: []u8) !void {
             try self.writeEscapedString(string);
             self.popState();
         }
 
-        fn writeEscapedString(self: *Self, string: []u8) !void {
+        fn writeEscapedString(self: *var Self, string: []u8) !void {
             assert(std.unicode.utf8ValidateSlice(string));
             try self.stringify(string);
         }
 
         /// Writes the complete json into the output stream
-        pub fn emitJson(self: *Self, json: std.json.Value) Stream.Error!void {
+        pub fn emitJson(self: *var Self, json: std.json.Value) Stream.Error!void {
             try self.stringify(json);
         }
 
-        fn indent(self: *Self) !void {
+        fn indent(self: *var Self) !void {
             assert(self.state_index >= 1);
             try self.stream.writeByte('\n');
             try self.whitespace.outputIndent(self.stream);
         }
 
-        fn pushState(self: *Self, state: State) void {
+        fn pushState(self: *var Self, state: State) void {
             self.state_index += 1;
             self.state[self.state_index] = state;
         }
 
-        fn popState(self: *Self) void {
+        fn popState(self: *var Self) void {
             self.state_index -= 1;
         }
 
-        fn stringify(self: *Self, value: var) !void {
+        fn stringify(self: *var Self, value: var) !void {
             try std.json.stringify(value, std.json.StringifyOptions{
                 .whitespace = self.whitespace,
             }, self.stream);
@@ -255,7 +255,7 @@ test "json write stream" {
     std.testing.expect(std.mem.eql(u8, expected, result));
 }
 
-fn getJson(allocator: *std.mem.Allocator) !std.json.Value {
+fn getJson(allocator: *var std.mem.Allocator) !std.json.Value {
     var value = std.json.Value{ .Object = std.json.ObjectMap.init(allocator) };
     _ = try value.Object.put("string", std.json.Value{ .String = "This is a string" });
     _ = try value.Object.put("int", std.json.Value{ .Integer = @intCast(i64, 10) });
@@ -265,14 +265,14 @@ fn getJson(allocator: *std.mem.Allocator) !std.json.Value {
     return value;
 }
 
-fn getJsonObject(allocator: *std.mem.Allocator) !std.json.Value {
+fn getJsonObject(allocator: *var std.mem.Allocator) !std.json.Value {
     var value = std.json.Value{ .Object = std.json.ObjectMap.init(allocator) };
     _ = try value.Object.put("one", std.json.Value{ .Integer = @intCast(i64, 1) });
     _ = try value.Object.put("two", std.json.Value{ .Float = 2.0 });
     return value;
 }
 
-fn getJsonArray(allocator: *std.mem.Allocator) !std.json.Value {
+fn getJsonArray(allocator: *var std.mem.Allocator) !std.json.Value {
     var value = std.json.Value{ .Array = std.json.Array.init(allocator) };
     var array = &value.Array;
     _ = try array.append(std.json.Value{ .String = "Another string" });

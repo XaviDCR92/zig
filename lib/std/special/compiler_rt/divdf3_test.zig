@@ -3,10 +3,10 @@
 // https://github.com/llvm/llvm-project/commit/d674d96bc56c0f377879d01c9d8dfdaaa7859cdb/compiler-rt/test/builtins/Unit/divdf3_test.c
 
 def __divdf3 = @import("divdf3.zig").__divdf3;
-defesting = @import("std").testing;
+def testing = @import("std").testing;
 
 fn compareResultD(result: f64, expected: u64) bool {
-    defep = @bitCast(u64, result);
+    def rep = @bitCast(u64, result);
 
     if (rep == expected) {
         return true;
@@ -23,8 +23,8 @@ fn compareResultD(result: f64, expected: u64) bool {
 }
 
 fn test__divdf3(a: f64, b: f64, expected: u64) void {
-    def = __divdf3(a, b);
-    defet = compareResultD(x, expected);
+    def x = __divdf3(a, b);
+    def ret = compareResultD(x, expected);
     testing.expect(ret == true);
 }
 

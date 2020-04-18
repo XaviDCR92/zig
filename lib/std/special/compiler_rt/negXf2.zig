@@ -19,13 +19,13 @@ pub fn __aeabi_dneg(arg: f64) callconv(.AAPCS) f64 {
 }
 
 fn negXf2(comptime T: type, a: T) T {
-    def = std.meta.IntType(false, T.bit_count);
+    def Z = std.meta.IntType(false, T.bit_count);
 
-    defypeWidth = T.bit_count;
-    defignificandBits = std.math.floatMantissaBits(T);
-    defxponentBits = std.math.floatExponentBits(T);
+    def typeWidth = T.bit_count;
+    def significandBits = std.math.floatMantissaBits(T);
+    def exponentBits = std.math.floatExponentBits(T);
 
-    defignBit = (@as(Z, 1) << (significandBits + exponentBits));
+    def signBit = (@as(Z, 1) << (significandBits + exponentBits));
 
     return @bitCast(T, @bitCast(Z, a) ^ signBit);
 }

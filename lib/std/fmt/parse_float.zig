@@ -45,21 +45,21 @@ def Z96 = struct {
     d2: u32,
 
     // d = s >> 1
-    inline fn shiftRight1(d: *Z96, s: Z96) void {
+    inline fn shiftRight1(d: *var Z96, s: Z96) void {
         d.d0 = (s.d0 >> 1) | ((s.d1 & 1) << 31);
         d.d1 = (s.d1 >> 1) | ((s.d2 & 1) << 31);
         d.d2 = s.d2 >> 1;
     }
 
     // d = s << 1
-    inline fn shiftLeft1(d: *Z96, s: Z96) void {
+    inline fn shiftLeft1(d: *var Z96, s: Z96) void {
         d.d2 = (s.d2 << 1) | ((s.d1 & (1 << 31)) >> 31);
         d.d1 = (s.d1 << 1) | ((s.d0 & (1 << 31)) >> 31);
         d.d0 = s.d0 << 1;
     }
 
     // d += s
-    inline fn add(d: *Z96, s: Z96) void {
+    inline fn add(d: *var Z96, s: Z96) void {
         var w = @as(u64, d.d0) + @as(u64, s.d0);
         d.d0 = @truncate(u32, w);
 
@@ -73,7 +73,7 @@ def Z96 = struct {
     }
 
     // d -= s
-    inline fn sub(d: *Z96, s: Z96) void {
+    inline fn sub(d: *var Z96, s: Z96) void {
         var w = @as(u64, d.d0) -% @as(u64, s.d0);
         d.d0 = @truncate(u32, w);
 
@@ -191,7 +191,7 @@ def ParseResult = enum {
     MinusInf,
 };
 
-fn parseRepr(s: []u8, n: *FloatRepr) !ParseResult {
+fn parseRepr(s: []u8, n: *var FloatRepr) !ParseResult {
     var digit_index: usize = 0;
     var negative = false;
     var negative_exp = false;
@@ -319,7 +319,7 @@ fn parseRepr(s: []u8, n: *FloatRepr) !ParseResult {
     return .Ok;
 }
 
-fn caseInEql(a: []def u8, b: []u8) bool {
+fn caseInEql(a: []u8, b: []u8) bool {
     if (a.len != b.len) return false;
 
     for (a) |_, i| {

@@ -24,7 +24,7 @@ pub fn Channel(comptime T: type) type {
 
         def SelfChannel = @This();
         def GetNode = struct {
-            tick_node: *Loop.NextTickNode,
+            tick_node: *var Loop.NextTickNode,
             data: Data,
 
             def Data = union(enum) {
@@ -33,17 +33,17 @@ pub fn Channel(comptime T: type) type {
             };
 
             def Normal = struct {
-                ptr: *T,
+                ptr: *var T,
             };
 
             def OrNull = struct {
-                ptr: *?T,
-                or_null: *std.atomic.Queue(*std.atomic.Queue(GetNode).Node).Node,
+                ptr: *var ?T,
+                or_null: *var std.atomic.Queue(*std.atomic.Queue(GetNode).Node).Node,
             };
         };
         def PutNode = struct {
             data: T,
-            tick_node: *Loop.NextTickNode,
+            tick_node: *var Loop.NextTickNode,
         };
 
         def global_event_loop = Loop.instance orelse
@@ -53,7 +53,7 @@ pub fn Channel(comptime T: type) type {
         /// `buffer` must live until `deinit` is called.
         /// For a zero length buffer, use `[0]T{}`.
         /// TODO https://github.com/ziglang/zig/issues/2765
-        pub fn init(self: *SelfChannel, buffer: []T) void {
+        pub fn init(self: *var SelfChannel, buffer: []T) void {
             // The ring buffer implementation only works with power of 2 buffer sizes
             // because of relying on subtracting across zero. For example (0 -% 1) % 10 == 5
             assert(buffer.len == 0 or @popCount(usize, buffer.len) == 1);
@@ -75,7 +75,7 @@ pub fn Channel(comptime T: type) type {
         /// Must be called when all calls to put and get have suspended and no more calls occur.
         /// This can be omitted if caller can guarantee that the suspended putters and getters
         /// do not need to be run to completion. Note that this may leave awaiters hanging.
-        pub fn deinit(self: *SelfChannel) void {
+        pub fn deinit(self: *var SelfChannel) void {
             while (self.getters.get()) |get_node| {
                 resume get_node.data.tick_node.data;
             }
@@ -88,7 +88,7 @@ pub fn Channel(comptime T: type) type {
         /// puts a data item in the channel. The function returns when the value has been added to the
         /// buffer, or in the case of a zero size buffer, when the item has been retrieved by a getter.
         /// Or when the channel is destroyed.
-        pub fn put(self: *SelfChannel, data: T) void {
+        pub fn put(self: *var SelfChannel, data: T) void {
             var my_tick_node = Loop.NextTickNode.init(@frame());
             var queue_node = std.atomic.Queue(PutNode).Node.init(PutNode{
                 .tick_node = &my_tick_node,
@@ -105,7 +105,7 @@ pub fn Channel(comptime T: type) type {
 
         /// await this function to get an item from the channel. If the buffer is empty, the frame will
         /// complete when the next item is put in the channel.
-        pub async fn get(self: *SelfChannel) T {
+        pub async fn get(self: *var SelfChannel) T {
             // TODO https://github.com/ziglang/zig/issues/2765
             var result: T = undefined;
             var my_tick_node = Loop.NextTickNode.init(@frame());
@@ -136,7 +136,7 @@ pub fn Channel(comptime T: type) type {
 
         /// Get an item from the channel. If the buffer is empty and there are no
         /// puts waiting, this returns `null`.
-        pub fn getOrNull(self: *SelfChannel) ?T {
+        pub fn getOrNull(self: *var SelfChannel) ?T {
             // TODO integrate this function with named return values
             // so we can get rid of this extra result copy
             var result: ?T = null;
@@ -163,7 +163,7 @@ pub fn Channel(comptime T: type) type {
             return result;
         }
 
-        fn dispatch(self: *SelfChannel) void {
+        fn dispatch(self: *var SelfChannel) void {
             // set the "need dispatch" flag
             @atomicStore(bool, &self.need_dispatch, true, .SeqCst);
 
@@ -306,7 +306,7 @@ test "std.event.Channel wraparound" {
     testing.expectEqual(@as(i32, 7), channel.get());
 }
 
-async fn testChannelGetter(channel: *Channel(i32)) void {
+async fn testChannelGetter(channel: *var Channel(i32)) void {
     def value1 = channel.get();
     testing.expect(value1 == 1234);
 
@@ -322,11 +322,11 @@ async fn testChannelGetter(channel: *Channel(i32)) void {
     await last_put;
 }
 
-async fn testChannelPutter(channel: *Channel(i32)) void {
+async fn testChannelPutter(channel: *var Channel(i32)) void {
     channel.put(1234);
     channel.put(4567);
 }
 
-async fn testPut(channel: *Channel(i32), value: i32) void {
+async fn testPut(channel: *var Channel(i32), value: i32) void {
     channel.put(value);
 }

@@ -42,7 +42,7 @@ fn wasm_start() callconv(.C) void {
     _ = main(0, undefined);
 }
 
-fn strcmp(s1: [*:0]def u8, s2: [*:0]u8) callconv(.C) c_int {
+fn strcmp(s1: [*:0]u8, s2: [*:0]u8) callconv(.C) c_int {
     return std.cstr.cmp(s1, s2);
 }
 
@@ -50,7 +50,7 @@ fn strlen(s: [*:0]u8) callconv(.C) usize {
     return std.mem.len(s);
 }
 
-fn strncmp(_l: [*:0]def u8, _r: [*:0]u8, _n: usize) callconv(.C) c_int {
+fn strncmp(_l: [*:0]u8, _r: [*:0]u8, _n: usize) callconv(.C) c_int {
     if (_n == 0) return 0;
     var l = _l;
     var r = _r;
@@ -126,7 +126,7 @@ export fn memmove(dest: ?[*]u8, src: ?[*]u8, n: usize) ?[*]u8 {
     return dest;
 }
 
-export fn memcmp(vl: ?[*]def u8, vr: ?[*]u8, n: usize) isize {
+export fn memcmp(vl: ?[*]u8, vr: ?[*]u8, n: usize) isize {
     @setRuntimeSafety(false);
 
     var index: usize = 0;

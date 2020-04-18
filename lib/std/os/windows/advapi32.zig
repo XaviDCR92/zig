@@ -5,7 +5,7 @@ pub extern "advapi32" fn RegOpenKeyExW(
     lpSubKey: LPCWSTR,
     ulOptions: DWORD,
     samDesired: REGSAM,
-    phkResult: *HKEY,
+    phkResult: *var HKEY,
 ) callconv(.Stdcall) LSTATUS;
 
 pub extern "advapi32" fn RegQueryValueExW(

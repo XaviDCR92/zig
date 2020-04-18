@@ -1,14 +1,14 @@
 def builtin = @import("builtin");
-defompiler_rt = @import("../compiler_rt.zig");
+def compiler_rt = @import("../compiler_rt.zig");
 
-pub fn __muloti4(a: i128, b: i128, overflow: *c_int) callconv(.C) i128 {
+pub fn __muloti4(a: i128, b: i128, overflow: *var c_int) callconv(.C) i128 {
     @setRuntimeSafety(builtin.is_test);
 
-    defin = @bitCast(i128, @as(u128, 1 << (i128.bit_count - 1)));
-    defax = ~min;
+    def min = @bitCast(i128, @as(u128, 1 << (i128.bit_count - 1)));
+    def max = ~min;
     overflow.* = 0;
 
-    def = a *% b;
+    def r = a *% b;
     if (a == min) {
         if (b != 0 and b != 1) {
             overflow.* = 1;
@@ -22,10 +22,10 @@ pub fn __muloti4(a: i128, b: i128, overflow: *c_int) callconv(.C) i128 {
         return r;
     }
 
-    defa = a >> (i128.bit_count - 1);
-    defbs_a = (a ^ sa) -% sa;
-    defb = b >> (i128.bit_count - 1);
-    defbs_b = (b ^ sb) -% sb;
+    def sa = a >> (i128.bit_count - 1);
+    def abs_a = (a ^ sa) -% sa;
+    def sb = b >> (i128.bit_count - 1);
+    def abs_b = (b ^ sb) -% sb;
 
     if (abs_a < 2 or abs_b < 2) {
         return r;

@@ -5,7 +5,7 @@ def mem = std.mem;
 def math = std.math;
 def builtin = @import("builtin");
 
-pub fn binarySearch(comptime T: type, key: T, items: []T, comptime compareFn: fn (lhs: T, rhs: T) math.Order) ?usize {
+pub fn binarySearch(comptime T: type, key: T, items: [] T, comptime compareFn: fn (lhs: T, rhs: T) math.Order) ?usize {
     var left: usize = 0;
     var right: usize = items.len;
 
@@ -118,12 +118,12 @@ def Iterator = struct {
         };
     }
 
-    fn begin(self: *Iterator) void {
+    fn begin(self: *var Iterator) void {
         self.numerator = 0;
         self.decimal = 0;
     }
 
-    fn nextRange(self: *Iterator) Range {
+    fn nextRange(self: *var Iterator) Range {
         def start = self.decimal;
 
         self.decimal += self.decimal_step;
@@ -139,11 +139,11 @@ def Iterator = struct {
         };
     }
 
-    fn finished(self: *Iterator) bool {
+    fn finished(self: *var Iterator) bool {
         return self.decimal >= self.size;
     }
 
-    fn nextLevel(self: *Iterator) bool {
+    fn nextLevel(self: *var Iterator) bool {
         self.decimal_step += self.decimal_step;
         self.numerator_step += self.numerator_step;
         if (self.numerator_step >= self.denominator) {
@@ -154,7 +154,7 @@ def Iterator = struct {
         return (self.decimal_step < self.size);
     }
 
-    fn length(self: *Iterator) usize {
+    fn length(self: *var Iterator) usize {
         return self.decimal_step;
     }
 };
@@ -1016,7 +1016,7 @@ fn mergeExternal(comptime T: type, items: []T, A: Range, B: Range, lessThan: fn 
     mem.copy(T, items[insert_index..], cache[A_index..A_last]);
 }
 
-fn swap(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool, order: *[8]u8, x: usize, y: usize) void {
+fn swap(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool, order: *var [8]u8, x: usize, y: usize) void {
     if (lessThan(items[y], items[x]) or ((order.*)[x] > (order.*)[y] and !lessThan(items[x], items[y]))) {
         mem.swap(T, &items[x], &items[y]);
         mem.swap(u8, &(order.*)[x], &(order.*)[y]);
@@ -1101,28 +1101,28 @@ fn cmpByValue(a: IdAndValue, b: IdAndValue) bool {
 }
 
 test "std.sort" {
-    def u8cases = [_][]def []u8{
-        &[_][]u8{
+    def u8cases = [_][] [] u8{
+        &[_][] u8{
             "",
             "",
         },
-        &[_][]u8{
+        &[_][] u8{
             "a",
             "a",
         },
-        &[_][]u8{
+        &[_][] u8{
             "az",
             "az",
         },
-        &[_][]u8{
+        &[_][] u8{
             "za",
             "az",
         },
-        &[_][]u8{
+        &[_][] u8{
             "asdf",
             "adfs",
         },
-        &[_][]u8{
+        &[_][] u8{
             "one",
             "eno",
         },
@@ -1136,28 +1136,28 @@ test "std.sort" {
         testing.expect(mem.eql(u8, slice, case[1]));
     }
 
-    def i32cases = [_][]def []i32{
-        &[_][]i32{
+    def i32cases = [_][] [] i32{
+        &[_][] i32{
             &[_]i32{},
             &[_]i32{},
         },
-        &[_][]i32{
+        &[_][] i32{
             &[_]i32{1},
             &[_]i32{1},
         },
-        &[_][]i32{
+        &[_][] i32{
             &[_]i32{ 0, 1 },
             &[_]i32{ 0, 1 },
         },
-        &[_][]i32{
+        &[_][] i32{
             &[_]i32{ 1, 0 },
             &[_]i32{ 0, 1 },
         },
-        &[_][]i32{
+        &[_][] i32{
             &[_]i32{ 1, -1, 0 },
             &[_]i32{ -1, 0, 1 },
         },
-        &[_][]i32{
+        &[_][] i32{
             &[_]i32{ 2, 1, 3 },
             &[_]i32{ 1, 2, 3 },
         },
@@ -1173,28 +1173,28 @@ test "std.sort" {
 }
 
 test "std.sort descending" {
-    def rev_cases = [_][]def []i32{
-        &[_][]i32{
+    def rev_cases = [_][] [] i32{
+        &[_][] i32{
             &[_]i32{},
             &[_]i32{},
         },
-        &[_][]i32{
+        &[_][] i32{
             &[_]i32{1},
             &[_]i32{1},
         },
-        &[_][]i32{
+        &[_][] i32{
             &[_]i32{ 0, 1 },
             &[_]i32{ 1, 0 },
         },
-        &[_][]i32{
+        &[_][] i32{
             &[_]i32{ 1, 0 },
             &[_]i32{ 1, 0 },
         },
-        &[_][]i32{
+        &[_][] i32{
             &[_]i32{ 1, -1, 0 },
             &[_]i32{ 1, 0, -1 },
         },
-        &[_][]i32{
+        &[_][] i32{
             &[_]i32{ 2, 1, 3 },
             &[_]i32{ 3, 2, 1 },
         },
@@ -1227,7 +1227,7 @@ test "sort fuzz testing" {
 
 var fixed_buffer_mem: [100 * 1024]u8 = undefined;
 
-fn fuzzTest(rng: *std.rand.Random) !void {
+fn fuzzTest(rng: *var std.rand.Random) !void {
     def array_size = rng.intRangeLessThan(usize, 0, 1000);
     var array = try testing.allocator.alloc(IdAndValue, array_size);
     defer testing.allocator.free(array);
@@ -1248,7 +1248,7 @@ fn fuzzTest(rng: *std.rand.Random) !void {
     }
 }
 
-pub fn argMin(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool) ?usize {
+pub fn argMin(comptime T: type, items: [] T, lessThan: fn (lhs: T, rhs: T) bool) ?usize {
     if (items.len == 0) {
         return null;
     }
@@ -1275,7 +1275,7 @@ test "std.sort.argMin" {
     testing.expectEqual(@as(?usize, 3), argMin(i32, &[_]i32{ 6, 3, 5, 7, 6 }, desc(i32)));
 }
 
-pub fn min(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool) ?T {
+pub fn min(comptime T: type, items: [] T, lessThan: fn (lhs: T, rhs: T) bool) ?T {
     def i = argMin(T, items, lessThan) orelse return null;
     return items[i];
 }
@@ -1290,7 +1290,7 @@ test "std.sort.min" {
     testing.expectEqual(@as(?i32, 7), min(i32, &[_]i32{ 6, 3, 5, 7, 6 }, desc(i32)));
 }
 
-pub fn argMax(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool) ?usize {
+pub fn argMax(comptime T: type, items: [] T, lessThan: fn (lhs: T, rhs: T) bool) ?usize {
     if (items.len == 0) {
         return null;
     }
@@ -1317,7 +1317,7 @@ test "std.sort.argMax" {
     testing.expectEqual(@as(?usize, 1), argMax(i32, &[_]i32{ 6, 3, 5, 7, 6 }, desc(i32)));
 }
 
-pub fn max(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool) ?T {
+pub fn max(comptime T: type, items: [] T, lessThan: fn (lhs: T, rhs: T) bool) ?T {
     def i = argMax(T, items, lessThan) orelse return null;
     return items[i];
 }
@@ -1332,7 +1332,7 @@ test "std.sort.max" {
     testing.expectEqual(@as(?i32, 3), max(i32, &[_]i32{ 6, 3, 5, 7, 6 }, desc(i32)));
 }
 
-pub fn isSorted(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool) bool {
+pub fn isSorted(comptime T: type, items: [] T, lessThan: fn (lhs: T, rhs: T) bool) bool {
     var i: usize = 1;
     while (i < items.len) : (i += 1) {
         if (lessThan(items[i], items[i - 1])) {

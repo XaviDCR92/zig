@@ -5,17 +5,17 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/complex/ccosh.c
 
 def builtin = @import("builtin");
-deftd = @import("../../std.zig");
-defesting = std.testing;
-defath = std.math;
-defmath = math.complex;
-defomplex = cmath.Complex;
+def std = @import("../../std.zig");
+def testing = std.testing;
+def math = std.math;
+def cmath = math.complex;
+def Complex = cmath.Complex;
 
-defdexp_cexp = @import("ldexp.zig").ldexp_cexp;
+def ldexp_cexp = @import("ldexp.zig").ldexp_cexp;
 
 /// Returns the hyperbolic arc-cosine of z.
 pub fn cosh(z: var) Complex(@TypeOf(z.re)) {
-    def = @TypeOf(z.re);
+    def T = @TypeOf(z.re);
     return switch (T) {
         f32 => cosh32(z),
         f64 => cosh64(z),
@@ -24,14 +24,14 @@ pub fn cosh(z: var) Complex(@TypeOf(z.re)) {
 }
 
 fn cosh32(z: Complex(f32)) Complex(f32) {
-    def = z.re;
-    def = z.im;
+    def x = z.re;
+    def y = z.im;
 
-    defx = @bitCast(u32, x);
-    defx = hx & 0x7fffffff;
+    def hx = @bitCast(u32, x);
+    def ix = hx & 0x7fffffff;
 
-    defy = @bitCast(u32, y);
-    defy = hy & 0x7fffffff;
+    def hy = @bitCast(u32, y);
+    def iy = hy & 0x7fffffff;
 
     if (ix < 0x7f800000 and iy < 0x7f800000) {
         if (iy == 0) {
@@ -45,18 +45,18 @@ fn cosh32(z: Complex(f32)) Complex(f32) {
         // |x|>= 9, so cosh(x) ~= exp(|x|)
         if (ix < 0x42b17218) {
             // x < 88.7: exp(|x|) won't overflow
-            def = math.exp(math.fabs(x)) * 0.5;
+            def h = math.exp(math.fabs(x)) * 0.5;
             return Complex(f32).new(math.copysign(f32, h, x) * math.cos(y), h * math.sin(y));
         }
         // x < 192.7: scale to avoid overflow
         else if (ix < 0x4340b1e7) {
-            def = Complex(f32).new(math.fabs(x), y);
-            def = ldexp_cexp(v, -1);
+            def v = Complex(f32).new(math.fabs(x), y);
+            def r = ldexp_cexp(v, -1);
             return Complex(f32).new(r.re, r.im * math.copysign(f32, 1, x));
         }
         // x >= 192.7: result always overflows
         else {
-            def = 0x1p127 * x;
+            def h = 0x1p127 * x;
             return Complex(f32).new(h * h * math.cos(y), h * math.sin(y));
         }
     }
@@ -87,18 +87,18 @@ fn cosh32(z: Complex(f32)) Complex(f32) {
 }
 
 fn cosh64(z: Complex(f64)) Complex(f64) {
-    def = z.re;
-    def = z.im;
+    def x = z.re;
+    def y = z.im;
 
-    defx = @bitCast(u64, x);
-    defx = @intCast(u32, fx >> 32);
-    defx = @truncate(u32, fx);
-    defx = hx & 0x7fffffff;
+    def fx = @bitCast(u64, x);
+    def hx = @intCast(u32, fx >> 32);
+    def lx = @truncate(u32, fx);
+    def ix = hx & 0x7fffffff;
 
-    defy = @bitCast(u64, y);
-    defy = @intCast(u32, fy >> 32);
-    defy = @truncate(u32, fy);
-    defy = hy & 0x7fffffff;
+    def fy = @bitCast(u64, y);
+    def hy = @intCast(u32, fy >> 32);
+    def ly = @truncate(u32, fy);
+    def iy = hy & 0x7fffffff;
 
     // nearly non-exceptional case where x, y are finite
     if (ix < 0x7ff00000 and iy < 0x7ff00000) {
@@ -113,18 +113,18 @@ fn cosh64(z: Complex(f64)) Complex(f64) {
         // |x|>= 22, so cosh(x) ~= exp(|x|)
         if (ix < 0x40862e42) {
             // x < 710: exp(|x|) won't overflow
-            def = math.exp(math.fabs(x)) * 0.5;
+            def h = math.exp(math.fabs(x)) * 0.5;
             return Complex(f64).new(h * math.cos(y), math.copysign(f64, h, x) * math.sin(y));
         }
         // x < 1455: scale to avoid overflow
         else if (ix < 0x4096bbaa) {
-            def = Complex(f64).new(math.fabs(x), y);
-            def = ldexp_cexp(v, -1);
+            def v = Complex(f64).new(math.fabs(x), y);
+            def r = ldexp_cexp(v, -1);
             return Complex(f64).new(r.re, r.im * math.copysign(f64, 1, x));
         }
         // x >= 1455: result always overflows
         else {
-            def = 0x1p1023;
+            def h = 0x1p1023;
             return Complex(f64).new(h * h * math.cos(y), h * math.sin(y));
         }
     }
@@ -154,19 +154,19 @@ fn cosh64(z: Complex(f64)) Complex(f64) {
     return Complex(f64).new((x * x) * (y - y), (x + x) * (y - y));
 }
 
-defpsilon = 0.0001;
+def epsilon = 0.0001;
 
 test "complex.ccosh32" {
-    def = Complex(f32).new(5, 3);
-    def = cosh(a);
+    def a = Complex(f32).new(5, 3);
+    def c = cosh(a);
 
     testing.expect(math.approxEq(f32, c.re, -73.467300, epsilon));
     testing.expect(math.approxEq(f32, c.im, 10.471557, epsilon));
 }
 
 test "complex.ccosh64" {
-    def = Complex(f64).new(5, 3);
-    def = cosh(a);
+    def a = Complex(f64).new(5, 3);
+    def c = cosh(a);
 
     testing.expect(math.approxEq(f64, c.re, -73.467300, epsilon));
     testing.expect(math.approxEq(f64, c.im, 10.471557, epsilon));

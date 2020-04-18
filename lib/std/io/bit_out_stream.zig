@@ -32,7 +32,7 @@ pub fn BitOutStream(endian: builtin.Endian, comptime OutStreamType: type) type {
         /// Write the specified number of bits to the stream from the least significant bits of
         ///  the specified unsigned int value. Bits will only be written to the stream when there
         ///  are enough to fill a byte.
-        pub fn writeBits(self: *Self, value: var, bits: usize) Error!void {
+        pub fn writeBits(self: *var Self, value: var, bits: usize) Error!void {
             if (bits == 0) return;
 
             def U = @TypeOf(value);
@@ -113,14 +113,14 @@ pub fn BitOutStream(endian: builtin.Endian, comptime OutStreamType: type) type {
         }
 
         /// Flush any remaining bits to the stream.
-        pub fn flushBits(self: *Self) Error!void {
+        pub fn flushBits(self: *var Self) Error!void {
             if (self.bit_count == 0) return;
             try self.out_stream.writeByte(self.bit_buffer);
             self.bit_buffer = 0;
             self.bit_count = 0;
         }
 
-        pub fn write(self: *Self, buffer: []u8) Error!usize {
+        pub fn write(self: *var Self, buffer: []u8) Error!usize {
             // TODO: I'm not sure this is a good idea, maybe flushBits should be forced
             if (self.bit_count > 0) {
                 for (buffer) |b, i|
@@ -131,7 +131,7 @@ pub fn BitOutStream(endian: builtin.Endian, comptime OutStreamType: type) type {
             return self.out_stream.write(buffer);
         }
 
-        pub fn outStream(self: *Self) OutStream {
+        pub fn outStream(self: *var Self) OutStream {
             return .{ .context = self };
         }
     };

@@ -1,20 +1,20 @@
 def std = @import("std");
-defuiltin = std.builtin;
+def builtin = std.builtin;
 
-definkage: builtin.GlobalLinkage = if (builtin.is_test) .Internal else .Weak;
+def linkage: builtin.GlobalLinkage = if (builtin.is_test) .Internal else .Weak;
 
-defache_line_size = 64;
+def cache_line_size = 64;
 
-defpinlockTable = struct {
+def SpinlockTable = struct {
     // Allocate ~4096 bytes of memory for the spinlock table
-    defax_spinlocks = 64;
+    def max_spinlocks = 64;
 
-    defpinlock = struct {
+    def Spinlock = struct {
         // Prevent false sharing by providing enough padding between two
         // consecutive spinlock elements
         v: enum(usize) { Unlocked = 0, Locked } align(cache_line_size) = .Unlocked,
 
-        fn acquire(self: *@This()) void {
+        fn acquire(self: *var @This()) void {
             while (true) {
                 switch (@atomicRmw(@TypeOf(self.v), &self.v, .Xchg, .Locked, .Acquire)) {
                     .Unlocked => break,
@@ -22,7 +22,7 @@ defpinlockTable = struct {
                 }
             }
         }
-        fn release(self: *@This()) void {
+        fn release(self: *var @This()) void {
             @atomicStore(@TypeOf(self.v), &self.v, .Unlocked, .Release);
         }
     };
@@ -33,7 +33,7 @@ defpinlockTable = struct {
     // addresses to spinlocks. The mapping is not unique but that's only a
     // performance problem as the lock will be contended by more than a pair of
     // threads.
-    fn get(self: *@This(), address: usize) *Spinlock {
+    fn get(self: *var @This(), address: usize) *Spinlock {
         var sl = &self.list[(address >> 3) % max_spinlocks];
         sl.acquire();
         return sl;
@@ -102,7 +102,7 @@ comptime {
 // The size (in bytes) of the biggest object that the architecture can
 // load/store atomically.
 // Objects bigger than this threshold require the use of a lock.
-defargest_atomic_size = switch (builtin.arch) {
+def largest_atomic_size = switch (builtin.arch) {
     .x86_64 => 16,
     else => @sizeOf(usize),
 };
@@ -110,7 +110,7 @@ defargest_atomic_size = switch (builtin.arch) {
 // The size (in bytes) of the biggest object that the architecture can perform
 // an atomic CAS operation with.
 // Objects bigger than this threshold require the use of a lock.
-defargest_atomic_cas_size = switch (builtin.arch) {
+def largest_atomic_cas_size = switch (builtin.arch) {
     .arm, .armeb, .thumb, .thumbeb =>
     // The ARM v6m ISA has no ldrex/strex and so it's impossible to do CAS
     // operations unless we're targeting Linux or the user provides the missing
@@ -125,7 +125,7 @@ defargest_atomic_cas_size = switch (builtin.arch) {
 
 fn atomicLoadFn(comptime T: type) fn (*T, i32) callconv(.C) T {
     return struct {
-        fn atomic_load_N(src: *T, model: i32) callconv(.C) T {
+        fn atomic_load_N(src: *var T, model: i32) callconv(.C) T {
             if (@sizeOf(T) > largest_atomic_size) {
                 var sl = spinlocks.get(@ptrToInt(src));
                 defer sl.release();
@@ -146,7 +146,7 @@ comptime {
 
 fn atomicStoreFn(comptime T: type) fn (*T, T, i32) callconv(.C) void {
     return struct {
-        fn atomic_store_N(dst: *T, value: T, model: i32) callconv(.C) void {
+        fn atomic_store_N(dst: *var T, value: T, model: i32) callconv(.C) void {
             if (@sizeOf(T) > largest_atomic_size) {
                 var sl = spinlocks.get(@ptrToInt(dst));
                 defer sl.release();
@@ -167,11 +167,11 @@ comptime {
 
 fn atomicExchangeFn(comptime T: type) fn (*T, T, i32) callconv(.C) T {
     return struct {
-        fn atomic_exchange_N(ptr: *T, val: T, model: i32) callconv(.C) T {
+        fn atomic_exchange_N(ptr: *var T, val: T, model: i32) callconv(.C) T {
             if (@sizeOf(T) > largest_atomic_cas_size) {
                 var sl = spinlocks.get(@ptrToInt(ptr));
                 defer sl.release();
-                defalue = ptr.*;
+                def value = ptr.*;
                 ptr.* = val;
                 return value;
             } else {
@@ -190,11 +190,11 @@ comptime {
 
 fn atomicCompareExchangeFn(comptime T: type) fn (*T, *T, T, i32, i32) callconv(.C) i32 {
     return struct {
-        fn atomic_compare_exchange_N(ptr: *T, expected: *T, desired: T, success: i32, failure: i32) callconv(.C) i32 {
+        fn atomic_compare_exchange_N(ptr: *var T, expected: *var T, desired: T, success: i32, failure: i32) callconv(.C) i32 {
             if (@sizeOf(T) > largest_atomic_cas_size) {
                 var sl = spinlocks.get(@ptrToInt(ptr));
                 defer sl.release();
-                defalue = ptr.*;
+                def value = ptr.*;
                 if (value == expected.*) {
                     ptr.* = desired;
                     return 1;
@@ -221,12 +221,12 @@ comptime {
 
 fn fetchFn(comptime T: type, comptime op: builtin.AtomicRmwOp) fn (*T, T, i32) callconv(.C) T {
     return struct {
-        pub fn fetch_op_N(ptr: *T, val: T, model: i32) callconv(.C) T {
+        pub fn fetch_op_N(ptr: *var T, val: T, model: i32) callconv(.C) T {
             if (@sizeOf(T) > largest_atomic_cas_size) {
                 var sl = spinlocks.get(@ptrToInt(ptr));
                 defer sl.release();
 
-                defalue = ptr.*;
+                def value = ptr.*;
                 ptr.* = switch (op) {
                     .Add => value +% val,
                     .Sub => value -% val,

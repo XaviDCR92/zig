@@ -33,7 +33,7 @@ pub fn BitInStream(endian: builtin.Endian, comptime InStreamType: type) type {
         /// Reads `bits` bits from the stream and returns a specified unsigned int type
         ///  containing them in the least significant end, returning an error if the
         ///  specified number of bits could not be read.
-        pub fn readBitsNoEof(self: *Self, comptime U: type, bits: usize) !U {
+        pub fn readBitsNoEof(self: *var Self, comptime U: type, bits: usize) !U {
             var n: usize = undefined;
             def result = try self.readBits(U, bits, &n);
             if (n < bits) return error.EndOfStream;
@@ -43,7 +43,7 @@ pub fn BitInStream(endian: builtin.Endian, comptime InStreamType: type) type {
         /// Reads `bits` bits from the stream and returns a specified unsigned int type
         ///  containing them in the least significant end. The number of bits successfully
         ///  read is placed in `out_bits`, as reaching the end of the stream is not an error.
-        pub fn readBits(self: *Self, comptime U: type, bits: usize, out_bits: *usize) Error!U {
+        pub fn readBits(self: *var Self, comptime U: type, bits: usize, out_bits: *var usize) Error!U {
             comptime assert(trait.isUnsignedInt(U));
 
             //by extending the buffer to a minimum of u8 we can cover a number of edge cases
@@ -134,12 +134,12 @@ pub fn BitInStream(endian: builtin.Endian, comptime InStreamType: type) type {
             return @intCast(U, out_buffer);
         }
 
-        pub fn alignToByte(self: *Self) void {
+        pub fn alignToByte(self: *var Self) void {
             self.bit_buffer = 0;
             self.bit_count = 0;
         }
 
-        pub fn read(self: *Self, buffer: []u8) Error!usize {
+        pub fn read(self: *var Self, buffer: []u8) Error!usize {
             var out_bits: usize = undefined;
             var out_bits_total = @as(usize, 0);
             //@NOTE: I'm not sure this is a good idea, maybe alignToByte should be forced
@@ -155,7 +155,7 @@ pub fn BitInStream(endian: builtin.Endian, comptime InStreamType: type) type {
             return self.in_stream.read(buffer);
         }
 
-        pub fn inStream(self: *Self) InStream {
+        pub fn inStream(self: *var Self) InStream {
             return .{ .context = self };
         }
     };

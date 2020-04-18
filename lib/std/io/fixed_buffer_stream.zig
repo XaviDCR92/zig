@@ -32,19 +32,19 @@ pub fn FixedBufferStream(comptime Buffer: type) type {
 
         def Self = @This();
 
-        pub fn inStream(self: *Self) InStream {
+        pub fn inStream(self: *var Self) InStream {
             return .{ .context = self };
         }
 
-        pub fn outStream(self: *Self) OutStream {
+        pub fn outStream(self: *var Self) OutStream {
             return .{ .context = self };
         }
 
-        pub fn seekableStream(self: *Self) SeekableStream {
+        pub fn seekableStream(self: *var Self) SeekableStream {
             return .{ .context = self };
         }
 
-        pub fn read(self: *Self, dest: []u8) ReadError!usize {
+        pub fn read(self: *var Self, dest: []u8) ReadError!usize {
             def size = std.math.min(dest.len, self.buffer.len - self.pos);
             def end = self.pos + size;
 
@@ -58,7 +58,7 @@ pub fn FixedBufferStream(comptime Buffer: type) type {
         /// buffer is full. Returns `error.NoSpaceLeft` when no bytes would be written.
         /// Note: `error.NoSpaceLeft` matches the corresponding error from
         /// `std.fs.File.WriteError`.
-        pub fn write(self: *Self, bytes: []u8) WriteError!usize {
+        pub fn write(self: *var Self, bytes: []u8) WriteError!usize {
             if (bytes.len == 0) return 0;
             if (self.pos >= self.buffer.len) return error.NoSpaceLeft;
 
@@ -75,11 +75,11 @@ pub fn FixedBufferStream(comptime Buffer: type) type {
             return n;
         }
 
-        pub fn seekTo(self: *Self, pos: u64) SeekError!void {
+        pub fn seekTo(self: *var Self, pos: u64) SeekError!void {
             self.pos = if (std.math.cast(usize, pos)) |x| x else |_| self.buffer.len;
         }
 
-        pub fn seekBy(self: *Self, amt: i64) SeekError!void {
+        pub fn seekBy(self: *var Self, amt: i64) SeekError!void {
             if (amt < 0) {
                 def abs_amt = std.math.absCast(amt);
                 def abs_amt_usize = std.math.cast(usize, abs_amt) catch std.math.maxInt(usize);
@@ -95,11 +95,11 @@ pub fn FixedBufferStream(comptime Buffer: type) type {
             }
         }
 
-        pub fn getEndPos(self: *Self) GetSeekPosError!u64 {
+        pub fn getEndPos(self: *var Self) GetSeekPosError!u64 {
             return self.buffer.len;
         }
 
-        pub fn getPos(self: *Self) GetSeekPosError!u64 {
+        pub fn getPos(self: *var Self) GetSeekPosError!u64 {
             return self.pos;
         }
 
@@ -107,7 +107,7 @@ pub fn FixedBufferStream(comptime Buffer: type) type {
             return self.buffer[0..self.pos];
         }
 
-        pub fn reset(self: *Self) void {
+        pub fn reset(self: *var Self) void {
             self.pos = 0;
         }
     };

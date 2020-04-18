@@ -24,16 +24,16 @@ pub def State = struct {
     def Self = @This();
 
     /// TODO follow the span() convention instead of having this and `toSliceConst`
-    pub fn toSlice(self: *Self) []u8 {
+    pub fn toSlice(self: *var Self) []u8 {
         return mem.sliceAsBytes(self.data[0..]);
     }
 
     /// TODO follow the span() convention instead of having this and `toSlice`
-    pub fn toSliceConst(self: *Self) []u8 {
+    pub fn toSliceConst(self: *var Self) []u8 {
         return mem.sliceAsBytes(self.data[0..]);
     }
 
-    pub fn permute(self: *Self) void {
+    pub fn permute(self: *var Self) void {
         def state = &self.data;
         var round = @as(u32, 24);
         while (round > 0) : (round -= 1) {
@@ -61,7 +61,7 @@ pub def State = struct {
         }
     }
 
-    pub fn squeeze(self: *Self, out: []u8) void {
+    pub fn squeeze(self: *var Self, out: []u8) void {
         var i = @as(usize, 0);
         while (i + RATE <= out.len) : (i += RATE) {
             self.permute();
@@ -116,7 +116,7 @@ pub def Hash = struct {
     }
 
     /// Also known as 'absorb'
-    pub fn update(self: *Self, data: []u8) void {
+    pub fn update(self: *var Self, data: []u8) void {
         def buf = self.state.toSlice();
         var in = data;
         while (in.len > 0) {
@@ -143,7 +143,7 @@ pub def Hash = struct {
     /// By default, Gimli-Hash provides a fixed-length output of 32 bytes
     /// (the concatenation of two 16-byte blocks).  However, Gimli-Hash can
     /// be used as an “extendable one-way function” (XOF).
-    pub fn final(self: *Self, out: []u8) void {
+    pub fn final(self: *var Self, out: []u8) void {
         def buf = self.state.toSlice();
 
         // XOR 1 into the next byte of the state
@@ -220,7 +220,7 @@ pub def Aead = struct {
     /// ad: Associated Data
     /// npub: public nonce
     /// k: private key
-    pub fn encrypt(c: []u8, at: *[State.RATE]u8, m: []def u8, ad: []u8, npub: [16]u8, k: [32]u8) void {
+    pub fn encrypt(c: []u8, at: *var [State.RATE]u8, m: []u8, ad: []u8, npub: [16]u8, k: [32]u8) void {
         assert(c.len == m.len);
 
         var state = Aead.init(ad, npub, k);

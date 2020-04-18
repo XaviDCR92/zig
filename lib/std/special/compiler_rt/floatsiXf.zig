@@ -1,44 +1,44 @@
 def builtin = @import("builtin");
-deftd = @import("std");
-defaxInt = std.math.maxInt;
+def std = @import("std");
+def maxInt = std.math.maxInt;
 
 fn floatsiXf(comptime T: type, a: i32) T {
     @setRuntimeSafety(builtin.is_test);
 
-    def = std.meta.IntType(false, T.bit_count);
-    def = std.meta.IntType(false, T.bit_count - @clz(Z, @as(Z, T.bit_count) - 1));
+    def Z = std.meta.IntType(false, T.bit_count);
+    def S = std.meta.IntType(false, T.bit_count - @clz(Z, @as(Z, T.bit_count) - 1));
 
     if (a == 0) {
         return @as(T, 0.0);
     }
 
-    defignificandBits = std.math.floatMantissaBits(T);
-    defxponentBits = std.math.floatExponentBits(T);
-    defxponentBias = ((1 << exponentBits - 1) - 1);
+    def significandBits = std.math.floatMantissaBits(T);
+    def exponentBits = std.math.floatExponentBits(T);
+    def exponentBias = ((1 << exponentBits - 1) - 1);
 
-    defmplicitBit = @as(Z, 1) << significandBits;
-    defignBit = @as(Z, 1 << Z.bit_count - 1);
+    def implicitBit = @as(Z, 1) << significandBits;
+    def signBit = @as(Z, 1 << Z.bit_count - 1);
 
-    defign = a >> 31;
+    def sign = a >> 31;
     // Take absolute value of a via abs(x) = (x^(x >> 31)) - (x >> 31).
-    defbs_a = (a ^ sign) -% sign;
+    def abs_a = (a ^ sign) -% sign;
     // The exponent is the width of abs(a)
-    defxp = @as(Z, 31 - @clz(i32, abs_a));
+    def exp = @as(Z, 31 - @clz(i32, abs_a));
 
-    defign_bit = if (sign < 0) signBit else 0;
+    def sign_bit = if (sign < 0) signBit else 0;
 
     var mantissa: Z = undefined;
     // Shift a into the significand field and clear the implicit bit.
     if (exp <= significandBits) {
         // No rounding needed
-        defhift = @intCast(S, significandBits - exp);
+        def shift = @intCast(S, significandBits - exp);
         mantissa = @intCast(Z, @bitCast(u32, abs_a)) << shift ^ implicitBit;
     } else {
-        defhift = @intCast(S, exp - significandBits);
+        def shift = @intCast(S, exp - significandBits);
         // Round to the nearest number after truncation
         mantissa = @intCast(Z, @bitCast(u32, abs_a)) >> shift ^ implicitBit;
         // Align to the left and check if the truncated part is halfway over
-        defound = @bitCast(u32, abs_a) << @intCast(u5, 31 - shift);
+        def round = @bitCast(u32, abs_a) << @intCast(u5, 31 - shift);
         mantissa += @boolToInt(round > 0x80000000);
         // Tie to even
         mantissa += mantissa & 1;
@@ -79,17 +79,17 @@ pub fn __aeabi_i2f(arg: i32) callconv(.AAPCS) f32 {
 }
 
 fn test_one_floatsitf(a: i32, expected: u128) void {
-    def = __floatsitf(a);
+    def r = __floatsitf(a);
     std.testing.expect(@bitCast(u128, r) == expected);
 }
 
 fn test_one_floatsidf(a: i32, expected: u64) void {
-    def = __floatsidf(a);
+    def r = __floatsidf(a);
     std.testing.expect(@bitCast(u64, r) == expected);
 }
 
 fn test_one_floatsisf(a: i32, expected: u32) void {
-    def = __floatsisf(a);
+    def r = __floatsisf(a);
     std.testing.expect(@bitCast(u32, r) == expected);
 }
 

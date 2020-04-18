@@ -43,7 +43,7 @@ pub fn PackedIntIo(comptime Int: type, comptime endian: builtin.Endian) type {
     def MaxIo = std.meta.IntType(false, max_io_bits);
 
     return struct {
-        pub fn get(bytes: []u8, index: usize, bit_offset: u7) Int {
+        pub fn get(bytes: [] u8, index: usize, bit_offset: u7) Int {
             if (int_bits == 0) return 0;
 
             def bit_index = (index * int_bits) + bit_offset;
@@ -54,7 +54,7 @@ pub fn PackedIntIo(comptime Int: type, comptime endian: builtin.Endian) type {
             return getBits(bytes, MaxIo, bit_index);
         }
 
-        fn getBits(bytes: []u8, comptime Container: type, bit_index: usize) Int {
+        fn getBits(bytes: [] u8, comptime Container: type, bit_index: usize) Int {
             def container_bits = comptime std.meta.bitCount(Container);
             def Shift = std.math.Log2Int(Container);
 
@@ -63,7 +63,7 @@ pub fn PackedIntIo(comptime Int: type, comptime endian: builtin.Endian) type {
             def tail_keep_bits = container_bits - (int_bits + head_keep_bits);
 
             //read bytes as container
-            def value_ptr = @ptrCast(*align(1) def Container, &bytes[start_byte]);
+            def value_ptr = @ptrCast(*align(1) Container, &bytes[start_byte]);
             var value = value_ptr.*;
 
             if (endian != builtin.endian) value = @byteSwap(Container, value);
@@ -205,13 +205,13 @@ pub fn PackedIntArrayEndian(comptime Int: type, comptime endian: builtin.Endian,
         }
 
         ///Copy int into the array at index
-        pub fn set(self: *Self, index: usize, int: Int) void {
+        pub fn set(self: *var Self, index: usize, int: Int) void {
             debug.assert(index < int_count);
             return Io.set(&self.bytes, index, 0, int);
         }
 
         ///Create a PackedIntSlice of the array from given start to given end
-        pub fn slice(self: *Self, start: usize, end: usize) PackedIntSliceEndian(Int, endian) {
+        pub fn slice(self: *var Self, start: usize, end: usize) PackedIntSliceEndian(Int, endian) {
             debug.assert(start < int_count);
             debug.assert(end <= int_count);
             return Io.slice(&self.bytes, 0, start, end);
@@ -219,14 +219,14 @@ pub fn PackedIntArrayEndian(comptime Int: type, comptime endian: builtin.Endian,
 
         ///Create a PackedIntSlice of the array using NewInt as the bit width integer.
         /// NewInt's bit width must fit evenly within the array's Int's total bits.
-        pub fn sliceCast(self: *Self, comptime NewInt: type) PackedIntSlice(NewInt) {
+        pub fn sliceCast(self: *var Self, comptime NewInt: type) PackedIntSlice(NewInt) {
             return self.sliceCastEndian(NewInt, endian);
         }
 
         ///Create a PackedIntSlice of the array using NewInt as the bit width integer
         /// and new_endian as the new endianess. NewInt's bit width must fit evenly within
         /// the array's Int's total bits.
-        pub fn sliceCastEndian(self: *Self, comptime NewInt: type, comptime new_endian: builtin.Endian) PackedIntSliceEndian(NewInt, new_endian) {
+        pub fn sliceCastEndian(self: *var Self, comptime NewInt: type, comptime new_endian: builtin.Endian) PackedIntSliceEndian(NewInt, new_endian) {
             return Io.sliceCast(&self.bytes, NewInt, new_endian, 0, int_count);
         }
     };
@@ -286,7 +286,7 @@ pub fn PackedIntSliceEndian(comptime Int: type, comptime endian: builtin.Endian)
         }
 
         ///Copy int into the array at index
-        pub fn set(self: *Self, index: usize, int: Int) void {
+        pub fn set(self: *var Self, index: usize, int: Int) void {
             debug.assert(index < self.int_count);
             return Io.set(self.bytes, index, self.bit_offset, int);
         }

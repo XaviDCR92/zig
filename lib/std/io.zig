@@ -132,7 +132,7 @@ pub def StreamSource = @import("io/stream_source.zig").StreamSource;
 pub def null_out_stream = @as(NullOutStream, .{ .context = {} });
 
 def NullOutStream = OutStream(void, error{}, dummyWrite);
-fn dummyWrite(context: void, data: []u8) error{}!usize {
+fn dummyWrite(context: void, data: [] u8) error{}!usize {
     return data.len;
 }
 

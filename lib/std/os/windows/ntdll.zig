@@ -6,34 +6,34 @@ pub extern "NtDll" fn RtlGetVersion(
 pub extern "NtDll" fn RtlCaptureStackBackTrace(
     FramesToSkip: DWORD,
     FramesToCapture: DWORD,
-    BackTrace: **c_void,
+    BackTrace: *var *c_void,
     BackTraceHash: ?*DWORD,
 ) callconv(.Stdcall) WORD;
 pub extern "NtDll" fn NtQueryInformationFile(
     FileHandle: HANDLE,
-    IoStatusBlock: *IO_STATUS_BLOCK,
-    FileInformation: *c_void,
+    IoStatusBlock: *var IO_STATUS_BLOCK,
+    FileInformation: *var c_void,
     Length: ULONG,
     FileInformationClass: FILE_INFORMATION_CLASS,
 ) callconv(.Stdcall) NTSTATUS;
 pub extern "NtDll" fn NtSetInformationFile(
     FileHandle: HANDLE,
-    IoStatusBlock: *IO_STATUS_BLOCK,
+    IoStatusBlock: *var IO_STATUS_BLOCK,
     FileInformation: PVOID,
     Length: ULONG,
     FileInformationClass: FILE_INFORMATION_CLASS,
 ) callconv(.Stdcall) NTSTATUS;
 
 pub extern "NtDll" fn NtQueryAttributesFile(
-    ObjectAttributes: *OBJECT_ATTRIBUTES,
-    FileAttributes: *FILE_BASIC_INFORMATION,
+    ObjectAttributes: *var OBJECT_ATTRIBUTES,
+    FileAttributes: *var FILE_BASIC_INFORMATION,
 ) callconv(.Stdcall) NTSTATUS;
 
 pub extern "NtDll" fn NtCreateFile(
-    FileHandle: *HANDLE,
+    FileHandle: *var HANDLE,
     DesiredAccess: ACCESS_MASK,
-    ObjectAttributes: *OBJECT_ATTRIBUTES,
-    IoStatusBlock: *IO_STATUS_BLOCK,
+    ObjectAttributes: *var OBJECT_ATTRIBUTES,
+    IoStatusBlock: *var IO_STATUS_BLOCK,
     AllocationSize: ?*LARGE_INTEGER,
     FileAttributes: ULONG,
     ShareAccess: ULONG,
@@ -47,9 +47,9 @@ pub extern "NtDll" fn NtDeviceIoControlFile(
     Event: ?HANDLE,
     ApcRoutine: ?IO_APC_ROUTINE,
     ApcContext: ?*c_void,
-    IoStatusBlock: *IO_STATUS_BLOCK,
+    IoStatusBlock: *var IO_STATUS_BLOCK,
     IoControlCode: ULONG,
-    InputBuffer: ?*def c_void,
+    InputBuffer: ?*c_void,
     InputBufferLength: ULONG,
     OutputBuffer: ?PVOID,
     OutputBufferLength: ULONG,
@@ -57,19 +57,19 @@ pub extern "NtDll" fn NtDeviceIoControlFile(
 pub extern "NtDll" fn NtClose(Handle: HANDLE) callconv(.Stdcall) NTSTATUS;
 pub extern "NtDll" fn RtlDosPathNameToNtPathName_U(
     DosPathName: [*:0]u16,
-    NtPathName: *UNICODE_STRING,
+    NtPathName: *var UNICODE_STRING,
     NtFileNamePart: ?*?[*:0]u16,
     DirectoryInfo: ?*CURDIR,
 ) callconv(.Stdcall) BOOL;
-pub extern "NtDll" fn RtlFreeUnicodeString(UnicodeString: *UNICODE_STRING) callconv(.Stdcall) void;
+pub extern "NtDll" fn RtlFreeUnicodeString(UnicodeString: *var UNICODE_STRING) callconv(.Stdcall) void;
 
 pub extern "NtDll" fn NtQueryDirectoryFile(
     FileHandle: HANDLE,
     Event: ?HANDLE,
     ApcRoutine: ?IO_APC_ROUTINE,
     ApcContext: ?*c_void,
-    IoStatusBlock: *IO_STATUS_BLOCK,
-    FileInformation: *c_void,
+    IoStatusBlock: *var IO_STATUS_BLOCK,
+    FileInformation: *var c_void,
     Length: ULONG,
     FileInformationClass: FILE_INFORMATION_CLASS,
     ReturnSingleEntry: BOOLEAN,
@@ -77,20 +77,20 @@ pub extern "NtDll" fn NtQueryDirectoryFile(
     RestartScan: BOOLEAN,
 ) callconv(.Stdcall) NTSTATUS;
 pub extern "NtDll" fn NtCreateKeyedEvent(
-    KeyedEventHandle: *HANDLE,
+    KeyedEventHandle: *var HANDLE,
     DesiredAccess: ACCESS_MASK,
     ObjectAttributes: ?PVOID,
     Flags: ULONG,
 ) callconv(.Stdcall) NTSTATUS;
 pub extern "NtDll" fn NtReleaseKeyedEvent(
     EventHandle: HANDLE,
-    Key: *def_void,
+    Key: *var c_void,
     Alertable: BOOLEAN,
     Timeout: ?*LARGE_INTEGER,
 ) callconv(.Stdcall) NTSTATUS;
 pub extern "NtDll" fn NtWaitForKeyedEvent(
     EventHandle: HANDLE,
-    Key: *def_void,
+    Key: *var c_void,
     Alertable: BOOLEAN,
     Timeout: ?*LARGE_INTEGER,
 ) callconv(.Stdcall) NTSTATUS;

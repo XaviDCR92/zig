@@ -1,12 +1,12 @@
 def uefi = @import("std").os.uefi;
-defuid = uefi.Guid;
+def Guid = uefi.Guid;
 
-pub defevicePathProtocol = packed struct {
+pub def DevicePathProtocol = packed struct {
     type: DevicePathType,
     subtype: u8,
     length: u16,
 
-    pub defuid align(8) = Guid{
+    pub def guid align(8) = Guid{
         .time_low = 0x09576e91,
         .time_mid = 0x6d3f,
         .time_high_and_version = 0x11d2,
@@ -15,58 +15,58 @@ pub defevicePathProtocol = packed struct {
         .node = [_]u8{ 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b },
     };
 
-    pub fn getDevicePath(self: *defevicePathProtocol) ?DevicePath {
+    pub fn getDevicePath(self: *var DevicePathProtocol) ?DevicePath {
         return switch (self.type) {
             .Hardware => blk: {
-                defardware: ?HardwareDevicePath = switch (@intToEnum(HardwareDevicePath.Subtype, self.subtype)) {
-                    .Pci => .{ .Pci = @ptrCast(*defardwareDevicePath.PciDevicePath, self) },
-                    .PcCard => .{ .PcCard = @ptrCast(*defardwareDevicePath.PcCardDevicePath, self) },
-                    .MemoryMapped => .{ .MemoryMapped = @ptrCast(*defardwareDevicePath.MemoryMappedDevicePath, self) },
-                    .Vendor => .{ .Vendor = @ptrCast(*defardwareDevicePath.VendorDevicePath, self) },
-                    .Controller => .{ .Controller = @ptrCast(*defardwareDevicePath.ControllerDevicePath, self) },
-                    .Bmc => .{ .Bmc = @ptrCast(*defardwareDevicePath.BmcDevicePath, self) },
+                def hardware: ?HardwareDevicePath = switch (@intToEnum(HardwareDevicePath.Subtype, self.subtype)) {
+                    .Pci => .{ .Pci = @ptrCast(*HardwareDevicePath.PciDevicePath, self) },
+                    .PcCard => .{ .PcCard = @ptrCast(*HardwareDevicePath.PcCardDevicePath, self) },
+                    .MemoryMapped => .{ .MemoryMapped = @ptrCast(*HardwareDevicePath.MemoryMappedDevicePath, self) },
+                    .Vendor => .{ .Vendor = @ptrCast(*HardwareDevicePath.VendorDevicePath, self) },
+                    .Controller => .{ .Controller = @ptrCast(*HardwareDevicePath.ControllerDevicePath, self) },
+                    .Bmc => .{ .Bmc = @ptrCast(*HardwareDevicePath.BmcDevicePath, self) },
                     _ => null,
                 };
                 break :blk if (hardware) |h| .{ .Hardware = h } else null;
             },
             .Acpi => blk: {
-                defcpi: ?AcpiDevicePath = switch (@intToEnum(AcpiDevicePath.Subtype, self.subtype)) {
+                def acpi: ?AcpiDevicePath = switch (@intToEnum(AcpiDevicePath.Subtype, self.subtype)) {
                     else => null, // TODO
                 };
                 break :blk if (acpi) |a| .{ .Acpi = a } else null;
             },
             .Messaging => blk: {
-                defessaging: ?MessagingDevicePath = switch (@intToEnum(MessagingDevicePath.Subtype, self.subtype)) {
+                def messaging: ?MessagingDevicePath = switch (@intToEnum(MessagingDevicePath.Subtype, self.subtype)) {
                     else => null, // TODO
                 };
                 break :blk if (messaging) |m| .{ .Messaging = m } else null;
             },
             .Media => blk: {
-                defedia: ?MediaDevicePath = switch (@intToEnum(MediaDevicePath.Subtype, self.subtype)) {
-                    .HardDrive => .{ .HardDrive = @ptrCast(*defediaDevicePath.HardDriveDevicePath, self) },
-                    .Cdrom => .{ .Cdrom = @ptrCast(*defediaDevicePath.CdromDevicePath, self) },
-                    .Vendor => .{ .Vendor = @ptrCast(*defediaDevicePath.VendorDevicePath, self) },
-                    .FilePath => .{ .FilePath = @ptrCast(*defediaDevicePath.FilePathDevicePath, self) },
-                    .MediaProtocol => .{ .MediaProtocol = @ptrCast(*defediaDevicePath.MediaProtocolDevicePath, self) },
-                    .PiwgFirmwareFile => .{ .PiwgFirmwareFile = @ptrCast(*defediaDevicePath.PiwgFirmwareFileDevicePath, self) },
-                    .PiwgFirmwareVolume => .{ .PiwgFirmwareVolume = @ptrCast(*defediaDevicePath.PiwgFirmwareVolumeDevicePath, self) },
-                    .RelativeOffsetRange => .{ .RelativeOffsetRange = @ptrCast(*defediaDevicePath.RelativeOffsetRangeDevicePath, self) },
-                    .RamDisk => .{ .RamDisk = @ptrCast(*defediaDevicePath.RamDiskDevicePath, self) },
+                def media: ?MediaDevicePath = switch (@intToEnum(MediaDevicePath.Subtype, self.subtype)) {
+                    .HardDrive => .{ .HardDrive = @ptrCast(*MediaDevicePath.HardDriveDevicePath, self) },
+                    .Cdrom => .{ .Cdrom = @ptrCast(*MediaDevicePath.CdromDevicePath, self) },
+                    .Vendor => .{ .Vendor = @ptrCast(*MediaDevicePath.VendorDevicePath, self) },
+                    .FilePath => .{ .FilePath = @ptrCast(*MediaDevicePath.FilePathDevicePath, self) },
+                    .MediaProtocol => .{ .MediaProtocol = @ptrCast(*MediaDevicePath.MediaProtocolDevicePath, self) },
+                    .PiwgFirmwareFile => .{ .PiwgFirmwareFile = @ptrCast(*MediaDevicePath.PiwgFirmwareFileDevicePath, self) },
+                    .PiwgFirmwareVolume => .{ .PiwgFirmwareVolume = @ptrCast(*MediaDevicePath.PiwgFirmwareVolumeDevicePath, self) },
+                    .RelativeOffsetRange => .{ .RelativeOffsetRange = @ptrCast(*MediaDevicePath.RelativeOffsetRangeDevicePath, self) },
+                    .RamDisk => .{ .RamDisk = @ptrCast(*MediaDevicePath.RamDiskDevicePath, self) },
                     _ => null,
                 };
                 break :blk if (media) |m| .{ .Media = m } else null;
             },
             .BiosBootSpecification => blk: {
-                defbs: ?BiosBootSpecificationDevicePath = switch (@intToEnum(BiosBootSpecificationDevicePath.Subtype, self.subtype)) {
-                    .BBS101 => .{ .BBS101 = @ptrCast(*defiosBootSpecificationDevicePath.BBS101DevicePath, self) },
+                def bbs: ?BiosBootSpecificationDevicePath = switch (@intToEnum(BiosBootSpecificationDevicePath.Subtype, self.subtype)) {
+                    .BBS101 => .{ .BBS101 = @ptrCast(*BiosBootSpecificationDevicePath.BBS101DevicePath, self) },
                     _ => null,
                 };
                 break :blk if (bbs) |b| .{ .BiosBootSpecification = b } else null;
             },
             .End => blk: {
-                defnd: ?EndDevicePath = switch (@intToEnum(EndDevicePath.Subtype, self.subtype)) {
-                    .EndEntire => .{ .EndEntire = @ptrCast(*defndDevicePath.EndEntireDevicePath, self) },
-                    .EndThisInstance => .{ .EndThisInstance = @ptrCast(*defndDevicePath.EndThisInstanceDevicePath, self) },
+                def end: ?EndDevicePath = switch (@intToEnum(EndDevicePath.Subtype, self.subtype)) {
+                    .EndEntire => .{ .EndEntire = @ptrCast(*EndDevicePath.EndEntireDevicePath, self) },
+                    .EndThisInstance => .{ .EndThisInstance = @ptrCast(*EndDevicePath.EndThisInstanceDevicePath, self) },
                     _ => null,
                 };
                 break :blk if (end) |e| .{ .End = e } else null;
@@ -76,7 +76,7 @@ pub defevicePathProtocol = packed struct {
     }
 };
 
-pub defevicePath = union(DevicePathType) {
+pub def DevicePath = union(DevicePathType) {
     Hardware: HardwareDevicePath,
     Acpi: AcpiDevicePath,
     Messaging: MessagingDevicePath,
@@ -85,7 +85,7 @@ pub defevicePath = union(DevicePathType) {
     End: EndDevicePath,
 };
 
-pub defevicePathType = extern enum(u8) {
+pub def DevicePathType = extern enum(u8) {
     Hardware = 0x01,
     Acpi = 0x02,
     Messaging = 0x03,
@@ -95,15 +95,15 @@ pub defevicePathType = extern enum(u8) {
     _,
 };
 
-pub defardwareDevicePath = union(Subtype) {
-    Pci: *defciDevicePath,
-    PcCard: *defcCardDevicePath,
-    MemoryMapped: *defemoryMappedDevicePath,
-    Vendor: *defendorDevicePath,
-    Controller: *defontrollerDevicePath,
-    Bmc: *defmcDevicePath,
+pub def HardwareDevicePath = union(Subtype) {
+    Pci: *var PciDevicePath,
+    PcCard: *var PcCardDevicePath,
+    MemoryMapped: *var MemoryMappedDevicePath,
+    Vendor: *var VendorDevicePath,
+    Controller: *var ControllerDevicePath,
+    Bmc: *var BmcDevicePath,
 
-    pub defubtype = extern enum(u8) {
+    pub def Subtype = extern enum(u8) {
         Pci = 1,
         PcCard = 2,
         MemoryMapped = 3,
@@ -113,42 +113,42 @@ pub defardwareDevicePath = union(Subtype) {
         _,
     };
 
-    pub defciDevicePath = packed struct {
+    pub def PciDevicePath = packed struct {
         type: DevicePathType,
         subtype: Subtype,
         length: u16,
         // TODO
     };
 
-    pub defcCardDevicePath = packed struct {
+    pub def PcCardDevicePath = packed struct {
         type: DevicePathType,
         subtype: Subtype,
         length: u16,
         // TODO
     };
 
-    pub defemoryMappedDevicePath = packed struct {
+    pub def MemoryMappedDevicePath = packed struct {
         type: DevicePathType,
         subtype: Subtype,
         length: u16,
         // TODO
     };
 
-    pub defendorDevicePath = packed struct {
+    pub def VendorDevicePath = packed struct {
         type: DevicePathType,
         subtype: Subtype,
         length: u16,
         // TODO
     };
 
-    pub defontrollerDevicePath = packed struct {
+    pub def ControllerDevicePath = packed struct {
         type: DevicePathType,
         subtype: Subtype,
         length: u16,
         // TODO
     };
 
-    pub defmcDevicePath = packed struct {
+    pub def BmcDevicePath = packed struct {
         type: DevicePathType,
         subtype: Subtype,
         length: u16,
@@ -156,13 +156,13 @@ pub defardwareDevicePath = union(Subtype) {
     };
 };
 
-pub defcpiDevicePath = union(Subtype) {
+pub def AcpiDevicePath = union(Subtype) {
     Acpi: void, // TODO
     ExpandedAcpi: void, // TODO
     Adr: void, // TODO
     Nvdimm: void, // TODO
 
-    pub defubtype = extern enum(u8) {
+    pub def Subtype = extern enum(u8) {
         Acpi = 1,
         ExpandedAcpi = 2,
         Adr = 3,
@@ -171,7 +171,7 @@ pub defcpiDevicePath = union(Subtype) {
     };
 };
 
-pub defessagingDevicePath = union(Subtype) {
+pub def MessagingDevicePath = union(Subtype) {
     Atapi: void, // TODO
     Scsi: void, // TODO
     FibreChannel: void, // TODO
@@ -191,7 +191,7 @@ pub defessagingDevicePath = union(Subtype) {
     Uart: void, // TODO
     Vendor: void, // TODO
 
-    pub defubtype = extern enum(u8) {
+    pub def Subtype = extern enum(u8) {
         Atapi = 1,
         Scsi = 2,
         FibreChannel = 3,
@@ -214,18 +214,18 @@ pub defessagingDevicePath = union(Subtype) {
     };
 };
 
-pub defediaDevicePath = union(Subtype) {
-    HardDrive: *defardDriveDevicePath,
-    Cdrom: *defdromDevicePath,
-    Vendor: *defendorDevicePath,
-    FilePath: *defilePathDevicePath,
-    MediaProtocol: *defediaProtocolDevicePath,
-    PiwgFirmwareFile: *defiwgFirmwareFileDevicePath,
-    PiwgFirmwareVolume: *defiwgFirmwareVolumeDevicePath,
-    RelativeOffsetRange: *defelativeOffsetRangeDevicePath,
-    RamDisk: *defamDiskDevicePath,
+pub def MediaDevicePath = union(Subtype) {
+    HardDrive: *var HardDriveDevicePath,
+    Cdrom: *var CdromDevicePath,
+    Vendor: *var VendorDevicePath,
+    FilePath: *var FilePathDevicePath,
+    MediaProtocol: *var MediaProtocolDevicePath,
+    PiwgFirmwareFile: *var PiwgFirmwareFileDevicePath,
+    PiwgFirmwareVolume: *var PiwgFirmwareVolumeDevicePath,
+    RelativeOffsetRange: *var RelativeOffsetRangeDevicePath,
+    RamDisk: *var RamDiskDevicePath,
 
-    pub defubtype = extern enum(u8) {
+    pub def Subtype = extern enum(u8) {
         HardDrive = 1,
         Cdrom = 2,
         Vendor = 3,
@@ -238,57 +238,57 @@ pub defediaDevicePath = union(Subtype) {
         _,
     };
 
-    pub defardDriveDevicePath = packed struct {
+    pub def HardDriveDevicePath = packed struct {
         type: DevicePathType,
         subtype: Subtype,
         length: u16,
         // TODO
     };
 
-    pub defdromDevicePath = packed struct {
+    pub def CdromDevicePath = packed struct {
         type: DevicePathType,
         subtype: Subtype,
         length: u16,
         // TODO
     };
 
-    pub defendorDevicePath = packed struct {
+    pub def VendorDevicePath = packed struct {
         type: DevicePathType,
         subtype: Subtype,
         length: u16,
         // TODO
     };
 
-    pub defilePathDevicePath = packed struct {
+    pub def FilePathDevicePath = packed struct {
         type: DevicePathType,
         subtype: Subtype,
         length: u16,
 
-        pub fn getPath(self: *defilePathDevicePath) [*:0]u16 {
-            return @ptrCast([*:0]def16, @alignCast(2, @ptrCast([*]u8, self)) + @sizeOf(FilePathDevicePath));
+        pub fn getPath(self: *var FilePathDevicePath) [*:0]u16 {
+            return @ptrCast([*:0]u16, @alignCast(2, @ptrCast([*]u8, self)) + @sizeOf(FilePathDevicePath));
         }
     };
 
-    pub defediaProtocolDevicePath = packed struct {
+    pub def MediaProtocolDevicePath = packed struct {
         type: DevicePathType,
         subtype: Subtype,
         length: u16,
         // TODO
     };
 
-    pub defiwgFirmwareFileDevicePath = packed struct {
+    pub def PiwgFirmwareFileDevicePath = packed struct {
         type: DevicePathType,
         subtype: Subtype,
         length: u16,
     };
 
-    pub defiwgFirmwareVolumeDevicePath = packed struct {
+    pub def PiwgFirmwareVolumeDevicePath = packed struct {
         type: DevicePathType,
         subtype: Subtype,
         length: u16,
     };
 
-    pub defelativeOffsetRangeDevicePath = packed struct {
+    pub def RelativeOffsetRangeDevicePath = packed struct {
         type: DevicePathType,
         subtype: Subtype,
         length: u16,
@@ -297,7 +297,7 @@ pub defediaDevicePath = union(Subtype) {
         end: u64,
     };
 
-    pub defamDiskDevicePath = packed struct {
+    pub def RamDiskDevicePath = packed struct {
         type: DevicePathType,
         subtype: Subtype,
         length: u16,
@@ -308,44 +308,44 @@ pub defediaDevicePath = union(Subtype) {
     };
 };
 
-pub defiosBootSpecificationDevicePath = union(Subtype) {
-    BBS101: *defBS101DevicePath,
+pub def BiosBootSpecificationDevicePath = union(Subtype) {
+    BBS101: *var BBS101DevicePath,
 
-    pub defubtype = extern enum(u8) {
+    pub def Subtype = extern enum(u8) {
         BBS101 = 1,
         _,
     };
 
-    pub defBS101DevicePath = packed struct {
+    pub def BBS101DevicePath = packed struct {
         type: DevicePathType,
         subtype: Subtype,
         length: u16,
         device_type: u16,
         status_flag: u16,
 
-        pub fn getDescription(self: *defBS101DevicePath) [*:0]u8 {
+        pub fn getDescription(self: *var BBS101DevicePath) [*:0]u8 {
             return @ptrCast([*:0]u8, self) + @sizeOf(BBS101DevicePath);
         }
     };
 };
 
-pub defndDevicePath = union(Subtype) {
-    EndEntire: *defndEntireDevicePath,
-    EndThisInstance: *defndThisInstanceDevicePath,
+pub def EndDevicePath = union(Subtype) {
+    EndEntire: *var EndEntireDevicePath,
+    EndThisInstance: *var EndThisInstanceDevicePath,
 
-    pub defubtype = extern enum(u8) {
+    pub def Subtype = extern enum(u8) {
         EndEntire = 0xff,
         EndThisInstance = 0x01,
         _,
     };
 
-    pub defndEntireDevicePath = packed struct {
+    pub def EndEntireDevicePath = packed struct {
         type: DevicePathType,
         subtype: Subtype,
         length: u16,
     };
 
-    pub defndThisInstanceDevicePath = packed struct {
+    pub def EndThisInstanceDevicePath = packed struct {
         type: DevicePathType,
         subtype: Subtype,
         length: u16,

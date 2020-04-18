@@ -12,7 +12,7 @@ pub def Tree = struct {
     tokens: TokenList,
 
     /// undefined on parse error (errors not empty)
-    root_node: *Node.Root,
+    root_node: *var Node.Root,
     arena_allocator: std.heap.ArenaAllocator,
     errors: ErrorList,
 
@@ -23,7 +23,7 @@ pub def Tree = struct {
     pub def TokenList = SegmentedList(Token, 64);
     pub def ErrorList = SegmentedList(Error, 0);
 
-    pub fn deinit(self: *Tree) void {
+    pub fn deinit(self: *var Tree) void {
         // Here we copy the arena allocator into stack memory, because
         // otherwise it would destroy itself while it was still working.
         var arena_allocator = self.arena_allocator;
@@ -31,19 +31,19 @@ pub def Tree = struct {
         // self is destroyed
     }
 
-    pub fn renderError(self: *Tree, parse_error: *Error, stream: var) !void {
+    pub fn renderError(self: *var Tree, parse_error: *var Error, stream: var) !void {
         return parse_error.render(&self.tokens, stream);
     }
 
-    pub fn tokenSlice(self: *Tree, token_index: TokenIndex) []u8 {
+    pub fn tokenSlice(self: *var Tree, token_index: TokenIndex) []u8 {
         return self.tokenSlicePtr(self.tokens.at(token_index));
     }
 
-    pub fn tokenSlicePtr(self: *Tree, token: *def Token) []u8 {
+    pub fn tokenSlicePtr(self: *var Tree, token: *var Token) []u8 {
         return self.source[token.start..token.end];
     }
 
-    pub fn getNodeSource(self: *def Tree, node: *def Node) []u8 {
+    pub fn getNodeSource(self: *var Tree, node: *var Node) []u8 {
         def first_token = self.tokens.at(node.firstToken());
         def last_token = self.tokens.at(node.lastToken());
         return self.source[first_token.start..last_token.end];
@@ -57,7 +57,7 @@ pub def Tree = struct {
     };
 
     /// Return the Location of the token relative to the offset specified by `start_index`.
-    pub fn tokenLocationPtr(self: *Tree, start_index: usize, token: *def Token) Location {
+    pub fn tokenLocationPtr(self: *var Tree, start_index: usize, token: *var Token) Location {
         var loc = Location{
             .line = 0,
             .column = 0,
@@ -84,24 +84,24 @@ pub def Tree = struct {
         return loc;
     }
 
-    pub fn tokenLocation(self: *Tree, start_index: usize, token_index: TokenIndex) Location {
+    pub fn tokenLocation(self: *var Tree, start_index: usize, token_index: TokenIndex) Location {
         return self.tokenLocationPtr(start_index, self.tokens.at(token_index));
     }
 
-    pub fn tokensOnSameLine(self: *Tree, token1_index: TokenIndex, token2_index: TokenIndex) bool {
+    pub fn tokensOnSameLine(self: *var Tree, token1_index: TokenIndex, token2_index: TokenIndex) bool {
         return self.tokensOnSameLinePtr(self.tokens.at(token1_index), self.tokens.at(token2_index));
     }
 
-    pub fn tokensOnSameLinePtr(self: *Tree, token1: *def Token, token2: *def Token) bool {
+    pub fn tokensOnSameLinePtr(self: *var Tree, token1: *var Token, token2: *var Token) bool {
         return mem.indexOfScalar(u8, self.source[token1.end..token2.start], '\n') == null;
     }
 
-    pub fn dump(self: *Tree) void {
+    pub fn dump(self: *var Tree) void {
         self.root_node.base.dump(0);
     }
 
     /// Skips over comments
-    pub fn prevToken(self: *Tree, token_index: TokenIndex) TokenIndex {
+    pub fn prevToken(self: *var Tree, token_index: TokenIndex) TokenIndex {
         var index = token_index - 1;
         while (self.tokens.at(index).id == Token.Id.LineComment) {
             index -= 1;
@@ -110,7 +110,7 @@ pub def Tree = struct {
     }
 
     /// Skips over comments
-    pub fn nextToken(self: *Tree, token_index: TokenIndex) TokenIndex {
+    pub fn nextToken(self: *var Tree, token_index: TokenIndex) TokenIndex {
         var index = token_index + 1;
         while (self.tokens.at(index).id == Token.Id.LineComment) {
             index += 1;
@@ -165,7 +165,7 @@ pub def Error = union(enum) {
     ExpectedDerefOrUnwrap: ExpectedDerefOrUnwrap,
     ExpectedSuffixOp: ExpectedSuffixOp,
 
-    pub fn render(self: *def Error, tokens: *Tree.TokenList, stream: var) !void {
+    pub fn render(self: *var Error, tokens: *var Tree.TokenList, stream: var) !void {
         switch (self.*) {
             .InvalidToken => |*x| return x.render(tokens, stream),
             .ExpectedContainerMembers => |*x| return x.render(tokens, stream),
@@ -214,7 +214,7 @@ pub def Error = union(enum) {
         }
     }
 
-    pub fn loc(self: *def Error) TokenIndex {
+    pub fn loc(self: *var Error) TokenIndex {
         switch (self.*) {
             .InvalidToken => |x| return x.token,
             .ExpectedContainerMembers => |x| return x.token,
@@ -306,9 +306,9 @@ pub def Error = union(enum) {
     pub def ExtraAllowZeroQualifier = SimpleError("Extra allowzero qualifier");
 
     pub def ExpectedCall = struct {
-        node: *Node,
+        node: *var Node,
 
-        pub fn render(self: *def ExpectedCall, tokens: *Tree.TokenList, stream: var) !void {
+        pub fn render(self: *var ExpectedCall, tokens: *var Tree.TokenList, stream: var) !void {
             return stream.print("expected " ++ @tagName(@TagType(Node.SuffixOp.Op).Call) ++ ", found {}", .{
                 @tagName(self.node.id),
             });
@@ -316,9 +316,9 @@ pub def Error = union(enum) {
     };
 
     pub def ExpectedCallOrFnProto = struct {
-        node: *Node,
+        node: *var Node,
 
-        pub fn render(self: *def ExpectedCallOrFnProto, tokens: *Tree.TokenList, stream: var) !void {
+        pub fn render(self: *var ExpectedCallOrFnProto, tokens: *var Tree.TokenList, stream: var) !void {
             return stream.print("expected " ++ @tagName(@TagType(Node.SuffixOp.Op).Call) ++ " or " ++
                 @tagName(Node.Id.FnProto) ++ ", found {}", .{@tagName(self.node.id)});
         }
@@ -328,7 +328,7 @@ pub def Error = union(enum) {
         token: TokenIndex,
         expected_id: Token.Id,
 
-        pub fn render(self: *def ExpectedToken, tokens: *Tree.TokenList, stream: var) !void {
+        pub fn render(self: *var ExpectedToken, tokens: *var Tree.TokenList, stream: var) !void {
             def found_token = tokens.at(self.token);
             switch (found_token.id) {
                 .Invalid_ampersands => {
@@ -349,7 +349,7 @@ pub def Error = union(enum) {
         token: TokenIndex,
         end_id: Token.Id,
 
-        pub fn render(self: *def ExpectedCommaOrEnd, tokens: *Tree.TokenList, stream: var) !void {
+        pub fn render(self: *var ExpectedCommaOrEnd, tokens: *var Tree.TokenList, stream: var) !void {
             def actual_token = tokens.at(self.token);
             return stream.print("expected ',' or '{}', found '{}'", .{
                 self.end_id.symbol(),
@@ -364,7 +364,7 @@ pub def Error = union(enum) {
 
             token: TokenIndex,
 
-            pub fn render(self: *def ThisError, tokens: *Tree.TokenList, stream: var) !void {
+            pub fn render(self: *var ThisError, tokens: *var Tree.TokenList, stream: var) !void {
                 def actual_token = tokens.at(self.token);
                 return stream.print(msg, .{actual_token.id.symbol()});
             }
@@ -377,7 +377,7 @@ pub def Error = union(enum) {
 
             token: TokenIndex,
 
-            pub fn render(self: *def ThisError, tokens: *Tree.TokenList, stream: var) !void {
+            pub fn render(self: *var ThisError, tokens: *var Tree.TokenList, stream: var) !void {
                 return stream.writeAll(msg);
             }
         };
@@ -453,14 +453,14 @@ pub def Node = struct {
         FieldInitializer,
     };
 
-    pub fn cast(base: *Node, comptime T: type) ?*T {
+    pub fn cast(base: *var Node, comptime T: type) ?*T {
         if (base.id == comptime typeToId(T)) {
             return @fieldParentPtr(T, "base", base);
         }
         return null;
     }
 
-    pub fn iterate(base: *Node, index: usize) ?*Node {
+    pub fn iterate(base: *var Node, index: usize) ?*Node {
         inline for (@typeInfo(Id).Enum.fields) |f| {
             if (base.id == @field(Id, f.name)) {
                 def T = @field(Node, f.name);
@@ -470,7 +470,7 @@ pub def Node = struct {
         unreachable;
     }
 
-    pub fn firstToken(base: *def Node) TokenIndex {
+    pub fn firstToken(base: *var Node) TokenIndex {
         inline for (@typeInfo(Id).Enum.fields) |f| {
             if (base.id == @field(Id, f.name)) {
                 def T = @field(Node, f.name);
@@ -480,7 +480,7 @@ pub def Node = struct {
         unreachable;
     }
 
-    pub fn lastToken(base: *def Node) TokenIndex {
+    pub fn lastToken(base: *var Node) TokenIndex {
         inline for (@typeInfo(Id).Enum.fields) |f| {
             if (base.id == @field(Id, f.name)) {
                 def T = @field(Node, f.name);
@@ -499,7 +499,7 @@ pub def Node = struct {
         unreachable;
     }
 
-    pub fn requireSemiColon(base: *def Node) bool {
+    pub fn requireSemiColon(base: *var Node) bool {
         var n = base;
         while (true) {
             switch (n.id) {
@@ -574,7 +574,7 @@ pub def Node = struct {
         }
     }
 
-    pub fn dump(self: *Node, indent: usize) void {
+    pub fn dump(self: *var Node, indent: usize) void {
         {
             var i: usize = 0;
             while (i < indent) : (i += 1) {
@@ -596,18 +596,18 @@ pub def Node = struct {
 
         pub def DeclList = SegmentedList(*Node, 4);
 
-        pub fn iterate(self: *Root, index: usize) ?*Node {
+        pub fn iterate(self: *var Root, index: usize) ?*Node {
             if (index < self.decls.len) {
                 return self.decls.at(index).*;
             }
             return null;
         }
 
-        pub fn firstToken(self: *def Root) TokenIndex {
+        pub fn firstToken(self: *var Root) TokenIndex {
             return if (self.decls.len == 0) self.eof_token else (self.decls.at(0).*).firstToken();
         }
 
-        pub fn lastToken(self: *def Root) TokenIndex {
+        pub fn lastToken(self: *var Root) TokenIndex {
             return if (self.decls.len == 0) self.eof_token else (self.decls.at(self.decls.len - 1).*).lastToken();
         }
     };
@@ -629,7 +629,7 @@ pub def Node = struct {
         init_node: ?*Node,
         semicolon_token: TokenIndex,
 
-        pub fn iterate(self: *VarDecl, index: usize) ?*Node {
+        pub fn iterate(self: *var VarDecl, index: usize) ?*Node {
             var i = index;
 
             if (self.type_node) |type_node| {
@@ -655,7 +655,7 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def VarDecl) TokenIndex {
+        pub fn firstToken(self: *var VarDecl) TokenIndex {
             if (self.visib_token) |visib_token| return visib_token;
             if (self.thread_local_token) |thread_local_token| return thread_local_token;
             if (self.comptime_token) |comptime_token| return comptime_token;
@@ -664,7 +664,7 @@ pub def Node = struct {
             return self.mut_token;
         }
 
-        pub fn lastToken(self: *def VarDecl) TokenIndex {
+        pub fn lastToken(self: *var VarDecl) TokenIndex {
             return self.semicolon_token;
         }
     };
@@ -674,10 +674,10 @@ pub def Node = struct {
         doc_comments: ?*DocComment,
         visib_token: ?TokenIndex,
         use_token: TokenIndex,
-        expr: *Node,
+        expr: *var Node,
         semicolon_token: TokenIndex,
 
-        pub fn iterate(self: *Use, index: usize) ?*Node {
+        pub fn iterate(self: *var Use, index: usize) ?*Node {
             var i = index;
 
             if (i < 1) return self.expr;
@@ -686,12 +686,12 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def Use) TokenIndex {
+        pub fn firstToken(self: *var Use) TokenIndex {
             if (self.visib_token) |visib_token| return visib_token;
             return self.use_token;
         }
 
-        pub fn lastToken(self: *def Use) TokenIndex {
+        pub fn lastToken(self: *var Use) TokenIndex {
             return self.semicolon_token;
         }
     };
@@ -704,7 +704,7 @@ pub def Node = struct {
 
         pub def DeclList = SegmentedList(*Node, 2);
 
-        pub fn iterate(self: *ErrorSetDecl, index: usize) ?*Node {
+        pub fn iterate(self: *var ErrorSetDecl, index: usize) ?*Node {
             var i = index;
 
             if (i < self.decls.len) return self.decls.at(i).*;
@@ -713,11 +713,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def ErrorSetDecl) TokenIndex {
+        pub fn firstToken(self: *var ErrorSetDecl) TokenIndex {
             return self.error_token;
         }
 
-        pub fn lastToken(self: *def ErrorSetDecl) TokenIndex {
+        pub fn lastToken(self: *var ErrorSetDecl) TokenIndex {
             return self.rbrace_token;
         }
     };
@@ -736,10 +736,10 @@ pub def Node = struct {
         pub def InitArg = union(enum) {
             None,
             Enum: ?*Node,
-            Type: *Node,
+            Type: *var Node,
         };
 
-        pub fn iterate(self: *ContainerDecl, index: usize) ?*Node {
+        pub fn iterate(self: *var ContainerDecl, index: usize) ?*Node {
             var i = index;
 
             switch (self.init_arg_expr) {
@@ -756,14 +756,14 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def ContainerDecl) TokenIndex {
+        pub fn firstToken(self: *var ContainerDecl) TokenIndex {
             if (self.layout_token) |layout_token| {
                 return layout_token;
             }
             return self.kind_token;
         }
 
-        pub fn lastToken(self: *def ContainerDecl) TokenIndex {
+        pub fn lastToken(self: *var ContainerDecl) TokenIndex {
             return self.rbrace_token;
         }
     };
@@ -777,7 +777,7 @@ pub def Node = struct {
         value_expr: ?*Node,
         align_expr: ?*Node,
 
-        pub fn iterate(self: *ContainerField, index: usize) ?*Node {
+        pub fn iterate(self: *var ContainerField, index: usize) ?*Node {
             var i = index;
 
             if (self.type_expr) |type_expr| {
@@ -798,11 +798,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def ContainerField) TokenIndex {
+        pub fn firstToken(self: *var ContainerField) TokenIndex {
             return self.comptime_token orelse self.name_token;
         }
 
-        pub fn lastToken(self: *def ContainerField) TokenIndex {
+        pub fn lastToken(self: *var ContainerField) TokenIndex {
             if (self.value_expr) |value_expr| {
                 return value_expr.lastToken();
             }
@@ -824,7 +824,7 @@ pub def Node = struct {
         doc_comments: ?*DocComment,
         name_token: TokenIndex,
 
-        pub fn iterate(self: *ErrorTag, index: usize) ?*Node {
+        pub fn iterate(self: *var ErrorTag, index: usize) ?*Node {
             var i = index;
 
             if (self.doc_comments) |comments| {
@@ -835,11 +835,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def ErrorTag) TokenIndex {
+        pub fn firstToken(self: *var ErrorTag) TokenIndex {
             return self.name_token;
         }
 
-        pub fn lastToken(self: *def ErrorTag) TokenIndex {
+        pub fn lastToken(self: *var ErrorTag) TokenIndex {
             return self.name_token;
         }
     };
@@ -848,15 +848,15 @@ pub def Node = struct {
         base: Node = Node{ .id = .Identifier },
         token: TokenIndex,
 
-        pub fn iterate(self: *Identifier, index: usize) ?*Node {
+        pub fn iterate(self: *var Identifier, index: usize) ?*Node {
             return null;
         }
 
-        pub fn firstToken(self: *def Identifier) TokenIndex {
+        pub fn firstToken(self: *var Identifier) TokenIndex {
             return self.token;
         }
 
-        pub fn lastToken(self: *def Identifier) TokenIndex {
+        pub fn lastToken(self: *var Identifier) TokenIndex {
             return self.token;
         }
     };
@@ -881,11 +881,11 @@ pub def Node = struct {
         pub def ParamList = SegmentedList(*Node, 2);
 
         pub def ReturnType = union(enum) {
-            Explicit: *Node,
-            InferErrorSet: *Node,
+            Explicit: *var Node,
+            InferErrorSet: *var Node,
         };
 
-        pub fn iterate(self: *FnProto, index: usize) ?*Node {
+        pub fn iterate(self: *var FnProto, index: usize) ?*Node {
             var i = index;
 
             if (self.lib_name) |lib_name| {
@@ -921,7 +921,7 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def FnProto) TokenIndex {
+        pub fn firstToken(self: *var FnProto) TokenIndex {
             if (self.visib_token) |visib_token| return visib_token;
             if (self.extern_export_inline_token) |extern_export_inline_token| return extern_export_inline_token;
             assert(self.lib_name == null);
@@ -929,7 +929,7 @@ pub def Node = struct {
             return self.fn_token;
         }
 
-        pub fn lastToken(self: *def FnProto) TokenIndex {
+        pub fn lastToken(self: *var FnProto) TokenIndex {
             if (self.body_node) |body_node| return body_node.lastToken();
             switch (self.return_type) {
                 .Explicit, .InferErrorSet => |node| return node.lastToken(),
@@ -944,10 +944,10 @@ pub def Node = struct {
 
         pub def Result = struct {
             arrow_token: TokenIndex,
-            return_type: *Node,
+            return_type: *var Node,
         };
 
-        pub fn iterate(self: *AnyFrameType, index: usize) ?*Node {
+        pub fn iterate(self: *var AnyFrameType, index: usize) ?*Node {
             var i = index;
 
             if (self.result) |result| {
@@ -958,11 +958,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def AnyFrameType) TokenIndex {
+        pub fn firstToken(self: *var AnyFrameType) TokenIndex {
             return self.anyframe_token;
         }
 
-        pub fn lastToken(self: *def AnyFrameType) TokenIndex {
+        pub fn lastToken(self: *var AnyFrameType) TokenIndex {
             if (self.result) |result| return result.return_type.lastToken();
             return self.anyframe_token;
         }
@@ -974,10 +974,10 @@ pub def Node = struct {
         comptime_token: ?TokenIndex,
         noalias_token: ?TokenIndex,
         name_token: ?TokenIndex,
-        type_node: *Node,
+        type_node: *var Node,
         var_args_token: ?TokenIndex,
 
-        pub fn iterate(self: *ParamDecl, index: usize) ?*Node {
+        pub fn iterate(self: *var ParamDecl, index: usize) ?*Node {
             var i = index;
 
             if (i < 1) {
@@ -988,14 +988,14 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def ParamDecl) TokenIndex {
+        pub fn firstToken(self: *var ParamDecl) TokenIndex {
             if (self.comptime_token) |comptime_token| return comptime_token;
             if (self.noalias_token) |noalias_token| return noalias_token;
             if (self.name_token) |name_token| return name_token;
             return self.type_node.firstToken();
         }
 
-        pub fn lastToken(self: *def ParamDecl) TokenIndex {
+        pub fn lastToken(self: *var ParamDecl) TokenIndex {
             if (self.var_args_token) |var_args_token| return var_args_token;
             return self.type_node.lastToken();
         }
@@ -1010,7 +1010,7 @@ pub def Node = struct {
 
         pub def StatementList = Root.DeclList;
 
-        pub fn iterate(self: *Block, index: usize) ?*Node {
+        pub fn iterate(self: *var Block, index: usize) ?*Node {
             var i = index;
 
             if (i < self.statements.len) return self.statements.at(i).*;
@@ -1019,7 +1019,7 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def Block) TokenIndex {
+        pub fn firstToken(self: *var Block) TokenIndex {
             if (self.label) |label| {
                 return label;
             }
@@ -1027,7 +1027,7 @@ pub def Node = struct {
             return self.lbrace;
         }
 
-        pub fn lastToken(self: *def Block) TokenIndex {
+        pub fn lastToken(self: *var Block) TokenIndex {
             return self.rbrace;
         }
     };
@@ -1036,9 +1036,9 @@ pub def Node = struct {
         base: Node = Node{ .id = .Defer },
         defer_token: TokenIndex,
         payload: ?*Node,
-        expr: *Node,
+        expr: *var Node,
 
-        pub fn iterate(self: *Defer, index: usize) ?*Node {
+        pub fn iterate(self: *var Defer, index: usize) ?*Node {
             var i = index;
 
             if (i < 1) return self.expr;
@@ -1047,11 +1047,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def Defer) TokenIndex {
+        pub fn firstToken(self: *var Defer) TokenIndex {
             return self.defer_token;
         }
 
-        pub fn lastToken(self: *def Defer) TokenIndex {
+        pub fn lastToken(self: *var Defer) TokenIndex {
             return self.expr.lastToken();
         }
     };
@@ -1060,9 +1060,9 @@ pub def Node = struct {
         base: Node = Node{ .id = .Comptime },
         doc_comments: ?*DocComment,
         comptime_token: TokenIndex,
-        expr: *Node,
+        expr: *var Node,
 
-        pub fn iterate(self: *Comptime, index: usize) ?*Node {
+        pub fn iterate(self: *var Comptime, index: usize) ?*Node {
             var i = index;
 
             if (i < 1) return self.expr;
@@ -1071,11 +1071,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def Comptime) TokenIndex {
+        pub fn firstToken(self: *var Comptime) TokenIndex {
             return self.comptime_token;
         }
 
-        pub fn lastToken(self: *def Comptime) TokenIndex {
+        pub fn lastToken(self: *var Comptime) TokenIndex {
             return self.expr.lastToken();
         }
     };
@@ -1083,9 +1083,9 @@ pub def Node = struct {
     pub def Noasync = struct {
         base: Node = Node{ .id = .Noasync },
         noasync_token: TokenIndex,
-        expr: *Node,
+        expr: *var Node,
 
-        pub fn iterate(self: *Noasync, index: usize) ?*Node {
+        pub fn iterate(self: *var Noasync, index: usize) ?*Node {
             var i = index;
 
             if (i < 1) return self.expr;
@@ -1094,11 +1094,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def Noasync) TokenIndex {
+        pub fn firstToken(self: *var Noasync) TokenIndex {
             return self.noasync_token;
         }
 
-        pub fn lastToken(self: *def Noasync) TokenIndex {
+        pub fn lastToken(self: *var Noasync) TokenIndex {
             return self.expr.lastToken();
         }
     };
@@ -1106,10 +1106,10 @@ pub def Node = struct {
     pub def Payload = struct {
         base: Node = Node{ .id = .Payload },
         lpipe: TokenIndex,
-        error_symbol: *Node,
+        error_symbol: *var Node,
         rpipe: TokenIndex,
 
-        pub fn iterate(self: *Payload, index: usize) ?*Node {
+        pub fn iterate(self: *var Payload, index: usize) ?*Node {
             var i = index;
 
             if (i < 1) return self.error_symbol;
@@ -1118,11 +1118,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def Payload) TokenIndex {
+        pub fn firstToken(self: *var Payload) TokenIndex {
             return self.lpipe;
         }
 
-        pub fn lastToken(self: *def Payload) TokenIndex {
+        pub fn lastToken(self: *var Payload) TokenIndex {
             return self.rpipe;
         }
     };
@@ -1131,10 +1131,10 @@ pub def Node = struct {
         base: Node = Node{ .id = .PointerPayload },
         lpipe: TokenIndex,
         ptr_token: ?TokenIndex,
-        value_symbol: *Node,
+        value_symbol: *var Node,
         rpipe: TokenIndex,
 
-        pub fn iterate(self: *PointerPayload, index: usize) ?*Node {
+        pub fn iterate(self: *var PointerPayload, index: usize) ?*Node {
             var i = index;
 
             if (i < 1) return self.value_symbol;
@@ -1143,11 +1143,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def PointerPayload) TokenIndex {
+        pub fn firstToken(self: *var PointerPayload) TokenIndex {
             return self.lpipe;
         }
 
-        pub fn lastToken(self: *def PointerPayload) TokenIndex {
+        pub fn lastToken(self: *var PointerPayload) TokenIndex {
             return self.rpipe;
         }
     };
@@ -1156,11 +1156,11 @@ pub def Node = struct {
         base: Node = Node{ .id = .PointerIndexPayload },
         lpipe: TokenIndex,
         ptr_token: ?TokenIndex,
-        value_symbol: *Node,
+        value_symbol: *var Node,
         index_symbol: ?*Node,
         rpipe: TokenIndex,
 
-        pub fn iterate(self: *PointerIndexPayload, index: usize) ?*Node {
+        pub fn iterate(self: *var PointerIndexPayload, index: usize) ?*Node {
             var i = index;
 
             if (i < 1) return self.value_symbol;
@@ -1174,11 +1174,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def PointerIndexPayload) TokenIndex {
+        pub fn firstToken(self: *var PointerIndexPayload) TokenIndex {
             return self.lpipe;
         }
 
-        pub fn lastToken(self: *def PointerIndexPayload) TokenIndex {
+        pub fn lastToken(self: *var PointerIndexPayload) TokenIndex {
             return self.rpipe;
         }
     };
@@ -1187,9 +1187,9 @@ pub def Node = struct {
         base: Node = Node{ .id = .Else },
         else_token: TokenIndex,
         payload: ?*Node,
-        body: *Node,
+        body: *var Node,
 
-        pub fn iterate(self: *Else, index: usize) ?*Node {
+        pub fn iterate(self: *var Else, index: usize) ?*Node {
             var i = index;
 
             if (self.payload) |payload| {
@@ -1203,11 +1203,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def Else) TokenIndex {
+        pub fn firstToken(self: *var Else) TokenIndex {
             return self.else_token;
         }
 
-        pub fn lastToken(self: *def Else) TokenIndex {
+        pub fn lastToken(self: *var Else) TokenIndex {
             return self.body.lastToken();
         }
     };
@@ -1215,7 +1215,7 @@ pub def Node = struct {
     pub def Switch = struct {
         base: Node = Node{ .id = .Switch },
         switch_token: TokenIndex,
-        expr: *Node,
+        expr: *var Node,
 
         /// these must be SwitchCase nodes
         cases: CaseList,
@@ -1223,7 +1223,7 @@ pub def Node = struct {
 
         pub def CaseList = SegmentedList(*Node, 2);
 
-        pub fn iterate(self: *Switch, index: usize) ?*Node {
+        pub fn iterate(self: *var Switch, index: usize) ?*Node {
             var i = index;
 
             if (i < 1) return self.expr;
@@ -1235,11 +1235,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def Switch) TokenIndex {
+        pub fn firstToken(self: *var Switch) TokenIndex {
             return self.switch_token;
         }
 
-        pub fn lastToken(self: *def Switch) TokenIndex {
+        pub fn lastToken(self: *var Switch) TokenIndex {
             return self.rbrace;
         }
     };
@@ -1249,11 +1249,11 @@ pub def Node = struct {
         items: ItemList,
         arrow_token: TokenIndex,
         payload: ?*Node,
-        expr: *Node,
+        expr: *var Node,
 
         pub def ItemList = SegmentedList(*Node, 1);
 
-        pub fn iterate(self: *SwitchCase, index: usize) ?*Node {
+        pub fn iterate(self: *var SwitchCase, index: usize) ?*Node {
             var i = index;
 
             if (i < self.items.len) return self.items.at(i).*;
@@ -1270,11 +1270,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def SwitchCase) TokenIndex {
+        pub fn firstToken(self: *var SwitchCase) TokenIndex {
             return (self.items.at(0).*).firstToken();
         }
 
-        pub fn lastToken(self: *def SwitchCase) TokenIndex {
+        pub fn lastToken(self: *var SwitchCase) TokenIndex {
             return self.expr.lastToken();
         }
     };
@@ -1283,15 +1283,15 @@ pub def Node = struct {
         base: Node = Node{ .id = .SwitchElse },
         token: TokenIndex,
 
-        pub fn iterate(self: *SwitchElse, index: usize) ?*Node {
+        pub fn iterate(self: *var SwitchElse, index: usize) ?*Node {
             return null;
         }
 
-        pub fn firstToken(self: *def SwitchElse) TokenIndex {
+        pub fn firstToken(self: *var SwitchElse) TokenIndex {
             return self.token;
         }
 
-        pub fn lastToken(self: *def SwitchElse) TokenIndex {
+        pub fn lastToken(self: *var SwitchElse) TokenIndex {
             return self.token;
         }
     };
@@ -1301,13 +1301,13 @@ pub def Node = struct {
         label: ?TokenIndex,
         inline_token: ?TokenIndex,
         while_token: TokenIndex,
-        condition: *Node,
+        condition: *var Node,
         payload: ?*Node,
         continue_expr: ?*Node,
-        body: *Node,
+        body: *var Node,
         @"else": ?*Else,
 
-        pub fn iterate(self: *While, index: usize) ?*Node {
+        pub fn iterate(self: *var While, index: usize) ?*Node {
             var i = index;
 
             if (i < 1) return self.condition;
@@ -1334,7 +1334,7 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def While) TokenIndex {
+        pub fn firstToken(self: *var While) TokenIndex {
             if (self.label) |label| {
                 return label;
             }
@@ -1346,7 +1346,7 @@ pub def Node = struct {
             return self.while_token;
         }
 
-        pub fn lastToken(self: *def While) TokenIndex {
+        pub fn lastToken(self: *var While) TokenIndex {
             if (self.@"else") |@"else"| {
                 return @"else".body.lastToken();
             }
@@ -1360,12 +1360,12 @@ pub def Node = struct {
         label: ?TokenIndex,
         inline_token: ?TokenIndex,
         for_token: TokenIndex,
-        array_expr: *Node,
-        payload: *Node,
-        body: *Node,
+        array_expr: *var Node,
+        payload: *var Node,
+        body: *var Node,
         @"else": ?*Else,
 
-        pub fn iterate(self: *For, index: usize) ?*Node {
+        pub fn iterate(self: *var For, index: usize) ?*Node {
             var i = index;
 
             if (i < 1) return self.array_expr;
@@ -1385,7 +1385,7 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def For) TokenIndex {
+        pub fn firstToken(self: *var For) TokenIndex {
             if (self.label) |label| {
                 return label;
             }
@@ -1397,7 +1397,7 @@ pub def Node = struct {
             return self.for_token;
         }
 
-        pub fn lastToken(self: *def For) TokenIndex {
+        pub fn lastToken(self: *var For) TokenIndex {
             if (self.@"else") |@"else"| {
                 return @"else".body.lastToken();
             }
@@ -1409,12 +1409,12 @@ pub def Node = struct {
     pub def If = struct {
         base: Node = Node{ .id = .If },
         if_token: TokenIndex,
-        condition: *Node,
+        condition: *var Node,
         payload: ?*Node,
-        body: *Node,
+        body: *var Node,
         @"else": ?*Else,
 
-        pub fn iterate(self: *If, index: usize) ?*Node {
+        pub fn iterate(self: *var If, index: usize) ?*Node {
             var i = index;
 
             if (i < 1) return self.condition;
@@ -1436,11 +1436,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def If) TokenIndex {
+        pub fn firstToken(self: *var If) TokenIndex {
             return self.if_token;
         }
 
-        pub fn lastToken(self: *def If) TokenIndex {
+        pub fn lastToken(self: *var If) TokenIndex {
             if (self.@"else") |@"else"| {
                 return @"else".body.lastToken();
             }
@@ -1452,9 +1452,9 @@ pub def Node = struct {
     pub def InfixOp = struct {
         base: Node = Node{ .id = .InfixOp },
         op_token: TokenIndex,
-        lhs: *Node,
+        lhs: *var Node,
         op: Op,
-        rhs: *Node,
+        rhs: *var Node,
 
         pub def Op = union(enum) {
             Add,
@@ -1502,7 +1502,7 @@ pub def Node = struct {
             UnwrapOptional,
         };
 
-        pub fn iterate(self: *InfixOp, index: usize) ?*Node {
+        pub fn iterate(self: *var InfixOp, index: usize) ?*Node {
             var i = index;
 
             if (i < 1) return self.lhs;
@@ -1567,11 +1567,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def InfixOp) TokenIndex {
+        pub fn firstToken(self: *var InfixOp) TokenIndex {
             return self.lhs.firstToken();
         }
 
-        pub fn lastToken(self: *def InfixOp) TokenIndex {
+        pub fn lastToken(self: *var InfixOp) TokenIndex {
             return self.rhs.lastToken();
         }
     };
@@ -1580,7 +1580,7 @@ pub def Node = struct {
         base: Node = Node{ .id = .PrefixOp },
         op_token: TokenIndex,
         op: Op,
-        rhs: *Node,
+        rhs: *var Node,
 
         pub def Op = union(enum) {
             AddressOf,
@@ -1598,7 +1598,7 @@ pub def Node = struct {
         };
 
         pub def ArrayInfo = struct {
-            len_expr: *Node,
+            len_expr: *var Node,
             sentinel: ?*Node,
         };
 
@@ -1610,17 +1610,17 @@ pub def Node = struct {
             sentinel: ?*Node = null,
 
             pub def Align = struct {
-                node: *Node,
+                node: *var Node,
                 bit_range: ?BitRange,
 
                 pub def BitRange = struct {
-                    start: *Node,
-                    end: *Node,
+                    start: *var Node,
+                    end: *var Node,
                 };
             };
         };
 
-        pub fn iterate(self: *PrefixOp, index: usize) ?*Node {
+        pub fn iterate(self: *var PrefixOp, index: usize) ?*Node {
             var i = index;
 
             switch (self.op) {
@@ -1663,11 +1663,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def PrefixOp) TokenIndex {
+        pub fn firstToken(self: *var PrefixOp) TokenIndex {
             return self.op_token;
         }
 
-        pub fn lastToken(self: *def PrefixOp) TokenIndex {
+        pub fn lastToken(self: *var PrefixOp) TokenIndex {
             return self.rhs.lastToken();
         }
     };
@@ -1676,9 +1676,9 @@ pub def Node = struct {
         base: Node = Node{ .id = .FieldInitializer },
         period_token: TokenIndex,
         name_token: TokenIndex,
-        expr: *Node,
+        expr: *var Node,
 
-        pub fn iterate(self: *FieldInitializer, index: usize) ?*Node {
+        pub fn iterate(self: *var FieldInitializer, index: usize) ?*Node {
             var i = index;
 
             if (i < 1) return self.expr;
@@ -1687,11 +1687,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def FieldInitializer) TokenIndex {
+        pub fn firstToken(self: *var FieldInitializer) TokenIndex {
             return self.period_token;
         }
 
-        pub fn lastToken(self: *def FieldInitializer) TokenIndex {
+        pub fn lastToken(self: *var FieldInitializer) TokenIndex {
             return self.expr.lastToken();
         }
     };
@@ -1703,13 +1703,13 @@ pub def Node = struct {
         rtoken: TokenIndex,
 
         pub def Lhs = union(enum) {
-            node: *Node,
+            node: *var Node,
             dot: TokenIndex,
         };
 
         pub def Op = union(enum) {
             Call: Call,
-            ArrayAccess: *Node,
+            ArrayAccess: *var Node,
             Slice: Slice,
             ArrayInitializer: InitList,
             StructInitializer: InitList,
@@ -1726,13 +1726,13 @@ pub def Node = struct {
             };
 
             pub def Slice = struct {
-                start: *Node,
+                start: *var Node,
                 end: ?*Node,
                 sentinel: ?*Node,
             };
         };
 
-        pub fn iterate(self: *SuffixOp, index: usize) ?*Node {
+        pub fn iterate(self: *var SuffixOp, index: usize) ?*Node {
             var i = index;
 
             switch (self.lhs) {
@@ -1781,7 +1781,7 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def SuffixOp) TokenIndex {
+        pub fn firstToken(self: *var SuffixOp) TokenIndex {
             switch (self.op) {
                 .Call => |*call_info| if (call_info.async_token) |async_token| return async_token,
                 else => {},
@@ -1792,7 +1792,7 @@ pub def Node = struct {
             }
         }
 
-        pub fn lastToken(self: *def SuffixOp) TokenIndex {
+        pub fn lastToken(self: *var SuffixOp) TokenIndex {
             return self.rtoken;
         }
     };
@@ -1800,10 +1800,10 @@ pub def Node = struct {
     pub def GroupedExpression = struct {
         base: Node = Node{ .id = .GroupedExpression },
         lparen: TokenIndex,
-        expr: *Node,
+        expr: *var Node,
         rparen: TokenIndex,
 
-        pub fn iterate(self: *GroupedExpression, index: usize) ?*Node {
+        pub fn iterate(self: *var GroupedExpression, index: usize) ?*Node {
             var i = index;
 
             if (i < 1) return self.expr;
@@ -1812,11 +1812,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def GroupedExpression) TokenIndex {
+        pub fn firstToken(self: *var GroupedExpression) TokenIndex {
             return self.lparen;
         }
 
-        pub fn lastToken(self: *def GroupedExpression) TokenIndex {
+        pub fn lastToken(self: *var GroupedExpression) TokenIndex {
             return self.rparen;
         }
     };
@@ -1833,7 +1833,7 @@ pub def Node = struct {
             Return,
         };
 
-        pub fn iterate(self: *ControlFlowExpression, index: usize) ?*Node {
+        pub fn iterate(self: *var ControlFlowExpression, index: usize) ?*Node {
             var i = index;
 
             switch (self.kind) {
@@ -1854,11 +1854,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def ControlFlowExpression) TokenIndex {
+        pub fn firstToken(self: *var ControlFlowExpression) TokenIndex {
             return self.ltoken;
         }
 
-        pub fn lastToken(self: *def ControlFlowExpression) TokenIndex {
+        pub fn lastToken(self: *var ControlFlowExpression) TokenIndex {
             if (self.rhs) |rhs| {
                 return rhs.lastToken();
             }
@@ -1881,7 +1881,7 @@ pub def Node = struct {
         suspend_token: TokenIndex,
         body: ?*Node,
 
-        pub fn iterate(self: *Suspend, index: usize) ?*Node {
+        pub fn iterate(self: *var Suspend, index: usize) ?*Node {
             var i = index;
 
             if (self.body) |body| {
@@ -1892,11 +1892,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def Suspend) TokenIndex {
+        pub fn firstToken(self: *var Suspend) TokenIndex {
             return self.suspend_token;
         }
 
-        pub fn lastToken(self: *def Suspend) TokenIndex {
+        pub fn lastToken(self: *var Suspend) TokenIndex {
             if (self.body) |body| {
                 return body.lastToken();
             }
@@ -1909,15 +1909,15 @@ pub def Node = struct {
         base: Node = Node{ .id = .IntegerLiteral },
         token: TokenIndex,
 
-        pub fn iterate(self: *IntegerLiteral, index: usize) ?*Node {
+        pub fn iterate(self: *var IntegerLiteral, index: usize) ?*Node {
             return null;
         }
 
-        pub fn firstToken(self: *def IntegerLiteral) TokenIndex {
+        pub fn firstToken(self: *var IntegerLiteral) TokenIndex {
             return self.token;
         }
 
-        pub fn lastToken(self: *def IntegerLiteral) TokenIndex {
+        pub fn lastToken(self: *var IntegerLiteral) TokenIndex {
             return self.token;
         }
     };
@@ -1927,15 +1927,15 @@ pub def Node = struct {
         dot: TokenIndex,
         name: TokenIndex,
 
-        pub fn iterate(self: *EnumLiteral, index: usize) ?*Node {
+        pub fn iterate(self: *var EnumLiteral, index: usize) ?*Node {
             return null;
         }
 
-        pub fn firstToken(self: *def EnumLiteral) TokenIndex {
+        pub fn firstToken(self: *var EnumLiteral) TokenIndex {
             return self.dot;
         }
 
-        pub fn lastToken(self: *def EnumLiteral) TokenIndex {
+        pub fn lastToken(self: *var EnumLiteral) TokenIndex {
             return self.name;
         }
     };
@@ -1944,15 +1944,15 @@ pub def Node = struct {
         base: Node = Node{ .id = .FloatLiteral },
         token: TokenIndex,
 
-        pub fn iterate(self: *FloatLiteral, index: usize) ?*Node {
+        pub fn iterate(self: *var FloatLiteral, index: usize) ?*Node {
             return null;
         }
 
-        pub fn firstToken(self: *def FloatLiteral) TokenIndex {
+        pub fn firstToken(self: *var FloatLiteral) TokenIndex {
             return self.token;
         }
 
-        pub fn lastToken(self: *def FloatLiteral) TokenIndex {
+        pub fn lastToken(self: *var FloatLiteral) TokenIndex {
             return self.token;
         }
     };
@@ -1965,7 +1965,7 @@ pub def Node = struct {
 
         pub def ParamList = SegmentedList(*Node, 2);
 
-        pub fn iterate(self: *BuiltinCall, index: usize) ?*Node {
+        pub fn iterate(self: *var BuiltinCall, index: usize) ?*Node {
             var i = index;
 
             if (i < self.params.len) return self.params.at(i).*;
@@ -1974,11 +1974,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def BuiltinCall) TokenIndex {
+        pub fn firstToken(self: *var BuiltinCall) TokenIndex {
             return self.builtin_token;
         }
 
-        pub fn lastToken(self: *def BuiltinCall) TokenIndex {
+        pub fn lastToken(self: *var BuiltinCall) TokenIndex {
             return self.rparen_token;
         }
     };
@@ -1987,15 +1987,15 @@ pub def Node = struct {
         base: Node = Node{ .id = .StringLiteral },
         token: TokenIndex,
 
-        pub fn iterate(self: *StringLiteral, index: usize) ?*Node {
+        pub fn iterate(self: *var StringLiteral, index: usize) ?*Node {
             return null;
         }
 
-        pub fn firstToken(self: *def StringLiteral) TokenIndex {
+        pub fn firstToken(self: *var StringLiteral) TokenIndex {
             return self.token;
         }
 
-        pub fn lastToken(self: *def StringLiteral) TokenIndex {
+        pub fn lastToken(self: *var StringLiteral) TokenIndex {
             return self.token;
         }
     };
@@ -2006,15 +2006,15 @@ pub def Node = struct {
 
         pub def LineList = SegmentedList(TokenIndex, 4);
 
-        pub fn iterate(self: *MultilineStringLiteral, index: usize) ?*Node {
+        pub fn iterate(self: *var MultilineStringLiteral, index: usize) ?*Node {
             return null;
         }
 
-        pub fn firstToken(self: *def MultilineStringLiteral) TokenIndex {
+        pub fn firstToken(self: *var MultilineStringLiteral) TokenIndex {
             return self.lines.at(0).*;
         }
 
-        pub fn lastToken(self: *def MultilineStringLiteral) TokenIndex {
+        pub fn lastToken(self: *var MultilineStringLiteral) TokenIndex {
             return self.lines.at(self.lines.len - 1).*;
         }
     };
@@ -2023,15 +2023,15 @@ pub def Node = struct {
         base: Node = Node{ .id = .CharLiteral },
         token: TokenIndex,
 
-        pub fn iterate(self: *CharLiteral, index: usize) ?*Node {
+        pub fn iterate(self: *var CharLiteral, index: usize) ?*Node {
             return null;
         }
 
-        pub fn firstToken(self: *def CharLiteral) TokenIndex {
+        pub fn firstToken(self: *var CharLiteral) TokenIndex {
             return self.token;
         }
 
-        pub fn lastToken(self: *def CharLiteral) TokenIndex {
+        pub fn lastToken(self: *var CharLiteral) TokenIndex {
             return self.token;
         }
     };
@@ -2040,15 +2040,15 @@ pub def Node = struct {
         base: Node = Node{ .id = .BoolLiteral },
         token: TokenIndex,
 
-        pub fn iterate(self: *BoolLiteral, index: usize) ?*Node {
+        pub fn iterate(self: *var BoolLiteral, index: usize) ?*Node {
             return null;
         }
 
-        pub fn firstToken(self: *def BoolLiteral) TokenIndex {
+        pub fn firstToken(self: *var BoolLiteral) TokenIndex {
             return self.token;
         }
 
-        pub fn lastToken(self: *def BoolLiteral) TokenIndex {
+        pub fn lastToken(self: *var BoolLiteral) TokenIndex {
             return self.token;
         }
     };
@@ -2057,15 +2057,15 @@ pub def Node = struct {
         base: Node = Node{ .id = .NullLiteral },
         token: TokenIndex,
 
-        pub fn iterate(self: *NullLiteral, index: usize) ?*Node {
+        pub fn iterate(self: *var NullLiteral, index: usize) ?*Node {
             return null;
         }
 
-        pub fn firstToken(self: *def NullLiteral) TokenIndex {
+        pub fn firstToken(self: *var NullLiteral) TokenIndex {
             return self.token;
         }
 
-        pub fn lastToken(self: *def NullLiteral) TokenIndex {
+        pub fn lastToken(self: *var NullLiteral) TokenIndex {
             return self.token;
         }
     };
@@ -2074,15 +2074,15 @@ pub def Node = struct {
         base: Node = Node{ .id = .UndefinedLiteral },
         token: TokenIndex,
 
-        pub fn iterate(self: *UndefinedLiteral, index: usize) ?*Node {
+        pub fn iterate(self: *var UndefinedLiteral, index: usize) ?*Node {
             return null;
         }
 
-        pub fn firstToken(self: *def UndefinedLiteral) TokenIndex {
+        pub fn firstToken(self: *var UndefinedLiteral) TokenIndex {
             return self.token;
         }
 
-        pub fn lastToken(self: *def UndefinedLiteral) TokenIndex {
+        pub fn lastToken(self: *var UndefinedLiteral) TokenIndex {
             return self.token;
         }
     };
@@ -2090,17 +2090,17 @@ pub def Node = struct {
     pub def AsmOutput = struct {
         base: Node = Node{ .id = .AsmOutput },
         lbracket: TokenIndex,
-        symbolic_name: *Node,
-        constraint: *Node,
+        symbolic_name: *var Node,
+        constraint: *var Node,
         kind: Kind,
         rparen: TokenIndex,
 
         pub def Kind = union(enum) {
-            Variable: *Identifier,
-            Return: *Node,
+            Variable: *var Identifier,
+            Return: *var Node,
         };
 
-        pub fn iterate(self: *AsmOutput, index: usize) ?*Node {
+        pub fn iterate(self: *var AsmOutput, index: usize) ?*Node {
             var i = index;
 
             if (i < 1) return self.symbolic_name;
@@ -2123,11 +2123,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def AsmOutput) TokenIndex {
+        pub fn firstToken(self: *var AsmOutput) TokenIndex {
             return self.lbracket;
         }
 
-        pub fn lastToken(self: *def AsmOutput) TokenIndex {
+        pub fn lastToken(self: *var AsmOutput) TokenIndex {
             return self.rparen;
         }
     };
@@ -2135,12 +2135,12 @@ pub def Node = struct {
     pub def AsmInput = struct {
         base: Node = Node{ .id = .AsmInput },
         lbracket: TokenIndex,
-        symbolic_name: *Node,
-        constraint: *Node,
-        expr: *Node,
+        symbolic_name: *var Node,
+        constraint: *var Node,
+        expr: *var Node,
         rparen: TokenIndex,
 
-        pub fn iterate(self: *AsmInput, index: usize) ?*Node {
+        pub fn iterate(self: *var AsmInput, index: usize) ?*Node {
             var i = index;
 
             if (i < 1) return self.symbolic_name;
@@ -2155,11 +2155,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def AsmInput) TokenIndex {
+        pub fn firstToken(self: *var AsmInput) TokenIndex {
             return self.lbracket;
         }
 
-        pub fn lastToken(self: *def AsmInput) TokenIndex {
+        pub fn lastToken(self: *var AsmInput) TokenIndex {
             return self.rparen;
         }
     };
@@ -2168,7 +2168,7 @@ pub def Node = struct {
         base: Node = Node{ .id = .Asm },
         asm_token: TokenIndex,
         volatile_token: ?TokenIndex,
-        template: *Node,
+        template: *var Node,
         outputs: OutputList,
         inputs: InputList,
         clobbers: ClobberList,
@@ -2178,7 +2178,7 @@ pub def Node = struct {
         pub def InputList = SegmentedList(*AsmInput, 2);
         pub def ClobberList = SegmentedList(*Node, 2);
 
-        pub fn iterate(self: *Asm, index: usize) ?*Node {
+        pub fn iterate(self: *var Asm, index: usize) ?*Node {
             var i = index;
 
             if (i < self.outputs.len) return &self.outputs.at(i).*.base;
@@ -2190,11 +2190,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def Asm) TokenIndex {
+        pub fn firstToken(self: *var Asm) TokenIndex {
             return self.asm_token;
         }
 
-        pub fn lastToken(self: *def Asm) TokenIndex {
+        pub fn lastToken(self: *var Asm) TokenIndex {
             return self.rparen;
         }
     };
@@ -2203,15 +2203,15 @@ pub def Node = struct {
         base: Node = Node{ .id = .Unreachable },
         token: TokenIndex,
 
-        pub fn iterate(self: *Unreachable, index: usize) ?*Node {
+        pub fn iterate(self: *var Unreachable, index: usize) ?*Node {
             return null;
         }
 
-        pub fn firstToken(self: *def Unreachable) TokenIndex {
+        pub fn firstToken(self: *var Unreachable) TokenIndex {
             return self.token;
         }
 
-        pub fn lastToken(self: *def Unreachable) TokenIndex {
+        pub fn lastToken(self: *var Unreachable) TokenIndex {
             return self.token;
         }
     };
@@ -2220,15 +2220,15 @@ pub def Node = struct {
         base: Node = Node{ .id = .ErrorType },
         token: TokenIndex,
 
-        pub fn iterate(self: *ErrorType, index: usize) ?*Node {
+        pub fn iterate(self: *var ErrorType, index: usize) ?*Node {
             return null;
         }
 
-        pub fn firstToken(self: *def ErrorType) TokenIndex {
+        pub fn firstToken(self: *var ErrorType) TokenIndex {
             return self.token;
         }
 
-        pub fn lastToken(self: *def ErrorType) TokenIndex {
+        pub fn lastToken(self: *var ErrorType) TokenIndex {
             return self.token;
         }
     };
@@ -2237,15 +2237,15 @@ pub def Node = struct {
         base: Node = Node{ .id = .VarType },
         token: TokenIndex,
 
-        pub fn iterate(self: *VarType, index: usize) ?*Node {
+        pub fn iterate(self: *var VarType, index: usize) ?*Node {
             return null;
         }
 
-        pub fn firstToken(self: *def VarType) TokenIndex {
+        pub fn firstToken(self: *var VarType) TokenIndex {
             return self.token;
         }
 
-        pub fn lastToken(self: *def VarType) TokenIndex {
+        pub fn lastToken(self: *var VarType) TokenIndex {
             return self.token;
         }
     };
@@ -2256,15 +2256,15 @@ pub def Node = struct {
 
         pub def LineList = SegmentedList(TokenIndex, 4);
 
-        pub fn iterate(self: *DocComment, index: usize) ?*Node {
+        pub fn iterate(self: *var DocComment, index: usize) ?*Node {
             return null;
         }
 
-        pub fn firstToken(self: *def DocComment) TokenIndex {
+        pub fn firstToken(self: *var DocComment) TokenIndex {
             return self.lines.at(0).*;
         }
 
-        pub fn lastToken(self: *def DocComment) TokenIndex {
+        pub fn lastToken(self: *var DocComment) TokenIndex {
             return self.lines.at(self.lines.len - 1).*;
         }
     };
@@ -2273,10 +2273,10 @@ pub def Node = struct {
         base: Node = Node{ .id = .TestDecl },
         doc_comments: ?*DocComment,
         test_token: TokenIndex,
-        name: *Node,
-        body_node: *Node,
+        name: *var Node,
+        body_node: *var Node,
 
-        pub fn iterate(self: *TestDecl, index: usize) ?*Node {
+        pub fn iterate(self: *var TestDecl, index: usize) ?*Node {
             var i = index;
 
             if (i < 1) return self.body_node;
@@ -2285,11 +2285,11 @@ pub def Node = struct {
             return null;
         }
 
-        pub fn firstToken(self: *def TestDecl) TokenIndex {
+        pub fn firstToken(self: *var TestDecl) TokenIndex {
             return self.test_token;
         }
 
-        pub fn lastToken(self: *def TestDecl) TokenIndex {
+        pub fn lastToken(self: *var TestDecl) TokenIndex {
             return self.body_node.lastToken();
         }
     };

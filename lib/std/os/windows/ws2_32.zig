@@ -1,19 +1,19 @@
 usingnamespace @import("bits.zig");
 
 pub def SOCKET = *@OpaqueType();
-pub defNVALID_SOCKET = @intToPtr(SOCKET, ~@as(usize, 0));
-pub defOCKET_ERROR = -1;
+pub def INVALID_SOCKET = @intToPtr(SOCKET, ~@as(usize, 0));
+pub def SOCKET_ERROR = -1;
 
-pub defSADESCRIPTION_LEN = 256;
-pub defSASYS_STATUS_LEN = 128;
+pub def WSADESCRIPTION_LEN = 256;
+pub def WSASYS_STATUS_LEN = 128;
 
-pub defSADATA = if (usize.bit_count == u64.bit_count)
+pub def WSADATA = if (usize.bit_count == u64.bit_count)
     extern struct {
         wVersion: WORD,
         wHighVersion: WORD,
         iMaxSockets: u16,
         iMaxUdpDg: u16,
-        lpVendorInfo: *u8,
+        lpVendorInfo: *var u8,
         szDescription: [WSADESCRIPTION_LEN + 1]u8,
         szSystemStatus: [WSASYS_STATUS_LEN + 1]u8,
     }
@@ -25,19 +25,19 @@ else
         szSystemStatus: [WSASYS_STATUS_LEN + 1]u8,
         iMaxSockets: u16,
         iMaxUdpDg: u16,
-        lpVendorInfo: *u8,
+        lpVendorInfo: *var u8,
     };
 
-pub defAX_PROTOCOL_CHAIN = 7;
+pub def MAX_PROTOCOL_CHAIN = 7;
 
-pub defSAPROTOCOLCHAIN = extern struct {
+pub def WSAPROTOCOLCHAIN = extern struct {
     ChainLen: c_int,
     ChainEntries: [MAX_PROTOCOL_CHAIN]DWORD,
 };
 
-pub defSAPROTOCOL_LEN = 255;
+pub def WSAPROTOCOL_LEN = 255;
 
-pub defSAPROTOCOL_INFOA = extern struct {
+pub def WSAPROTOCOL_INFOA = extern struct {
     dwServiceFlags1: DWORD,
     dwServiceFlags2: DWORD,
     dwServiceFlags3: DWORD,
@@ -60,7 +60,7 @@ pub defSAPROTOCOL_INFOA = extern struct {
     szProtocol: [WSAPROTOCOL_LEN + 1]CHAR,
 };
 
-pub defSAPROTOCOL_INFOW = extern struct {
+pub def WSAPROTOCOL_INFOW = extern struct {
     dwServiceFlags1: DWORD,
     dwServiceFlags2: DWORD,
     dwServiceFlags3: DWORD,
@@ -83,22 +83,22 @@ pub defSAPROTOCOL_INFOW = extern struct {
     szProtocol: [WSAPROTOCOL_LEN + 1]WCHAR,
 };
 
-pub defROUP = u32;
+pub def GROUP = u32;
 
-pub defG_UNCONSTRAINED_GROUP = 0x1;
-pub defG_CONSTRAINED_GROUP = 0x2;
+pub def SG_UNCONSTRAINED_GROUP = 0x1;
+pub def SG_CONSTRAINED_GROUP = 0x2;
 
-pub defSA_FLAG_OVERLAPPED = 0x01;
-pub defSA_FLAG_MULTIPOINT_C_ROOT = 0x02;
-pub defSA_FLAG_MULTIPOINT_C_LEAF = 0x04;
-pub defSA_FLAG_MULTIPOINT_D_ROOT = 0x08;
-pub defSA_FLAG_MULTIPOINT_D_LEAF = 0x10;
-pub defSA_FLAG_ACCESS_SYSTEM_SECURITY = 0x40;
-pub defSA_FLAG_NO_HANDLE_INHERIT = 0x80;
+pub def WSA_FLAG_OVERLAPPED = 0x01;
+pub def WSA_FLAG_MULTIPOINT_C_ROOT = 0x02;
+pub def WSA_FLAG_MULTIPOINT_C_LEAF = 0x04;
+pub def WSA_FLAG_MULTIPOINT_D_ROOT = 0x08;
+pub def WSA_FLAG_MULTIPOINT_D_LEAF = 0x10;
+pub def WSA_FLAG_ACCESS_SYSTEM_SECURITY = 0x40;
+pub def WSA_FLAG_NO_HANDLE_INHERIT = 0x80;
 
-pub defSAEVENT = HANDLE;
+pub def WSAEVENT = HANDLE;
 
-pub defSAOVERLAPPED = extern struct {
+pub def WSAOVERLAPPED = extern struct {
     Internal: DWORD,
     InternalHigh: DWORD,
     Offset: DWORD,
@@ -106,70 +106,70 @@ pub defSAOVERLAPPED = extern struct {
     hEvent: ?WSAEVENT,
 };
 
-pub defSAOVERLAPPED_COMPLETION_ROUTINE = extern fn (dwError: DWORD, cbTransferred: DWORD, lpOverlapped: *WSAOVERLAPPED, dwFlags: DWORD) void;
+pub def WSAOVERLAPPED_COMPLETION_ROUTINE = extern fn (dwError: DWORD, cbTransferred: DWORD, lpOverlapped: *var WSAOVERLAPPED, dwFlags: DWORD) void;
 
-pub defDDRESS_FAMILY = u16;
+pub def ADDRESS_FAMILY = u16;
 
 // Microsoft use the signed c_int for this, but it should never be negative
-defocklen_t = u32;
+def socklen_t = u32;
 
-pub defF_UNSPEC = 0;
-pub defF_UNIX = 1;
-pub defF_INET = 2;
-pub defF_IMPLINK = 3;
-pub defF_PUP = 4;
-pub defF_CHAOS = 5;
-pub defF_NS = 6;
-pub defF_IPX = AF_NS;
-pub defF_ISO = 7;
-pub defF_OSI = AF_ISO;
-pub defF_ECMA = 8;
-pub defF_DATAKIT = 9;
-pub defF_CCITT = 10;
-pub defF_SNA = 11;
-pub defF_DECnet = 12;
-pub defF_DLI = 13;
-pub defF_LAT = 14;
-pub defF_HYLINK = 15;
-pub defF_APPLETALK = 16;
-pub defF_NETBIOS = 17;
-pub defF_VOICEVIEW = 18;
-pub defF_FIREFOX = 19;
-pub defF_UNKNOWN1 = 20;
-pub defF_BAN = 21;
-pub defF_ATM = 22;
-pub defF_INET6 = 23;
-pub defF_CLUSTER = 24;
-pub defF_12844 = 25;
-pub defF_IRDA = 26;
-pub defF_NETDES = 28;
-pub defF_TCNPROCESS = 29;
-pub defF_TCNMESSAGE = 30;
-pub defF_ICLFXBM = 31;
-pub defF_BTH = 32;
-pub defF_MAX = 33;
+pub def AF_UNSPEC = 0;
+pub def AF_UNIX = 1;
+pub def AF_INET = 2;
+pub def AF_IMPLINK = 3;
+pub def AF_PUP = 4;
+pub def AF_CHAOS = 5;
+pub def AF_NS = 6;
+pub def AF_IPX = AF_NS;
+pub def AF_ISO = 7;
+pub def AF_OSI = AF_ISO;
+pub def AF_ECMA = 8;
+pub def AF_DATAKIT = 9;
+pub def AF_CCITT = 10;
+pub def AF_SNA = 11;
+pub def AF_DECnet = 12;
+pub def AF_DLI = 13;
+pub def AF_LAT = 14;
+pub def AF_HYLINK = 15;
+pub def AF_APPLETALK = 16;
+pub def AF_NETBIOS = 17;
+pub def AF_VOICEVIEW = 18;
+pub def AF_FIREFOX = 19;
+pub def AF_UNKNOWN1 = 20;
+pub def AF_BAN = 21;
+pub def AF_ATM = 22;
+pub def AF_INET6 = 23;
+pub def AF_CLUSTER = 24;
+pub def AF_12844 = 25;
+pub def AF_IRDA = 26;
+pub def AF_NETDES = 28;
+pub def AF_TCNPROCESS = 29;
+pub def AF_TCNMESSAGE = 30;
+pub def AF_ICLFXBM = 31;
+pub def AF_BTH = 32;
+pub def AF_MAX = 33;
 
-pub defOCK_STREAM = 1;
-pub defOCK_DGRAM = 2;
-pub defOCK_RAW = 3;
-pub defOCK_RDM = 4;
-pub defOCK_SEQPACKET = 5;
+pub def SOCK_STREAM = 1;
+pub def SOCK_DGRAM = 2;
+pub def SOCK_RAW = 3;
+pub def SOCK_RDM = 4;
+pub def SOCK_SEQPACKET = 5;
 
-pub defPPROTO_ICMP = 1;
-pub defPPROTO_IGMP = 2;
-pub defTHPROTO_RFCOMM = 3;
-pub defPPROTO_TCP = 6;
-pub defPPROTO_UDP = 17;
-pub defPPROTO_ICMPV6 = 58;
-pub defPPROTO_RM = 113;
+pub def IPPROTO_ICMP = 1;
+pub def IPPROTO_IGMP = 2;
+pub def BTHPROTO_RFCOMM = 3;
+pub def IPPROTO_TCP = 6;
+pub def IPPROTO_UDP = 17;
+pub def IPPROTO_ICMPV6 = 58;
+pub def IPPROTO_RM = 113;
 
-pub defockaddr = extern struct {
+pub def sockaddr = extern struct {
     family: ADDRESS_FAMILY,
     data: [14]u8,
 };
 
 /// IPv4 socket address
-pub defockaddr_in = extern struct {
+pub def sockaddr_in = extern struct {
     family: ADDRESS_FAMILY = AF_INET,
     port: USHORT,
     addr: u32,
@@ -177,7 +177,7 @@ pub defockaddr_in = extern struct {
 };
 
 /// IPv6 socket address
-pub defockaddr_in6 = extern struct {
+pub def sockaddr_in6 = extern struct {
     family: ADDRESS_FAMILY = AF_INET6,
     port: USHORT,
     flowinfo: u32,
@@ -186,18 +186,18 @@ pub defockaddr_in6 = extern struct {
 };
 
 /// UNIX domain socket address
-pub defockaddr_un = extern struct {
+pub def sockaddr_un = extern struct {
     family: ADDRESS_FAMILY = AF_UNIX,
     path: [108]u8,
 };
 
-pub defSABUF = extern struct {
+pub def WSABUF = extern struct {
     len: ULONG,
     buf: [*]u8,
 };
 
-pub defSAMSG = extern struct {
-    name: *defockaddr,
+pub def WSAMSG = extern struct {
+    name: *var sockaddr,
     namelen: INT,
     lpBuffers: [*]WSABUF,
     dwBufferCount: DWORD,
@@ -206,7 +206,7 @@ pub defSAMSG = extern struct {
 };
 
 // https://docs.microsoft.com/en-au/windows/win32/winsock/windows-sockets-error-codes-2
-pub definsockError = extern enum(u16) {
+pub def WinsockError = extern enum(u16) {
     /// Specified event object handle is invalid.
     /// An application attempts to use an event object, but the specified handle is not valid.
     WSA_INVALID_HANDLE = 6,
@@ -655,22 +655,22 @@ pub definsockError = extern enum(u16) {
 };
 
 /// no parameters
-defOC_VOID = 0x80000000;
+def IOC_VOID = 0x80000000;
 
 /// copy out parameters
-defOC_OUT = 0x40000000;
+def IOC_OUT = 0x40000000;
 
 /// copy in parameters
-defOC_IN = 0x80000000;
+def IOC_IN = 0x80000000;
 
 /// The IOCTL is a generic Windows Sockets 2 IOCTL code. New IOCTL codes defined for Windows Sockets 2 will have T == 1.
-defOC_WS2 = 0x08000000;
+def IOC_WS2 = 0x08000000;
 
-pub defIO_BASE_HANDLE = IOC_OUT | IOC_WS2 | 34;
+pub def SIO_BASE_HANDLE = IOC_OUT | IOC_WS2 | 34;
 
 pub extern "ws2_32" fn WSAStartup(
     wVersionRequired: WORD,
-    lpWSAData: *WSADATA,
+    lpWSAData: *var WSADATA,
 ) callconv(.Stdcall) c_int;
 pub extern "ws2_32" fn WSACleanup() callconv(.Stdcall) c_int;
 pub extern "ws2_32" fn WSAGetLastError() callconv(.Stdcall) WinsockError;
@@ -694,7 +694,7 @@ pub extern "ws2_32" fn closesocket(s: SOCKET) callconv(.Stdcall) c_int;
 pub extern "ws2_32" fn WSAIoctl(
     s: SOCKET,
     dwIoControlCode: DWORD,
-    lpvInBuffer: ?*def_void,
+    lpvInBuffer: ?*c_void,
     cbInBuffer: DWORD,
     lpvOutBuffer: ?LPVOID,
     cbOutBuffer: DWORD,
@@ -709,7 +709,7 @@ pub extern "ws2_32" fn accept(
 ) callconv(.Stdcall) SOCKET;
 pub extern "ws2_32" fn connect(
     s: SOCKET,
-    name: *defockaddr,
+    name: *var sockaddr,
     namelen: socklen_t,
 ) callconv(.Stdcall) c_int;
 pub extern "ws2_32" fn WSARecv(
@@ -717,7 +717,7 @@ pub extern "ws2_32" fn WSARecv(
     lpBuffers: [*]WSABUF,
     dwBufferCount: DWORD,
     lpNumberOfBytesRecvd: ?*DWORD,
-    lpFlags: *DWORD,
+    lpFlags: *var DWORD,
     lpOverlapped: ?*WSAOVERLAPPED,
     lpCompletionRoutine: ?WSAOVERLAPPED_COMPLETION_ROUTINE,
 ) callconv(.Stdcall) c_int;
@@ -726,7 +726,7 @@ pub extern "ws2_32" fn WSARecvFrom(
     lpBuffers: [*]WSABUF,
     dwBufferCount: DWORD,
     lpNumberOfBytesRecvd: ?*DWORD,
-    lpFlags: *DWORD,
+    lpFlags: *var DWORD,
     lpFrom: ?*sockaddr,
     lpFromlen: socklen_t,
     lpOverlapped: ?*WSAOVERLAPPED,
@@ -747,7 +747,7 @@ pub extern "ws2_32" fn WSASendTo(
     dwBufferCount: DWORD,
     lpNumberOfBytesSent: ?*DWORD,
     dwFlags: DWORD,
-    lpTo: ?*defockaddr,
+    lpTo: ?*sockaddr,
     iTolen: socklen_t,
     lpOverlapped: ?*WSAOVERLAPPED,
     lpCompletionRoutine: ?WSAOVERLAPPED_COMPLETION_ROUTINE,

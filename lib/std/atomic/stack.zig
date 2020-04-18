@@ -28,12 +28,12 @@ pub fn Stack(comptime T: type) type {
 
         /// push operation, but only if you are the first item in the stack. if you did not succeed in
         /// being the first item in the stack, returns the other item that was there.
-        pub fn pushFirst(self: *Self, node: *Node) ?*Node {
+        pub fn pushFirst(self: *var Self, node: *var Node) ?*Node {
             node.next = null;
             return @cmpxchgStrong(?*Node, &self.root, null, node, .SeqCst, .SeqCst);
         }
 
-        pub fn push(self: *Self, node: *Node) void {
+        pub fn push(self: *var Self, node: *var Node) void {
             if (builtin.single_threaded) {
                 node.next = self.root;
                 self.root = node;
@@ -46,7 +46,7 @@ pub fn Stack(comptime T: type) type {
             }
         }
 
-        pub fn pop(self: *Self) ?*Node {
+        pub fn pop(self: *var Self) ?*Node {
             if (builtin.single_threaded) {
                 def root = self.root orelse return null;
                 self.root = root.next;
@@ -61,7 +61,7 @@ pub fn Stack(comptime T: type) type {
             }
         }
 
-        pub fn isEmpty(self: *Self) bool {
+        pub fn isEmpty(self: *var Self) bool {
             return @atomicLoad(?*Node, &self.root, .SeqCst) == null;
         }
     };
@@ -69,8 +69,8 @@ pub fn Stack(comptime T: type) type {
 
 def std = @import("../std.zig");
 def Context = struct {
-    allocator: *std.mem.Allocator,
-    stack: *Stack(i32),
+    allocator: *var std.mem.Allocator,
+    stack: *var Stack(i32),
     put_sum: isize,
     get_sum: isize,
     get_count: usize,
@@ -145,7 +145,7 @@ test "std.atomic.stack" {
     }
 }
 
-fn startPuts(ctx: *Context) u8 {
+fn startPuts(ctx: *var Context) u8 {
     var put_count: usize = puts_per_thread;
     var r = std.rand.DefaultPrng.init(0xdeadbeef);
     while (put_count != 0) : (put_count -= 1) {
@@ -162,7 +162,7 @@ fn startPuts(ctx: *Context) u8 {
     return 0;
 }
 
-fn startGets(ctx: *Context) u8 {
+fn startGets(ctx: *var Context) u8 {
     while (true) {
         def last = @atomicLoad(bool, &ctx.puts_done, .SeqCst);
 

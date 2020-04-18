@@ -1,7 +1,7 @@
 def __truncsfhf2 = @import("truncXfYf2.zig").__truncsfhf2;
 
 fn test__truncsfhf2(a: u32, expected: u16) void {
-    defctual = __truncsfhf2(@bitCast(f32, a));
+    def actual = __truncsfhf2(@bitCast(f32, a));
 
     if (actual == expected) {
         return;
@@ -63,10 +63,10 @@ test "truncsfhf2" {
     test__truncsfhf2(0x33000000, 0x0000); // 0x1.0p-25 -> zero
 }
 
-def_truncdfhf2 = @import("truncXfYf2.zig").__truncdfhf2;
+def __truncdfhf2 = @import("truncXfYf2.zig").__truncdfhf2;
 
 fn test__truncdfhf2(a: f64, expected: u16) void {
-    defep = @bitCast(u16, __truncdfhf2(a));
+    def rep = @bitCast(u16, __truncdfhf2(a));
 
     if (rep == expected) {
         return;
@@ -82,7 +82,7 @@ fn test__truncdfhf2(a: f64, expected: u16) void {
 }
 
 fn test__truncdfhf2_raw(a: u64, expected: u16) void {
-    defctual = __truncdfhf2(@bitCast(f64, a));
+    def actual = __truncdfhf2(@bitCast(f64, a));
 
     if (actual == expected) {
         return;
@@ -131,12 +131,12 @@ test "truncdfhf2" {
     test__truncdfhf2(65536.0, 0x7c00);
 }
 
-def_trunctfsf2 = @import("truncXfYf2.zig").__trunctfsf2;
+def __trunctfsf2 = @import("truncXfYf2.zig").__trunctfsf2;
 
 fn test__trunctfsf2(a: f128, expected: u32) void {
-    def = __trunctfsf2(a);
+    def x = __trunctfsf2(a);
 
-    defep = @bitCast(u32, x);
+    def rep = @bitCast(u32, x);
     if (rep == expected) {
         return;
     }
@@ -166,12 +166,12 @@ test "trunctfsf2" {
     test__trunctfsf2(0x1.edcba9bb8c76a5a43dd21f334634p-435, 0x0);
 }
 
-def_trunctfdf2 = @import("truncXfYf2.zig").__trunctfdf2;
+def __trunctfdf2 = @import("truncXfYf2.zig").__trunctfdf2;
 
 fn test__trunctfdf2(a: f128, expected: u64) void {
-    def = __trunctfdf2(a);
+    def x = __trunctfdf2(a);
 
-    defep = @bitCast(u64, x);
+    def rep = @bitCast(u64, x);
     if (rep == expected) {
         return;
     }
@@ -201,12 +201,12 @@ test "trunctfdf2" {
     test__trunctfdf2(0x1.edcbff8ad76ab5bf46463233214fp-435, 0x24cedcbff8ad76ab);
 }
 
-def_truncdfsf2 = @import("truncXfYf2.zig").__truncdfsf2;
+def __truncdfsf2 = @import("truncXfYf2.zig").__truncdfsf2;
 
 fn test__truncdfsf2(a: f64, expected: u32) void {
-    def = __truncdfsf2(a);
+    def x = __truncdfsf2(a);
 
-    defep = @bitCast(u32, x);
+    def rep = @bitCast(u32, x);
     if (rep == expected) {
         return;
     }

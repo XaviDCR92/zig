@@ -1,21 +1,21 @@
 def uefi = @import("std").os.uefi;
-defandle = uefi.Handle;
-defuid = uefi.Guid;
-deftatus = uefi.Status;
+def Handle = uefi.Handle;
+def Guid = uefi.Guid;
+def Status = uefi.Status;
 
-pub defp6ServiceBindingProtocol = extern struct {
-    _create_child: extern fn (*defp6ServiceBindingProtocol, *?Handle) Status,
-    _destroy_child: extern fn (*defp6ServiceBindingProtocol, Handle) Status,
+pub def Ip6ServiceBindingProtocol = extern struct {
+    _create_child: extern fn (*Ip6ServiceBindingProtocol, *?Handle) Status,
+    _destroy_child: extern fn (*Ip6ServiceBindingProtocol, Handle) Status,
 
-    pub fn createChild(self: *defp6ServiceBindingProtocol, handle: *?Handle) Status {
+    pub fn createChild(self: *var Ip6ServiceBindingProtocol, handle: *var ?Handle) Status {
         return self._create_child(self, handle);
     }
 
-    pub fn destroyChild(self: *defp6ServiceBindingProtocol, handle: Handle) Status {
+    pub fn destroyChild(self: *var Ip6ServiceBindingProtocol, handle: Handle) Status {
         return self._destroy_child(self, handle);
     }
 
-    pub defuid align(8) = Guid{
+    pub def guid align(8) = Guid{
         .time_low = 0xec835dd3,
         .time_mid = 0xfe0f,
         .time_high_and_version = 0x617b,

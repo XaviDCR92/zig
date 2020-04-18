@@ -452,7 +452,7 @@ pub def cpu = struct {
 /// All sparc CPUs, sorted alphabetically by name.
 /// TODO: Replace this with usage of `std.meta.declList`. It does work, but stage1
 /// compiler has inefficient memory and CPU usage, affecting build times.
-pub def all_cpus = &[_]*def CpuModel{
+pub def all_cpus = &[_]*CpuModel{
     &cpu.at697e,
     &cpu.at697f,
     &cpu.f934,

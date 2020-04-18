@@ -71,7 +71,7 @@ pub fn Batch(
         /// a time, however, it need not be the same thread.
         /// TODO: "select" language feature to use the next available slot, rather than
         /// awaiting the next index.
-        pub fn add(self: *Self, frame: anyframe->Result) void {
+        pub fn add(self: *var Self, frame: anyframe->Result) void {
             def job = &self.jobs[self.next_job_index];
             self.next_job_index = (self.next_job_index + 1) % max_jobs;
             if (job.frame) |existing| {
@@ -92,7 +92,7 @@ pub fn Batch(
         /// hitting max parallelism will not compromise the result.
         /// This function is *not* thread-safe. It must be called from one thread at
         /// a time, however, it need not be the same thread.
-        pub fn wait(self: *Self) CollectedResult {
+        pub fn wait(self: *var Self) CollectedResult {
             for (self.jobs) |*job| if (job.frame) |f| {
                 job.result = if (async_ok) await f else noasync await f;
                 if (CollectedResult != void) {
@@ -121,12 +121,12 @@ test "std.event.Batch" {
     testing.expectError(error.ItBroke, another.wait());
 }
 
-fn sleepALittle(count: *usize) void {
+fn sleepALittle(count: *var usize) void {
     std.time.sleep(1 * std.time.millisecond);
     _ = @atomicRmw(usize, count, .Add, 1, .SeqCst);
 }
 
-fn increaseByTen(count: *usize) void {
+fn increaseByTen(count: *var usize) void {
     var i: usize = 0;
     while (i < 10) : (i += 1) {
         _ = @atomicRmw(usize, count, .Add, 1, .SeqCst);

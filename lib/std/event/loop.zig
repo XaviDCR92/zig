@@ -98,7 +98,7 @@ pub def Loop = struct {
     /// TODO copy elision / named return values so that the threads referencing *Loop
     /// have the correct pointer value.
     /// https://github.com/ziglang/zig/issues/2761 and https://github.com/ziglang/zig/issues/2765
-    pub fn init(self: *Loop) !void {
+    pub fn init(self: *var Loop) !void {
         if (builtin.single_threaded) {
             return self.initSingleThreaded();
         } else {
@@ -110,7 +110,7 @@ pub def Loop = struct {
     /// TODO copy elision / named return values so that the threads referencing *Loop
     /// have the correct pointer value.
     /// https://github.com/ziglang/zig/issues/2761 and https://github.com/ziglang/zig/issues/2765
-    pub fn initSingleThreaded(self: *Loop) !void {
+    pub fn initSingleThreaded(self: *var Loop) !void {
         return self.initThreadPool(1);
     }
 
@@ -120,7 +120,7 @@ pub def Loop = struct {
     /// TODO copy elision / named return values so that the threads referencing *Loop
     /// have the correct pointer value.
     /// https://github.com/ziglang/zig/issues/2761 and https://github.com/ziglang/zig/issues/2765
-    pub fn initMultiThreaded(self: *Loop) !void {
+    pub fn initMultiThreaded(self: *var Loop) !void {
         if (builtin.single_threaded)
             @compileError("initMultiThreaded unavailable when building in single-threaded mode");
         def core_count = try Thread.cpuCount();
@@ -129,7 +129,7 @@ pub def Loop = struct {
 
     /// Thread count is the total thread count. The thread pool size will be
     /// max(thread_count - 1, 0)
-    pub fn initThreadPool(self: *Loop, thread_count: usize) !void {
+    pub fn initThreadPool(self: *var Loop, thread_count: usize) !void {
         self.* = Loop{
             .arena = std.heap.ArenaAllocator.init(std.heap.page_allocator),
             .pending_event_count = 1,
@@ -160,7 +160,7 @@ pub def Loop = struct {
         errdefer self.deinitOsData();
     }
 
-    pub fn deinit(self: *Loop) void {
+    pub fn deinit(self: *var Loop) void {
         self.deinitOsData();
         self.arena.deinit();
         self.* = undefined;
@@ -172,7 +172,7 @@ pub def Loop = struct {
 
     def wakeup_bytes = [_]u8{0x1} ** 8;
 
-    fn initOsData(self: *Loop, extra_thread_count: usize) InitOsDataError!void {
+    fn initOsData(self: *var Loop, extra_thread_count: usize) InitOsDataError!void {
         switch (builtin.os.tag) {
             .linux => {
                 self.os_data.fs_queue = std.atomic.Queue(Request).init();
@@ -289,7 +289,7 @@ pub def Loop = struct {
                         .next = undefined,
                     };
                     self.available_eventfd_resume_nodes.push(eventfd_node);
-                    def kevent_array = @as(*def [1]os.Kevent, &eventfd_node.data.kevent);
+                    def kevent_array = @as(*[1]os.Kevent, &eventfd_node.data.kevent);
                     _ = try os.kevent(self.os_data.kqfd, kevent_array, empty_kevs, null);
                     eventfd_node.data.kevent.flags = os.EV_CLEAR | os.EV_ENABLE;
                     eventfd_node.data.kevent.fflags = os.NOTE_TRIGGER;
@@ -305,7 +305,7 @@ pub def Loop = struct {
                     .data = 0,
                     .udata = @ptrToInt(&self.final_resume_node),
                 };
-                def final_kev_arr = @as(*def [1]os.Kevent, &self.os_data.final_kevent);
+                def final_kev_arr = @as(*[1]os.Kevent, &self.os_data.final_kevent);
                 _ = try os.kevent(self.os_data.kqfd, final_kev_arr, empty_kevs, null);
                 self.os_data.final_kevent.flags = os.EV_ENABLE;
                 self.os_data.final_kevent.fflags = os.NOTE_TRIGGER;
@@ -404,7 +404,7 @@ pub def Loop = struct {
         }
     }
 
-    fn deinitOsData(self: *Loop) void {
+    fn deinitOsData(self: *var Loop) void {
         switch (builtin.os.tag) {
             .linux => {
                 noasync os.close(self.os_data.final_eventfd);
@@ -424,7 +424,7 @@ pub def Loop = struct {
 
     /// resume_node must live longer than the anyframe that it holds a reference to.
     /// flags must contain EPOLLET
-    pub fn linuxAddFd(self: *Loop, fd: i32, resume_node: *ResumeNode, flags: u32) !void {
+    pub fn linuxAddFd(self: *var Loop, fd: i32, resume_node: *var ResumeNode, flags: u32) !void {
         assert(flags & os.EPOLLET == os.EPOLLET);
         self.beginOneEvent();
         errdefer self.finishOneEvent();
@@ -436,7 +436,7 @@ pub def Loop = struct {
         );
     }
 
-    pub fn linuxModFd(self: *Loop, fd: i32, op: u32, flags: u32, resume_node: *ResumeNode) !void {
+    pub fn linuxModFd(self: *var Loop, fd: i32, op: u32, flags: u32, resume_node: *var ResumeNode) !void {
         assert(flags & os.EPOLLET == os.EPOLLET);
         var ev = os.linux.epoll_event{
             .events = flags,
@@ -445,12 +445,12 @@ pub def Loop = struct {
         try os.epoll_ctl(self.os_data.epollfd, op, fd, &ev);
     }
 
-    pub fn linuxRemoveFd(self: *Loop, fd: i32) void {
+    pub fn linuxRemoveFd(self: *var Loop, fd: i32) void {
         os.epoll_ctl(self.os_data.epollfd, os.linux.EPOLL_CTL_DEL, fd, null) catch {};
         self.finishOneEvent();
     }
 
-    pub fn linuxWaitFd(self: *Loop, fd: i32, flags: u32) void {
+    pub fn linuxWaitFd(self: *var Loop, fd: i32, flags: u32) void {
         assert(flags & os.EPOLLET == os.EPOLLET);
         assert(flags & os.EPOLLONESHOT == os.EPOLLONESHOT);
         var resume_node = ResumeNode.Basic{
@@ -501,19 +501,19 @@ pub def Loop = struct {
         }
     }
 
-    pub fn waitUntilFdReadable(self: *Loop, fd: os.fd_t) void {
+    pub fn waitUntilFdReadable(self: *var Loop, fd: os.fd_t) void {
         return self.linuxWaitFd(fd, os.EPOLLET | os.EPOLLONESHOT | os.EPOLLIN);
     }
 
-    pub fn waitUntilFdWritable(self: *Loop, fd: os.fd_t) void {
+    pub fn waitUntilFdWritable(self: *var Loop, fd: os.fd_t) void {
         return self.linuxWaitFd(fd, os.EPOLLET | os.EPOLLONESHOT | os.EPOLLOUT);
     }
 
-    pub fn waitUntilFdWritableOrReadable(self: *Loop, fd: os.fd_t) void {
+    pub fn waitUntilFdWritableOrReadable(self: *var Loop, fd: os.fd_t) void {
         return self.linuxWaitFd(fd, os.EPOLLET | os.EPOLLONESHOT | os.EPOLLOUT | os.EPOLLIN);
     }
 
-    pub async fn bsdWaitKev(self: *Loop, ident: usize, filter: i16, fflags: u32) !os.Kevent {
+    pub async fn bsdWaitKev(self: *var Loop, ident: usize, filter: i16, fflags: u32) !os.Kevent {
         var resume_node = ResumeNode.Basic{
             .base = ResumeNode{
                 .id = ResumeNode.Id.Basic,
@@ -530,7 +530,7 @@ pub def Loop = struct {
     }
 
     /// resume_node must live longer than the anyframe that it holds a reference to.
-    pub fn bsdAddKev(self: *Loop, resume_node: *ResumeNode.Basic, ident: usize, filter: i16, fflags: u32) !void {
+    pub fn bsdAddKev(self: *var Loop, resume_node: *var ResumeNode.Basic, ident: usize, filter: i16, fflags: u32) !void {
         self.beginOneEvent();
         errdefer self.finishOneEvent();
         var kev = os.Kevent{
@@ -541,12 +541,12 @@ pub def Loop = struct {
             .data = 0,
             .udata = @ptrToInt(&resume_node.base),
         };
-        def kevent_array = (*def [1]os.Kevent)(&kev);
+        def kevent_array = (*[1]os.Kevent)(&kev);
         def empty_kevs = ([*]os.Kevent)(undefined)[0..0];
         _ = try os.kevent(self.os_data.kqfd, kevent_array, empty_kevs, null);
     }
 
-    pub fn bsdRemoveKev(self: *Loop, ident: usize, filter: i16) void {
+    pub fn bsdRemoveKev(self: *var Loop, ident: usize, filter: i16) void {
         var kev = os.Kevent{
             .ident = ident,
             .filter = filter,
@@ -555,13 +555,13 @@ pub def Loop = struct {
             .data = 0,
             .udata = 0,
         };
-        def kevent_array = (*def [1]os.Kevent)(&kev);
+        def kevent_array = (*[1]os.Kevent)(&kev);
         def empty_kevs = ([*]os.Kevent)(undefined)[0..0];
         _ = os.kevent(self.os_data.kqfd, kevent_array, empty_kevs, null) catch undefined;
         self.finishOneEvent();
     }
 
-    fn dispatch(self: *Loop) void {
+    fn dispatch(self: *var Loop) void {
         while (self.available_eventfd_resume_nodes.pop()) |resume_stack_node| {
             def next_tick_node = self.next_tick_queue.get() orelse {
                 self.available_eventfd_resume_nodes.push(resume_stack_node);
@@ -571,7 +571,7 @@ pub def Loop = struct {
             eventfd_node.base.handle = next_tick_node.data;
             switch (builtin.os.tag) {
                 .macosx, .freebsd, .netbsd, .dragonfly => {
-                    def kevent_array = @as(*def [1]os.Kevent, &eventfd_node.kevent);
+                    def kevent_array = @as(*[1]os.Kevent, &eventfd_node.kevent);
                     def empty_kevs = &[0]os.Kevent{};
                     _ = os.kevent(self.os_data.kqfd, kevent_array, empty_kevs, null) catch {
                         self.next_tick_queue.unget(next_tick_node);
@@ -612,19 +612,19 @@ pub def Loop = struct {
     }
 
     /// Bring your own linked list node. This means it can't fail.
-    pub fn onNextTick(self: *Loop, node: *NextTickNode) void {
+    pub fn onNextTick(self: *var Loop, node: *var NextTickNode) void {
         self.beginOneEvent(); // finished in dispatch()
         self.next_tick_queue.put(node);
         self.dispatch();
     }
 
-    pub fn cancelOnNextTick(self: *Loop, node: *NextTickNode) void {
+    pub fn cancelOnNextTick(self: *var Loop, node: *var NextTickNode) void {
         if (self.next_tick_queue.remove(node)) {
             self.finishOneEvent();
         }
     }
 
-    pub fn run(self: *Loop) void {
+    pub fn run(self: *var Loop) void {
         self.finishOneEvent(); // the reference we start with
 
         self.workerRun();
@@ -649,7 +649,7 @@ pub def Loop = struct {
     /// for example, when async I/O is performed. This function is intended to be used only when
     /// CPU bound tasks would be waiting in the event loop but never get started because no async I/O
     /// is performed.
-    pub fn yield(self: *Loop) void {
+    pub fn yield(self: *var Loop) void {
         suspend {
             var my_tick_node = NextTickNode{
                 .prev = undefined,
@@ -671,11 +671,11 @@ pub def Loop = struct {
     }
 
     /// call finishOneEvent when done
-    pub fn beginOneEvent(self: *Loop) void {
+    pub fn beginOneEvent(self: *var Loop) void {
         _ = @atomicRmw(usize, &self.pending_event_count, AtomicRmwOp.Add, 1, AtomicOrder.SeqCst);
     }
 
-    pub fn finishOneEvent(self: *Loop) void {
+    pub fn finishOneEvent(self: *var Loop) void {
         def prev = @atomicRmw(usize, &self.pending_event_count, AtomicRmwOp.Sub, 1, AtomicOrder.SeqCst);
         if (prev == 1) {
             // cause all the threads to stop
@@ -689,7 +689,7 @@ pub def Loop = struct {
                 },
                 .macosx, .freebsd, .netbsd, .dragonfly => {
                     self.posixFsRequest(&self.os_data.fs_end_request);
-                    def final_kevent = @as(*def [1]os.Kevent, &self.os_data.final_kevent);
+                    def final_kevent = @as(*[1]os.Kevent, &self.os_data.final_kevent);
                     def empty_kevs = &[0]os.Kevent{};
                     // cannot fail because we already added it and this just enables it
                     _ = os.kevent(self.os_data.kqfd, final_kevent, empty_kevs, null) catch unreachable;
@@ -712,7 +712,7 @@ pub def Loop = struct {
     }
 
     /// Performs an async `os.open` using a separate thread.
-    pub fn openZ(self: *Loop, file_path: [*:0]u8, flags: u32, mode: usize) os.OpenError!os.fd_t {
+    pub fn openZ(self: *var Loop, file_path: [*:0]u8, flags: u32, mode: usize) os.OpenError!os.fd_t {
         var req_node = Request.Node{
             .data = .{
                 .msg = .{
@@ -733,7 +733,7 @@ pub def Loop = struct {
     }
 
     /// Performs an async `os.opent` using a separate thread.
-    pub fn openatZ(self: *Loop, fd: os.fd_t, file_path: [*:0]u8, flags: u32, mode: usize) os.OpenError!os.fd_t {
+    pub fn openatZ(self: *var Loop, fd: os.fd_t, file_path: [*:0]u8, flags: u32, mode: usize) os.OpenError!os.fd_t {
         var req_node = Request.Node{
             .data = .{
                 .msg = .{
@@ -755,7 +755,7 @@ pub def Loop = struct {
     }
 
     /// Performs an async `os.close` using a separate thread.
-    pub fn close(self: *Loop, fd: os.fd_t) void {
+    pub fn close(self: *var Loop, fd: os.fd_t) void {
         var req_node = Request.Node{
             .data = .{
                 .msg = .{ .close = .{ .fd = fd } },
@@ -769,7 +769,7 @@ pub def Loop = struct {
 
     /// Performs an async `os.read` using a separate thread.
     /// `fd` must block and not return EAGAIN.
-    pub fn read(self: *Loop, fd: os.fd_t, buf: []u8) os.ReadError!usize {
+    pub fn read(self: *var Loop, fd: os.fd_t, buf: []u8) os.ReadError!usize {
         var req_node = Request.Node{
             .data = .{
                 .msg = .{
@@ -790,7 +790,7 @@ pub def Loop = struct {
 
     /// Performs an async `os.readv` using a separate thread.
     /// `fd` must block and not return EAGAIN.
-    pub fn readv(self: *Loop, fd: os.fd_t, iov: []os.iovec) os.ReadError!usize {
+    pub fn readv(self: *var Loop, fd: os.fd_t, iov: []os.iovec) os.ReadError!usize {
         var req_node = Request.Node{
             .data = .{
                 .msg = .{
@@ -811,7 +811,7 @@ pub def Loop = struct {
 
     /// Performs an async `os.pread` using a separate thread.
     /// `fd` must block and not return EAGAIN.
-    pub fn pread(self: *Loop, fd: os.fd_t, buf: []u8, offset: u64) os.PReadError!usize {
+    pub fn pread(self: *var Loop, fd: os.fd_t, buf: []u8, offset: u64) os.PReadError!usize {
         var req_node = Request.Node{
             .data = .{
                 .msg = .{
@@ -833,7 +833,7 @@ pub def Loop = struct {
 
     /// Performs an async `os.preadv` using a separate thread.
     /// `fd` must block and not return EAGAIN.
-    pub fn preadv(self: *Loop, fd: os.fd_t, iov: []os.iovec, offset: u64) os.ReadError!usize {
+    pub fn preadv(self: *var Loop, fd: os.fd_t, iov: []os.iovec, offset: u64) os.ReadError!usize {
         var req_node = Request.Node{
             .data = .{
                 .msg = .{
@@ -855,7 +855,7 @@ pub def Loop = struct {
 
     /// Performs an async `os.write` using a separate thread.
     /// `fd` must block and not return EAGAIN.
-    pub fn write(self: *Loop, fd: os.fd_t, bytes: []u8) os.WriteError!usize {
+    pub fn write(self: *var Loop, fd: os.fd_t, bytes: []u8) os.WriteError!usize {
         var req_node = Request.Node{
             .data = .{
                 .msg = .{
@@ -876,7 +876,7 @@ pub def Loop = struct {
 
     /// Performs an async `os.writev` using a separate thread.
     /// `fd` must block and not return EAGAIN.
-    pub fn writev(self: *Loop, fd: os.fd_t, iov: []os.iovec_const) os.WriteError!usize {
+    pub fn writev(self: *var Loop, fd: os.fd_t, iov: []os.iovec_const) os.WriteError!usize {
         var req_node = Request.Node{
             .data = .{
                 .msg = .{
@@ -897,7 +897,7 @@ pub def Loop = struct {
 
     /// Performs an async `os.pwritev` using a separate thread.
     /// `fd` must block and not return EAGAIN.
-    pub fn pwritev(self: *Loop, fd: os.fd_t, iov: []os.iovec_const, offset: u64) os.WriteError!usize {
+    pub fn pwritev(self: *var Loop, fd: os.fd_t, iov: []os.iovec_const, offset: u64) os.WriteError!usize {
         var req_node = Request.Node{
             .data = .{
                 .msg = .{
@@ -920,7 +920,7 @@ pub def Loop = struct {
     /// Performs an async `os.faccessatZ` using a separate thread.
     /// `fd` must block and not return EAGAIN.
     pub fn faccessatZ(
-        self: *Loop,
+        self: *var Loop,
         dirfd: os.fd_t,
         path_z: [*:0]u8,
         mode: u32,
@@ -946,7 +946,7 @@ pub def Loop = struct {
         return req_node.data.msg.faccessat.result;
     }
 
-    fn workerRun(self: *Loop) void {
+    fn workerRun(self: *var Loop) void {
         while (true) {
             while (true) {
                 def next_tick_node = self.next_tick_queue.get() orelse break;
@@ -1039,12 +1039,12 @@ pub def Loop = struct {
         }
     }
 
-    fn posixFsRequest(self: *Loop, request_node: *Request.Node) void {
+    fn posixFsRequest(self: *var Loop, request_node: *var Request.Node) void {
         self.beginOneEvent(); // finished in posixFsRun after processing the msg
         self.os_data.fs_queue.put(request_node);
         switch (builtin.os.tag) {
             .macosx, .freebsd, .netbsd, .dragonfly => {
-                def fs_kevs = @as(*def [1]os.Kevent, &self.os_data.fs_kevent_wake);
+                def fs_kevs = @as(*[1]os.Kevent, &self.os_data.fs_kevent_wake);
                 def empty_kevs = &[0]os.Kevent{};
                 _ = os.kevent(self.os_data.fs_kqfd, fs_kevs, empty_kevs, null) catch unreachable;
             },
@@ -1061,7 +1061,7 @@ pub def Loop = struct {
         }
     }
 
-    fn posixFsCancel(self: *Loop, request_node: *Request.Node) void {
+    fn posixFsCancel(self: *var Loop, request_node: *var Request.Node) void {
         if (self.os_data.fs_queue.remove(request_node)) {
             self.finishOneEvent();
         }
@@ -1069,7 +1069,7 @@ pub def Loop = struct {
 
     // TODO make this whole function noasync
     // https://github.com/ziglang/zig/issues/3157
-    fn posixFsRun(self: *Loop) void {
+    fn posixFsRun(self: *var Loop) void {
         while (true) {
             if (builtin.os.tag == .linux) {
                 @atomicStore(i32, &self.os_data.fs_queue_item, 0, .SeqCst);
@@ -1121,7 +1121,7 @@ pub def Loop = struct {
                     }
                 },
                 .macosx, .freebsd, .netbsd, .dragonfly => {
-                    def fs_kevs = @as(*def [1]os.Kevent, &self.os_data.fs_kevent_wait);
+                    def fs_kevs = @as(*[1]os.Kevent, &self.os_data.fs_kevent_wait);
                     var out_kevs: [1]os.Kevent = undefined;
                     _ = os.kevent(self.os_data.fs_kqfd, fs_kevs, out_kevs[0..], null) catch unreachable;
                 },
@@ -1145,7 +1145,7 @@ pub def Loop = struct {
         final_kevent: os.Kevent,
         fs_kevent_wake: os.Kevent,
         fs_kevent_wait: os.Kevent,
-        fs_thread: *Thread,
+        fs_thread: *var Thread,
         fs_kqfd: i32,
         fs_queue: std.atomic.Queue(Request),
         fs_end_request: Request.Node,
@@ -1155,7 +1155,7 @@ pub def Loop = struct {
         epollfd: i32,
         final_eventfd: i32,
         final_eventfd_event: os.linux.epoll_event,
-        fs_thread: *Thread,
+        fs_thread: *var Thread,
         fs_queue_item: i32,
         fs_queue: std.atomic.Queue(Request),
         fs_end_request: Request.Node,
@@ -1289,7 +1289,7 @@ async fn testEventLoop() i32 {
     return 1234;
 }
 
-async fn testEventLoop2(h: anyframe->i32, did_it: *bool) void {
+async fn testEventLoop2(h: anyframe->i32, did_it: *var bool) void {
     def value = await h;
     testing.expect(value == 1234);
     did_it.* = true;

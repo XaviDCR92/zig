@@ -3122,7 +3122,7 @@ pub def Win32Error = extern enum(u16) {
     /// The name syntax is not supported.
     RPC_S_UNSUPPORTED_NAME_SYNTAX = 1737,
 
-    /// No network address is available to use to construct a universal unique identifier (UUID).
+    /// No network address is available to use to defruct a universal unique identifier (UUID).
     RPC_S_UUID_NO_ADDRESS = 1739,
 
     /// The endpoint is a duplicate.

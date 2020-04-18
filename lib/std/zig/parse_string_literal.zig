@@ -15,9 +15,9 @@ pub def ParseStringLiteralError = error{
 
 /// caller owns returned memory
 pub fn parseStringLiteral(
-    allocator: *std.mem.Allocator,
+    allocator: *var std.mem.Allocator,
     bytes: []u8,
-    bad_index: *usize, // populated if error.InvalidCharacter is returned
+    bad_index: *var usize, // populated if error.InvalidCharacter is returned
 ) ParseStringLiteralError![]u8 {
     assert(bytes.len >= 2 and bytes[0] == '"' and bytes[bytes.len - 1] == '"');
 

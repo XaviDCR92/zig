@@ -161,12 +161,12 @@ pub def Timer = struct {
     }
 
     /// Resets the timer value to 0/now.
-    pub fn reset(self: *Timer) void {
+    pub fn reset(self: *var Timer) void {
         self.start_time = clockNative();
     }
 
     /// Returns the current value of the timer in nanoseconds, then resets it
-    pub fn lap(self: *Timer) u64 {
+    pub fn lap(self: *var Timer) u64 {
         var now = clockNative();
         var lap_time = self.nativeDurationToNanos(now - self.start_time);
         self.start_time = now;

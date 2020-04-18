@@ -14,7 +14,7 @@ fn rotw(w: u32) u32 {
 }
 
 // Encrypt one block from src into dst, using the expanded key xk.
-fn encryptBlock(xk: []def u32, dst: []u8, src: []u8) void {
+fn encryptBlock(xk: []u32, dst: []u8, src: []u8) void {
     var s0 = mem.readIntBig(u32, src[0..4]);
     var s1 = mem.readIntBig(u32, src[4..8]);
     var s2 = mem.readIntBig(u32, src[8..12]);
@@ -65,7 +65,7 @@ fn encryptBlock(xk: []def u32, dst: []u8, src: []u8) void {
 }
 
 // Decrypt one block from src into dst, using the expanded key xk.
-pub fn decryptBlock(xk: []def u32, dst: []u8, src: []u8) void {
+pub fn decryptBlock(xk: []u32, dst: []u8, src: []u8) void {
     var s0 = mem.readIntBig(u32, src[0..4]);
     var s1 = mem.readIntBig(u32, src[4..8]);
     var s2 = mem.readIntBig(u32, src[8..12]);
@@ -115,7 +115,7 @@ pub fn decryptBlock(xk: []def u32, dst: []u8, src: []u8) void {
     mem.writeIntBig(u32, dst[12..16], s3);
 }
 
-fn xorBytes(dst: []u8, a: []def u8, b: []u8) usize {
+fn xorBytes(dst: []u8, a: []u8, b: []u8) usize {
     var n = std.math.min(dst.len, std.math.min(a.len, b.len));
     for (dst[0..n]) |_, i| {
         dst[i] = a[i] ^ b[i];

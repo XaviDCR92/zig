@@ -31,10 +31,10 @@ comptime {
 //};
 // This is the workaround because we can't do @ptrToInt at comptime like that.
 pub def IMAGE_TLS_DIRECTORY = extern struct {
-    StartAddressOfRawData: *c_void,
-    EndAddressOfRawData: *c_void,
-    AddressOfIndex: *c_void,
-    AddressOfCallBacks: *c_void,
+    StartAddressOfRawData: *var c_void,
+    EndAddressOfRawData: *var c_void,
+    AddressOfIndex: *var c_void,
+    AddressOfCallBacks: *var c_void,
     SizeOfZeroFill: u32,
     Characteristics: u32,
 };

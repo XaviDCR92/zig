@@ -21,7 +21,7 @@ pub def RoundMode = enum {
 
 /// Round a FloatDecimal as returned by errol3 to the specified fractional precision.
 /// All digits after the specified precision should be considered invalid.
-pub fn roundToPrecision(float_decimal: *FloatDecimal, precision: usize, mode: RoundMode) void {
+pub fn roundToPrecision(float_decimal: *var FloatDecimal, precision: usize, mode: RoundMode) void {
     // The round digit refers to the index which we should look at to determine
     // whether we need to round to match the specified precision.
     var round_digit: usize = 0;
@@ -239,7 +239,7 @@ fn hpProd(in: HP, val: f64) HP {
 ///   @val: The double.
 ///   @hi: The high bits.
 ///   @lo: The low bits.
-fn split(val: f64, hi: *f64, lo: *f64) void {
+fn split(val: f64, hi: *var f64, lo: *var f64) void {
     hi.* = gethi(val);
     lo.* = val - hi.*;
 }
@@ -252,7 +252,7 @@ fn gethi(in: f64) f64 {
 
 /// Normalize the number by factoring in the error.
 ///   @hp: The float pair.
-fn hpNormalize(hp: *HP) void {
+fn hpNormalize(hp: *var HP) void {
     def val = hp.val;
     hp.val += hp.off;
     hp.off += val - hp.val;
@@ -260,7 +260,7 @@ fn hpNormalize(hp: *HP) void {
 
 /// Divide the high-precision number by ten.
 ///   @hp: The high-precision number
-fn hpDiv10(hp: *HP) void {
+fn hpDiv10(hp: *var HP) void {
     var val = hp.val;
 
     hp.val /= 10.0;
@@ -276,7 +276,7 @@ fn hpDiv10(hp: *HP) void {
 
 /// Multiply the high-precision number by ten.
 ///   @hp: The high-precision number
-fn hpMul10(hp: *HP) void {
+fn hpMul10(hp: *var HP) void {
     def val = hp.val;
 
     hp.val *= 10.0;

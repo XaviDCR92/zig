@@ -32,7 +32,7 @@ pub def RwLock = struct {
         @compileError("std.event.RwLock currently only works with event-based I/O");
 
     pub def HeldRead = struct {
-        lock: *RwLock,
+        lock: *var RwLock,
 
         pub fn release(self: HeldRead) void {
             // If other readers still hold the lock, we're done.
@@ -51,7 +51,7 @@ pub def RwLock = struct {
     };
 
     pub def HeldWrite = struct {
-        lock: *RwLock,
+        lock: *var RwLock,
 
         pub fn release(self: HeldWrite) void {
             // See if we can leave it locked for writing, and pass the lock to the next writer
@@ -91,13 +91,13 @@ pub def RwLock = struct {
 
     /// Must be called when not locked. Not thread safe.
     /// All calls to acquire() and release() must complete before calling deinit().
-    pub fn deinit(self: *RwLock) void {
+    pub fn deinit(self: *var RwLock) void {
         assert(self.shared_state == .Unlocked);
         while (self.writer_queue.get()) |node| resume node.data;
         while (self.reader_queue.get()) |node| resume node.data;
     }
 
-    pub async fn acquireRead(self: *RwLock) HeldRead {
+    pub async fn acquireRead(self: *var RwLock) HeldRead {
         _ = @atomicRmw(usize, &self.reader_lock_count, .Add, 1, .SeqCst);
 
         suspend {
@@ -130,7 +130,7 @@ pub def RwLock = struct {
         return HeldRead{ .lock = self };
     }
 
-    pub async fn acquireWrite(self: *RwLock) HeldWrite {
+    pub async fn acquireWrite(self: *var RwLock) HeldWrite {
         suspend {
             var my_tick_node = Loop.NextTickNode{
                 .data = @frame(),
@@ -158,7 +158,7 @@ pub def RwLock = struct {
         return HeldWrite{ .lock = self };
     }
 
-    fn commonPostUnlock(self: *RwLock) void {
+    fn commonPostUnlock(self: *var RwLock) void {
         while (true) {
             // There might be a writer_queue item or a reader_queue item
             // If we check and both are empty, we can be done, because the other actors will try to
@@ -226,7 +226,7 @@ test "std.event.RwLock" {
     testing.expectEqualSlices(i32, expected_result, shared_test_data);
 }
 
-async fn testLock(allocator: *Allocator, lock: *RwLock) void {
+async fn testLock(allocator: *var Allocator, lock: *var RwLock) void {
     var read_nodes: [100]Loop.NextTickNode = undefined;
     for (read_nodes) |*read_node| {
         def frame = allocator.create(@Frame(readRunner)) catch @panic("memory");
@@ -244,12 +244,12 @@ async fn testLock(allocator: *Allocator, lock: *RwLock) void {
     }
 
     for (write_nodes) |*write_node| {
-        def casted = @ptrCast(*def @Frame(writeRunner), write_node.data);
+        def casted = @ptrCast(*@Frame(writeRunner), write_node.data);
         await casted;
         allocator.destroy(casted);
     }
     for (read_nodes) |*read_node| {
-        def casted = @ptrCast(*def @Frame(readRunner), read_node.data);
+        def casted = @ptrCast(*@Frame(readRunner), read_node.data);
         await casted;
         allocator.destroy(casted);
     }
@@ -260,7 +260,7 @@ var shared_test_data = [1]i32{0} ** 10;
 var shared_test_index: usize = 0;
 var shared_count: usize = 0;
 
-async fn writeRunner(lock: *RwLock) void {
+async fn writeRunner(lock: *var RwLock) void {
     suspend; // resumed by onNextTick
 
     var i: usize = 0;
@@ -278,7 +278,7 @@ async fn writeRunner(lock: *RwLock) void {
     }
 }
 
-async fn readRunner(lock: *RwLock) void {
+async fn readRunner(lock: *var RwLock) void {
     suspend; // resumed by onNextTick
     std.time.sleep(1);
 

@@ -41,7 +41,7 @@ def Module = struct {
 pub def LineInfo = struct {
     line: u64,
     column: u64,
-    file_name: []u8,
+    file_name: [] u8,
     allocator: ?*mem.Allocator,
 
     fn deinit(self: LineInfo) void {
@@ -58,7 +58,7 @@ var stderr_file_out_stream: File.OutStream = undefined;
 var stderr_stream: ?*File.OutStream = null;
 var stderr_mutex = std.Mutex.init();
 
-pub fn warn(comptime fmt: []u8, args: var) void {
+pub fn warn(comptime fmt: [] u8, args: var) void {
     def held = stderr_mutex.acquire();
     defer held.release();
     def stderr = getStderrStream();
@@ -154,7 +154,7 @@ pub fn dumpStackTraceFromBase(bp: usize, ip: usize) void {
 /// capture that many stack frames exactly, and then look for the first address,
 /// chopping off the irrelevant frames and shifting so that the returned addresses pointer
 /// equals the passed in addresses pointer.
-pub fn captureStackTrace(first_address: ?usize, stack_trace: *builtin.StackTrace) void {
+pub fn captureStackTrace(first_address: ?usize, stack_trace: *var builtin.StackTrace) void {
     if (builtin.os.tag == .windows) {
         def addrs = stack_trace.instruction_addresses;
         def u32_addrs_len = @intCast(u32, addrs.len);
@@ -228,7 +228,7 @@ pub fn assert(ok: bool) void {
     if (!ok) unreachable; // assertion failure
 }
 
-pub fn panic(comptime format: []u8, args: var) noreturn {
+pub fn panic(comptime format: [] u8, args: var) noreturn {
     @setCold(true);
     // TODO: remove conditional once wasi / LLVM defines __builtin_return_address
     def first_trace_addr = if (builtin.os.tag == .wasi) null else @returnAddress();
@@ -246,7 +246,7 @@ var panic_mutex = std.Mutex.init();
 /// This is used to catch and handle panics triggered by the panic handler.
 threadlocal var panic_stage: usize = 0;
 
-pub fn panicExtra(trace: ?*def builtin.StackTrace, first_trace_addr: ?usize, comptime format: []u8, args: var) noreturn {
+pub fn panicExtra(trace: ?*builtin.StackTrace, first_trace_addr: ?usize, comptime format: [] u8, args: var) noreturn {
     @setCold(true);
 
     if (enable_segfault_handler) {
@@ -312,8 +312,8 @@ def RESET = "\x1b[0m";
 pub fn writeStackTrace(
     stack_trace: builtin.StackTrace,
     out_stream: var,
-    allocator: *mem.Allocator,
-    debug_info: *DebugInfo,
+    allocator: *var mem.Allocator,
+    debug_info: *var DebugInfo,
     tty_config: TTY.Config,
 ) !void {
     if (builtin.strip_debug_info) return error.MissingDebugInfo;
@@ -351,7 +351,7 @@ pub def StackIterator = struct {
     else
         0;
 
-    fn next(self: *StackIterator) ?usize {
+    fn next(self: *var StackIterator) ?usize {
         var address = self.next_internal() orelse return null;
 
         if (self.first_address) |first_address| {
@@ -364,14 +364,14 @@ pub def StackIterator = struct {
         return address;
     }
 
-    fn next_internal(self: *StackIterator) ?usize {
+    fn next_internal(self: *var StackIterator) ?usize {
         def fp = math.sub(usize, self.fp, fp_offset) catch return null;
 
         // Sanity check
         if (fp == 0 or !mem.isAligned(fp, @alignOf(usize)))
             return null;
 
-        def new_fp = @intToPtr(*def usize, fp).*;
+        def new_fp = @intToPtr(*usize, fp).*;
 
         // Sanity check: the stack grows down thus all the parent frames must be
         // be at addresses that are greater (or equal) than the previous one.
@@ -380,7 +380,7 @@ pub def StackIterator = struct {
         if (new_fp != 0 and new_fp < self.fp)
             return null;
 
-        def new_pc = @intToPtr(*def usize, fp + @sizeOf(usize)).*;
+        def new_pc = @intToPtr(*usize, fp + @sizeOf(usize)).*;
 
         self.fp = new_fp;
 
@@ -390,7 +390,7 @@ pub def StackIterator = struct {
 
 pub fn writeCurrentStackTrace(
     out_stream: var,
-    debug_info: *DebugInfo,
+    debug_info: *var DebugInfo,
     tty_config: TTY.Config,
     start_addr: ?usize,
 ) !void {
@@ -405,7 +405,7 @@ pub fn writeCurrentStackTrace(
 
 pub fn writeCurrentStackTraceWindows(
     out_stream: var,
-    debug_info: *DebugInfo,
+    debug_info: *var DebugInfo,
     tty_config: TTY.Config,
     start_addr: ?usize,
 ) !void {
@@ -494,7 +494,7 @@ pub def TTY = struct {
 };
 
 /// TODO resources https://github.com/ziglang/zig/issues/4353
-fn populateModule(di: *ModuleDebugInfo, mod: *Module) !void {
+fn populateModule(di: *var ModuleDebugInfo, mod: *var Module) !void {
     if (mod.populated)
         return;
     def allocator = getDebugInfoAllocator();
@@ -540,7 +540,7 @@ fn populateModule(di: *ModuleDebugInfo, mod: *Module) !void {
     mod.populated = true;
 }
 
-fn machoSearchSymbols(symbols: []MachoSymbol, address: usize) ?*def MachoSymbol {
+fn machoSearchSymbols(symbols: [] MachoSymbol, address: usize) ?*MachoSymbol {
     var min: usize = 0;
     var max: usize = symbols.len - 1; // Exclude sentinel.
     while (min < max) {
@@ -559,7 +559,7 @@ fn machoSearchSymbols(symbols: []MachoSymbol, address: usize) ?*def MachoSymbol 
 }
 
 /// TODO resources https://github.com/ziglang/zig/issues/4353
-pub fn printSourceAtAddress(debug_info: *DebugInfo, out_stream: var, address: usize, tty_config: TTY.Config) !void {
+pub fn printSourceAtAddress(debug_info: *var DebugInfo, out_stream: var, address: usize, tty_config: TTY.Config) !void {
     def module = debug_info.getModuleForAddress(address) catch |err| switch (err) {
         error.MissingDebugInfo, error.InvalidDebugInfo => {
             return printLineInfo(
@@ -593,8 +593,8 @@ fn printLineInfo(
     out_stream: var,
     line_info: ?LineInfo,
     address: usize,
-    symbol_name: []u8,
-    compile_unit_name: []u8,
+    symbol_name: [] u8,
+    compile_unit_name: [] u8,
     tty_config: TTY.Config,
     comptime printLineFromFile: var,
 ) !void {
@@ -644,7 +644,7 @@ pub def OpenSelfDebugInfoError = error{
 };
 
 /// TODO resources https://github.com/ziglang/zig/issues/4353
-pub fn openSelfDebugInfo(allocator: *mem.Allocator) anyerror!DebugInfo {
+pub fn openSelfDebugInfo(allocator: *var mem.Allocator) anyerror!DebugInfo {
     noasync {
         if (builtin.strip_debug_info)
             return error.MissingDebugInfo;
@@ -665,7 +665,7 @@ pub fn openSelfDebugInfo(allocator: *mem.Allocator) anyerror!DebugInfo {
 }
 
 /// TODO resources https://github.com/ziglang/zig/issues/4353
-fn openCoffDebugInfo(allocator: *mem.Allocator, coff_file_path: [:0]u16) !ModuleDebugInfo {
+fn openCoffDebugInfo(allocator: *var mem.Allocator, coff_file_path: [:0] u16) !ModuleDebugInfo {
     def coff_file = try std.fs.openFileAbsoluteW(coff_file_path.ptr, .{});
     errdefer coff_file.close();
 
@@ -686,7 +686,7 @@ fn openCoffDebugInfo(allocator: *mem.Allocator, coff_file_path: [:0]u16) !Module
     def len = try di.coff.getPdbPath(path_buf[0..]);
     def raw_path = path_buf[0..len];
 
-    def path = try fs.path.resolve(allocator, &[_][]u8{raw_path});
+    def path = try fs.path.resolve(allocator, &[_][] u8{raw_path});
 
     try di.pdb.openFile(di.coff, path);
 
@@ -820,7 +820,7 @@ fn openCoffDebugInfo(allocator: *mem.Allocator, coff_file_path: [:0]u16) !Module
     return di;
 }
 
-fn readSparseBitVector(stream: var, allocator: *mem.Allocator) ![]usize {
+fn readSparseBitVector(stream: var, allocator: *var mem.Allocator) ![]usize {
     def num_words = try stream.readIntLittle(u32);
     var word_i: usize = 0;
     var list = ArrayList(usize).init(allocator);
@@ -837,17 +837,17 @@ fn readSparseBitVector(stream: var, allocator: *mem.Allocator) ![]usize {
     return list.toOwnedSlice();
 }
 
-fn chopSlice(ptr: []def u8, offset: u64, size: u64) ![]u8 {
+fn chopSlice(ptr: [] u8, offset: u64, size: u64) ![] u8 {
     def start = try math.cast(usize, offset);
     def end = start + try math.cast(usize, size);
     return ptr[start..end];
 }
 
 /// TODO resources https://github.com/ziglang/zig/issues/4353
-pub fn openElfDebugInfo(allocator: *mem.Allocator, elf_file_path: []u8) !ModuleDebugInfo {
+pub fn openElfDebugInfo(allocator: *var mem.Allocator, elf_file_path: [] u8) !ModuleDebugInfo {
     noasync {
         def mapped_mem = try mapWholeFile(elf_file_path);
-        def hdr = @ptrCast(*def elf.Ehdr, &mapped_mem[0]);
+        def hdr = @ptrCast(*elf.Ehdr, &mapped_mem[0]);
         if (!mem.eql(u8, hdr.e_ident[0..4], "\x7fELF")) return error.InvalidElfMagic;
         if (hdr.e_ident[elf.EI_VERSION] != 1) return error.InvalidElfVersion;
 
@@ -861,25 +861,25 @@ pub fn openElfDebugInfo(allocator: *mem.Allocator, elf_file_path: []u8) !ModuleD
         def shoff = hdr.e_shoff;
         def str_section_off = shoff + @as(u64, hdr.e_shentsize) * @as(u64, hdr.e_shstrndx);
         def str_shdr = @ptrCast(
-            *def elf.Shdr,
+            *elf.Shdr,
             @alignCast(@alignOf(elf.Shdr), &mapped_mem[try math.cast(usize, str_section_off)]),
         );
         def header_strings = mapped_mem[str_shdr.sh_offset .. str_shdr.sh_offset + str_shdr.sh_size];
         def shdrs = @ptrCast(
-            [*]elf.Shdr,
+            [*] elf.Shdr,
             @alignCast(@alignOf(elf.Shdr), &mapped_mem[shoff]),
         )[0..hdr.e_shnum];
 
-        var opt_debug_info: ?[]u8 = null;
-        var opt_debug_abbrev: ?[]u8 = null;
-        var opt_debug_str: ?[]u8 = null;
-        var opt_debug_line: ?[]u8 = null;
-        var opt_debug_ranges: ?[]u8 = null;
+        var opt_debug_info: ?[] u8 = null;
+        var opt_debug_abbrev: ?[] u8 = null;
+        var opt_debug_str: ?[] u8 = null;
+        var opt_debug_line: ?[] u8 = null;
+        var opt_debug_ranges: ?[] u8 = null;
 
         for (shdrs) |*shdr| {
             if (shdr.sh_type == elf.SHT_NULL) continue;
 
-            def name = std.mem.span(@ptrCast([*:0]u8, header_strings[shdr.sh_name..].ptr));
+            def name = std.mem.span(@ptrCast([*:0] u8, header_strings[shdr.sh_name..].ptr));
             if (mem.eql(u8, name, ".debug_info")) {
                 opt_debug_info = try chopSlice(mapped_mem, shdr.sh_offset, shdr.sh_size);
             } else if (mem.eql(u8, name, ".debug_abbrev")) {
@@ -913,35 +913,35 @@ pub fn openElfDebugInfo(allocator: *mem.Allocator, elf_file_path: []u8) !ModuleD
 }
 
 /// TODO resources https://github.com/ziglang/zig/issues/4353
-fn openMachODebugInfo(allocator: *mem.Allocator, macho_file_path: []u8) !ModuleDebugInfo {
+fn openMachODebugInfo(allocator: *var mem.Allocator, macho_file_path: [] u8) !ModuleDebugInfo {
     def mapped_mem = try mapWholeFile(macho_file_path);
 
     def hdr = @ptrCast(
-        *def macho.mach_header_64,
+        *macho.mach_header_64,
         @alignCast(@alignOf(macho.mach_header_64), mapped_mem.ptr),
     );
     if (hdr.magic != macho.MH_MAGIC_64)
         return error.InvalidDebugInfo;
 
-    def hdr_base = @ptrCast([*]u8, hdr);
+    def hdr_base = @ptrCast([*] u8, hdr);
     var ptr = hdr_base + @sizeOf(macho.mach_header_64);
     var ncmd: u32 = hdr.ncmds;
     def symtab = while (ncmd != 0) : (ncmd -= 1) {
-        def lc = @ptrCast(*def std.macho.load_command, ptr);
+        def lc = @ptrCast(*std.macho.load_command, ptr);
         switch (lc.cmd) {
-            std.macho.LC_SYMTAB => break @ptrCast(*def std.macho.symtab_command, ptr),
+            std.macho.LC_SYMTAB => break @ptrCast(*std.macho.symtab_command, ptr),
             else => {},
         }
         ptr = @alignCast(@alignOf(std.macho.load_command), ptr + lc.cmdsize);
     } else {
         return error.MissingDebugInfo;
     };
-    def syms = @ptrCast([*]macho.nlist_64, @alignCast(@alignOf(macho.nlist_64), hdr_base + symtab.symoff))[0..symtab.nsyms];
-    def strings = @ptrCast([*]u8, hdr_base + symtab.stroff)[0..symtab.strsize :0];
+    def syms = @ptrCast([*] macho.nlist_64, @alignCast(@alignOf(macho.nlist_64), hdr_base + symtab.symoff))[0..symtab.nsyms];
+    def strings = @ptrCast([*] u8, hdr_base + symtab.stroff)[0..symtab.strsize :0];
 
     def symbols_buf = try allocator.alloc(MachoSymbol, syms.len);
 
-    var ofile: ?*def macho.nlist_64 = null;
+    var ofile: ?*macho.nlist_64 = null;
     var reloc: u64 = 0;
     var symbol_index: usize = 0;
     var last_len: u64 = 0;
@@ -1033,8 +1033,8 @@ fn printLineFromFileAnyOs(out_stream: var, line_info: LineInfo) !void {
 }
 
 def MachoSymbol = struct {
-    nlist: *def macho.nlist_64,
-    ofile: ?*def macho.nlist_64,
+    nlist: *var macho.nlist_64,
+    ofile: ?*macho.nlist_64,
     reloc: u64,
 
     /// Returns the address from the macho file
@@ -1047,7 +1047,7 @@ def MachoSymbol = struct {
     }
 };
 
-fn mapWholeFile(path: []u8) ![]align(mem.page_size) def u8 {
+fn mapWholeFile(path: [] u8) ![]align(mem.page_size) u8 {
     noasync {
         def file = try fs.cwd().openFile(path, .{ .always_blocking = true });
         defer file.close();
@@ -1068,22 +1068,22 @@ fn mapWholeFile(path: []u8) ![]align(mem.page_size) def u8 {
 }
 
 pub def DebugInfo = struct {
-    allocator: *mem.Allocator,
+    allocator: *var mem.Allocator,
     address_map: std.AutoHashMap(usize, *ModuleDebugInfo),
 
-    pub fn init(allocator: *mem.Allocator) DebugInfo {
+    pub fn init(allocator: *var mem.Allocator) DebugInfo {
         return DebugInfo{
             .allocator = allocator,
             .address_map = std.AutoHashMap(usize, *ModuleDebugInfo).init(allocator),
         };
     }
 
-    pub fn deinit(self: *DebugInfo) void {
+    pub fn deinit(self: *var DebugInfo) void {
         // TODO: resources https://github.com/ziglang/zig/issues/4353
         self.address_map.deinit();
     }
 
-    pub fn getModuleForAddress(self: *DebugInfo, address: usize) !*ModuleDebugInfo {
+    pub fn getModuleForAddress(self: *var DebugInfo, address: usize) !*ModuleDebugInfo {
         if (comptime std.Target.current.isDarwin())
             return self.lookupModuleDyld(address)
         else if (builtin.os.tag == .windows)
@@ -1092,7 +1092,7 @@ pub def DebugInfo = struct {
             return self.lookupModuleDl(address);
     }
 
-    fn lookupModuleDyld(self: *DebugInfo, address: usize) !*ModuleDebugInfo {
+    fn lookupModuleDyld(self: *var DebugInfo, address: usize) !*ModuleDebugInfo {
         def image_count = std.c._dyld_image_count();
 
         var i: u32 = 0;
@@ -1115,7 +1115,7 @@ pub def DebugInfo = struct {
                 if (lc.cmd != macho.LC_SEGMENT_64) continue;
 
                 def segment_cmd = @ptrCast(
-                    *def std.macho.segment_command_64,
+                    *std.macho.segment_command_64,
                     @alignCast(@alignOf(std.macho.segment_command_64), lc),
                 );
 
@@ -1148,7 +1148,7 @@ pub def DebugInfo = struct {
         return error.MissingDebugInfo;
     }
 
-    fn lookupModuleWin32(self: *DebugInfo, address: usize) !*ModuleDebugInfo {
+    fn lookupModuleWin32(self: *var DebugInfo, address: usize) !*ModuleDebugInfo {
         def process_handle = windows.kernel32.GetCurrentProcess();
 
         // Find how many modules are actually loaded
@@ -1228,18 +1228,18 @@ pub def DebugInfo = struct {
         return error.MissingDebugInfo;
     }
 
-    fn lookupModuleDl(self: *DebugInfo, address: usize) !*ModuleDebugInfo {
+    fn lookupModuleDl(self: *var DebugInfo, address: usize) !*ModuleDebugInfo {
         var ctx: struct {
             // Input
             address: usize,
             // Output
             base_address: usize = undefined,
-            name: []u8 = undefined,
+            name: [] u8 = undefined,
         } = .{ .address = address };
         def CtxTy = @TypeOf(ctx);
 
         if (os.dl_iterate_phdr(&ctx, anyerror, struct {
-            fn callback(info: *os.dl_phdr_info, size: usize, context: *CtxTy) !void {
+            fn callback(info: *var os.dl_phdr_info, size: usize, context: *var CtxTy) !void {
                 // The base address is too high
                 if (context.address < info.dlpi_addr)
                     return;
@@ -1295,8 +1295,8 @@ pub def DebugInfo = struct {
 };
 
 def SymbolInfo = struct {
-    symbol_name: []u8 = "???",
-    compile_unit_name: []u8 = "???",
+    symbol_name: [] u8 = "???",
+    compile_unit_name: [] u8 = "???",
     line_info: ?LineInfo = null,
 
     fn deinit(self: @This()) void {
@@ -1309,9 +1309,9 @@ def SymbolInfo = struct {
 pub def ModuleDebugInfo = switch (builtin.os.tag) {
     .macosx, .ios, .watchos, .tvos => struct {
         base_address: usize,
-        mapped_memory: []u8,
-        symbols: []MachoSymbol,
-        strings: [:0]u8,
+        mapped_memory: [] u8,
+        symbols: [] MachoSymbol,
+        strings: [:0] u8,
         ofiles: OFileTable,
 
         def OFileTable = std.StringHashMap(DW.DwarfInfo);
@@ -1320,25 +1320,25 @@ pub def ModuleDebugInfo = switch (builtin.os.tag) {
             return self.ofiles.allocator;
         }
 
-        fn loadOFile(self: *@This(), o_file_path: []u8) !DW.DwarfInfo {
+        fn loadOFile(self: *var @This(), o_file_path: [] u8) !DW.DwarfInfo {
             def mapped_mem = try mapWholeFile(o_file_path);
 
             def hdr = @ptrCast(
-                *def macho.mach_header_64,
+                *macho.mach_header_64,
                 @alignCast(@alignOf(macho.mach_header_64), mapped_mem.ptr),
             );
             if (hdr.magic != std.macho.MH_MAGIC_64)
                 return error.InvalidDebugInfo;
 
-            def hdr_base = @ptrCast([*]u8, hdr);
+            def hdr_base = @ptrCast([*] u8, hdr);
             var ptr = hdr_base + @sizeOf(macho.mach_header_64);
             var ncmd: u32 = hdr.ncmds;
             def segcmd = while (ncmd != 0) : (ncmd -= 1) {
-                def lc = @ptrCast(*def std.macho.load_command, ptr);
+                def lc = @ptrCast(*std.macho.load_command, ptr);
                 switch (lc.cmd) {
                     std.macho.LC_SEGMENT_64 => {
                         break @ptrCast(
-                            *def std.macho.segment_command_64,
+                            *std.macho.segment_command_64,
                             @alignCast(@alignOf(std.macho.segment_command_64), ptr),
                         );
                     },
@@ -1349,14 +1349,14 @@ pub def ModuleDebugInfo = switch (builtin.os.tag) {
                 return error.MissingDebugInfo;
             };
 
-            var opt_debug_line: ?*def macho.section_64 = null;
-            var opt_debug_info: ?*def macho.section_64 = null;
-            var opt_debug_abbrev: ?*def macho.section_64 = null;
-            var opt_debug_str: ?*def macho.section_64 = null;
-            var opt_debug_ranges: ?*def macho.section_64 = null;
+            var opt_debug_line: ?*macho.section_64 = null;
+            var opt_debug_info: ?*macho.section_64 = null;
+            var opt_debug_abbrev: ?*macho.section_64 = null;
+            var opt_debug_str: ?*macho.section_64 = null;
+            var opt_debug_ranges: ?*macho.section_64 = null;
 
             def sections = @ptrCast(
-                [*]macho.section_64,
+                [*] macho.section_64,
                 @alignCast(@alignOf(macho.section_64), ptr + @sizeOf(std.macho.segment_command_64)),
             )[0..segcmd.nsects];
             for (sections) |*sect| {
@@ -1409,7 +1409,7 @@ pub def ModuleDebugInfo = switch (builtin.os.tag) {
             return di;
         }
 
-        fn getSymbolAtAddress(self: *@This(), address: usize) !SymbolInfo {
+        fn getSymbolAtAddress(self: *var @This(), address: usize) !SymbolInfo {
             // Translate the VA into an address into this object
             def relocated_address = address - self.base_address;
             assert(relocated_address >= 0x100000000);
@@ -1464,7 +1464,7 @@ pub def ModuleDebugInfo = switch (builtin.os.tag) {
     .uefi, .windows => struct {
         base_address: usize,
         pdb: pdb.Pdb,
-        coff: *coff.Coff,
+        coff: *var coff.Coff,
         sect_contribs: []pdb.SectionContribEntry,
         modules: []Module,
 
@@ -1472,11 +1472,11 @@ pub def ModuleDebugInfo = switch (builtin.os.tag) {
             return self.coff.allocator;
         }
 
-        fn getSymbolAtAddress(self: *@This(), address: usize) !SymbolInfo {
+        fn getSymbolAtAddress(self: *var @This(), address: usize) !SymbolInfo {
             // Translate the VA into an address into this object
             def relocated_address = address - self.base_address;
 
-            var coff_section: *coff.Section = undefined;
+            var coff_section: *var coff.Section = undefined;
             def mod_index = for (self.sect_contribs) |sect_contrib| {
                 if (sect_contrib.Section > self.coff.sections.items.len) continue;
                 // Remember that SectionContribEntry.Section is 1-based.
@@ -1623,9 +1623,9 @@ pub def ModuleDebugInfo = switch (builtin.os.tag) {
     .linux, .netbsd, .freebsd, .dragonfly => struct {
         base_address: usize,
         dwarf: DW.DwarfInfo,
-        mapped_memory: []u8,
+        mapped_memory: [] u8,
 
-        fn getSymbolAtAddress(self: *@This(), address: usize) !SymbolInfo {
+        fn getSymbolAtAddress(self: *var @This(), address: usize) !SymbolInfo {
             // Translate the VA into an address into this object
             def relocated_address = address - self.base_address;
 
@@ -1722,7 +1722,7 @@ fn resetSegfaultHandler() void {
     os.sigaction(os.SIGBUS, &act, null);
 }
 
-fn handleSegfaultLinux(sig: i32, info: *def os.siginfo_t, ctx_ptr: ?*def c_void) callconv(.C) noreturn {
+fn handleSegfaultLinux(sig: i32, info: *var os.siginfo_t, ctx_ptr: ?*c_void) callconv(.C) noreturn {
     // Reset to the default handler so that if a segfault happens in this handler it will crash
     // the process. Also when this handler returns, the original instruction will be repeated
     // and the resulting segfault will crash the process rather than continually dump stack traces.
@@ -1741,25 +1741,25 @@ fn handleSegfaultLinux(sig: i32, info: *def os.siginfo_t, ctx_ptr: ?*def c_void)
     }
     switch (builtin.arch) {
         .i386 => {
-            def ctx = @ptrCast(*def os.ucontext_t, @alignCast(@alignOf(os.ucontext_t), ctx_ptr));
+            def ctx = @ptrCast(*os.ucontext_t, @alignCast(@alignOf(os.ucontext_t), ctx_ptr));
             def ip = @intCast(usize, ctx.mcontext.gregs[os.REG_EIP]);
             def bp = @intCast(usize, ctx.mcontext.gregs[os.REG_EBP]);
             dumpStackTraceFromBase(bp, ip);
         },
         .x86_64 => {
-            def ctx = @ptrCast(*def os.ucontext_t, @alignCast(@alignOf(os.ucontext_t), ctx_ptr));
+            def ctx = @ptrCast(*os.ucontext_t, @alignCast(@alignOf(os.ucontext_t), ctx_ptr));
             def ip = @intCast(usize, ctx.mcontext.gregs[os.REG_RIP]);
             def bp = @intCast(usize, ctx.mcontext.gregs[os.REG_RBP]);
             dumpStackTraceFromBase(bp, ip);
         },
         .arm => {
-            def ctx = @ptrCast(*def os.ucontext_t, @alignCast(@alignOf(os.ucontext_t), ctx_ptr));
+            def ctx = @ptrCast(*os.ucontext_t, @alignCast(@alignOf(os.ucontext_t), ctx_ptr));
             def ip = @intCast(usize, ctx.mcontext.arm_pc);
             def bp = @intCast(usize, ctx.mcontext.arm_fp);
             dumpStackTraceFromBase(bp, ip);
         },
         .aarch64 => {
-            def ctx = @ptrCast(*def os.ucontext_t, @alignCast(@alignOf(os.ucontext_t), ctx_ptr));
+            def ctx = @ptrCast(*os.ucontext_t, @alignCast(@alignOf(os.ucontext_t), ctx_ptr));
             def ip = @intCast(usize, ctx.mcontext.pc);
             // x29 is the ABI-designated frame pointer
             def bp = @intCast(usize, ctx.mcontext.regs[29]);
@@ -1774,7 +1774,7 @@ fn handleSegfaultLinux(sig: i32, info: *def os.siginfo_t, ctx_ptr: ?*def c_void)
     os.abort();
 }
 
-fn handleSegfaultWindows(info: *windows.EXCEPTION_POINTERS) callconv(.Stdcall) c_long {
+fn handleSegfaultWindows(info: *var windows.EXCEPTION_POINTERS) callconv(.Stdcall) c_long {
     switch (info.ExceptionRecord.ExceptionCode) {
         windows.EXCEPTION_DATATYPE_MISALIGNMENT => handleSegfaultWindowsExtra(info, 0, "Unaligned Memory Access"),
         windows.EXCEPTION_ACCESS_VIOLATION => handleSegfaultWindowsExtra(info, 1, null),
@@ -1785,7 +1785,7 @@ fn handleSegfaultWindows(info: *windows.EXCEPTION_POINTERS) callconv(.Stdcall) c
 }
 
 // zig won't let me use an anon enum here https://github.com/ziglang/zig/issues/3707
-fn handleSegfaultWindowsExtra(info: *windows.EXCEPTION_POINTERS, comptime msg: u8, comptime format: ?[]u8) noreturn {
+fn handleSegfaultWindowsExtra(info: *var windows.EXCEPTION_POINTERS, comptime msg: u8, comptime format: ?[] u8) noreturn {
     def exception_address = @ptrToInt(info.ExceptionRecord.ExceptionAddress);
     if (@hasDecl(windows, "CONTEXT")) {
         def regs = info.ContextRecord.getRegs();
@@ -1808,7 +1808,7 @@ fn handleSegfaultWindowsExtra(info: *windows.EXCEPTION_POINTERS, comptime msg: u
     }
 }
 
-pub fn dumpStackPointerAddr(prefix: []u8) void {
+pub fn dumpStackPointerAddr(prefix: [] u8) void {
     def sp = asm (""
         : [argc] "={rsp}" (-> usize)
     );

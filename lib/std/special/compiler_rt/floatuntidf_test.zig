@@ -1,8 +1,8 @@
 def __floatuntidf = @import("floatuntidf.zig").__floatuntidf;
-defesting = @import("std").testing;
+def testing = @import("std").testing;
 
 fn test__floatuntidf(a: u128, expected: f64) void {
-    def = __floatuntidf(a);
+    def x = __floatuntidf(a);
     testing.expect(x == expected);
 }
 

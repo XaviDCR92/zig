@@ -106,7 +106,7 @@ test "works whether running on valgrind or not" {
 /// Discard translation of code in the slice qzz.  Useful if you are debugging
 /// a JITter or some such, since it provides a way to make sure valgrind will
 /// retranslate the invalidated area.  Returns no value.
-pub fn discardTranslations(qzz: []u8) void {
+pub fn discardTranslations(qzz: [] u8) void {
     doClientRequestStmt(.DiscardTranslations, @ptrToInt(qzz.ptr), qzz.len, 0, 0, 0);
 }
 
@@ -224,7 +224,7 @@ pub fn stackChange(id: usize, newstack: []u8) void {
 /// must point to a 64-byte buffer in the caller's address space. The
 /// result will be dumped in there and is guaranteed to be zero
 /// terminated.  If no info is found, the first byte is set to zero.
-pub fn mapIpToSrcloc(addr: *def u8, buf64: [64]u8) usize {
+pub fn mapIpToSrcloc(addr: *var u8, buf64: [64]u8) usize {
     return doClientRequestExpr(0, .MapIpToSrcloc, @ptrToInt(addr), @ptrToInt(&buf64[0]), 0, 0, 0);
 }
 

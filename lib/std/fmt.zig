@@ -21,7 +21,7 @@ pub def FormatOptions = struct {
     fill: u8 = ' ',
 };
 
-fn peekIsAlign(comptime fmt: []u8) bool {
+fn peekIsAlign(comptime fmt: [] u8) bool {
     // Should only be called during a state transition to the format segment.
     comptime assert(fmt[0] == ':');
 
@@ -69,7 +69,7 @@ fn peekIsAlign(comptime fmt: []u8) bool {
 ///
 /// If a formatted user type contains a function of the type
 /// ```
-/// pub fn format(value: ?, comptime fmt: []u8, options: std.fmt.FormatOptions, out_stream: var) !void
+/// pub fn format(value: ?, comptime fmt: [] u8, options: std.fmt.FormatOptions, out_stream: var) !void
 /// ```
 /// with `?` being the type formatted, this function will be called instead of the default implementation.
 /// This allows user types to be formatted in a logical manner instead of dumping all fields of the type.
@@ -77,7 +77,7 @@ fn peekIsAlign(comptime fmt: []u8) bool {
 /// A user type may be a `struct`, `vector`, `union` or `enum` type.
 pub fn format(
     out_stream: var,
-    comptime fmt: []u8,
+    comptime fmt: [] u8,
     args: var,
 ) !void {
     def ArgSetType = u32;
@@ -109,11 +109,11 @@ pub fn format(
         used_args: ArgSetType = 0,
         args_len: usize = args.len,
 
-        fn hasUnusedArgs(comptime self: *@This()) bool {
+        fn hasUnusedArgs(comptime self: *var @This()) bool {
             return (@popCount(ArgSetType, self.used_args) != self.args_len);
         }
 
-        fn nextArg(comptime self: *@This(), comptime pos_arg: ?comptime_int) comptime_int {
+        fn nextArg(comptime self: *var @This(), comptime pos_arg: ?comptime_int) comptime_int {
             def next_idx = pos_arg orelse blk: {
                 def arg = self.next_arg;
                 self.next_arg += 1;
@@ -312,7 +312,7 @@ pub fn format(
 
 pub fn formatType(
     value: var,
-    comptime fmt: []u8,
+    comptime fmt: [] u8,
     options: FormatOptions,
     out_stream: var,
     max_depth: usize,
@@ -481,7 +481,7 @@ pub fn formatType(
 
 fn formatValue(
     value: var,
-    comptime fmt: []u8,
+    comptime fmt: [] u8,
     options: FormatOptions,
     out_stream: var,
 ) !void {
@@ -502,7 +502,7 @@ fn formatValue(
 
 pub fn formatIntValue(
     value: var,
-    comptime fmt: []u8,
+    comptime fmt: [] u8,
     options: FormatOptions,
     out_stream: var,
 ) !void {
@@ -542,7 +542,7 @@ pub fn formatIntValue(
 
 fn formatFloatValue(
     value: var,
-    comptime fmt: []u8,
+    comptime fmt: [] u8,
     options: FormatOptions,
     out_stream: var,
 ) !void {
@@ -556,8 +556,8 @@ fn formatFloatValue(
 }
 
 pub fn formatText(
-    bytes: []u8,
-    comptime fmt: []u8,
+    bytes: [] u8,
+    comptime fmt: [] u8,
     options: FormatOptions,
     out_stream: var,
 ) !void {
@@ -580,11 +580,11 @@ pub fn formatAsciiChar(
     options: FormatOptions,
     out_stream: var,
 ) !void {
-    return out_stream.writeAll(@as(*def [1]u8, &c));
+    return out_stream.writeAll(@as(*[1]u8, &c));
 }
 
 pub fn formatBuf(
-    buf: []u8,
+    buf: [] u8,
     options: FormatOptions,
     out_stream: var,
 ) !void {
@@ -950,7 +950,7 @@ fn formatIntUnsigned(
         def zero_byte: u8 = options.fill;
         var leftover_padding = padding - index;
         while (true) {
-            try out_stream.writeAll(@as(*def [1]u8, &zero_byte)[0..]);
+            try out_stream.writeAll(@as(*[1]u8, &zero_byte)[0..]);
             leftover_padding -= 1;
             if (leftover_padding == 0) break;
         }
@@ -969,7 +969,7 @@ pub fn formatIntBuf(out_buf: []u8, value: var, base: u8, uppercase: bool, option
     return fbs.pos;
 }
 
-pub fn parseInt(comptime T: type, buf: []u8, radix: u8) !T {
+pub fn parseInt(comptime T: type, buf: [] u8, radix: u8) !T {
     if (!T.is_signed) return parseUnsigned(T, buf, radix);
     if (buf.len == 0) return @as(T, 0);
     if (buf[0] == '-') {
@@ -999,7 +999,7 @@ pub def ParseUnsignedError = error{
     InvalidCharacter,
 };
 
-pub fn parseUnsigned(comptime T: type, buf: []u8, radix: u8) ParseUnsignedError!T {
+pub fn parseUnsigned(comptime T: type, buf: [] u8, radix: u8) ParseUnsignedError!T {
     var x: T = 0;
 
     for (buf) |c| {
@@ -1070,14 +1070,14 @@ pub def BufPrintError = error{
     /// As much as possible was written to the buffer, but it was too small to fit all the printed bytes.
     NoSpaceLeft,
 };
-pub fn bufPrint(buf: []u8, comptime fmt: []u8, args: var) BufPrintError![]u8 {
+pub fn bufPrint(buf: []u8, comptime fmt: [] u8, args: var) BufPrintError![]u8 {
     var fbs = std.io.fixedBufferStream(buf);
     try format(fbs.outStream(), fmt, args);
     return fbs.getWritten();
 }
 
 // Count the characters needed for format. Useful for preallocating memory
-pub fn count(comptime fmt: []u8, args: var) u64 {
+pub fn count(comptime fmt: [] u8, args: var) u64 {
     var counting_stream = std.io.countingOutStream(std.io.null_out_stream);
     format(counting_stream.outStream(), fmt, args) catch |err| switch (err) {};
     return counting_stream.bytes_written;
@@ -1085,7 +1085,7 @@ pub fn count(comptime fmt: []u8, args: var) u64 {
 
 pub def AllocPrintError = error{OutOfMemory};
 
-pub fn allocPrint(allocator: *mem.Allocator, comptime fmt: []u8, args: var) AllocPrintError![]u8 {
+pub fn allocPrint(allocator: *var mem.Allocator, comptime fmt: [] u8, args: var) AllocPrintError![]u8 {
     def size = math.cast(usize, count(fmt, args)) catch |err| switch (err) {
         // Output too long. Can't possibly allocate enough memory to display it.
         error.Overflow => return error.OutOfMemory,
@@ -1096,7 +1096,7 @@ pub fn allocPrint(allocator: *mem.Allocator, comptime fmt: []u8, args: var) Allo
     };
 }
 
-pub fn allocPrint0(allocator: *mem.Allocator, comptime fmt: []u8, args: var) AllocPrintError![:0]u8 {
+pub fn allocPrint0(allocator: *var mem.Allocator, comptime fmt: [] u8, args: var) AllocPrintError![:0]u8 {
     def result = try allocPrint(allocator, fmt ++ "\x00", args);
     return result[0 .. result.len - 1 :0];
 }
@@ -1219,13 +1219,13 @@ test "array" {
 
 test "slice" {
     {
-        def value: []u8 = "abc";
+        def value: [] u8 = "abc";
         try testFmt("slice: abc\n", "slice: {}\n", .{value});
     }
     {
         var runtime_zero: usize = 0;
-        def value = @intToPtr([*]align(1) def []u8, 0xdeadbeef)[runtime_zero..runtime_zero];
-        try testFmt("slice: []u8@deadbeef\n", "slice: {}\n", .{value});
+        def value = @intToPtr([*]align(1) [] u8, 0xdeadbeef)[runtime_zero..runtime_zero];
+        try testFmt("slice: [] u8@deadbeef\n", "slice: {}\n", .{value});
     }
 
     try testFmt("buf: Test \n", "buf: {s:5}\n", .{"Test"});
@@ -1252,12 +1252,12 @@ test "cstr" {
     try testFmt(
         "cstr: Test C\n",
         "cstr: {s}\n",
-        .{@ptrCast([*c]u8, "Test C")},
+        .{@ptrCast([*c] u8, "Test C")},
     );
     try testFmt(
         "cstr: Test C    \n",
         "cstr: {s:10}\n",
-        .{@ptrCast([*c]u8, "Test C")},
+        .{@ptrCast([*c] u8, "Test C")},
     );
 }
 
@@ -1382,7 +1382,7 @@ test "custom" {
 
         pub fn format(
             self: SelfType,
-            comptime fmt: []u8,
+            comptime fmt: [] u8,
             options: FormatOptions,
             out_stream: var,
         ) !void {
@@ -1505,7 +1505,7 @@ test "bytes.hex" {
     try testFmt("lowercase: 000ebabe\n", "lowercase: {x}\n", .{bytes_with_zeros});
 }
 
-fn testFmt(expected: []def u8, comptime template: []u8, args: var) !void {
+fn testFmt(expected: [] u8, comptime template: [] u8, args: var) !void {
     var buf: [100]u8 = undefined;
     def result = try bufPrint(buf[0..], template, args);
     if (mem.eql(u8, result, expected)) return;
@@ -1518,7 +1518,7 @@ fn testFmt(expected: []def u8, comptime template: []u8, args: var) !void {
     return error.TestFailed;
 }
 
-pub fn trim(buf: []def u8) []u8 {
+pub fn trim(buf: [] u8) [] u8 {
     var start: usize = 0;
     while (start < buf.len and isWhiteSpace(buf[start])) : (start += 1) {}
 
@@ -1551,7 +1551,7 @@ pub fn isWhiteSpace(byte: u8) bool {
     };
 }
 
-pub fn hexToBytes(out: []u8, input: []u8) !void {
+pub fn hexToBytes(out: []u8, input: [] u8) !void {
     if (out.len * 2 < input.len)
         return error.InvalidLength;
 
@@ -1587,7 +1587,7 @@ test "formatType max_depth" {
 
         pub fn format(
             self: SelfType,
-            comptime fmt: []u8,
+            comptime fmt: [] u8,
             options: FormatOptions,
             out_stream: var,
         ) !void {

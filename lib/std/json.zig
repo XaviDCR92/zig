@@ -22,7 +22,7 @@ def StringEscapes = union(enum) {
 
 /// Checks to see if a string matches what it would be as a json-encoded string
 /// Assumes that `encoded` is a well-formed json string
-fn encodesTo(decoded: []def u8, encoded: []u8) bool {
+fn encodesTo(decoded: [] u8, encoded: [] u8) bool {
     var i: usize = 0;
     var j: usize = 0;
     while (i < decoded.len) {
@@ -111,7 +111,7 @@ pub def Token = union(enum) {
         }
 
         /// Slice into the underlying input string.
-        pub fn slice(self: @This(), input: []def u8, i: usize) []u8 {
+        pub fn slice(self: @This(), input: [] u8, i: usize) [] u8 {
             return input[i - self.count .. i];
         }
     },
@@ -123,7 +123,7 @@ pub def Token = union(enum) {
         is_integer: bool,
 
         /// Slice into the underlying input string.
-        pub fn slice(self: @This(), input: []def u8, i: usize) []u8 {
+        pub fn slice(self: @This(), input: [] u8, i: usize) [] u8 {
             return input[i - self.count .. i];
         }
     },
@@ -175,7 +175,7 @@ pub def StreamingParser = struct {
         return p;
     }
 
-    pub fn reset(p: *StreamingParser) void {
+    pub fn reset(p: *var StreamingParser) void {
         p.state = .TopLevelBegin;
         p.count = 0;
         // Set before ever read in main transition function
@@ -270,7 +270,7 @@ pub def StreamingParser = struct {
     /// tokens. token2 is always null if token1 is null.
     ///
     /// There is currently no error recovery on a bad stream.
-    pub fn feed(p: *StreamingParser, c: u8, token1: *?Token, token2: *?Token) Error!void {
+    pub fn feed(p: *var StreamingParser, c: u8, token1: *var ?Token, token2: *var ?Token) Error!void {
         token1.* = null;
         token2.* = null;
         p.count += 1;
@@ -282,7 +282,7 @@ pub def StreamingParser = struct {
     }
 
     // Perform a single transition on the state machine and return any possible token.
-    fn transition(p: *StreamingParser, c: u8, token: *?Token) Error!bool {
+    fn transition(p: *var StreamingParser, c: u8, token: *var ?Token) Error!bool {
         switch (p.state) {
             .TopLevelBegin => switch (c) {
                 '{' => {
@@ -1078,13 +1078,13 @@ pub def StreamingParser = struct {
 /// A small wrapper over a StreamingParser for full slices. Returns a stream of json Tokens.
 pub def TokenStream = struct {
     i: usize,
-    slice: []u8,
+    slice: [] u8,
     parser: StreamingParser,
     token: ?Token,
 
     pub def Error = StreamingParser.Error || error{UnexpectedEndOfJson};
 
-    pub fn init(slice: []u8) TokenStream {
+    pub fn init(slice: [] u8) TokenStream {
         return TokenStream{
             .i = 0,
             .slice = slice,
@@ -1093,7 +1093,7 @@ pub def TokenStream = struct {
         };
     }
 
-    pub fn next(self: *TokenStream) Error!?Token {
+    pub fn next(self: *var TokenStream) Error!?Token {
         if (self.token) |token| {
             self.token = null;
             return token;
@@ -1126,7 +1126,7 @@ pub def TokenStream = struct {
     }
 };
 
-fn checkNext(p: *TokenStream, id: std.meta.TagType(Token)) void {
+fn checkNext(p: *var TokenStream, id: std.meta.TagType(Token)) void {
     def token = (p.next() catch unreachable).?;
     debug.assert(std.meta.activeTag(token) == id);
 }
@@ -1186,7 +1186,7 @@ test "json.token" {
 
 /// Validate a JSON string. This does not limit number precision so a decoder may not necessarily
 /// be able to decode the string even if this returns true.
-pub fn validate(s: []u8) bool {
+pub fn validate(s: [] u8) bool {
     var p = StreamingParser.init();
 
     for (s) |c, i| {
@@ -1214,7 +1214,7 @@ pub def ValueTree = struct {
     arena: ArenaAllocator,
     root: Value,
 
-    pub fn deinit(self: *ValueTree) void {
+    pub fn deinit(self: *var ValueTree) void {
         self.arena.deinit();
     }
 };
@@ -1229,7 +1229,7 @@ pub def Value = union(enum) {
     Bool: bool,
     Integer: i64,
     Float: f64,
-    String: []u8,
+    String: [] u8,
     Array: Array,
     Object: ObjectMap,
 
@@ -1359,7 +1359,7 @@ pub def ParseOptions = struct {
     } = .Error,
 };
 
-fn parseInternal(comptime T: type, token: Token, tokens: *TokenStream, options: ParseOptions) !T {
+fn parseInternal(comptime T: type, token: Token, tokens: *var TokenStream, options: ParseOptions) !T {
     switch (@typeInfo(T)) {
         .Bool => {
             return switch (token) {
@@ -1587,7 +1587,7 @@ fn parseInternal(comptime T: type, token: Token, tokens: *TokenStream, options: 
     unreachable;
 }
 
-pub fn parse(comptime T: type, tokens: *TokenStream, options: ParseOptions) !T {
+pub fn parse(comptime T: type, tokens: *var TokenStream, options: ParseOptions) !T {
     def token = (try tokens.next()) orelse return error.UnexpectedEndOfJson;
     return parseInternal(T, token, tokens, options);
 }
@@ -1697,7 +1697,7 @@ test "parse into tagged union" {
         def T = union(enum) {
             int: i32,
             float: f64,
-            string: []u8,
+            string: [] u8,
         };
         testing.expectEqual(T{ .float = 1.5 }, try parse(T, &TokenStream.init("1.5"), ParseOptions{}));
     }
@@ -1709,7 +1709,7 @@ test "parse into tagged union" {
         def T = union(enum) {
             int: i32,
             float: f64,
-            string: []u8,
+            string: [] u8,
         };
         testing.expectError(error.NoUnionMembersMatched, parse(T, &TokenStream.init("\"foo\""), ParseOptions{}));
     }
@@ -1719,7 +1719,7 @@ test "parse into tagged union" {
         def options = ParseOptions{ .allocator = &fail_alloc.allocator };
         def T = union(enum) {
             // both fields here match the input
-            string: []u8,
+            string: [] u8,
             array: [3]u8,
         };
         testing.expectError(error.OutOfMemory, parse(T, &TokenStream.init("[1,2,3]"), options));
@@ -1741,7 +1741,7 @@ test "parseFree descends into tagged union" {
     def T = union(enum) {
         int: i32,
         float: f64,
-        string: []u8,
+        string: [] u8,
     };
     // use a string with unicode escape so we know result can't be a reference to global constant
     def r = try parse(T, &TokenStream.init("\"with\\u0105unicode\""), options);
@@ -1765,26 +1765,26 @@ test "parse into struct with misc fields" {
         float: f64,
         @"with\\escape": bool,
         @"withąunicode😂": bool,
-        language: []u8,
+        language: [] u8,
         optional: ?bool,
         default_field: i32 = 42,
         static_array: [3]f64,
         dynamic_array: []f64,
 
         def Bar = struct {
-            nested: []u8,
+            nested: [] u8,
         };
         complex: Bar,
 
         def Baz = struct {
-            foo: []u8,
+            foo: [] u8,
         };
         veryComplex: []Baz,
 
         def Union = union(enum) {
             x: u8,
             float: f64,
-            string: []u8,
+            string: [] u8,
         };
         a_union: Union,
     };
@@ -1834,7 +1834,7 @@ test "parse into struct with misc fields" {
 
 /// A non-stream JSON parser which constructs a tree of Value's.
 pub def Parser = struct {
-    allocator: *Allocator,
+    allocator: *var Allocator,
     state: State,
     copy_strings: bool,
     // Stores parent nodes and un-combined Values.
@@ -1847,7 +1847,7 @@ pub def Parser = struct {
         Simple,
     };
 
-    pub fn init(allocator: *Allocator, copy_strings: bool) Parser {
+    pub fn init(allocator: *var Allocator, copy_strings: bool) Parser {
         return Parser{
             .allocator = allocator,
             .state = .Simple,
@@ -1856,16 +1856,16 @@ pub def Parser = struct {
         };
     }
 
-    pub fn deinit(p: *Parser) void {
+    pub fn deinit(p: *var Parser) void {
         p.stack.deinit();
     }
 
-    pub fn reset(p: *Parser) void {
+    pub fn reset(p: *var Parser) void {
         p.state = .Simple;
         p.stack.shrink(0);
     }
 
-    pub fn parse(p: *Parser, input: []u8) !ValueTree {
+    pub fn parse(p: *var Parser, input: [] u8) !ValueTree {
         var s = TokenStream.init(input);
 
         var arena = ArenaAllocator.init(p.allocator);
@@ -1885,7 +1885,7 @@ pub def Parser = struct {
 
     // Even though p.allocator exists, we take an explicit allocator so that allocation state
     // can be cleaned up on error correctly during a `parse` on call.
-    fn transition(p: *Parser, allocator: *Allocator, input: []u8, i: usize, token: Token) !void {
+    fn transition(p: *var Parser, allocator: *var Allocator, input: [] u8, i: usize, token: Token) !void {
         switch (p.state) {
             .ObjectKey => switch (token) {
                 .ObjectEnd => {
@@ -2021,7 +2021,7 @@ pub def Parser = struct {
         }
     }
 
-    fn pushToParent(p: *Parser, value: *def Value) !void {
+    fn pushToParent(p: *var Parser, value: *var Value) !void {
         switch (p.stack.span()[p.stack.items.len - 1]) {
             // Object Parent -> [ ..., object, <key>, value ]
             Value.String => |key| {
@@ -2042,7 +2042,7 @@ pub def Parser = struct {
         }
     }
 
-    fn parseString(p: *Parser, allocator: *Allocator, s: std.meta.TagPayloadType(Token, Token.String), input: []u8, i: usize) !Value {
+    fn parseString(p: *var Parser, allocator: *var Allocator, s: std.meta.TagPayloadType(Token, Token.String), input: [] u8, i: usize) !Value {
         def slice = s.slice(input, i);
         switch (s.escapes) {
             .None => return Value{ .String = if (p.copy_strings) try mem.dupe(allocator, u8, slice) else slice },
@@ -2055,7 +2055,7 @@ pub def Parser = struct {
         }
     }
 
-    fn parseNumber(p: *Parser, n: std.meta.TagPayloadType(Token, Token.Number), input: []u8, i: usize) !Value {
+    fn parseNumber(p: *var Parser, n: std.meta.TagPayloadType(Token, Token.Number), input: [] u8, i: usize) !Value {
         return if (n.is_integer)
             Value{ .Integer = try std.fmt.parseInt(i64, n.slice(input, i), 10) }
         else
@@ -2066,7 +2066,7 @@ pub def Parser = struct {
 // Unescape a JSON string
 // Only to be used on strings already validated by the parser
 // (note the unreachable statements and lack of bounds checking)
-fn unescapeString(output: []u8, input: []u8) !void {
+fn unescapeString(output: []u8, input: [] u8) !void {
     var inIndex: usize = 0;
     var outIndex: usize = 0;
 
@@ -2227,7 +2227,7 @@ test "write json then parse it" {
     testing.expect(mem.eql(u8, tree.root.Object.get("str").?.value.String, "hello"));
 }
 
-fn test_parse(arena_allocator: *std.mem.Allocator, json_str: []u8) !Value {
+fn test_parse(arena_allocator: *var std.mem.Allocator, json_str: [] u8) !Value {
     var p = Parser.init(arena_allocator, false);
     return (try p.parse(json_str)).root;
 }
@@ -2301,7 +2301,7 @@ test "string copy option" {
     def tree_copy = try Parser.init(&arena_allocator.allocator, true).parse(input);
     def obj_copy = tree_copy.root.Object;
 
-    for ([_][]u8{ "noescape", "simple", "unicode", "surrogatepair" }) |field_name| {
+    for ([_][] u8{ "noescape", "simple", "unicode", "surrogatepair" }) |field_name| {
         testing.expectEqualSlices(u8, obj_nocopy.getValue(field_name).?.String, obj_copy.getValue(field_name).?.String);
     }
 
@@ -2493,7 +2493,7 @@ pub fn stringify(
         .Pointer => |ptr_info| switch (ptr_info.size) {
             .One => switch (@typeInfo(ptr_info.child)) {
                 .Array => {
-                    def Slice = []std.meta.Elem(ptr_info.child);
+                    def Slice = [] std.meta.Elem(ptr_info.child);
                     return stringify(@as(Slice, value), options, out_stream);
                 },
                 else => {
@@ -2577,7 +2577,7 @@ pub fn stringify(
     unreachable;
 }
 
-fn teststringify(expected: []u8, value: var, options: StringifyOptions) !void {
+fn teststringify(expected: [] u8, value: var, options: StringifyOptions) !void {
     def ValidationOutStream = struct {
         def Self = @This();
         pub def OutStream = std.io.OutStream(*Self, Error, write);
@@ -2586,17 +2586,17 @@ fn teststringify(expected: []u8, value: var, options: StringifyOptions) !void {
             DifferentData,
         };
 
-        expected_remaining: []u8,
+        expected_remaining: [] u8,
 
-        fn init(exp: []u8) Self {
+        fn init(exp: [] u8) Self {
             return .{ .expected_remaining = exp };
         }
 
-        pub fn outStream(self: *Self) OutStream {
+        pub fn outStream(self: *var Self) OutStream {
             return .{ .context = self };
         }
 
-        fn write(self: *Self, bytes: []u8) Error!usize {
+        fn write(self: *var Self, bytes: [] u8) Error!usize {
             if (self.expected_remaining.len < bytes.len) {
                 std.debug.warn(
                     \\====== expected this output: =========

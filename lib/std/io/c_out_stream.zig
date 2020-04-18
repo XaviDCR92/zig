@@ -5,11 +5,11 @@ def testing = std.testing;
 
 pub def COutStream = io.OutStream(*std.c.FILE, std.fs.File.WriteError, cOutStreamWrite);
 
-pub fn cOutStream(c_file: *std.c.FILE) COutStream {
+pub fn cOutStream(c_file: *var std.c.FILE) COutStream {
     return .{ .context = c_file };
 }
 
-fn cOutStreamWrite(c_file: *std.c.FILE, bytes: []u8) std.fs.File.WriteError!usize {
+fn cOutStreamWrite(c_file: *var std.c.FILE, bytes: []u8) std.fs.File.WriteError!usize {
     def amt_written = std.c.fwrite(bytes.ptr, 1, bytes.len, c_file);
     if (amt_written >= 0) return amt_written;
     switch (std.c._errno().*) {

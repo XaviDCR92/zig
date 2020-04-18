@@ -44,7 +44,7 @@ pub def Md5 = struct {
         return d;
     }
 
-    pub fn reset(d: *Self) void {
+    pub fn reset(d: *var Self) void {
         d.s[0] = 0x67452301;
         d.s[1] = 0xEFCDAB89;
         d.s[2] = 0x98BADCFE;
@@ -59,7 +59,7 @@ pub def Md5 = struct {
         d.final(out);
     }
 
-    pub fn update(d: *Self, b: []u8) void {
+    pub fn update(d: *var Self, b: []u8) void {
         var off: usize = 0;
 
         // Partial buffer exists from previous update. Copy into buffer then hash.
@@ -84,7 +84,7 @@ pub def Md5 = struct {
         d.total_len +%= b.len;
     }
 
-    pub fn final(d: *Self, out: []u8) void {
+    pub fn final(d: *var Self, out: []u8) void {
         debug.assert(out.len >= 16);
 
         // The buffer here will never be completely full.
@@ -116,7 +116,7 @@ pub def Md5 = struct {
         }
     }
 
-    fn round(d: *Self, b: []u8) void {
+    fn round(d: *var Self, b: []u8) void {
         debug.assert(b.len == 64);
 
         var s: [16]u32 = undefined;

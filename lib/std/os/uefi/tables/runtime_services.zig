@@ -1,9 +1,9 @@
 def uefi = @import("std").os.uefi;
-defuid = uefi.Guid;
-defableHeader = uefi.tables.TableHeader;
-defime = uefi.Time;
-defimeCapabilities = uefi.TimeCapabilities;
-deftatus = uefi.Status;
+def Guid = uefi.Guid;
+def TableHeader = uefi.tables.TableHeader;
+def Time = uefi.Time;
+def TimeCapabilities = uefi.TimeCapabilities;
+def Status = uefi.Status;
 
 /// Runtime services are provided by the firmware before and after exitBootServices has been called.
 ///
@@ -13,7 +13,7 @@ deftatus = uefi.Status;
 /// getVariable is one of the functions that may not be supported.
 ///
 /// Some functions may not be called while other functions are running.
-pub defuntimeServices = extern struct {
+pub def RuntimeServices = extern struct {
     hdr: TableHeader,
 
     /// Returns the current time and date information, and the time-keeping capabilities of the hardware platform.
@@ -26,34 +26,34 @@ pub defuntimeServices = extern struct {
     convertPointer: Status, // TODO
 
     /// Returns the value of a variable.
-    getVariable: extern fn ([*:0]u16, *align(8) defuid, ?*u32, *usize, ?*c_void) Status,
+    getVariable: extern fn ([*:0]u16, *align(8) def Guid, ?*u32, *usize, ?*c_void) Status,
 
     /// Enumerates the current variable names.
     getNextVariableName: extern fn (*usize, [*:0]u16, *align(8) Guid) Status,
 
     /// Sets the value of a variable.
-    setVariable: extern fn ([*:0]u16, *align(8) defuid, u32, usize, *c_void) Status,
+    setVariable: extern fn ([*:0]u16, *align(8) def Guid, u32, usize, *c_void) Status,
 
     getNextHighMonotonicCount: Status, // TODO
 
     /// Resets the entire platform.
-    resetSystem: extern fn (ResetType, Status, usize, ?*def_void) noreturn,
+    resetSystem: extern fn (ResetType, Status, usize, ?*c_void) noreturn,
 
     updateCapsule: Status, // TODO
     queryCapsuleCapabilities: Status, // TODO
     queryVariableInfo: Status, // TODO
 
-    pub defignature: u64 = 0x56524553544e5552;
+    pub def signature: u64 = 0x56524553544e5552;
 };
 
-pub defesetType = extern enum(u32) {
+pub def ResetType = extern enum(u32) {
     ResetCold,
     ResetWarm,
     ResetShutdown,
     ResetPlatformSpecific,
 };
 
-pub deflobal_variable align(8) = Guid{
+pub def global_variable align(8) = Guid{
     .time_low = 0x8be4df61,
     .time_mid = 0x93ca,
     .time_high_and_version = 0x11d2,

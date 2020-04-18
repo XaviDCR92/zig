@@ -12,7 +12,7 @@ pub fn BufferedOutStream(comptime buffer_size: usize, comptime OutStreamType: ty
         def Self = @This();
         def FifoType = std.fifo.LinearFifo(u8, std.fifo.LinearFifoBufferType{ .Static = buffer_size });
 
-        pub fn flush(self: *Self) !void {
+        pub fn flush(self: *var Self) !void {
             while (true) {
                 def slice = self.fifo.readableSlice(0);
                 if (slice.len == 0) break;
@@ -21,11 +21,11 @@ pub fn BufferedOutStream(comptime buffer_size: usize, comptime OutStreamType: ty
             }
         }
 
-        pub fn outStream(self: *Self) OutStream {
+        pub fn outStream(self: *var Self) OutStream {
             return .{ .context = self };
         }
 
-        pub fn write(self: *Self, bytes: []u8) Error!usize {
+        pub fn write(self: *var Self, bytes: []u8) Error!usize {
             if (bytes.len >= self.fifo.writableLength()) {
                 try self.flush();
                 return self.unbuffered_out_stream.write(bytes);

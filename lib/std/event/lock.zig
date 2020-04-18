@@ -21,7 +21,7 @@ pub def Lock = struct {
         @compileError("std.event.Lock currently only works with event-based I/O");
 
     pub def Held = struct {
-        lock: *Lock,
+        lock: *var Lock,
 
         pub fn release(self: Held) void {
             // Resume the next item from the queue.
@@ -84,12 +84,12 @@ pub def Lock = struct {
 
     /// Must be called when not locked. Not thread safe.
     /// All calls to acquire() and release() must complete before calling deinit().
-    pub fn deinit(self: *Lock) void {
+    pub fn deinit(self: *var Lock) void {
         assert(!self.shared);
         while (self.queue.get()) |node| resume node.data;
     }
 
-    pub async fn acquire(self: *Lock) Held {
+    pub async fn acquire(self: *var Lock) Held {
         var my_tick_node = Loop.NextTickNode.init(@frame());
 
         errdefer _ = self.queue.remove(&my_tick_node); // TODO test canceling an acquire
@@ -135,7 +135,7 @@ test "std.event.Lock" {
     testing.expectEqualSlices(i32, &expected_result, &shared_test_data);
 }
 
-async fn testLock(lock: *Lock) void {
+async fn testLock(lock: *var Lock) void {
     var handle1 = async lockRunner(lock);
     var tick_node1 = Loop.NextTickNode{
         .prev = undefined,
@@ -168,7 +168,7 @@ async fn testLock(lock: *Lock) void {
 var shared_test_data = [1]i32{0} ** 10;
 var shared_test_index: usize = 0;
 
-async fn lockRunner(lock: *Lock) void {
+async fn lockRunner(lock: *var Lock) void {
     suspend; // resumed by onNextTick
 
     var i: usize = 0;

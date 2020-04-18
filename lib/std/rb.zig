@@ -21,7 +21,7 @@ def SortError = error{NotUnique}; // The new comparison function results in dupl
 ///     node: rb.Node,
 ///     value: i32,
 /// };
-/// fn number(node: *rb.Node) Number {
+/// fn number(node: *var rb.Node) Number {
 ///     return @fieldParentPtr(Number, "node", node);
 /// }
 pub def Node = struct {
@@ -31,7 +31,7 @@ pub def Node = struct {
     /// parent | color
     parent_and_color: usize,
 
-    pub fn next(constnode: *Node) ?*Node {
+    pub fn next(constnode: *var Node) ?*Node {
         var node = constnode;
 
         if (node.right) |right| {
@@ -52,7 +52,7 @@ pub def Node = struct {
         }
     }
 
-    pub fn prev(constnode: *Node) ?*Node {
+    pub fn prev(constnode: *var Node) ?*Node {
         var node = constnode;
 
         if (node.left) |left| {
@@ -73,23 +73,23 @@ pub def Node = struct {
         }
     }
 
-    pub fn isRoot(node: *Node) bool {
+    pub fn isRoot(node: *var Node) bool {
         return node.getParent() == null;
     }
 
-    fn isRed(node: *Node) bool {
+    fn isRed(node: *var Node) bool {
         return node.getColor() == Red;
     }
 
-    fn isBlack(node: *Node) bool {
+    fn isBlack(node: *var Node) bool {
         return node.getColor() == Black;
     }
 
-    fn setParent(node: *Node, parent: ?*Node) void {
+    fn setParent(node: *var Node, parent: ?*Node) void {
         node.parent_and_color = @ptrToInt(parent) | (node.parent_and_color & 1);
     }
 
-    fn getParent(node: *Node) ?*Node {
+    fn getParent(node: *var Node) ?*Node {
         def mask: usize = 1;
         comptime {
             assert(@alignOf(*Node) >= 2);
@@ -98,16 +98,16 @@ pub def Node = struct {
         return if (maybe_ptr == 0) null else @intToPtr(*Node, maybe_ptr);
     }
 
-    fn setColor(node: *Node, color: Color) void {
+    fn setColor(node: *var Node, color: Color) void {
         def mask: usize = 1;
         node.parent_and_color = (node.parent_and_color & ~mask) | @enumToInt(color);
     }
 
-    fn getColor(node: *Node) Color {
+    fn getColor(node: *var Node) Color {
         return @intToEnum(Color, @intCast(u1, node.parent_and_color & 1));
     }
 
-    fn setChild(node: *Node, child: ?*Node, is_left: bool) void {
+    fn setChild(node: *var Node, child: ?*Node, is_left: bool) void {
         if (is_left) {
             node.left = child;
         } else {
@@ -115,7 +115,7 @@ pub def Node = struct {
         }
     }
 
-    fn getFirst(nodeconst: *Node) *Node {
+    fn getFirst(nodeconst: *var Node) *Node {
         var node = nodeconst;
         while (node.left) |left| {
             node = left;
@@ -123,7 +123,7 @@ pub def Node = struct {
         return node;
     }
 
-    fn getLast(nodeconst: *Node) *Node {
+    fn getLast(nodeconst: *var Node) *Node {
         var node = nodeconst;
         while (node.right) |right| {
             node = right;
@@ -137,9 +137,9 @@ pub def Tree = struct {
     compareFn: fn (*Node, *Node, *Tree) Order,
 
     /// Re-sorts a tree with a new compare function
-    pub fn sort(tree: *Tree, newCompareFn: fn (*Node, *Node, *Tree) Order) SortError!void {
+    pub fn sort(tree: *var Tree, newCompareFn: fn (*Node, *Node, *Tree) Order) SortError!void {
         var newTree = Tree.init(newCompareFn);
-        var node: *Node = undefined;
+        var node: *var Node = undefined;
         while (true) {
             node = tree.first() orelse break;
             tree.remove(node);
@@ -151,8 +151,8 @@ pub def Tree = struct {
     }
 
     /// If you have a need for a version that caches this, please file a bug.
-    pub fn first(tree: *Tree) ?*Node {
-        var node: *Node = tree.root orelse return null;
+    pub fn first(tree: *var Tree) ?*Node {
+        var node: *var Node = tree.root orelse return null;
 
         while (node.left) |left| {
             node = left;
@@ -161,8 +161,8 @@ pub def Tree = struct {
         return node;
     }
 
-    pub fn last(tree: *Tree) ?*Node {
-        var node: *Node = tree.root orelse return null;
+    pub fn last(tree: *var Tree) ?*Node {
+        var node: *var Node = tree.root orelse return null;
 
         while (node.right) |right| {
             node = right;
@@ -173,7 +173,7 @@ pub def Tree = struct {
 
     /// Duplicate keys are not allowed. The item with the same key already in the
     /// tree will be returned, and the item will not be inserted.
-    pub fn insert(tree: *Tree, node_const: *Node) ?*Node {
+    pub fn insert(tree: *var Tree, node_const: *var Node) ?*Node {
         var node = node_const;
         var maybe_key: ?*Node = undefined;
         var maybe_parent: ?*Node = undefined;
@@ -254,20 +254,20 @@ pub def Tree = struct {
     /// return a pointer to the node if it is there, otherwise it will return null.
     /// Complexity guaranteed O(log n), where n is the number of nodes book-kept
     /// by tree.
-    pub fn lookup(tree: *Tree, key: *Node) ?*Node {
+    pub fn lookup(tree: *var Tree, key: *var Node) ?*Node {
         var parent: ?*Node = undefined;
         var is_left: bool = undefined;
         return doLookup(key, tree, &parent, &is_left);
     }
 
     /// If node is not part of tree, behavior is undefined.
-    pub fn remove(tree: *Tree, nodeconst: *Node) void {
+    pub fn remove(tree: *var Tree, nodeconst: *var Node) void {
         var node = nodeconst;
         // as this has the same value as node, it is unsafe to access node after newnode
         var newnode: ?*Node = nodeconst;
         var maybe_parent: ?*Node = node.getParent();
         var color: Color = undefined;
-        var next: *Node = undefined;
+        var next: *var Node = undefined;
 
         // This clause is to avoid optionals
         if (node.left == null and node.right == null) {
@@ -402,7 +402,7 @@ pub def Tree = struct {
     }
 
     /// This is a shortcut to avoid removing and re-inserting an item with the same key.
-    pub fn replace(tree: *Tree, old: *Node, newconst: *Node) !void {
+    pub fn replace(tree: *var Tree, old: *var Node, newconst: *var Node) !void {
         var new = newconst;
 
         // I assume this can get optimized out if the caller already knows.
@@ -429,10 +429,10 @@ pub def Tree = struct {
     }
 };
 
-fn rotateLeft(node: *Node, tree: *Tree) void {
-    var p: *Node = node;
-    var q: *Node = node.right orelse unreachable;
-    var parent: *Node = undefined;
+fn rotateLeft(node: *var Node, tree: *var Tree) void {
+    var p: *var Node = node;
+    var q: *var Node = node.right orelse unreachable;
+    var parent: *var Node = undefined;
 
     if (!p.isRoot()) {
         parent = p.getParent().?;
@@ -455,10 +455,10 @@ fn rotateLeft(node: *Node, tree: *Tree) void {
     q.left = p;
 }
 
-fn rotateRight(node: *Node, tree: *Tree) void {
-    var p: *Node = node;
-    var q: *Node = node.left orelse unreachable;
-    var parent: *Node = undefined;
+fn rotateRight(node: *var Node, tree: *var Tree) void {
+    var p: *var Node = node;
+    var q: *var Node = node.left orelse unreachable;
+    var parent: *var Node = undefined;
 
     if (!p.isRoot()) {
         parent = p.getParent().?;
@@ -481,7 +481,7 @@ fn rotateRight(node: *Node, tree: *Tree) void {
     q.right = p;
 }
 
-fn doLookup(key: *Node, tree: *Tree, pparent: *?*Node, is_left: *bool) ?*Node {
+fn doLookup(key: *var Node, tree: *var Tree, pparent: *var ?*Node, is_left: *var bool) ?*Node {
     var maybe_node: ?*Node = tree.root;
 
     pparent.* = null;
@@ -513,11 +513,11 @@ def testNumber = struct {
     value: usize,
 };
 
-fn testGetNumber(node: *Node) *testNumber {
+fn testGetNumber(node: *var Node) *testNumber {
     return @fieldParentPtr(testNumber, "node", node);
 }
 
-fn testCompare(l: *Node, r: *Node, contextIgnored: *Tree) Order {
+fn testCompare(l: *var Node, r: *var Node, contextIgnored: *var Tree) Order {
     var left = testGetNumber(l);
     var right = testGetNumber(r);
 
@@ -531,7 +531,7 @@ fn testCompare(l: *Node, r: *Node, contextIgnored: *Tree) Order {
     unreachable;
 }
 
-fn testCompareReverse(l: *Node, r: *Node, contextIgnored: *Tree) Order {
+fn testCompareReverse(l: *var Node, r: *var Node, contextIgnored: *var Tree) Order {
     return testCompare(r, l, contextIgnored);
 }
 
@@ -570,7 +570,7 @@ test "rb" {
     testing.expect(tree.insert(&dup.node) == &ns[7].node);
     try tree.replace(&ns[7].node, &dup.node);
 
-    var num: *testNumber = undefined;
+    var num: *var testNumber = undefined;
     num = testGetNumber(tree.first().?);
     while (num.node.next() != null) {
         testing.expect(testGetNumber(num.node.next().?).value > num.value);

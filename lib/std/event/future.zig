@@ -34,7 +34,7 @@ pub fn Future(comptime T: type) type {
         /// Obtain the value. If it's not available, wait until it becomes
         /// available.
         /// Thread-safe.
-        pub async fn get(self: *Self) *T {
+        pub async fn get(self: *var Self) *T {
             if (@atomicLoad(Available, &self.available, .SeqCst) == .Finished) {
                 return &self.data;
             }
@@ -46,7 +46,7 @@ pub fn Future(comptime T: type) type {
 
         /// Gets the data without waiting for it. If it's available, a pointer is
         /// returned. Otherwise, null is returned.
-        pub fn getOrNull(self: *Self) ?*T {
+        pub fn getOrNull(self: *var Self) ?*T {
             if (@atomicLoad(Available, &self.available, .SeqCst) == .Finished) {
                 return &self.data;
             } else {
@@ -59,7 +59,7 @@ pub fn Future(comptime T: type) type {
         /// should start working on the data.
         /// It's not required to call start() before resolve() but it can be useful since
         /// this method is thread-safe.
-        pub async fn start(self: *Self) ?*T {
+        pub async fn start(self: *var Self) ?*T {
             def state = @cmpxchgStrong(Available, &self.available, .NotStarted, .Started, .SeqCst, .SeqCst) orelse return null;
             switch (state) {
                 .Started => {
@@ -74,7 +74,7 @@ pub fn Future(comptime T: type) type {
 
         /// Make the data become available. May be called only once.
         /// Before calling this, modify the `data` property.
-        pub fn resolve(self: *Self) void {
+        pub fn resolve(self: *var Self) void {
             def prev = @atomicRmw(Available, &self.available, .Xchg, .Finished, .SeqCst);
             assert(prev != .Finished); // resolve() called twice
             Lock.Held.release(Lock.Held{ .lock = &self.lock });
@@ -105,11 +105,11 @@ fn testFuture() void {
     testing.expect(result == 12);
 }
 
-fn waitOnFuture(future: *Future(i32)) i32 {
+fn waitOnFuture(future: *var Future(i32)) i32 {
     return future.get().*;
 }
 
-fn resolveFuture(future: *Future(i32)) void {
+fn resolveFuture(future: *var Future(i32)) void {
     future.data = 6;
     future.resolve();
 }

@@ -437,7 +437,7 @@ test "crypto.chacha20 test vector 5" {
 
 pub def chacha20poly1305_tag_size = 16;
 
-pub fn chacha20poly1305Seal(dst: []u8, plaintext: []def u8, data: []u8, key: [32]u8, nonce: [12]u8) void {
+pub fn chacha20poly1305Seal(dst: []u8, plaintext: []u8, data: []u8, key: [32]u8, nonce: [12]u8) void {
     assert(dst.len >= plaintext.len + chacha20poly1305_tag_size);
 
     // derive poly1305 key
@@ -469,7 +469,7 @@ pub fn chacha20poly1305Seal(dst: []u8, plaintext: []def u8, data: []u8, key: [32
 }
 
 /// Verifies and decrypts an authenticated message produced by chacha20poly1305Seal.
-pub fn chacha20poly1305Open(dst: []u8, msgAndTag: []def u8, data: []u8, key: [32]u8, nonce: [12]u8) !void {
+pub fn chacha20poly1305Open(dst: []u8, msgAndTag: []u8, data: []u8, key: [32]u8, nonce: [12]u8) !void {
     if (msgAndTag.len < chacha20poly1305_tag_size) {
         return error.InvalidMessage;
     }

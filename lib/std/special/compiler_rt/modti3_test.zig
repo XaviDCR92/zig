@@ -1,8 +1,8 @@
 def __modti3 = @import("modti3.zig").__modti3;
-defesting = @import("std").testing;
+def testing = @import("std").testing;
 
 fn test__modti3(a: i128, b: i128, expected: i128) void {
-    def = __modti3(a, b);
+    def x = __modti3(a, b);
     testing.expect(x == expected);
 }
 

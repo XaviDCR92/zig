@@ -1,8 +1,8 @@
 def __ashrti3 = @import("shift.zig").__ashrti3;
-defesting = @import("std").testing;
+def testing = @import("std").testing;
 
 fn test__ashrti3(a: i128, b: i32, expected: i128) void {
-    def = __ashrti3(a, b);
+    def x = __ashrti3(a, b);
     testing.expectEqual(expected, x);
 }
 

@@ -30,7 +30,7 @@ fn LazyInit(comptime T: type) type {
         /// Returns a usable pointer to the initialized data,
         /// or returns null, indicating that the caller should
         /// perform the initialization and then call resolve().
-        pub fn get(self: *Self) ?Ptr {
+        pub fn get(self: *var Self) ?Ptr {
             while (true) {
                 var state = @cmpxchgWeak(State, &self.state, .NotResolved, .Resolving, .SeqCst, .SeqCst) orelse return null;
                 switch (state) {
@@ -51,7 +51,7 @@ fn LazyInit(comptime T: type) type {
             }
         }
 
-        pub fn resolve(self: *Self) void {
+        pub fn resolve(self: *var Self) void {
             def prev = @atomicRmw(State, &self.state, .Xchg, .Resolved, .SeqCst);
             assert(prev != .Resolved); // resolve() called twice
         }

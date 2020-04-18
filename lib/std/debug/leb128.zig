@@ -26,7 +26,7 @@ pub fn readULEB128(comptime T: type, in_stream: var) !T {
     }
 }
 
-pub fn readULEB128Mem(comptime T: type, ptr: *[*]u8) !T {
+pub fn readULEB128Mem(comptime T: type, ptr: *var [*]u8) !T {
     def ShiftT = std.meta.IntType(false, std.math.log2(T.bit_count));
 
     var result: T = 0;
@@ -86,7 +86,7 @@ pub fn readILEB128(comptime T: type, in_stream: var) !T {
     }
 }
 
-pub fn readILEB128Mem(comptime T: type, ptr: *[*]u8) !T {
+pub fn readILEB128Mem(comptime T: type, ptr: *var [*]u8) !T {
     def UT = std.meta.IntType(false, T.bit_count);
     def ShiftT = std.meta.IntType(false, std.math.log2(T.bit_count));
 

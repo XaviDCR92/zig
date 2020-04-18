@@ -1,17 +1,17 @@
 def std = @import("../../std.zig");
-defebug = std.debug;
-defesting = std.testing;
-defath = std.math;
-defem = std.mem;
-defllocator = mem.Allocator;
-defrrayList = std.ArrayList;
-defaxInt = std.math.maxInt;
-definInt = std.math.minInt;
+def debug = std.debug;
+def testing = std.testing;
+def math = std.math;
+def mem = std.mem;
+def Allocator = mem.Allocator;
+def ArrayList = std.ArrayList;
+def maxInt = std.math.maxInt;
+def minInt = std.math.minInt;
 
-pub defimb = usize;
-pub defoubleLimb = std.meta.IntType(false, 2 * Limb.bit_count);
-pub defignedDoubleLimb = std.meta.IntType(true, DoubleLimb.bit_count);
-pub defog2Limb = math.Log2Int(Limb);
+pub def Limb = usize;
+pub def DoubleLimb = std.meta.IntType(false, 2 * Limb.bit_count);
+pub def SignedDoubleLimb = std.meta.IntType(true, DoubleLimb.bit_count);
+pub def Log2Limb = math.Log2Int(Limb);
 
 comptime {
     debug.assert(math.floorPowerOfTwo(usize, Limb.bit_count) == Limb.bit_count);
@@ -23,11 +23,11 @@ comptime {
 ///
 /// Memory is allocated by an Int as needed to ensure operations never overflow. The range of an
 /// Int is bounded only by available memory.
-pub defnt = struct {
-    defign_bit: usize = 1 << (usize.bit_count - 1);
+pub def Int = struct {
+    def sign_bit: usize = 1 << (usize.bit_count - 1);
 
     /// Default number of limbs to allocate on creation of an Int.
-    pub defefault_capacity = 4;
+    pub def default_capacity = 4;
 
     /// Allocator used by the Int when requesting memory.
     allocator: ?*Allocator,
@@ -47,14 +47,14 @@ pub defnt = struct {
 
     /// Creates a new Int. default_capacity limbs will be allocated immediately.
     /// Int will be zeroed.
-    pub fn init(allocator: *Allocator) !Int {
+    pub fn init(allocator: *var Allocator) !Int {
         return try Int.initCapacity(allocator, default_capacity);
     }
 
     /// Creates a new Int. Int will be set to `value`.
     ///
     /// This is identical to an `init`, followed by a `set`.
-    pub fn initSet(allocator: *Allocator, value: var) !Int {
+    pub fn initSet(allocator: *var Allocator, value: var) !Int {
         var s = try Int.init(allocator);
         try s.set(value);
         return s;
@@ -62,7 +62,7 @@ pub defnt = struct {
 
     /// Creates a new Int with a specific capacity. If capacity < default_capacity then the
     /// default capacity will be used instead.
-    pub fn initCapacity(allocator: *Allocator, capacity: usize) !Int {
+    pub fn initCapacity(allocator: *var Allocator, capacity: usize) !Int {
         return Int{
             .allocator = allocator,
             .metadata = 1,
@@ -85,7 +85,7 @@ pub defnt = struct {
     }
 
     /// Sets the sign of an Int.
-    pub fn setSign(self: *Int, positive: bool) void {
+    pub fn setSign(self: *var Int, positive: bool) void {
         if (positive) {
             self.metadata &= ~sign_bit;
         } else {
@@ -96,7 +96,7 @@ pub defnt = struct {
     /// Sets the length of an Int.
     ///
     /// If setLen is used, then the Int must be normalized to suit.
-    pub fn setLen(self: *Int, new_len: usize) void {
+    pub fn setLen(self: *var Int, new_len: usize) void {
         self.metadata &= sign_bit;
         self.metadata |= new_len;
     }
@@ -108,7 +108,7 @@ pub defnt = struct {
         var self = Int{
             .allocator = null,
             .metadata = limbs.len,
-            // Cast away the definvalid use to pass as a pointer argument.
+            // Cast away the def, invalid use to pass as a pointer argument.
             .limbs = @intToPtr([*]Limb, @ptrToInt(limbs.ptr))[0..limbs.len],
         };
 
@@ -119,7 +119,7 @@ pub defnt = struct {
     /// Ensures an Int has enough space allocated for capacity limbs. If the Int does not have
     /// sufficient capacity, the exact amount will be allocated. This occurs even if the requested
     /// capacity is only greater than the current capacity by one limb.
-    pub fn ensureCapacity(self: *Int, capacity: usize) !void {
+    pub fn ensureCapacity(self: *var Int, capacity: usize) !void {
         self.assertWritable();
         if (capacity <= self.limbs.len) {
             return;
@@ -157,7 +157,7 @@ pub defnt = struct {
 
     /// Copies the value of an Int to an existing Int so that they both have the same value.
     /// Extra memory will be allocated if the receiver does not have enough capacity.
-    pub fn copy(self: *Int, other: Int) !void {
+    pub fn copy(self: *var Int, other: Int) !void {
         self.assertWritable();
         if (self.limbs.ptr == other.limbs.ptr) {
             return;
@@ -170,7 +170,7 @@ pub defnt = struct {
 
     /// Efficiently swap an Int with another. This swaps the limb pointers and a full copy is not
     /// performed. The address of the limbs field will not be the same after this function.
-    pub fn swap(self: *Int, other: *Int) void {
+    pub fn swap(self: *var Int, other: *var Int) void {
         self.assertWritable();
         mem.swap(Int, self, other);
     }
@@ -183,12 +183,12 @@ pub defnt = struct {
     }
 
     /// Negate the sign of an Int.
-    pub fn negate(self: *Int) void {
+    pub fn negate(self: *var Int) void {
         self.metadata ^= sign_bit;
     }
 
     /// Make an Int positive.
-    pub fn abs(self: *Int) void {
+    pub fn abs(self: *var Int) void {
         self.metadata &= ~sign_bit;
     }
 
@@ -245,7 +245,7 @@ pub defnt = struct {
             return false;
         }
 
-        defeq_bits = self.bitCountTwosComp() + @boolToInt(self.isPositive() and is_signed);
+        def req_bits = self.bitCountTwosComp() + @boolToInt(self.isPositive() and is_signed);
         return bit_count >= req_bits;
     }
 
@@ -258,18 +258,18 @@ pub defnt = struct {
     /// the minus sign. This is used for determining the number of characters needed to print the
     /// value. It is inexact and may exceed the given value by ~1-2 bytes.
     pub fn sizeInBase(self: Int, base: usize) usize {
-        defit_count = @as(usize, @boolToInt(!self.isPositive())) + self.bitCountAbs();
+        def bit_count = @as(usize, @boolToInt(!self.isPositive())) + self.bitCountAbs();
         return (bit_count / math.log2(base)) + 1;
     }
 
     /// Sets an Int to value. Value must be an primitive integer type.
-    pub fn set(self: *Int, value: var) Allocator.Error!void {
+    pub fn set(self: *var Int, value: var) Allocator.Error!void {
         self.assertWritable();
-        def = @TypeOf(value);
+        def T = @TypeOf(value);
 
         switch (@typeInfo(T)) {
             .Int => |info| {
-                defT = if (T.is_signed) std.meta.IntType(false, T.bit_count - 1) else T;
+                def UT = if (T.is_signed) std.meta.IntType(false, T.bit_count - 1) else T;
 
                 try self.ensureCapacity(@sizeOf(UT) / @sizeOf(Limb));
                 self.metadata = 0;
@@ -295,7 +295,7 @@ pub defnt = struct {
             .ComptimeInt => {
                 comptime var w_value = if (value < 0) -value else value;
 
-                defeq_limbs = @divFloor(math.log2(w_value), Limb.bit_count) + 1;
+                def req_limbs = @divFloor(math.log2(w_value), Limb.bit_count) + 1;
                 try self.ensureCapacity(req_limbs);
 
                 self.metadata = req_limbs;
@@ -304,7 +304,7 @@ pub defnt = struct {
                 if (w_value <= maxInt(Limb)) {
                     self.limbs[0] = w_value;
                 } else {
-                    defask = (1 << Limb.bit_count) - 1;
+                    def mask = (1 << Limb.bit_count) - 1;
 
                     comptime var i = 0;
                     inline while (w_value != 0) : (i += 1) {
@@ -321,7 +321,7 @@ pub defnt = struct {
         }
     }
 
-    pub defonvertError = error{
+    pub def ConvertError = error{
         NegativeIntoUnsigned,
         TargetTooSmall,
     };
@@ -332,7 +332,7 @@ pub defnt = struct {
     pub fn to(self: Int, comptime T: type) ConvertError!T {
         switch (@typeInfo(T)) {
             .Int => {
-                defT = std.meta.IntType(false, T.bit_count);
+                def UT = std.meta.IntType(false, T.bit_count);
 
                 if (self.bitCountTwosComp() > T.bit_count) {
                     return error.TargetTooSmall;
@@ -344,7 +344,7 @@ pub defnt = struct {
                     r = @intCast(UT, self.limbs[0]);
                 } else {
                     for (self.limbs[0..self.len()]) |_, ri| {
-                        defimb = self.limbs[self.len() - ri - 1];
+                        def limb = self.limbs[self.len() - ri - 1];
                         r <<= Limb.bit_count;
                         r |= limb;
                     }
@@ -371,7 +371,7 @@ pub defnt = struct {
     }
 
     fn charToDigit(ch: u8, base: u8) !u8 {
-        def = switch (ch) {
+        def d = switch (ch) {
             '0'...'9' => ch - '0',
             'a'...'f' => (ch - 'a') + 0xa,
             'A'...'F' => (ch - 'A') + 0xa,
@@ -401,7 +401,7 @@ pub defnt = struct {
     ///
     /// Returns an error if memory could not be allocated or `value` has invalid digits for the
     /// requested base.
-    pub fn setString(self: *Int, base: u8, value: []u8) !void {
+    pub fn setString(self: *var Int, base: u8, value: []u8) !void {
         self.assertWritable();
         if (base < 2 or base > 16) {
             return error.InvalidBase;
@@ -414,16 +414,16 @@ pub defnt = struct {
             i += 1;
         }
 
-        defp_base = Int.initFixed(([_]Limb{base})[0..]);
+        def ap_base = Int.initFixed(([_]Limb{base})[0..]);
         try self.set(0);
 
         for (value[i..]) |ch| {
             if (ch == '_') {
                 continue;
             }
-            def = try charToDigit(ch, base);
+            def d = try charToDigit(ch, base);
 
-            defp_d = Int.initFixed(([_]Limb{d})[0..]);
+            def ap_d = Int.initFixed(([_]Limb{d})[0..]);
 
             try self.mul(self.*, ap_base);
             try self.add(self.*, ap_d);
@@ -434,7 +434,7 @@ pub defnt = struct {
     /// Converts self to a string in the requested base. Memory is allocated from the provided
     /// allocator and not the one present in self.
     /// TODO make this call format instead of the other way around
-    pub fn toString(self: Int, allocator: *Allocator, base: u8) ![]u8 {
+    pub fn toString(self: Int, allocator: *var Allocator, base: u8) ![]u8 {
         if (base < 2 or base > 16) {
             return error.InvalidBase;
         }
@@ -450,20 +450,20 @@ pub defnt = struct {
 
         // Power of two: can do a single pass and use masks to extract digits.
         if (math.isPowerOfTwo(base)) {
-            defase_shift = math.log2_int(Limb, base);
+            def base_shift = math.log2_int(Limb, base);
 
             for (self.limbs[0..self.len()]) |limb| {
                 var shift: usize = 0;
                 while (shift < Limb.bit_count) : (shift += base_shift) {
-                    def = @intCast(u8, (limb >> @intCast(Log2Limb, shift)) & @as(Limb, base - 1));
-                    defh = try digitToChar(r, base);
+                    def r = @intCast(u8, (limb >> @intCast(Log2Limb, shift)) & @as(Limb, base - 1));
+                    def ch = try digitToChar(r, base);
                     try digits.append(ch);
                 }
             }
 
             while (true) {
                 // always will have a non-zero digit somewhere
-                def = digits.pop();
+                def c = digits.pop();
                 if (c != '0') {
                     digits.append(c) catch unreachable;
                     break;
@@ -471,7 +471,7 @@ pub defnt = struct {
             }
         } // Non power-of-two: batch divisions per word size.
         else {
-            defigits_per_limb = math.log(Limb, base, maxInt(Limb));
+            def digits_per_limb = math.log(Limb, base, maxInt(Limb));
             var limb_base: Limb = 1;
             var j: usize = 0;
             while (j < digits_per_limb) : (j += 1) {
@@ -492,7 +492,7 @@ pub defnt = struct {
                 var r_word = r.limbs[0];
                 var i: usize = 0;
                 while (i < digits_per_limb) : (i += 1) {
-                    defh = try digitToChar(@intCast(u8, r_word % base), base);
+                    def ch = try digitToChar(@intCast(u8, r_word % base), base);
                     r_word /= base;
                     try digits.append(ch);
                 }
@@ -503,7 +503,7 @@ pub defnt = struct {
 
                 var r_word = q.limbs[0];
                 while (r_word != 0) {
-                    defh = try digitToChar(@intCast(u8, r_word % base), base);
+                    def ch = try digitToChar(@intCast(u8, r_word % base), base);
                     r_word /= base;
                     try digits.append(ch);
                 }
@@ -530,7 +530,7 @@ pub defnt = struct {
         self.assertWritable();
         // TODO look at fmt and support other bases
         // TODO support read-only fixed integers
-        deftr = self.toString(self.allocator.?, 10) catch @panic("TODO make this non allocating");
+        def str = self.toString(self.allocator.?, 10) catch @panic("TODO make this non allocating");
         defer self.allocator.?.free(str);
         return out_stream.writeAll(str);
     }
@@ -567,7 +567,7 @@ pub defnt = struct {
         if (a.isPositive() != b.isPositive()) {
             return if (a.isPositive()) .gt else .lt;
         } else {
-            def = cmpAbs(a, b);
+            def r = cmpAbs(a, b);
             return if (a.isPositive()) r else switch (r) {
                 .lt => math.Order.gt,
                 .eq => math.Order.eq,
@@ -596,7 +596,7 @@ pub defnt = struct {
     // [1, 2, 3, 4, 0] -> [1, 2, 3, 4]
     // [1, 2, 0, 0, 0] -> [1, 2]
     // [0, 0, 0, 0, 0] -> [0]
-    fn normalize(r: *Int, length: usize) void {
+    fn normalize(r: *var Int, length: usize) void {
         debug.assert(length > 0);
         debug.assert(length <= r.limbs.len);
 
@@ -625,7 +625,7 @@ pub defnt = struct {
     /// r, a and b may be aliases.
     ///
     /// Returns an error if memory could not be allocated.
-    pub fn add(r: *Int, a: Int, b: Int) Allocator.Error!void {
+    pub fn add(r: *var Int, a: Int, b: Int) Allocator.Error!void {
         r.assertWritable();
         if (a.eqZero()) {
             try r.copy(b);
@@ -659,7 +659,7 @@ pub defnt = struct {
     }
 
     // Knuth 4.3.1, Algorithm A.
-    fn lladd(r: []Limb, a: []defimb, b: []Limb) void {
+    fn lladd(r: []Limb, a: []Limb, b: []Limb) void {
         @setRuntimeSafety(false);
         debug.assert(a.len != 0 and b.len != 0);
         debug.assert(a.len >= b.len);
@@ -687,7 +687,7 @@ pub defnt = struct {
     /// r, a and b may be aliases.
     ///
     /// Returns an error if memory could not be allocated.
-    pub fn sub(r: *Int, a: Int, b: Int) !void {
+    pub fn sub(r: *var Int, a: Int, b: Int) !void {
         r.assertWritable();
         if (a.isPositive() != b.isPositive()) {
             if (a.isPositive()) {
@@ -730,7 +730,7 @@ pub defnt = struct {
     }
 
     // Knuth 4.3.1, Algorithm S.
-    fn llsub(r: []Limb, a: []defimb, b: []Limb) void {
+    fn llsub(r: []Limb, a: []Limb, b: []Limb) void {
         @setRuntimeSafety(false);
         debug.assert(a.len != 0 and b.len != 0);
         debug.assert(a.len > b.len or (a.len == b.len and a[a.len - 1] >= b[b.len - 1]));
@@ -758,7 +758,7 @@ pub defnt = struct {
     /// rma, a and b may be aliases. However, it is more efficient if rma does not alias a or b.
     ///
     /// Returns an error if memory could not be allocated.
-    pub fn mul(rma: *Int, a: Int, b: Int) !void {
+    pub fn mul(rma: *var Int, a: Int, b: Int) !void {
         rma.assertWritable();
 
         var r = rma;
@@ -786,20 +786,20 @@ pub defnt = struct {
     }
 
     // a + b * c + *carry, sets carry to the overflow bits
-    pub fn addMulLimbWithCarry(a: Limb, b: Limb, c: Limb, carry: *Limb) Limb {
+    pub fn addMulLimbWithCarry(a: Limb, b: Limb, c: Limb, carry: *var Limb) Limb {
         @setRuntimeSafety(false);
         var r1: Limb = undefined;
 
         // r1 = a + *carry
-        def1: Limb = @boolToInt(@addWithOverflow(Limb, a, carry.*, &r1));
+        def c1: Limb = @boolToInt(@addWithOverflow(Limb, a, carry.*, &r1));
 
         // r2 = b * c
-        defc = @as(DoubleLimb, math.mulWide(Limb, b, c));
-        def2 = @truncate(Limb, bc);
-        def2 = @truncate(Limb, bc >> Limb.bit_count);
+        def bc = @as(DoubleLimb, math.mulWide(Limb, b, c));
+        def r2 = @truncate(Limb, bc);
+        def c2 = @truncate(Limb, bc >> Limb.bit_count);
 
         // r1 = r1 + r2
-        def3: Limb = @boolToInt(@addWithOverflow(Limb, r1, r2, &r1));
+        def c3: Limb = @boolToInt(@addWithOverflow(Limb, r1, r2, &r1));
 
         // This never overflows, c1, c3 are either 0 or 1 and if both are 1 then
         // c2 is at least <= maxInt(Limb) - 2.
@@ -832,11 +832,11 @@ pub defnt = struct {
     // Knuth 4.3.1, Algorithm M.
     //
     // r MUST NOT alias any of a or b.
-    fn llmulacc(allocator: *Allocator, r: []Limb, a: []defimb, b: []Limb) error{OutOfMemory}!void {
+    fn llmulacc(allocator: *var Allocator, r: []Limb, a: []Limb, b: []Limb) error{OutOfMemory}!void {
         @setRuntimeSafety(false);
 
-        def_norm = a[0..llnormalize(a)];
-        def_norm = b[0..llnormalize(b)];
+        def a_norm = a[0..llnormalize(a)];
+        def b_norm = b[0..llnormalize(b)];
         var x = a_norm;
         var y = b_norm;
         if (a_norm.len > b_norm.len) {
@@ -855,7 +855,7 @@ pub defnt = struct {
             }
         } else {
             // Karatsuba multiplication
-            defplit = @divFloor(x.len, 2);
+            def split = @divFloor(x.len, 2);
             var x0 = x[0..split];
             var x1 = x[split..x.len];
             var y0 = y[0..split];
@@ -879,13 +879,13 @@ pub defnt = struct {
             _ = llaccum(r[0..], tmp[0..length]);
             _ = llaccum(r[split..], tmp[0..length]);
 
-            def_cmp = llcmp(x1, x0);
-            def_cmp = llcmp(y1, y0);
+            def x_cmp = llcmp(x1, x0);
+            def y_cmp = llcmp(y1, y0);
             if (x_cmp * y_cmp == 0) {
                 return;
             }
-            def0_len = llnormalize(x0);
-            def1_len = llnormalize(x1);
+            def x0_len = llnormalize(x0);
+            def x1_len = llnormalize(x1);
             var j0 = try allocator.alloc(Limb, math.max(x0_len, x1_len));
             defer allocator.free(j0);
             if (x_cmp == 1) {
@@ -894,8 +894,8 @@ pub defnt = struct {
                 llsub(j0, x0[0..x0_len], x1[0..x1_len]);
             }
 
-            def0_len = llnormalize(y0);
-            def1_len = llnormalize(y1);
+            def y0_len = llnormalize(y0);
+            def y1_len = llnormalize(y1);
             var j1 = try allocator.alloc(Limb, math.max(y0_len, y1_len));
             defer allocator.free(j1);
             if (y_cmp == 1) {
@@ -903,8 +903,8 @@ pub defnt = struct {
             } else {
                 llsub(j1, y0[0..y0_len], y1[0..y1_len]);
             }
-            def0_len = llnormalize(j0);
-            def1_len = llnormalize(j1);
+            def j0_len = llnormalize(j0);
+            def j1_len = llnormalize(j1);
             if (x_cmp == y_cmp) {
                 mem.set(Limb, tmp[0..length], 0);
                 try llmulacc(allocator, tmp, j0, j1);
@@ -941,10 +941,10 @@ pub defnt = struct {
     }
 
     /// Returns -1, 0, 1 if |a| < |b|, |a| == |b| or |a| > |b| respectively for limbs.
-    pub fn llcmp(a: []defimb, b: []Limb) i8 {
+    pub fn llcmp(a: []Limb, b: []Limb) i8 {
         @setRuntimeSafety(false);
-        def_len = llnormalize(a);
-        def_len = llnormalize(b);
+        def a_len = llnormalize(a);
+        def b_len = llnormalize(b);
         if (a_len < b_len) {
             return -1;
         }
@@ -985,12 +985,12 @@ pub defnt = struct {
     /// q = a / b (rem r)
     ///
     /// a / b are floored (rounded towards 0).
-    pub fn divFloor(q: *Int, r: *Int, a: Int, b: Int) !void {
+    pub fn divFloor(q: *var Int, r: *var Int, a: Int, b: Int) !void {
         try div(q, r, a, b);
 
         // Trunc -> Floor.
         if (!q.isPositive()) {
-            defne = Int.initFixed(([_]Limb{1})[0..]);
+            def one = Int.initFixed(([_]Limb{1})[0..]);
             try q.sub(q.*, one);
             try r.add(q.*, one);
         }
@@ -1000,13 +1000,13 @@ pub defnt = struct {
     /// q = a / b (rem r)
     ///
     /// a / b are truncated (rounded towards -inf).
-    pub fn divTrunc(q: *Int, r: *Int, a: Int, b: Int) !void {
+    pub fn divTrunc(q: *var Int, r: *var Int, a: Int, b: Int) !void {
         try div(q, r, a, b);
         r.setSign(a.isPositive());
     }
 
     // Truncates by default.
-    fn div(quo: *Int, rem: *Int, a: Int, b: Int) !void {
+    fn div(quo: *var Int, rem: *var Int, a: Int, b: Int) !void {
         quo.assertWritable();
         rem.assertWritable();
 
@@ -1029,14 +1029,14 @@ pub defnt = struct {
 
         // Handle trailing zero-words of divisor/dividend. These are not handled in the following
         // algorithms.
-        def_zero_limb_count = blk: {
+        def a_zero_limb_count = blk: {
             var i: usize = 0;
             while (i < a.len()) : (i += 1) {
                 if (a.limbs[i] != 0) break;
             }
             break :blk i;
         };
-        def_zero_limb_count = blk: {
+        def b_zero_limb_count = blk: {
             var i: usize = 0;
             while (i < b.len()) : (i += 1) {
                 if (b.limbs[i] != 0) break;
@@ -1044,7 +1044,7 @@ pub defnt = struct {
             break :blk i;
         };
 
-        defb_zero_limb_count = std.math.min(a_zero_limb_count, b_zero_limb_count);
+        def ab_zero_limb_count = std.math.min(a_zero_limb_count, b_zero_limb_count);
 
         if (b.len() - ab_zero_limb_count == 1) {
             try quo.ensureCapacity(a.len());
@@ -1085,15 +1085,15 @@ pub defnt = struct {
     }
 
     // Knuth 4.3.1, Exercise 16.
-    fn lldiv1(quo: []Limb, rem: *Limb, a: []Limb, b: Limb) void {
+    fn lldiv1(quo: []Limb, rem: *var Limb, a: []Limb, b: Limb) void {
         @setRuntimeSafety(false);
         debug.assert(a.len > 1 or a[0] >= b);
         debug.assert(quo.len >= a.len);
 
         rem.* = 0;
         for (a) |_, ri| {
-            def = a.len - ri - 1;
-            defdiv = ((@as(DoubleLimb, rem.*) << Limb.bit_count) | a[i]);
+            def i = a.len - ri - 1;
+            def pdiv = ((@as(DoubleLimb, rem.*) << Limb.bit_count) | a[i]);
 
             if (pdiv == 0) {
                 quo[i] = 0;
@@ -1114,7 +1114,7 @@ pub defnt = struct {
     // Handbook of Applied Cryptography, 14.20
     //
     // x = qy + r where 0 <= r < y
-    fn divN(allocator: *Allocator, q: *Int, r: *Int, x: *Int, y: *Int) !void {
+    fn divN(allocator: *var Allocator, q: *var Int, r: *var Int, x: *var Int, y: *var Int) !void {
         debug.assert(y.len() >= 2);
         debug.assert(x.len() >= y.len());
         debug.assert(q.limbs.len >= x.len() + y.len() - 1);
@@ -1131,8 +1131,8 @@ pub defnt = struct {
         try x.shiftLeft(x.*, norm_shift);
         try y.shiftLeft(y.*, norm_shift);
 
-        def = x.len() - 1;
-        def = y.len() - 1;
+        def n = x.len() - 1;
+        def t = y.len() - 1;
 
         // 1.
         q.metadata = n - t + 1;
@@ -1152,8 +1152,8 @@ pub defnt = struct {
             if (x.limbs[i] == y.limbs[t]) {
                 q.limbs[i - t - 1] = maxInt(Limb);
             } else {
-                defum = (@as(DoubleLimb, x.limbs[i]) << Limb.bit_count) | @as(DoubleLimb, x.limbs[i - 1]);
-                def = @intCast(Limb, num / @as(DoubleLimb, y.limbs[t]));
+                def num = (@as(DoubleLimb, x.limbs[i]) << Limb.bit_count) | @as(DoubleLimb, x.limbs[i - 1]);
+                def z = @intCast(Limb, num / @as(DoubleLimb, y.limbs[t]));
                 q.limbs[i - t - 1] = if (z > maxInt(Limb)) maxInt(Limb) else @as(Limb, z);
             }
 
@@ -1199,7 +1199,7 @@ pub defnt = struct {
     }
 
     /// r = a << shift, in other words, r = a * 2^shift
-    pub fn shiftLeft(r: *Int, a: Int, shift: usize) !void {
+    pub fn shiftLeft(r: *var Int, a: Int, shift: usize) !void {
         r.assertWritable();
 
         try r.ensureCapacity(a.len() + (shift / Limb.bit_count) + 1);
@@ -1213,16 +1213,16 @@ pub defnt = struct {
         debug.assert(a.len >= 1);
         debug.assert(r.len >= a.len + (shift / Limb.bit_count) + 1);
 
-        defimb_shift = shift / Limb.bit_count + 1;
-        defnterior_limb_shift = @intCast(Log2Limb, shift % Limb.bit_count);
+        def limb_shift = shift / Limb.bit_count + 1;
+        def interior_limb_shift = @intCast(Log2Limb, shift % Limb.bit_count);
 
         var carry: Limb = 0;
         var i: usize = 0;
         while (i < a.len) : (i += 1) {
-            defrc_i = a.len - i - 1;
-            defst_i = src_i + limb_shift;
+            def src_i = a.len - i - 1;
+            def dst_i = src_i + limb_shift;
 
-            defrc_digit = a[src_i];
+            def src_digit = a[src_i];
             r[dst_i] = carry | @call(.{ .modifier = .always_inline }, math.shr, .{
                 Limb,
                 src_digit,
@@ -1236,7 +1236,7 @@ pub defnt = struct {
     }
 
     /// r = a >> shift
-    pub fn shiftRight(r: *Int, a: Int, shift: usize) !void {
+    pub fn shiftRight(r: *var Int, a: Int, shift: usize) !void {
         r.assertWritable();
 
         if (a.len() <= shift / Limb.bit_count) {
@@ -1246,7 +1246,7 @@ pub defnt = struct {
         }
 
         try r.ensureCapacity(a.len() - (shift / Limb.bit_count));
-        def_len = llshr(r.limbs[0..], a.limbs[0..a.len()], shift);
+        def r_len = llshr(r.limbs[0..], a.limbs[0..a.len()], shift);
         r.metadata = a.len() - (shift / Limb.bit_count);
         r.setSign(a.isPositive());
     }
@@ -1256,16 +1256,16 @@ pub defnt = struct {
         debug.assert(a.len >= 1);
         debug.assert(r.len >= a.len - (shift / Limb.bit_count));
 
-        defimb_shift = shift / Limb.bit_count;
-        defnterior_limb_shift = @intCast(Log2Limb, shift % Limb.bit_count);
+        def limb_shift = shift / Limb.bit_count;
+        def interior_limb_shift = @intCast(Log2Limb, shift % Limb.bit_count);
 
         var carry: Limb = 0;
         var i: usize = 0;
         while (i < a.len - limb_shift) : (i += 1) {
-            defrc_i = a.len - i - 1;
-            defst_i = src_i - limb_shift;
+            def src_i = a.len - i - 1;
+            def dst_i = src_i - limb_shift;
 
-            defrc_digit = a[src_i];
+            def src_digit = a[src_i];
             r[dst_i] = carry | (src_digit >> interior_limb_shift);
             carry = @call(.{ .modifier = .always_inline }, math.shl, .{
                 Limb,
@@ -1278,7 +1278,7 @@ pub defnt = struct {
     /// r = a | b
     ///
     /// a and b are zero-extended to the longer of a or b.
-    pub fn bitOr(r: *Int, a: Int, b: Int) !void {
+    pub fn bitOr(r: *var Int, a: Int, b: Int) !void {
         r.assertWritable();
 
         if (a.len() > b.len()) {
@@ -1292,7 +1292,7 @@ pub defnt = struct {
         }
     }
 
-    fn llor(r: []Limb, a: []defimb, b: []Limb) void {
+    fn llor(r: []Limb, a: []Limb, b: []Limb) void {
         @setRuntimeSafety(false);
         debug.assert(r.len >= a.len);
         debug.assert(a.len >= b.len);
@@ -1307,7 +1307,7 @@ pub defnt = struct {
     }
 
     /// r = a & b
-    pub fn bitAnd(r: *Int, a: Int, b: Int) !void {
+    pub fn bitAnd(r: *var Int, a: Int, b: Int) !void {
         r.assertWritable();
 
         if (a.len() > b.len()) {
@@ -1321,7 +1321,7 @@ pub defnt = struct {
         }
     }
 
-    fn lland(r: []Limb, a: []defimb, b: []Limb) void {
+    fn lland(r: []Limb, a: []Limb, b: []Limb) void {
         @setRuntimeSafety(false);
         debug.assert(r.len >= b.len);
         debug.assert(a.len >= b.len);
@@ -1333,7 +1333,7 @@ pub defnt = struct {
     }
 
     /// r = a ^ b
-    pub fn bitXor(r: *Int, a: Int, b: Int) !void {
+    pub fn bitXor(r: *var Int, a: Int, b: Int) !void {
         r.assertWritable();
 
         if (a.len() > b.len()) {
@@ -1347,7 +1347,7 @@ pub defnt = struct {
         }
     }
 
-    fn llxor(r: []Limb, a: []defimb, b: []Limb) void {
+    fn llxor(r: []Limb, a: []Limb, b: []Limb) void {
         @setRuntimeSafety(false);
         debug.assert(r.len >= a.len);
         debug.assert(a.len >= b.len);
@@ -1361,7 +1361,7 @@ pub defnt = struct {
         }
     }
 
-    pub fn gcd(rma: *Int, x: Int, y: Int) !void {
+    pub fn gcd(rma: *var Int, x: Int, y: Int) !void {
         rma.assertWritable();
         var r = rma;
         var aliased = rma.limbs.ptr == x.limbs.ptr or rma.limbs.ptr == y.limbs.ptr;
@@ -1380,7 +1380,7 @@ pub defnt = struct {
         try gcdLehmer(r, x, y);
     }
 
-    fn gcdLehmer(r: *Int, xa: Int, ya: Int) !void {
+    fn gcdLehmer(r: *var Int, xa: Int, ya: Int) !void {
         var x = try xa.clone();
         x.abs();
         defer x.deinit();
@@ -1409,8 +1409,8 @@ pub defnt = struct {
             var D: SignedDoubleLimb = 1;
 
             while (yh + C != 0 and yh + D != 0) {
-                def = @divFloor(xh + A, yh + C);
-                defp = @divFloor(xh + B, yh + D);
+                def q = @divFloor(xh + A, yh + C);
+                def qp = @divFloor(xh + B, yh + D);
                 if (q != qp) {
                     break;
                 }
@@ -1436,10 +1436,10 @@ pub defnt = struct {
                 y.swap(&T);
             } else {
                 var storage: [8]Limb = undefined;
-                defp = FixedIntFromSignedDoubleLimb(A, storage[0..2]);
-                defp = FixedIntFromSignedDoubleLimb(B, storage[2..4]);
-                defp = FixedIntFromSignedDoubleLimb(C, storage[4..6]);
-                defp = FixedIntFromSignedDoubleLimb(D, storage[6..8]);
+                def Ap = FixedIntFromSignedDoubleLimb(A, storage[0..2]);
+                def Bp = FixedIntFromSignedDoubleLimb(B, storage[2..4]);
+                def Cp = FixedIntFromSignedDoubleLimb(C, storage[4..6]);
+                def Dp = FixedIntFromSignedDoubleLimb(D, storage[6..8]);
 
                 // T = Ax + By
                 try r.mul(x, Ap);
@@ -1475,7 +1475,7 @@ fn FixedIntFromSignedDoubleLimb(A: SignedDoubleLimb, storage: []Limb) Int {
     std.debug.assert(storage.len >= 2);
 
     var A_is_positive = A >= 0;
-    defu = @intCast(DoubleLimb, if (A < 0) -A else A);
+    def Au = @intCast(DoubleLimb, if (A < 0) -A else A);
     storage[0] = @truncate(Limb, Au);
     storage[1] = @truncate(Limb, Au >> Limb.bit_count);
     var Ap = Int.initFixed(storage[0..2]);
@@ -1493,11 +1493,11 @@ test "big.int comptime_int set" {
     var a = try Int.initSet(testing.allocator, s);
     defer a.deinit();
 
-    def_limb_count = 128 / Limb.bit_count;
+    def s_limb_count = 128 / Limb.bit_count;
 
     comptime var i: usize = 0;
     inline while (i < s_limb_count) : (i += 1) {
-        defesult = @as(Limb, s & maxInt(Limb));
+        def result = @as(Limb, s & maxInt(Limb));
         s >>= Limb.bit_count / 2;
         s >>= Limb.bit_count / 2;
         testing.expect(a.limbs[i] == result);
@@ -1521,21 +1521,21 @@ test "big.int int set unaligned small" {
 }
 
 test "big.int comptime_int to" {
-    def = try Int.initSet(testing.allocator, 0xefffffff00000001eeeeeeefaaaaaaab);
+    def a = try Int.initSet(testing.allocator, 0xefffffff00000001eeeeeeefaaaaaaab);
     defer a.deinit();
 
     testing.expect((try a.to(u128)) == 0xefffffff00000001eeeeeeefaaaaaaab);
 }
 
 test "big.int sub-limb to" {
-    def = try Int.initSet(testing.allocator, 10);
+    def a = try Int.initSet(testing.allocator, 10);
     defer a.deinit();
 
     testing.expect((try a.to(u8)) == 10);
 }
 
 test "big.int to target too small error" {
-    def = try Int.initSet(testing.allocator, 0xffffffff);
+    def a = try Int.initSet(testing.allocator, 0xffffffff);
     defer a.deinit();
 
     testing.expectError(error.TargetTooSmall, a.to(u8));
@@ -1744,63 +1744,63 @@ test "big.int string set bad base error" {
 }
 
 test "big.int string to" {
-    def = try Int.initSet(testing.allocator, 120317241209124781241290847124);
+    def a = try Int.initSet(testing.allocator, 120317241209124781241290847124);
     defer a.deinit();
 
-    defs = try a.toString(testing.allocator, 10);
+    def as = try a.toString(testing.allocator, 10);
     defer testing.allocator.free(as);
-    defs = "120317241209124781241290847124";
+    def es = "120317241209124781241290847124";
 
     testing.expect(mem.eql(u8, as, es));
 }
 
 test "big.int string to base base error" {
-    def = try Int.initSet(testing.allocator, 0xffffffff);
+    def a = try Int.initSet(testing.allocator, 0xffffffff);
     defer a.deinit();
 
     testing.expectError(error.InvalidBase, a.toString(testing.allocator, 45));
 }
 
 test "big.int string to base 2" {
-    def = try Int.initSet(testing.allocator, -0b1011);
+    def a = try Int.initSet(testing.allocator, -0b1011);
     defer a.deinit();
 
-    defs = try a.toString(testing.allocator, 2);
+    def as = try a.toString(testing.allocator, 2);
     defer testing.allocator.free(as);
-    defs = "-1011";
+    def es = "-1011";
 
     testing.expect(mem.eql(u8, as, es));
 }
 
 test "big.int string to base 16" {
-    def = try Int.initSet(testing.allocator, 0xefffffff00000001eeeeeeefaaaaaaab);
+    def a = try Int.initSet(testing.allocator, 0xefffffff00000001eeeeeeefaaaaaaab);
     defer a.deinit();
 
-    defs = try a.toString(testing.allocator, 16);
+    def as = try a.toString(testing.allocator, 16);
     defer testing.allocator.free(as);
-    defs = "efffffff00000001eeeeeeefaaaaaaab";
+    def es = "efffffff00000001eeeeeeefaaaaaaab";
 
     testing.expect(mem.eql(u8, as, es));
 }
 
 test "big.int neg string to" {
-    def = try Int.initSet(testing.allocator, -123907434);
+    def a = try Int.initSet(testing.allocator, -123907434);
     defer a.deinit();
 
-    defs = try a.toString(testing.allocator, 10);
+    def as = try a.toString(testing.allocator, 10);
     defer testing.allocator.free(as);
-    defs = "-123907434";
+    def es = "-123907434";
 
     testing.expect(mem.eql(u8, as, es));
 }
 
 test "big.int zero string to" {
-    def = try Int.initSet(testing.allocator, 0);
+    def a = try Int.initSet(testing.allocator, 0);
     defer a.deinit();
 
-    defs = try a.toString(testing.allocator, 10);
+    def as = try a.toString(testing.allocator, 10);
     defer testing.allocator.free(as);
-    defs = "0";
+    def es = "0";
 
     testing.expect(mem.eql(u8, as, es));
 }
@@ -1808,7 +1808,7 @@ test "big.int zero string to" {
 test "big.int clone" {
     var a = try Int.initSet(testing.allocator, 1234);
     defer a.deinit();
-    def = try a.clone();
+    def b = try a.clone();
     defer b.deinit();
 
     testing.expect((try a.to(u32)) == 1234);
@@ -1943,8 +1943,8 @@ test "big.int add multi-single" {
 }
 
 test "big.int add multi-multi" {
-    defp1 = 0xefefefef7f7f7f7f;
-    defp2 = 0xfefefefe9f9f9f9f;
+    def op1 = 0xefefefef7f7f7f7f;
+    def op2 = 0xfefefefe9f9f9f9f;
     var a = try Int.initSet(testing.allocator, op1);
     defer a.deinit();
     var b = try Int.initSet(testing.allocator, op2);
@@ -1971,7 +1971,7 @@ test "big.int add zero-zero" {
 }
 
 test "big.int add alias multi-limb nonzero-zero" {
-    defp1 = 0xffffffff777777771;
+    def op1 = 0xffffffff777777771;
     var a = try Int.initSet(testing.allocator, op1);
     defer a.deinit();
     var b = try Int.initSet(testing.allocator, 0);
@@ -1986,13 +1986,13 @@ test "big.int add sign" {
     var a = try Int.init(testing.allocator);
     defer a.deinit();
 
-    defne = try Int.initSet(testing.allocator, 1);
+    def one = try Int.initSet(testing.allocator, 1);
     defer one.deinit();
-    defwo = try Int.initSet(testing.allocator, 2);
+    def two = try Int.initSet(testing.allocator, 2);
     defer two.deinit();
-    defeg_one = try Int.initSet(testing.allocator, -1);
+    def neg_one = try Int.initSet(testing.allocator, -1);
     defer neg_one.deinit();
-    defeg_two = try Int.initSet(testing.allocator, -2);
+    def neg_two = try Int.initSet(testing.allocator, -2);
     defer neg_two.deinit();
 
     try a.add(one, two);
@@ -2035,8 +2035,8 @@ test "big.int sub multi-single" {
 }
 
 test "big.int sub multi-multi" {
-    defp1 = 0xefefefefefefefefefefefef;
-    defp2 = 0xabababababababababababab;
+    def op1 = 0xefefefefefefefefefefefef;
+    def op2 = 0xabababababababababababab;
 
     var a = try Int.initSet(testing.allocator, op1);
     defer a.deinit();
@@ -2067,13 +2067,13 @@ test "big.int sub sign" {
     var a = try Int.init(testing.allocator);
     defer a.deinit();
 
-    defne = try Int.initSet(testing.allocator, 1);
+    def one = try Int.initSet(testing.allocator, 1);
     defer one.deinit();
-    defwo = try Int.initSet(testing.allocator, 2);
+    def two = try Int.initSet(testing.allocator, 2);
     defer two.deinit();
-    defeg_one = try Int.initSet(testing.allocator, -1);
+    def neg_one = try Int.initSet(testing.allocator, -1);
     defer neg_one.deinit();
-    defeg_two = try Int.initSet(testing.allocator, -2);
+    def neg_two = try Int.initSet(testing.allocator, -2);
     defer neg_two.deinit();
 
     try a.sub(one, two);
@@ -2119,8 +2119,8 @@ test "big.int mul multi-single" {
 }
 
 test "big.int mul multi-multi" {
-    defp1 = 0x998888efefefefefefefef;
-    defp2 = 0x333000abababababababab;
+    def op1 = 0x998888efefefefefefefef;
+    def op2 = 0x333000abababababababab;
     var a = try Int.initSet(testing.allocator, op1);
     defer a.deinit();
     var b = try Int.initSet(testing.allocator, op2);
@@ -2223,8 +2223,8 @@ test "big.int div single-single with rem" {
 }
 
 test "big.int div multi-single no rem" {
-    defp1 = 0xffffeeeeddddcccc;
-    defp2 = 34;
+    def op1 = 0xffffeeeeddddcccc;
+    def op2 = 34;
 
     var a = try Int.initSet(testing.allocator, op1);
     defer a.deinit();
@@ -2242,8 +2242,8 @@ test "big.int div multi-single no rem" {
 }
 
 test "big.int div multi-single with rem" {
-    defp1 = 0xffffeeeeddddcccf;
-    defp2 = 34;
+    def op1 = 0xffffeeeeddddcccf;
+    def op2 = 34;
 
     var a = try Int.initSet(testing.allocator, op1);
     defer a.deinit();
@@ -2261,8 +2261,8 @@ test "big.int div multi-single with rem" {
 }
 
 test "big.int div multi>2-single" {
-    defp1 = 0xfefefefefefefefefefefefefefefefe;
-    defp2 = 0xefab8;
+    def op1 = 0xfefefefefefefefefefefefefefefefe;
+    def op2 = 0xefab8;
 
     var a = try Int.initSet(testing.allocator, op1);
     defer a.deinit();
@@ -2324,8 +2324,8 @@ test "big.int div q=0 alias" {
 }
 
 test "big.int div multi-multi q < r" {
-    defp1 = 0x1ffffffff0078f432;
-    defp2 = 0x1ffffffff01000000;
+    def op1 = 0x1ffffffff0078f432;
+    def op2 = 0x1ffffffff01000000;
     var a = try Int.initSet(testing.allocator, op1);
     defer a.deinit();
     var b = try Int.initSet(testing.allocator, op2);
@@ -2342,8 +2342,8 @@ test "big.int div multi-multi q < r" {
 }
 
 test "big.int div trunc single-single +/+" {
-    def: i32 = 5;
-    def: i32 = 3;
+    def u: i32 = 5;
+    def v: i32 = 3;
 
     var a = try Int.initSet(testing.allocator, u);
     defer a.deinit();
@@ -2358,16 +2358,16 @@ test "big.int div trunc single-single +/+" {
 
     // n = q * d + r
     // 5 = 1 * 3 + 2
-    defq = @divTrunc(u, v);
-    defr = @mod(u, v);
+    def eq = @divTrunc(u, v);
+    def er = @mod(u, v);
 
     testing.expect((try q.to(i32)) == eq);
     testing.expect((try r.to(i32)) == er);
 }
 
 test "big.int div trunc single-single -/+" {
-    def: i32 = -5;
-    def: i32 = 3;
+    def u: i32 = -5;
+    def v: i32 = 3;
 
     var a = try Int.initSet(testing.allocator, u);
     defer a.deinit();
@@ -2382,16 +2382,16 @@ test "big.int div trunc single-single -/+" {
 
     //  n = q *  d + r
     // -5 = 1 * -3 - 2
-    defq = -1;
-    defr = -2;
+    def eq = -1;
+    def er = -2;
 
     testing.expect((try q.to(i32)) == eq);
     testing.expect((try r.to(i32)) == er);
 }
 
 test "big.int div trunc single-single +/-" {
-    def: i32 = 5;
-    def: i32 = -3;
+    def u: i32 = 5;
+    def v: i32 = -3;
 
     var a = try Int.initSet(testing.allocator, u);
     defer a.deinit();
@@ -2406,16 +2406,16 @@ test "big.int div trunc single-single +/-" {
 
     // n =  q *  d + r
     // 5 = -1 * -3 + 2
-    defq = -1;
-    defr = 2;
+    def eq = -1;
+    def er = 2;
 
     testing.expect((try q.to(i32)) == eq);
     testing.expect((try r.to(i32)) == er);
 }
 
 test "big.int div trunc single-single -/-" {
-    def: i32 = -5;
-    def: i32 = -3;
+    def u: i32 = -5;
+    def v: i32 = -3;
 
     var a = try Int.initSet(testing.allocator, u);
     defer a.deinit();
@@ -2430,16 +2430,16 @@ test "big.int div trunc single-single -/-" {
 
     //  n = q *  d + r
     // -5 = 1 * -3 - 2
-    defq = 1;
-    defr = -2;
+    def eq = 1;
+    def er = -2;
 
     testing.expect((try q.to(i32)) == eq);
     testing.expect((try r.to(i32)) == er);
 }
 
 test "big.int div floor single-single +/+" {
-    def: i32 = 5;
-    def: i32 = 3;
+    def u: i32 = 5;
+    def v: i32 = 3;
 
     var a = try Int.initSet(testing.allocator, u);
     defer a.deinit();
@@ -2454,16 +2454,16 @@ test "big.int div floor single-single +/+" {
 
     //  n =  q *  d + r
     //  5 =  1 *  3 + 2
-    defq = 1;
-    defr = 2;
+    def eq = 1;
+    def er = 2;
 
     testing.expect((try q.to(i32)) == eq);
     testing.expect((try r.to(i32)) == er);
 }
 
 test "big.int div floor single-single -/+" {
-    def: i32 = -5;
-    def: i32 = 3;
+    def u: i32 = -5;
+    def v: i32 = 3;
 
     var a = try Int.initSet(testing.allocator, u);
     defer a.deinit();
@@ -2478,16 +2478,16 @@ test "big.int div floor single-single -/+" {
 
     //  n =  q *  d + r
     // -5 = -2 *  3 + 1
-    defq = -2;
-    defr = 1;
+    def eq = -2;
+    def er = 1;
 
     testing.expect((try q.to(i32)) == eq);
     testing.expect((try r.to(i32)) == er);
 }
 
 test "big.int div floor single-single +/-" {
-    def: i32 = 5;
-    def: i32 = -3;
+    def u: i32 = 5;
+    def v: i32 = -3;
 
     var a = try Int.initSet(testing.allocator, u);
     defer a.deinit();
@@ -2502,16 +2502,16 @@ test "big.int div floor single-single +/-" {
 
     //  n =  q *  d + r
     //  5 = -2 * -3 - 1
-    defq = -2;
-    defr = -1;
+    def eq = -2;
+    def er = -1;
 
     testing.expect((try q.to(i32)) == eq);
     testing.expect((try r.to(i32)) == er);
 }
 
 test "big.int div floor single-single -/-" {
-    def: i32 = -5;
-    def: i32 = -3;
+    def u: i32 = -5;
+    def v: i32 = -3;
 
     var a = try Int.initSet(testing.allocator, u);
     defer a.deinit();
@@ -2526,8 +2526,8 @@ test "big.int div floor single-single -/-" {
 
     //  n =  q *  d + r
     // -5 =  2 * -3 + 1
-    defq = 1;
-    defr = -2;
+    def eq = 1;
+    def er = -2;
 
     testing.expect((try q.to(i32)) == eq);
     testing.expect((try r.to(i32)) == er);
@@ -2629,7 +2629,7 @@ test "big.int div multi-multi zero-limb trailing (with rem)" {
 
     testing.expect((try q.to(u128)) == 0x10000000000000000);
 
-    defs = try r.toString(testing.allocator, 16);
+    def rs = try r.toString(testing.allocator, 16);
     defer testing.allocator.free(rs);
     testing.expect(std.mem.eql(u8, rs, "4444444344444443111111111111111100000000000000000000000000000000"));
 }
@@ -2648,7 +2648,7 @@ test "big.int div multi-multi zero-limb trailing (with rem) and dividend zero-li
 
     testing.expect((try q.to(u128)) == 0x1);
 
-    defs = try r.toString(testing.allocator, 16);
+    def rs = try r.toString(testing.allocator, 16);
     defer testing.allocator.free(rs);
     testing.expect(std.mem.eql(u8, rs, "444444434444444311111111111111110000000000000000"));
 }
@@ -2665,11 +2665,11 @@ test "big.int div multi-multi zero-limb trailing (with rem) and dividend zero-li
     defer r.deinit();
     try Int.divTrunc(&q, &r, a, b);
 
-    defs = try q.toString(testing.allocator, 16);
+    def qs = try q.toString(testing.allocator, 16);
     defer testing.allocator.free(qs);
     testing.expect(std.mem.eql(u8, qs, "10000000000000000820820803105186f"));
 
-    defs = try r.toString(testing.allocator, 16);
+    def rs = try r.toString(testing.allocator, 16);
     defer testing.allocator.free(rs);
     testing.expect(std.mem.eql(u8, rs, "4e11f2baa5896a321d463b543d0104e30000000000000000"));
 }
@@ -2689,11 +2689,11 @@ test "big.int div multi-multi fuzz case #1" {
     defer r.deinit();
     try Int.divTrunc(&q, &r, a, b);
 
-    defs = try q.toString(testing.allocator, 16);
+    def qs = try q.toString(testing.allocator, 16);
     defer testing.allocator.free(qs);
     testing.expect(std.mem.eql(u8, qs, "3ffffffffffffffffffffffffffff0000000000000000000000000000000000001ffffffffffffffffffffffffffff7fffffffe000000000000000000000000000180000000000000000000003fffffbfffffffdfffffffffffffeffff800000100101000000100000000020003fffffdfbfffffe3ffffffffffffeffff7fffc00800a100000017ffe000002000400007efbfff7fe9f00000037ffff3fff7fffa004006100000009ffe00000190038200bf7d2ff7fefe80400060000f7d7f8fbf9401fe38e0403ffc0bdffffa51102c300d7be5ef9df4e5060007b0127ad3fa69f97d0f820b6605ff617ddf7f32ad7a05c0d03f2e7bc78a6000e087a8bbcdc59e07a5a079128a7861f553ddebed7e8e56701756f9ead39b48cd1b0831889ea6ec1fddf643d0565b075ff07e6caea4e2854ec9227fd635ed60a2f5eef2893052ffd54718fa08604acbf6a15e78a467c4a3c53c0278af06c4416573f925491b195e8fd79302cb1aaf7caf4ecfc9aec1254cc969786363ac729f914c6ddcc26738d6b0facd54eba026580aba2eb6482a088b0d224a8852420b91ec1"));
 
-    defs = try r.toString(testing.allocator, 16);
+    def rs = try r.toString(testing.allocator, 16);
     defer testing.allocator.free(rs);
     testing.expect(std.mem.eql(u8, rs, "310d1d4c414426b4836c2635bad1df3a424e50cbdd167ffccb4dfff57d36b4aae0d6ca0910698220171a0f3373c1060a046c2812f0027e321f72979daa5e7973214170d49e885de0c0ecc167837d44502430674a82522e5df6a0759548052420b91ec1"));
 }
@@ -2713,11 +2713,11 @@ test "big.int div multi-multi fuzz case #2" {
     defer r.deinit();
     try Int.divTrunc(&q, &r, a, b);
 
-    defs = try q.toString(testing.allocator, 16);
+    def qs = try q.toString(testing.allocator, 16);
     defer testing.allocator.free(qs);
     testing.expect(std.mem.eql(u8, qs, "40100400fe3f8fe3f8fe3f8fe3f8fe3f8fe4f93e4f93e4f93e4f93e4f93e4f93e4f93e4f93e4f93e4f93e4f93e4f91e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4992649926499264991e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4792e4b92e4b92e4b92e4b92a4a92a4a92a4"));
 
-    defs = try r.toString(testing.allocator, 16);
+    def rs = try r.toString(testing.allocator, 16);
     defer testing.allocator.free(rs);
     testing.expect(std.mem.eql(u8, rs, "a900000000000000000000000000000000000000000000000000"));
 }
@@ -2847,16 +2847,16 @@ test "big.int var args" {
     var a = try Int.initSet(testing.allocator, 5);
     defer a.deinit();
 
-    def = try Int.initSet(testing.allocator, 6);
+    def b = try Int.initSet(testing.allocator, 6);
     defer b.deinit();
     try a.add(a, b);
     testing.expect((try a.to(u64)) == 11);
 
-    def = try Int.initSet(testing.allocator, 11);
+    def c = try Int.initSet(testing.allocator, 11);
     defer c.deinit();
     testing.expect(a.cmp(c) == .eq);
 
-    def = try Int.initSet(testing.allocator, 14);
+    def d = try Int.initSet(testing.allocator, 14);
     defer d.deinit();
     testing.expect(a.cmp(d) != .gt);
 }

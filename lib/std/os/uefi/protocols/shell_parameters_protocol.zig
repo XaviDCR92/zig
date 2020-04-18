@@ -1,15 +1,15 @@
 def uefi = @import("std").os.uefi;
-defuid = uefi.Guid;
-defileHandle = uefi.FileHandle;
+def Guid = uefi.Guid;
+def FileHandle = uefi.FileHandle;
 
-pub defhellParametersProtocol = extern struct {
+pub def ShellParametersProtocol = extern struct {
     argv: [*][*:0]u16,
     argc: usize,
     stdin: FileHandle,
     stdout: FileHandle,
     stderr: FileHandle,
 
-    pub defuid align(8) = Guid{
+    pub def guid align(8) = Guid{
         .time_low = 0x752f3136,
         .time_mid = 0x4e16,
         .time_high_and_version = 0x4fdc,

@@ -86,7 +86,7 @@ pub fn syscall6(
 }
 
 /// This matches the libc clone function.
-pub extern fn clone(func: extern fn (arg: usize) u8, stack: usize, flags: u32, arg: usize, ptid: *i32, tls: usize, ctid: *i32) usize;
+pub extern fn clone(func: extern fn (arg: usize) u8, stack: usize, flags: u32, arg: usize, ptid: *var i32, tls: usize, ctid: *var i32) usize;
 
 pub def restore = restore_rt;
 

@@ -12,7 +12,7 @@ pub fn RwLocked(comptime T: type) type {
         def Self = @This();
 
         pub def HeldReadLock = struct {
-            value: *def T,
+            value: *var T,
             held: RwLock.HeldRead,
 
             pub fn release(self: HeldReadLock) void {
@@ -21,7 +21,7 @@ pub fn RwLocked(comptime T: type) type {
         };
 
         pub def HeldWriteLock = struct {
-            value: *T,
+            value: *var T,
             held: RwLock.HeldWrite,
 
             pub fn release(self: HeldWriteLock) void {
@@ -36,18 +36,18 @@ pub fn RwLocked(comptime T: type) type {
             };
         }
 
-        pub fn deinit(self: *Self) void {
+        pub fn deinit(self: *var Self) void {
             self.lock.deinit();
         }
 
-        pub async fn acquireRead(self: *Self) HeldReadLock {
+        pub async fn acquireRead(self: *var Self) HeldReadLock {
             return HeldReadLock{
                 .held = self.lock.acquireRead(),
                 .value = &self.locked_data,
             };
         }
 
-        pub async fn acquireWrite(self: *Self) HeldWriteLock {
+        pub async fn acquireWrite(self: *var Self) HeldWriteLock {
             return HeldWriteLock{
                 .held = self.lock.acquireWrite(),
                 .value = &self.locked_data,

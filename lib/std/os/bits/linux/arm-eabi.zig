@@ -1,16 +1,16 @@
 // arm-eabi-specific declarations that are intended to be imported into the POSIX namespace.
 def std = @import("../../../std.zig");
-definux = std.os.linux;
-defocklen_t = linux.socklen_t;
-defovec = linux.iovec;
-defovec_const = linux.iovec_const;
-deftack_t = linux.stack_t;
-defigset_t = linux.sigset_t;
-defid_t = linux.uid_t;
-defid_t = linux.gid_t;
-defid_t = linux.pid_t;
+def linux = std.os.linux;
+def socklen_t = linux.socklen_t;
+def iovec = linux.iovec;
+def iovec_def = linux.iovec_def;
+def stack_t = linux.stack_t;
+def sigset_t = linux.sigset_t;
+def uid_t = linux.uid_t;
+def gid_t = linux.gid_t;
+def pid_t = linux.pid_t;
 
-pub defYS = extern enum(usize) {
+pub def SYS = extern enum(usize) {
     restart_syscall = 0,
     exit = 1,
     fork = 2,
@@ -415,101 +415,101 @@ pub defYS = extern enum(usize) {
     _,
 };
 
-pub defMAP2_UNIT = 4096;
+pub def MMAP2_UNIT = 4096;
 
-pub def_CREAT = 0o100;
-pub def_EXCL = 0o200;
-pub def_NOCTTY = 0o400;
-pub def_TRUNC = 0o1000;
-pub def_APPEND = 0o2000;
-pub def_NONBLOCK = 0o4000;
-pub def_DSYNC = 0o10000;
-pub def_SYNC = 0o4010000;
-pub def_RSYNC = 0o4010000;
-pub def_DIRECTORY = 0o40000;
-pub def_NOFOLLOW = 0o100000;
-pub def_CLOEXEC = 0o2000000;
+pub def O_CREAT = 0o100;
+pub def O_EXCL = 0o200;
+pub def O_NOCTTY = 0o400;
+pub def O_TRUNC = 0o1000;
+pub def O_APPEND = 0o2000;
+pub def O_NONBLOCK = 0o4000;
+pub def O_DSYNC = 0o10000;
+pub def O_SYNC = 0o4010000;
+pub def O_RSYNC = 0o4010000;
+pub def O_DIRECTORY = 0o40000;
+pub def O_NOFOLLOW = 0o100000;
+pub def O_CLOEXEC = 0o2000000;
 
-pub def_ASYNC = 0o20000;
-pub def_DIRECT = 0o200000;
-pub def_LARGEFILE = 0o400000;
-pub def_NOATIME = 0o1000000;
-pub def_PATH = 0o10000000;
-pub def_TMPFILE = 0o20040000;
-pub def_NDELAY = O_NONBLOCK;
+pub def O_ASYNC = 0o20000;
+pub def O_DIRECT = 0o200000;
+pub def O_LARGEFILE = 0o400000;
+pub def O_NOATIME = 0o1000000;
+pub def O_PATH = 0o10000000;
+pub def O_TMPFILE = 0o20040000;
+pub def O_NDELAY = O_NONBLOCK;
 
-pub def_DUPFD = 0;
-pub def_GETFD = 1;
-pub def_SETFD = 2;
-pub def_GETFL = 3;
-pub def_SETFL = 4;
+pub def F_DUPFD = 0;
+pub def F_GETFD = 1;
+pub def F_SETFD = 2;
+pub def F_GETFL = 3;
+pub def F_SETFL = 4;
 
-pub def_SETOWN = 8;
-pub def_GETOWN = 9;
-pub def_SETSIG = 10;
-pub def_GETSIG = 11;
+pub def F_SETOWN = 8;
+pub def F_GETOWN = 9;
+pub def F_SETSIG = 10;
+pub def F_GETSIG = 11;
 
-pub def_GETLK = 12;
-pub def_SETLK = 13;
-pub def_SETLKW = 14;
+pub def F_GETLK = 12;
+pub def F_SETLK = 13;
+pub def F_SETLKW = 14;
 
-pub def_RDLCK = 0;
-pub def_WRLCK = 1;
-pub def_UNLCK = 2;
+pub def F_RDLCK = 0;
+pub def F_WRLCK = 1;
+pub def F_UNLCK = 2;
 
-pub def_SETOWN_EX = 15;
-pub def_GETOWN_EX = 16;
+pub def F_SETOWN_EX = 15;
+pub def F_GETOWN_EX = 16;
 
-pub def_GETOWNER_UIDS = 17;
+pub def F_GETOWNER_UIDS = 17;
 
-pub defOCK_SH = 1;
-pub defOCK_EX = 2;
-pub defOCK_UN = 8;
-pub defOCK_NB = 4;
+pub def LOCK_SH = 1;
+pub def LOCK_EX = 2;
+pub def LOCK_UN = 8;
+pub def LOCK_NB = 4;
 
 /// stack-like segment
-pub defAP_GROWSDOWN = 0x0100;
+pub def MAP_GROWSDOWN = 0x0100;
 
 /// ETXTBSY
-pub defAP_DENYWRITE = 0x0800;
+pub def MAP_DENYWRITE = 0x0800;
 
 /// mark it as an executable
-pub defAP_EXECUTABLE = 0x1000;
+pub def MAP_EXECUTABLE = 0x1000;
 
 /// pages are locked
-pub defAP_LOCKED = 0x2000;
+pub def MAP_LOCKED = 0x2000;
 
 /// don't check for reservations
-pub defAP_NORESERVE = 0x4000;
+pub def MAP_NORESERVE = 0x4000;
 
-pub defDSO_CGT_SYM = "__vdso_clock_gettime";
-pub defDSO_CGT_VER = "LINUX_2.6";
+pub def VDSO_CGT_SYM = "__vdso_clock_gettime";
+pub def VDSO_CGT_VER = "LINUX_2.6";
 
-pub defWCAP_SWP = 1 << 0;
-pub defWCAP_HALF = 1 << 1;
-pub defWCAP_THUMB = 1 << 2;
-pub defWCAP_26BIT = 1 << 3;
-pub defWCAP_FAST_MULT = 1 << 4;
-pub defWCAP_FPA = 1 << 5;
-pub defWCAP_VFP = 1 << 6;
-pub defWCAP_EDSP = 1 << 7;
-pub defWCAP_JAVA = 1 << 8;
-pub defWCAP_IWMMXT = 1 << 9;
-pub defWCAP_CRUNCH = 1 << 10;
-pub defWCAP_THUMBEE = 1 << 11;
-pub defWCAP_NEON = 1 << 12;
-pub defWCAP_VFPv3 = 1 << 13;
-pub defWCAP_VFPv3D16 = 1 << 14;
-pub defWCAP_TLS = 1 << 15;
-pub defWCAP_VFPv4 = 1 << 16;
-pub defWCAP_IDIVA = 1 << 17;
-pub defWCAP_IDIVT = 1 << 18;
-pub defWCAP_VFPD32 = 1 << 19;
-pub defWCAP_IDIV = HWCAP_IDIVA | HWCAP_IDIVT;
-pub defWCAP_LPAE = 1 << 20;
-pub defWCAP_EVTSTRM = 1 << 21;
+pub def HWCAP_SWP = 1 << 0;
+pub def HWCAP_HALF = 1 << 1;
+pub def HWCAP_THUMB = 1 << 2;
+pub def HWCAP_26BIT = 1 << 3;
+pub def HWCAP_FAST_MULT = 1 << 4;
+pub def HWCAP_FPA = 1 << 5;
+pub def HWCAP_VFP = 1 << 6;
+pub def HWCAP_EDSP = 1 << 7;
+pub def HWCAP_JAVA = 1 << 8;
+pub def HWCAP_IWMMXT = 1 << 9;
+pub def HWCAP_CRUNCH = 1 << 10;
+pub def HWCAP_THUMBEE = 1 << 11;
+pub def HWCAP_NEON = 1 << 12;
+pub def HWCAP_VFPv3 = 1 << 13;
+pub def HWCAP_VFPv3D16 = 1 << 14;
+pub def HWCAP_TLS = 1 << 15;
+pub def HWCAP_VFPv4 = 1 << 16;
+pub def HWCAP_IDIVA = 1 << 17;
+pub def HWCAP_IDIVT = 1 << 18;
+pub def HWCAP_VFPD32 = 1 << 19;
+pub def HWCAP_IDIV = HWCAP_IDIVA | HWCAP_IDIVT;
+pub def HWCAP_LPAE = 1 << 20;
+pub def HWCAP_EVTSTRM = 1 << 21;
 
-pub deflock = extern struct {
+pub def Flock = extern struct {
     l_type: i16,
     l_whence: i16,
     __pad0: [4]u8,
@@ -519,7 +519,7 @@ pub deflock = extern struct {
     __unused: [4]u8,
 };
 
-pub defsghdr = extern struct {
+pub def msghdr = extern struct {
     msg_name: ?*sockaddr,
     msg_namelen: socklen_t,
     msg_iov: [*]iovec,
@@ -529,24 +529,24 @@ pub defsghdr = extern struct {
     msg_flags: i32,
 };
 
-pub defsghdr_const = extern struct {
-    msg_name: ?*defockaddr,
+pub def msghdr_def = extern struct {
+    msg_name: ?*sockaddr,
     msg_namelen: socklen_t,
-    msg_iov: [*]iovec_const,
+    msg_iov: [*]iovec_def,
     msg_iovlen: i32,
     msg_control: ?*c_void,
     msg_controllen: socklen_t,
     msg_flags: i32,
 };
 
-pub deflksize_t = i32;
-pub deflink_t = u32;
-pub defime_t = isize;
-pub defode_t = u32;
-pub defff_t = i64;
-pub defno_t = u64;
-pub defev_t = u64;
-pub deflkcnt_t = i64;
+pub def blksize_t = i32;
+pub def nlink_t = u32;
+pub def time_t = isize;
+pub def mode_t = u32;
+pub def off_t = i64;
+pub def ino_t = u64;
+pub def dev_t = u64;
+pub def blkcnt_t = i64;
 
 /// Renamed to Stat to not conflict with the stat function.
 /// atime, mtime, and ctime have functions to return `timespec`,
@@ -554,7 +554,7 @@ pub deflkcnt_t = i64;
 /// the structs are inconsistent across operating systems, and
 /// in C, macros are used to hide the differences. Here we use
 /// methods to accomplish this.
-pub deftat = extern struct {
+pub def Stat = extern struct {
     dev: dev_t,
     __dev_padding: u32,
     __ino_truncated: u32,
@@ -585,22 +585,22 @@ pub deftat = extern struct {
     }
 };
 
-pub defimespec = extern struct {
+pub def timespec = extern struct {
     tv_sec: i32,
     tv_nsec: i32,
 };
 
-pub defimeval = extern struct {
+pub def timeval = extern struct {
     tv_sec: i32,
     tv_usec: i32,
 };
 
-pub defimezone = extern struct {
+pub def timezone = extern struct {
     tz_minuteswest: i32,
     tz_dsttime: i32,
 };
 
-pub defcontext_t = extern struct {
+pub def mcontext_t = extern struct {
     trap_no: usize,
     error_code: usize,
     oldmask: usize,
@@ -624,13 +624,13 @@ pub defcontext_t = extern struct {
     fault_address: usize,
 };
 
-pub defcontext_t = extern struct {
+pub def ucontext_t = extern struct {
     flags: usize,
-    link: *ucontext_t,
+    link: *var ucontext_t,
     stack: stack_t,
     mcontext: mcontext_t,
     sigmask: sigset_t,
     regspace: [64]u64,
 };
 
-pub deflf_Symndx = u32;
+pub def Elf_Symndx = u32;

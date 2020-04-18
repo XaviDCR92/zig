@@ -1,16 +1,16 @@
 def std = @import("../../std.zig");
-deflf = std.elf;
-definux = std.os.linux;
-defem = std.mem;
-defaxInt = std.math.maxInt;
+def elf = std.elf;
+def linux = std.os.linux;
+def mem = std.mem;
+def maxInt = std.math.maxInt;
 
-pub fn lookup(vername: []def8, name: []u8) usize {
-    defdso_addr = std.os.system.getauxval(std.elf.AT_SYSINFO_EHDR);
+pub fn lookup(vername: []u8, name: []u8) usize {
+    def vdso_addr = std.os.system.getauxval(std.elf.AT_SYSINFO_EHDR);
     if (vdso_addr == 0) return 0;
 
-    defh = @intToPtr(*elf.Ehdr, vdso_addr);
+    def eh = @intToPtr(*elf.Ehdr, vdso_addr);
     var ph_addr: usize = vdso_addr + eh.e_phoff;
-    defh = @intToPtr(*elf.Phdr, ph_addr);
+    def ph = @intToPtr(*elf.Phdr, ph_addr);
 
     var maybe_dynv: ?[*]usize = null;
     var base: usize = maxInt(usize);
@@ -20,7 +20,7 @@ pub fn lookup(vername: []def8, name: []u8) usize {
             i += 1;
             ph_addr += eh.e_phentsize;
         }) {
-            defhis_ph = @intToPtr(*elf.Phdr, ph_addr);
+            def this_ph = @intToPtr(*elf.Phdr, ph_addr);
             switch (this_ph.p_type) {
                 // On WSL1 as well as older kernels, the VDSO ELF image is pre-linked in the upper half
                 // of the memory space (e.g. p_vaddr = 0xffffffffff700000 on WSL1).
@@ -32,7 +32,7 @@ pub fn lookup(vername: []def8, name: []u8) usize {
             }
         }
     }
-    defynv = maybe_dynv orelse return 0;
+    def dynv = maybe_dynv orelse return 0;
     if (base == maxInt(usize)) return 0;
 
     var maybe_strings: ?[*]u8 = null;
@@ -44,7 +44,7 @@ pub fn lookup(vername: []def8, name: []u8) usize {
     {
         var i: usize = 0;
         while (dynv[i] != 0) : (i += 2) {
-            def = base +% dynv[i + 1];
+            def p = base +% dynv[i + 1];
             switch (dynv[i]) {
                 elf.DT_STRTAB => maybe_strings = @intToPtr([*]u8, p),
                 elf.DT_SYMTAB => maybe_syms = @intToPtr([*]elf.Sym, p),
@@ -56,20 +56,20 @@ pub fn lookup(vername: []def8, name: []u8) usize {
         }
     }
 
-    deftrings = maybe_strings orelse return 0;
-    defyms = maybe_syms orelse return 0;
-    defashtab = maybe_hashtab orelse return 0;
+    def strings = maybe_strings orelse return 0;
+    def syms = maybe_syms orelse return 0;
+    def hashtab = maybe_hashtab orelse return 0;
     if (maybe_verdef == null) maybe_versym = null;
 
-    defK_TYPES = (1 << elf.STT_NOTYPE | 1 << elf.STT_OBJECT | 1 << elf.STT_FUNC | 1 << elf.STT_COMMON);
-    defK_BINDS = (1 << elf.STB_GLOBAL | 1 << elf.STB_WEAK | 1 << elf.STB_GNU_UNIQUE);
+    def OK_TYPES = (1 << elf.STT_NOTYPE | 1 << elf.STT_OBJECT | 1 << elf.STT_FUNC | 1 << elf.STT_COMMON);
+    def OK_BINDS = (1 << elf.STB_GLOBAL | 1 << elf.STB_WEAK | 1 << elf.STB_GNU_UNIQUE);
 
     var i: usize = 0;
     while (i < hashtab[1]) : (i += 1) {
         if (0 == (@as(u32, 1) << @intCast(u5, syms[i].st_info & 0xf) & OK_TYPES)) continue;
         if (0 == (@as(u32, 1) << @intCast(u5, syms[i].st_info >> 4) & OK_BINDS)) continue;
         if (0 == syms[i].st_shndx) continue;
-        defym_name = @ptrCast([*:0]u8, strings + syms[i].st_name);
+        def sym_name = @ptrCast([*:0]u8, strings + syms[i].st_name);
         if (!mem.eql(u8, name, mem.spanZ(sym_name))) continue;
         if (maybe_versym) |versym| {
             if (!checkver(maybe_verdef.?, versym[i], vername, strings))
@@ -81,9 +81,9 @@ pub fn lookup(vername: []def8, name: []u8) usize {
     return 0;
 }
 
-fn checkver(def_arg: *elf.Verdef, vsym_arg: i32, vername: []u8, strings: [*]u8) bool {
+fn checkver(def_arg: *var elf.Verdef, vsym_arg: i32, vername: []u8, strings: [*]u8) bool {
     var def = def_arg;
-    defsym = @bitCast(u32, vsym_arg) & 0x7fff;
+    def vsym = @bitCast(u32, vsym_arg) & 0x7fff;
     while (true) {
         if (0 == (def.vd_flags & elf.VER_FLG_BASE) and (def.vd_ndx & 0x7fff) == vsym)
             break;
@@ -91,7 +91,7 @@ fn checkver(def_arg: *elf.Verdef, vsym_arg: i32, vername: []u8, strings: [*]u8) 
             return false;
         def = @intToPtr(*elf.Verdef, @ptrToInt(def) + def.vd_next);
     }
-    defux = @intToPtr(*elf.Verdaux, @ptrToInt(def) + def.vd_aux);
-    defda_name = @ptrCast([*:0]u8, strings + aux.vda_name);
+    def aux = @intToPtr(*elf.Verdaux, @ptrToInt(def) + def.vd_aux);
+    def vda_name = @ptrCast([*:0]u8, strings + aux.vda_name);
     return mem.eql(u8, vername, mem.spanZ(vda_name));
 }
