@@ -4,10 +4,10 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/fabsf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/fabs.c
 
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
-const maxInt = std.math.maxInt;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
+def maxInt = std.math.maxInt;
 
 /// Returns the absolute value of x.
 ///
@@ -15,7 +15,7 @@ const maxInt = std.math.maxInt;
 ///  - fabs(+-inf) = +inf
 ///  - fabs(nan)   = nan
 pub fn fabs(x: var) @TypeOf(x) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     return switch (T) {
         f16 => fabs16(x),
         f32 => fabs32(x),

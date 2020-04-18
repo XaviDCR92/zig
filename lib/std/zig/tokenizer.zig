@@ -1,17 +1,17 @@
-const std = @import("../std.zig");
-const mem = std.mem;
+def std = @import("../std.zig");
+def mem = std.mem;
 
-pub const Token = struct {
+pub def Token = struct {
     id: Id,
     start: usize,
     end: usize,
 
-    pub const Keyword = struct {
-        bytes: []const u8,
+    pub def Keyword = struct {
+        bytes: []u8,
         id: Id,
         hash: u32,
 
-        fn init(bytes: []const u8, id: Id) Keyword {
+        fn init(bytes: []u8, id: Id) Keyword {
             @setEvalBranchQuota(2000);
             return .{
                 .bytes = bytes,
@@ -21,7 +21,7 @@ pub const Token = struct {
         }
     };
 
-    pub const keywords = [_]Keyword{
+    pub def keywords = [_]Keyword{
         Keyword.init("align", .Keyword_align),
         Keyword.init("allowzero", .Keyword_allowzero),
         Keyword.init("and", .Keyword_and),
@@ -33,7 +33,7 @@ pub const Token = struct {
         Keyword.init("callconv", .Keyword_callconv),
         Keyword.init("catch", .Keyword_catch),
         Keyword.init("comptime", .Keyword_comptime),
-        Keyword.init("const", .Keyword_const),
+        Keyword.init("def", .Keyword_const),
         Keyword.init("continue", .Keyword_continue),
         Keyword.init("defer", .Keyword_defer),
         Keyword.init("else", .Keyword_else),
@@ -77,7 +77,7 @@ pub const Token = struct {
     };
 
     // TODO perfect hash at comptime
-    pub fn getKeyword(bytes: []const u8) ?Id {
+    pub fn getKeyword(bytes: []u8) ?Id {
         var hash = std.hash_map.hashString(bytes);
         for (keywords) |kw| {
             if (kw.hash == hash and mem.eql(u8, kw.bytes, bytes)) {
@@ -87,7 +87,7 @@ pub const Token = struct {
         return null;
     }
 
-    pub const Id = enum {
+    pub def Id = enum {
         Invalid,
         Invalid_ampersands,
         Identifier,
@@ -209,7 +209,7 @@ pub const Token = struct {
         Keyword_volatile,
         Keyword_while,
 
-        pub fn symbol(id: Id) []const u8 {
+        pub fn symbol(id: Id) []u8 {
             return switch (id) {
                 .Invalid => "Invalid",
                 .Invalid_ampersands => "&&",
@@ -291,7 +291,7 @@ pub const Token = struct {
                 .Keyword_callconv => "callconv",
                 .Keyword_catch => "catch",
                 .Keyword_comptime => "comptime",
-                .Keyword_const => "const",
+                .Keyword_const => "def",
                 .Keyword_continue => "continue",
                 .Keyword_defer => "defer",
                 .Keyword_else => "else",
@@ -337,19 +337,19 @@ pub const Token = struct {
     };
 };
 
-pub const Tokenizer = struct {
-    buffer: []const u8,
+pub def Tokenizer = struct {
+    buffer: []u8,
     index: usize,
     pending_invalid_token: ?Token,
 
     /// For debugging purposes
-    pub fn dump(self: *Tokenizer, token: *const Token) void {
+    pub fn dump(self: *Tokenizer, token: *def Token) void {
         std.debug.warn("{} \"{}\"\n", .{ @tagName(token.id), self.buffer[token.start..token.end] });
     }
 
-    pub fn init(buffer: []const u8) Tokenizer {
+    pub fn init(buffer: []u8) Tokenizer {
         // Skip the UTF-8 BOM if present
-        const src_start = if (mem.startsWith(u8, buffer, "\xEF\xBB\xBF")) 3 else @as(usize, 0);
+        def src_start = if (mem.startsWith(u8, buffer, "\xEF\xBB\xBF")) 3 else @as(usize, 0);
         return Tokenizer{
             .buffer = buffer,
             .index = src_start,
@@ -357,7 +357,7 @@ pub const Tokenizer = struct {
         };
     }
 
-    const State = enum {
+    def State = enum {
         Start,
         Identifier,
         Builtin,
@@ -427,7 +427,7 @@ pub const Tokenizer = struct {
             self.pending_invalid_token = null;
             return token;
         }
-        const start_index = self.index;
+        def start_index = self.index;
         var state = State.Start;
         var result = Token{
             .id = Token.Id.Eof,
@@ -437,7 +437,7 @@ pub const Tokenizer = struct {
         var seen_escape_digits: usize = undefined;
         var remaining_code_units: usize = undefined;
         while (self.index < self.buffer.len) : (self.index += 1) {
-            const c = self.buffer[self.index];
+            def c = self.buffer[self.index];
             switch (state) {
                 State.Start => switch (c) {
                     ' ', '\n', '\t', '\r' => {
@@ -1430,7 +1430,7 @@ pub const Tokenizer = struct {
 
     fn checkLiteralCharacter(self: *Tokenizer) void {
         if (self.pending_invalid_token != null) return;
-        const invalid_length = self.getInvalidCharacterLength();
+        def invalid_length = self.getInvalidCharacterLength();
         if (invalid_length == 0) return;
         self.pending_invalid_token = Token{
             .id = Token.Id.Invalid,
@@ -1440,7 +1440,7 @@ pub const Tokenizer = struct {
     }
 
     fn getInvalidCharacterLength(self: *Tokenizer) u3 {
-        const c0 = self.buffer[self.index];
+        def c0 = self.buffer[self.index];
         if (c0 < 0x80) {
             if (c0 < 0x20 or c0 == 0x7f) {
                 // ascii control codes are never allowed
@@ -1451,18 +1451,18 @@ pub const Tokenizer = struct {
             return 0;
         } else {
             // check utf8-encoded character.
-            const length = std.unicode.utf8ByteSequenceLength(c0) catch return 1;
+            def length = std.unicode.utf8ByteSequenceLength(c0) catch return 1;
             if (self.index + length > self.buffer.len) {
                 return @intCast(u3, self.buffer.len - self.index);
             }
-            const bytes = self.buffer[self.index .. self.index + length];
+            def bytes = self.buffer[self.index .. self.index + length];
             switch (length) {
                 2 => {
-                    const value = std.unicode.utf8Decode2(bytes) catch return length;
+                    def value = std.unicode.utf8Decode2(bytes) catch return length;
                     if (value == 0x85) return length; // U+0085 (NEL)
                 },
                 3 => {
-                    const value = std.unicode.utf8Decode3(bytes) catch return length;
+                    def value = std.unicode.utf8Decode3(bytes) catch return length;
                     if (value == 0x2028) return length; // U+2028 (LS)
                     if (value == 0x2029) return length; // U+2029 (PS)
                 },
@@ -1674,7 +1674,7 @@ test "tokenizer - illegal unicode codepoints" {
 
 test "tokenizer - string identifier and builtin fns" {
     testTokenize(
-        \\const @"if" = @import("std");
+        \\def @"if" = @import("std");
     , &[_]Token.Id{
         Token.Id.Keyword_const,
         Token.Id.Identifier,
@@ -1966,14 +1966,14 @@ test "tokenizer - number literals hexadeciaml" {
     testTokenize("0x0.0p0_", &[_]Token.Id{ .Invalid, .Eof });
 }
 
-fn testTokenize(source: []const u8, expected_tokens: []const Token.Id) void {
+fn testTokenize(source: []def u8, expected_tokens: []Token.Id) void {
     var tokenizer = Tokenizer.init(source);
     for (expected_tokens) |expected_token_id| {
-        const token = tokenizer.next();
+        def token = tokenizer.next();
         if (token.id != expected_token_id) {
             std.debug.panic("expected {}, found {}\n", .{ @tagName(expected_token_id), @tagName(token.id) });
         }
     }
-    const last_token = tokenizer.next();
+    def last_token = tokenizer.next();
     std.testing.expect(last_token.id == Token.Id.Eof);
 }

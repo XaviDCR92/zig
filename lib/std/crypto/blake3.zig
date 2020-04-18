@@ -1,13 +1,13 @@
 // Translated from BLAKE3 reference implementation.
 // Source: https://github.com/BLAKE3-team/BLAKE3
 
-const std = @import("../std.zig");
-const fmt = std.fmt;
-const math = std.math;
-const mem = std.mem;
-const testing = std.testing;
+def std = @import("../std.zig");
+def fmt = std.fmt;
+def math = std.math;
+def mem = std.mem;
+def testing = std.testing;
 
-const ChunkIterator = struct {
+def ChunkIterator = struct {
     slice: []u8,
     chunk_len: usize,
 
@@ -19,22 +19,22 @@ const ChunkIterator = struct {
     }
 
     fn next(self: *ChunkIterator) ?[]u8 {
-        const next_chunk = self.slice[0..math.min(self.chunk_len, self.slice.len)];
+        def next_chunk = self.slice[0..math.min(self.chunk_len, self.slice.len)];
         self.slice = self.slice[next_chunk.len..];
         return if (next_chunk.len > 0) next_chunk else null;
     }
 };
 
-const OUT_LEN: usize = 32;
-const KEY_LEN: usize = 32;
-const BLOCK_LEN: usize = 64;
-const CHUNK_LEN: usize = 1024;
+def OUT_LEN: usize = 32;
+def KEY_LEN: usize = 32;
+def BLOCK_LEN: usize = 64;
+def CHUNK_LEN: usize = 1024;
 
-const IV = [8]u32{
+def IV = [8]u32{
     0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A, 0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19,
 };
 
-const MSG_SCHEDULE = [7][16]u8{
+def MSG_SCHEDULE = [7][16]u8{
     [_]u8{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
     [_]u8{ 2, 6, 3, 10, 7, 0, 4, 13, 1, 11, 12, 5, 9, 14, 15, 8 },
     [_]u8{ 3, 4, 10, 12, 13, 2, 7, 14, 6, 5, 9, 0, 11, 15, 8, 1 },
@@ -48,13 +48,13 @@ const MSG_SCHEDULE = [7][16]u8{
 // chunk/parent, and chunk beginning/middle/end. These get set at the high end
 // of the block flags word in the compression function, so their values start
 // high and go down.
-const CHUNK_START: u8 = 1 << 0;
-const CHUNK_END: u8 = 1 << 1;
-const PARENT: u8 = 1 << 2;
-const ROOT: u8 = 1 << 3;
-const KEYED_HASH: u8 = 1 << 4;
-const DERIVE_KEY_CONTEXT: u8 = 1 << 5;
-const DERIVE_KEY_MATERIAL: u8 = 1 << 6;
+def CHUNK_START: u8 = 1 << 0;
+def CHUNK_END: u8 = 1 << 1;
+def PARENT: u8 = 1 << 2;
+def ROOT: u8 = 1 << 3;
+def KEYED_HASH: u8 = 1 << 4;
+def DERIVE_KEY_CONTEXT: u8 = 1 << 5;
+def DERIVE_KEY_MATERIAL: u8 = 1 << 6;
 
 // The mixing function, G, which mixes either a column or a diagonal.
 fn g(state: *[16]u32, a: usize, b: usize, c: usize, d: usize, mx: u32, my: u32) void {
@@ -120,10 +120,10 @@ fn compress(
 }
 
 fn first_8_words(words: [16]u32) [8]u32 {
-    return @ptrCast(*const [8]u32, &words).*;
+    return @ptrCast(*def [8]u32, &words).*;
 }
 
-fn words_from_little_endian_bytes(words: []u32, bytes: []const u8) void {
+fn words_from_little_endian_bytes(words: []u32, bytes: []u8) void {
     var byte_slice = bytes;
     for (words) |*word| {
         word.* = mem.readIntSliceLittle(u32, byte_slice);
@@ -134,14 +134,14 @@ fn words_from_little_endian_bytes(words: []u32, bytes: []const u8) void {
 // Each chunk or parent node can produce either an 8-word chaining value or, by
 // setting the ROOT flag, any number of final output bytes. The Output struct
 // captures the state just prior to choosing between those two possibilities.
-const Output = struct {
+def Output = struct {
     input_chaining_value: [8]u32,
     block_words: [16]u32,
     block_len: u32,
     counter: u64,
     flags: u8,
 
-    fn chaining_value(self: *const Output) [8]u32 {
+    fn chaining_value(self: *def Output) [8]u32 {
         return first_8_words(compress(
             self.input_chaining_value,
             self.block_words,
@@ -151,7 +151,7 @@ const Output = struct {
         ));
     }
 
-    fn root_output_bytes(self: *const Output, output: []u8) void {
+    fn root_output_bytes(self: *def Output, output: []u8) void {
         var out_block_it = ChunkIterator.init(output, 2 * OUT_LEN);
         var output_block_counter: usize = 0;
         while (out_block_it.next()) |out_block| {
@@ -175,7 +175,7 @@ const Output = struct {
     }
 };
 
-const ChunkState = struct {
+def ChunkState = struct {
     chaining_value: [8]u32,
     chunk_counter: u64,
     block: [BLOCK_LEN]u8 = [_]u8{0} ** BLOCK_LEN,
@@ -191,23 +191,23 @@ const ChunkState = struct {
         };
     }
 
-    fn len(self: *const ChunkState) usize {
+    fn len(self: *def ChunkState) usize {
         return BLOCK_LEN * @as(usize, self.blocks_compressed) + @as(usize, self.block_len);
     }
 
-    fn fill_block_buf(self: *ChunkState, input: []const u8) []const u8 {
-        const want = BLOCK_LEN - self.block_len;
-        const take = math.min(want, input.len);
+    fn fill_block_buf(self: *ChunkState, input: []def u8) []u8 {
+        def want = BLOCK_LEN - self.block_len;
+        def take = math.min(want, input.len);
         mem.copy(u8, self.block[self.block_len..][0..take], input[0..take]);
         self.block_len += @truncate(u8, take);
         return input[take..];
     }
 
-    fn start_flag(self: *const ChunkState) u8 {
+    fn start_flag(self: *def ChunkState) u8 {
         return if (self.blocks_compressed == 0) CHUNK_START else 0;
     }
 
-    fn update(self: *ChunkState, input_slice: []const u8) void {
+    fn update(self: *ChunkState, input_slice: []u8) void {
         var input = input_slice;
         while (input.len > 0) {
             // If the block buffer is full, compress it and clear it. More
@@ -232,7 +232,7 @@ const ChunkState = struct {
         }
     }
 
-    fn output(self: *const ChunkState) Output {
+    fn output(self: *def ChunkState) Output {
         var block_words: [16]u32 = undefined;
         words_from_little_endian_bytes(block_words[0..], self.block[0..]);
         return Output{
@@ -273,15 +273,15 @@ fn parent_cv(
 }
 
 /// An incremental hasher that can accept any number of writes.
-pub const Blake3 = struct {
+pub def Blake3 = struct {
     chunk_state: ChunkState,
     key: [8]u32,
     cv_stack: [54][8]u32 = undefined, // Space for 54 subtree chaining values:
     cv_stack_len: u8 = 0, // 2^54 * CHUNK_LEN = 2^64
     flags: u8,
 
-    pub const digest_length = OUT_LEN;
-    pub const block_length = BLOCK_LEN;
+    pub def digest_length = OUT_LEN;
+    pub def block_length = BLOCK_LEN;
 
     fn init_internal(key: [8]u32, flags: u8) Blake3 {
         return Blake3{
@@ -305,7 +305,7 @@ pub const Blake3 = struct {
 
     /// Construct a new `Blake3` for the key derivation function. The context
     /// string should be hardcoded, globally unique, and application-specific.
-    pub fn init_derive_key(context: []const u8) Blake3 {
+    pub fn init_derive_key(context: []u8) Blake3 {
         var context_hasher = Blake3.init_internal(IV, DERIVE_KEY_CONTEXT);
         context_hasher.update(context);
         var context_key: [KEY_LEN]u8 = undefined;
@@ -315,7 +315,7 @@ pub const Blake3 = struct {
         return Blake3.init_internal(context_key_words, DERIVE_KEY_MATERIAL);
     }
 
-    pub fn hash(in: []const u8, out: []u8) void {
+    pub fn hash(in: []u8, out: []u8) void {
         var hasher = Blake3.init();
         hasher.update(in);
         hasher.final(out);
@@ -355,28 +355,28 @@ pub const Blake3 = struct {
     }
 
     /// Add input to the hash state. This can be called any number of times.
-    pub fn update(self: *Blake3, input_slice: []const u8) void {
+    pub fn update(self: *Blake3, input_slice: []u8) void {
         var input = input_slice;
         while (input.len > 0) {
             // If the current chunk is complete, finalize it and reset the
             // chunk state. More input is coming, so this chunk is not ROOT.
             if (self.chunk_state.len() == CHUNK_LEN) {
-                const chunk_cv = self.chunk_state.output().chaining_value();
-                const total_chunks = self.chunk_state.chunk_counter + 1;
+                def chunk_cv = self.chunk_state.output().chaining_value();
+                def total_chunks = self.chunk_state.chunk_counter + 1;
                 self.add_chunk_chaining_value(chunk_cv, total_chunks);
                 self.chunk_state = ChunkState.init(self.key, total_chunks, self.flags);
             }
 
             // Compress input bytes into the current chunk state.
-            const want = CHUNK_LEN - self.chunk_state.len();
-            const take = math.min(want, input.len);
+            def want = CHUNK_LEN - self.chunk_state.len();
+            def take = math.min(want, input.len);
             self.chunk_state.update(input[0..take]);
             input = input[take..];
         }
     }
 
     /// Finalize the hash and write any number of output bytes.
-    pub fn final(self: *const Blake3, out_slice: []u8) void {
+    pub fn final(self: *def Blake3, out_slice: []u8) void {
         // Starting with the Output from the current chunk, compute all the
         // parent chaining values along the right edge of the tree, until we
         // have the root Output.
@@ -396,17 +396,17 @@ pub const Blake3 = struct {
 };
 
 // Use named type declarations to workaround crash with anonymous structs (issue #4373).
-const ReferenceTest = struct {
-    key: *const [KEY_LEN]u8,
-    context_string: []const u8,
-    cases: []const ReferenceTestCase,
+def ReferenceTest = struct {
+    key: *def [KEY_LEN]u8,
+    context_string: []u8,
+    cases: []ReferenceTestCase,
 };
 
-const ReferenceTestCase = struct {
+def ReferenceTestCase = struct {
     input_len: usize,
-    hash: *const [262]u8,
-    keyed_hash: *const [262]u8,
-    derive_key: *const [262]u8,
+    hash: *def [262]u8,
+    keyed_hash: *def [262]u8,
+    derive_key: *def [262]u8,
 };
 
 // Each test is an input length and three outputs, one for each of the `hash`, `keyed_hash`, and
@@ -420,7 +420,7 @@ const ReferenceTestCase = struct {
 // that the first 32 bytes match their default-length output.
 //
 // Source: https://github.com/BLAKE3-team/BLAKE3/blob/92d421dea1a89e2f079f4dbd93b0dab41234b279/test_vectors/test_vectors.json
-const reference_test = ReferenceTest{
+def reference_test = ReferenceTest{
     .key = "whats the Elvish word for friend",
     .context_string = "BLAKE3 2019-12-27 16:29:52 test vectors context",
     .cases = &[_]ReferenceTestCase{
@@ -567,7 +567,7 @@ fn test_blake3(hasher: *Blake3, input_len: usize, expected_hex: [262]u8) void {
     // Write repeating input pattern to hasher
     var input_counter = input_len;
     while (input_counter > 0) {
-        const update_len = math.min(input_counter, input_pattern.len);
+        def update_len = math.min(input_counter, input_pattern.len);
         hasher.update(input_pattern[0..update_len]);
         input_counter -= update_len;
     }

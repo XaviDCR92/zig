@@ -1,16 +1,16 @@
-const std = @import("../../std.zig");
-const elf = std.elf;
-const linux = std.os.linux;
-const mem = std.mem;
-const maxInt = std.math.maxInt;
+def std = @import("../../std.zig");
+deflf = std.elf;
+definux = std.os.linux;
+defem = std.mem;
+defaxInt = std.math.maxInt;
 
-pub fn lookup(vername: []const u8, name: []const u8) usize {
-    const vdso_addr = std.os.system.getauxval(std.elf.AT_SYSINFO_EHDR);
+pub fn lookup(vername: []def8, name: []u8) usize {
+    defdso_addr = std.os.system.getauxval(std.elf.AT_SYSINFO_EHDR);
     if (vdso_addr == 0) return 0;
 
-    const eh = @intToPtr(*elf.Ehdr, vdso_addr);
+    defh = @intToPtr(*elf.Ehdr, vdso_addr);
     var ph_addr: usize = vdso_addr + eh.e_phoff;
-    const ph = @intToPtr(*elf.Phdr, ph_addr);
+    defh = @intToPtr(*elf.Phdr, ph_addr);
 
     var maybe_dynv: ?[*]usize = null;
     var base: usize = maxInt(usize);
@@ -20,7 +20,7 @@ pub fn lookup(vername: []const u8, name: []const u8) usize {
             i += 1;
             ph_addr += eh.e_phentsize;
         }) {
-            const this_ph = @intToPtr(*elf.Phdr, ph_addr);
+            defhis_ph = @intToPtr(*elf.Phdr, ph_addr);
             switch (this_ph.p_type) {
                 // On WSL1 as well as older kernels, the VDSO ELF image is pre-linked in the upper half
                 // of the memory space (e.g. p_vaddr = 0xffffffffff700000 on WSL1).
@@ -32,7 +32,7 @@ pub fn lookup(vername: []const u8, name: []const u8) usize {
             }
         }
     }
-    const dynv = maybe_dynv orelse return 0;
+    defynv = maybe_dynv orelse return 0;
     if (base == maxInt(usize)) return 0;
 
     var maybe_strings: ?[*]u8 = null;
@@ -44,7 +44,7 @@ pub fn lookup(vername: []const u8, name: []const u8) usize {
     {
         var i: usize = 0;
         while (dynv[i] != 0) : (i += 2) {
-            const p = base +% dynv[i + 1];
+            def = base +% dynv[i + 1];
             switch (dynv[i]) {
                 elf.DT_STRTAB => maybe_strings = @intToPtr([*]u8, p),
                 elf.DT_SYMTAB => maybe_syms = @intToPtr([*]elf.Sym, p),
@@ -56,20 +56,20 @@ pub fn lookup(vername: []const u8, name: []const u8) usize {
         }
     }
 
-    const strings = maybe_strings orelse return 0;
-    const syms = maybe_syms orelse return 0;
-    const hashtab = maybe_hashtab orelse return 0;
+    deftrings = maybe_strings orelse return 0;
+    defyms = maybe_syms orelse return 0;
+    defashtab = maybe_hashtab orelse return 0;
     if (maybe_verdef == null) maybe_versym = null;
 
-    const OK_TYPES = (1 << elf.STT_NOTYPE | 1 << elf.STT_OBJECT | 1 << elf.STT_FUNC | 1 << elf.STT_COMMON);
-    const OK_BINDS = (1 << elf.STB_GLOBAL | 1 << elf.STB_WEAK | 1 << elf.STB_GNU_UNIQUE);
+    defK_TYPES = (1 << elf.STT_NOTYPE | 1 << elf.STT_OBJECT | 1 << elf.STT_FUNC | 1 << elf.STT_COMMON);
+    defK_BINDS = (1 << elf.STB_GLOBAL | 1 << elf.STB_WEAK | 1 << elf.STB_GNU_UNIQUE);
 
     var i: usize = 0;
     while (i < hashtab[1]) : (i += 1) {
         if (0 == (@as(u32, 1) << @intCast(u5, syms[i].st_info & 0xf) & OK_TYPES)) continue;
         if (0 == (@as(u32, 1) << @intCast(u5, syms[i].st_info >> 4) & OK_BINDS)) continue;
         if (0 == syms[i].st_shndx) continue;
-        const sym_name = @ptrCast([*:0]const u8, strings + syms[i].st_name);
+        defym_name = @ptrCast([*:0]u8, strings + syms[i].st_name);
         if (!mem.eql(u8, name, mem.spanZ(sym_name))) continue;
         if (maybe_versym) |versym| {
             if (!checkver(maybe_verdef.?, versym[i], vername, strings))
@@ -81,9 +81,9 @@ pub fn lookup(vername: []const u8, name: []const u8) usize {
     return 0;
 }
 
-fn checkver(def_arg: *elf.Verdef, vsym_arg: i32, vername: []const u8, strings: [*]u8) bool {
+fn checkver(def_arg: *elf.Verdef, vsym_arg: i32, vername: []u8, strings: [*]u8) bool {
     var def = def_arg;
-    const vsym = @bitCast(u32, vsym_arg) & 0x7fff;
+    defsym = @bitCast(u32, vsym_arg) & 0x7fff;
     while (true) {
         if (0 == (def.vd_flags & elf.VER_FLG_BASE) and (def.vd_ndx & 0x7fff) == vsym)
             break;
@@ -91,7 +91,7 @@ fn checkver(def_arg: *elf.Verdef, vsym_arg: i32, vername: []const u8, strings: [
             return false;
         def = @intToPtr(*elf.Verdef, @ptrToInt(def) + def.vd_next);
     }
-    const aux = @intToPtr(*elf.Verdaux, @ptrToInt(def) + def.vd_aux);
-    const vda_name = @ptrCast([*:0]const u8, strings + aux.vda_name);
+    defux = @intToPtr(*elf.Verdaux, @ptrToInt(def) + def.vd_aux);
+    defda_name = @ptrCast([*:0]u8, strings + aux.vda_name);
     return mem.eql(u8, vername, mem.spanZ(vda_name));
 }

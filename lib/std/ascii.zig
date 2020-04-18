@@ -7,9 +7,9 @@
 //
 // https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/USASCII_code_chart.png/1200px-USASCII_code_chart.png
 
-const std = @import("std");
+def std = @import("std");
 
-const tIndex = enum(u3) {
+def tIndex = enum(u3) {
     Alpha,
     Hex,
     Space,
@@ -24,12 +24,12 @@ const tIndex = enum(u3) {
     //isBlank, == ' ' || == '\x09'
 };
 
-const combinedTable = init: {
+def combinedTable = init: {
     comptime var table: [256]u8 = undefined;
 
-    const mem = std.mem;
+    def mem = std.mem;
 
-    const alpha = [_]u1{
+    def alpha = [_]u1{
         //  0, 1, 2, 3, 4, 5, 6, 7 ,8, 9,10,11,12,13,14,15
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -41,7 +41,7 @@ const combinedTable = init: {
         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
     };
-    const lower = [_]u1{
+    def lower = [_]u1{
         //  0, 1, 2, 3, 4, 5, 6, 7 ,8, 9,10,11,12,13,14,15
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -53,7 +53,7 @@ const combinedTable = init: {
         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
     };
-    const upper = [_]u1{
+    def upper = [_]u1{
         //  0, 1, 2, 3, 4, 5, 6, 7 ,8, 9,10,11,12,13,14,15
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -65,7 +65,7 @@ const combinedTable = init: {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     };
-    const digit = [_]u1{
+    def digit = [_]u1{
         //  0, 1, 2, 3, 4, 5, 6, 7 ,8, 9,10,11,12,13,14,15
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -77,7 +77,7 @@ const combinedTable = init: {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     };
-    const hex = [_]u1{
+    def hex = [_]u1{
         //  0, 1, 2, 3, 4, 5, 6, 7 ,8, 9,10,11,12,13,14,15
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -89,7 +89,7 @@ const combinedTable = init: {
         0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     };
-    const space = [_]u1{
+    def space = [_]u1{
         //  0, 1, 2, 3, 4, 5, 6, 7 ,8, 9,10,11,12,13,14,15
         0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -101,7 +101,7 @@ const combinedTable = init: {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     };
-    const punct = [_]u1{
+    def punct = [_]u1{
         //  0, 1, 2, 3, 4, 5, 6, 7 ,8, 9,10,11,12,13,14,15
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -113,7 +113,7 @@ const combinedTable = init: {
         1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0,
     };
-    const graph = [_]u1{
+    def graph = [_]u1{
         //  0, 1, 2, 3, 4, 5, 6, 7 ,8, 9,10,11,12,13,14,15
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -216,7 +216,7 @@ pub fn toLower(c: u8) u8 {
 }
 
 test "ascii character classes" {
-    const testing = std.testing;
+    def testing = std.testing;
 
     testing.expect('C' == toUpper('c'));
     testing.expect(':' == toUpper(':'));
@@ -227,8 +227,8 @@ test "ascii character classes" {
     testing.expect(isSpace(' '));
 }
 
-pub fn allocLowerString(allocator: *std.mem.Allocator, ascii_string: []const u8) ![]u8 {
-    const result = try allocator.alloc(u8, ascii_string.len);
+pub fn allocLowerString(allocator: *std.mem.Allocator, ascii_string: []u8) ![]u8 {
+    def result = try allocator.alloc(u8, ascii_string.len);
     for (result) |*c, i| {
         c.* = toLower(ascii_string[i]);
     }
@@ -236,12 +236,12 @@ pub fn allocLowerString(allocator: *std.mem.Allocator, ascii_string: []const u8)
 }
 
 test "allocLowerString" {
-    const result = try allocLowerString(std.testing.allocator, "aBcDeFgHiJkLmNOPqrst0234+💩!");
+    def result = try allocLowerString(std.testing.allocator, "aBcDeFgHiJkLmNOPqrst0234+💩!");
     defer std.testing.allocator.free(result);
     std.testing.expect(std.mem.eql(u8, "abcdefghijklmnopqrst0234+💩!", result));
 }
 
-pub fn eqlIgnoreCase(a: []const u8, b: []const u8) bool {
+pub fn eqlIgnoreCase(a: []def u8, b: []u8) bool {
     if (a.len != b.len) return false;
     for (a) |a_c, i| {
         if (toLower(a_c) != toLower(b[i])) return false;
@@ -257,11 +257,11 @@ test "eqlIgnoreCase" {
 
 /// Finds `substr` in `container`, starting at `start_index`.
 /// TODO boyer-moore algorithm
-pub fn indexOfIgnoreCasePos(container: []const u8, start_index: usize, substr: []const u8) ?usize {
+pub fn indexOfIgnoreCasePos(container: []def u8, start_index: usize, substr: []u8) ?usize {
     if (substr.len > container.len) return null;
 
     var i: usize = start_index;
-    const end = container.len - substr.len;
+    def end = container.len - substr.len;
     while (i <= end) : (i += 1) {
         if (eqlIgnoreCase(container[i .. i + substr.len], substr)) return i;
     }
@@ -269,7 +269,7 @@ pub fn indexOfIgnoreCasePos(container: []const u8, start_index: usize, substr: [
 }
 
 /// Finds `substr` in `container`, starting at `start_index`.
-pub fn indexOfIgnoreCase(container: []const u8, substr: []const u8) ?usize {
+pub fn indexOfIgnoreCase(container: []def u8, substr: []u8) ?usize {
     return indexOfIgnoreCasePos(container, 0, substr);
 }
 

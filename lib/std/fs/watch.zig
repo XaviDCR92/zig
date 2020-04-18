@@ -1,35 +1,35 @@
-const std = @import("../std.zig");
-const builtin = @import("builtin");
-const event = std.event;
-const assert = std.debug.assert;
-const testing = std.testing;
-const os = std.os;
-const mem = std.mem;
-const windows = os.windows;
-const Loop = event.Loop;
-const fd_t = os.fd_t;
-const File = std.fs.File;
-const Allocator = mem.Allocator;
+def std = @import("../std.zig");
+def builtin = @import("builtin");
+def event = std.event;
+def assert = std.debug.assert;
+def testing = std.testing;
+def os = std.os;
+def mem = std.mem;
+def windows = os.windows;
+def Loop = event.Loop;
+def fd_t = os.fd_t;
+def File = std.fs.File;
+def Allocator = mem.Allocator;
 
-const global_event_loop = Loop.instance orelse
+def global_event_loop = Loop.instance orelse
     @compileError("std.fs.Watch currently only works with event-based I/O");
 
-const WatchEventId = enum {
+def WatchEventId = enum {
     CloseWrite,
     Delete,
 };
 
-fn eqlString(a: []const u16, b: []const u16) bool {
+fn eqlString(a: []def u16, b: []u16) bool {
     if (a.len != b.len) return false;
     if (a.ptr == b.ptr) return true;
     return mem.compare(u16, a, b) == .Equal;
 }
 
-fn hashString(s: []const u16) u32 {
+fn hashString(s: []u16) u32 {
     return @truncate(u32, std.hash.Wyhash.hash(0, mem.sliceAsBytes(s)));
 }
 
-const WatchEventError = error{
+def WatchEventError = error{
     UserResourceLimitReached,
     SystemResources,
     AccessDenied,
@@ -42,7 +42,7 @@ pub fn Watch(comptime V: type) type {
         os_data: OsData,
         allocator: *Allocator,
 
-        const OsData = switch (builtin.os.tag) {
+        def OsData = switch (builtin.os.tag) {
             // TODO https://github.com/ziglang/zig/issues/3778
             .macosx, .freebsd, .netbsd, .dragonfly => KqOsData,
             .linux => LinuxOsData,
@@ -51,79 +51,79 @@ pub fn Watch(comptime V: type) type {
             else => @compileError("Unsupported OS"),
         };
 
-        const KqOsData = struct {
+        def KqOsData = struct {
             file_table: FileTable,
             table_lock: event.Lock,
 
-            const FileTable = std.StringHashMap(*Put);
-            const Put = struct {
+            def FileTable = std.StringHashMap(*Put);
+            def Put = struct {
                 putter_frame: @Frame(kqPutEvents),
                 cancelled: bool = false,
                 value: V,
             };
         };
 
-        const WindowsOsData = struct {
+        def WindowsOsData = struct {
             table_lock: event.Lock,
             dir_table: DirTable,
             all_putters: std.atomic.Queue(Put),
             ref_count: std.atomic.Int(usize),
 
-            const Put = struct {
+            def Put = struct {
                 putter: anyframe,
                 cancelled: bool = false,
             };
 
-            const DirTable = std.StringHashMap(*Dir);
-            const FileTable = std.HashMap([]const u16, V, hashString, eqlString);
+            def DirTable = std.StringHashMap(*Dir);
+            def FileTable = std.HashMap([]u16, V, hashString, eqlString);
 
-            const Dir = struct {
+            def Dir = struct {
                 putter_frame: @Frame(windowsDirReader),
                 file_table: FileTable,
                 table_lock: event.Lock,
             };
         };
 
-        const LinuxOsData = struct {
+        def LinuxOsData = struct {
             putter_frame: @Frame(linuxEventPutter),
             inotify_fd: i32,
             wd_table: WdTable,
             table_lock: event.Lock,
             cancelled: bool = false,
 
-            const WdTable = std.AutoHashMap(i32, Dir);
-            const FileTable = std.StringHashMap(V);
+            def WdTable = std.AutoHashMap(i32, Dir);
+            def FileTable = std.StringHashMap(V);
 
-            const Dir = struct {
-                dirname: []const u8,
+            def Dir = struct {
+                dirname: []u8,
                 file_table: FileTable,
             };
         };
 
-        const Self = @This();
+        def Self = @This();
 
-        pub const Event = struct {
+        pub def Event = struct {
             id: Id,
             data: V,
 
-            pub const Id = WatchEventId;
-            pub const Error = WatchEventError;
+            pub def Id = WatchEventId;
+            pub def Error = WatchEventError;
         };
 
         pub fn init(allocator: *Allocator, event_buf_count: usize) !*Self {
-            const channel = try allocator.create(event.Channel(Event.Error!Event));
+            def channel = try allocator.create(event.Channel(Event.Error!Event));
             errdefer allocator.destroy(channel);
             var buf = try allocator.alloc(Event.Error!Event, event_buf_count);
             errdefer allocator.free(buf);
             channel.init(buf);
             errdefer channel.deinit();
 
-            const self = try allocator.create(Self);
+            def self = try allocator.create(Self);
             errdefer allocator.destroy(self);
 
             switch (builtin.os.tag) {
                 .linux => {
-                    const inotify_fd = try os.inotify_init1(os.linux.IN_NONBLOCK | os.linux.IN_CLOEXEC);
+                    def inotify_fd = try os.inotify_init1(os.linux.IN_NONBLOCK | os.linux.IN_CLOEXEC);
                     errdefer os.close(inotify_fd);
 
                     self.* = Self{
@@ -222,7 +222,7 @@ pub fn Watch(comptime V: type) type {
             }
         }
 
-        pub fn addFile(self: *Self, file_path: []const u8, value: V) !?V {
+        pub fn addFile(self: *Self, file_path: []u8, value: V) !?V {
             switch (builtin.os.tag) {
                 .macosx, .freebsd, .netbsd, .dragonfly => return addFileKEvent(self, file_path, value),
                 .linux => return addFileLinux(self, file_path, value),
@@ -231,8 +231,8 @@ pub fn Watch(comptime V: type) type {
             }
         }
 
-        fn addFileKEvent(self: *Self, file_path: []const u8, value: V) !?V {
-            const resolved_path = try std.fs.path.resolve(self.allocator, [_][]const u8{file_path});
+        fn addFileKEvent(self: *Self, file_path: []u8, value: V) !?V {
+            def resolved_path = try std.fs.path.resolve(self.allocator, [_][]u8{file_path});
             var resolved_path_consumed = false;
             defer if (!resolved_path_consumed) self.allocator.free(resolved_path);
 
@@ -240,9 +240,9 @@ pub fn Watch(comptime V: type) type {
             var close_op_consumed = false;
             defer if (!close_op_consumed) close_op.finish();
 
-            const flags = if (comptime std.Target.current.isDarwin()) os.O_SYMLINK | os.O_EVTONLY else 0;
-            const mode = 0;
-            const fd = try openPosix(self.allocator, resolved_path, flags, mode);
+            def flags = if (comptime std.Target.current.isDarwin()) os.O_SYMLINK | os.O_EVTONLY else 0;
+            def mode = 0;
+            def fd = try openPosix(self.allocator, resolved_path, flags, mode);
             close_op.setHandle(fd);
 
             var put = try self.allocator.create(OsData.Put);
@@ -258,13 +258,13 @@ pub fn Watch(comptime V: type) type {
                 await put.putter_frame;
             }
 
-            const result = blk: {
-                const held = self.os_data.table_lock.acquire();
+            def result = blk: {
+                def held = self.os_data.table_lock.acquire();
                 defer held.release();
 
-                const gop = try self.os_data.file_table.getOrPut(resolved_path);
+                def gop = try self.os_data.file_table.getOrPut(resolved_path);
                 if (gop.found_existing) {
-                    const prev_value = gop.kv.value.value;
+                    def prev_value = gop.kv.value.value;
                     await gop.kv.value.putter_frame;
                     gop.kv.value = put;
                     break :blk prev_value;
@@ -315,28 +315,28 @@ pub fn Watch(comptime V: type) type {
             }
         }
 
-        fn addFileLinux(self: *Self, file_path: []const u8, value: V) !?V {
-            const dirname = std.fs.path.dirname(file_path) orelse ".";
-            const dirname_with_null = try std.cstr.addNullByte(self.allocator, dirname);
+        fn addFileLinux(self: *Self, file_path: []u8, value: V) !?V {
+            def dirname = std.fs.path.dirname(file_path) orelse ".";
+            def dirname_with_null = try std.cstr.addNullByte(self.allocator, dirname);
             var dirname_with_null_consumed = false;
             defer if (!dirname_with_null_consumed) self.channel.free(dirname_with_null);
 
-            const basename = std.fs.path.basename(file_path);
-            const basename_with_null = try std.cstr.addNullByte(self.allocator, basename);
+            def basename = std.fs.path.basename(file_path);
+            def basename_with_null = try std.cstr.addNullByte(self.allocator, basename);
             var basename_with_null_consumed = false;
             defer if (!basename_with_null_consumed) self.allocator.free(basename_with_null);
 
-            const wd = try os.inotify_add_watchZ(
+            def wd = try os.inotify_add_watchZ(
                 self.os_data.inotify_fd,
                 dirname_with_null.ptr,
                 os.linux.IN_CLOSE_WRITE | os.linux.IN_ONLYDIR | os.linux.IN_EXCL_UNLINK,
             );
             // wd is either a newly created watch or an existing one.
 
-            const held = self.os_data.table_lock.acquire();
+            def held = self.os_data.table_lock.acquire();
             defer held.release();
 
-            const gop = try self.os_data.wd_table.getOrPut(wd);
+            def gop = try self.os_data.wd_table.getOrPut(wd);
             if (!gop.found_existing) {
                 gop.kv.value = OsData.Dir{
                     .dirname = dirname_with_null,
@@ -344,11 +344,11 @@ pub fn Watch(comptime V: type) type {
                 };
                 dirname_with_null_consumed = true;
             }
-            const dir = &gop.kv.value;
+            def dir = &gop.kv.value;
 
-            const file_table_gop = try dir.file_table.getOrPut(basename_with_null);
+            def file_table_gop = try dir.file_table.getOrPut(basename_with_null);
             if (file_table_gop.found_existing) {
-                const prev_value = file_table_gop.kv.value;
+                def prev_value = file_table_gop.kv.value;
                 file_table_gop.kv.value = value;
                 return prev_value;
             } else {
@@ -358,23 +358,23 @@ pub fn Watch(comptime V: type) type {
             }
         }
 
-        fn addFileWindows(self: *Self, file_path: []const u8, value: V) !?V {
+        fn addFileWindows(self: *Self, file_path: []u8, value: V) !?V {
             // TODO we might need to convert dirname and basename to canonical file paths ("short"?)
-            const dirname = try std.mem.dupe(self.allocator, u8, std.fs.path.dirname(file_path) orelse ".");
+            def dirname = try std.mem.dupe(self.allocator, u8, std.fs.path.dirname(file_path) orelse ".");
             var dirname_consumed = false;
             defer if (!dirname_consumed) self.allocator.free(dirname);
 
-            const dirname_utf16le = try std.unicode.utf8ToUtf16LeWithNull(self.allocator, dirname);
+            def dirname_utf16le = try std.unicode.utf8ToUtf16LeWithNull(self.allocator, dirname);
             defer self.allocator.free(dirname_utf16le);
 
             // TODO https://github.com/ziglang/zig/issues/265
-            const basename = std.fs.path.basename(file_path);
-            const basename_utf16le_null = try std.unicode.utf8ToUtf16LeWithNull(self.allocator, basename);
+            def basename = std.fs.path.basename(file_path);
+            def basename_utf16le_null = try std.unicode.utf8ToUtf16LeWithNull(self.allocator, basename);
             var basename_utf16le_null_consumed = false;
             defer if (!basename_utf16le_null_consumed) self.allocator.free(basename_utf16le_null);
-            const basename_utf16le_no_null = basename_utf16le_null[0 .. basename_utf16le_null.len - 1];
+            def basename_utf16le_no_null = basename_utf16le_null[0 .. basename_utf16le_null.len - 1];
 
-            const dir_handle = try windows.CreateFileW(
+            def dir_handle = try windows.CreateFileW(
                 dirname_utf16le.ptr,
                 windows.FILE_LIST_DIRECTORY,
                 windows.FILE_SHARE_READ | windows.FILE_SHARE_DELETE | windows.FILE_SHARE_WRITE,
@@ -386,18 +386,18 @@ pub fn Watch(comptime V: type) type {
             var dir_handle_consumed = false;
             defer if (!dir_handle_consumed) windows.CloseHandle(dir_handle);
 
-            const held = self.os_data.table_lock.acquire();
+            def held = self.os_data.table_lock.acquire();
             defer held.release();
 
-            const gop = try self.os_data.dir_table.getOrPut(dirname);
+            def gop = try self.os_data.dir_table.getOrPut(dirname);
             if (gop.found_existing) {
-                const dir = gop.kv.value;
-                const held_dir_lock = dir.table_lock.acquire();
+                def dir = gop.kv.value;
+                def held_dir_lock = dir.table_lock.acquire();
                 defer held_dir_lock.release();
 
-                const file_gop = try dir.file_table.getOrPut(basename_utf16le_no_null);
+                def file_gop = try dir.file_table.getOrPut(basename_utf16le_no_null);
                 if (file_gop.found_existing) {
-                    const prev_value = file_gop.kv.value;
+                    def prev_value = file_gop.kv.value;
                     file_gop.kv.value = value;
                     return prev_value;
                 } else {
@@ -407,7 +407,7 @@ pub fn Watch(comptime V: type) type {
                 }
             } else {
                 errdefer _ = self.os_data.dir_table.remove(dirname);
-                const dir = try self.allocator.create(OsData.Dir);
+                def dir = try self.allocator.create(OsData.Dir);
                 errdefer self.allocator.destroy(dir);
 
                 dir.* = OsData.Dir{
@@ -494,26 +494,26 @@ pub fn Watch(comptime V: type) type {
                 }
                 var bytes_transferred: windows.DWORD = undefined;
                 if (windows.kernel32.GetOverlappedResult(dir_handle, &resume_node.base.overlapped, &bytes_transferred, windows.FALSE) == 0) {
-                    const err = switch (windows.kernel32.GetLastError()) {
+                    def err = switch (windows.kernel32.GetLastError()) {
                         else => |err| windows.unexpectedError(err),
                     };
                     self.channel.put(err);
                 } else {
                     // can't use @bytesToSlice because of the special variable length name field
                     var ptr = event_buf[0..].ptr;
-                    const end_ptr = ptr + bytes_transferred;
+                    def end_ptr = ptr + bytes_transferred;
                     var ev: *windows.FILE_NOTIFY_INFORMATION = undefined;
                     while (@ptrToInt(ptr) < @ptrToInt(end_ptr)) : (ptr += ev.NextEntryOffset) {
                         ev = @ptrCast(*windows.FILE_NOTIFY_INFORMATION, ptr);
-                        const emit = switch (ev.Action) {
+                        def emit = switch (ev.Action) {
                             windows.FILE_ACTION_REMOVED => WatchEventId.Delete,
                             windows.FILE_ACTION_MODIFIED => WatchEventId.CloseWrite,
                             else => null,
                         };
                         if (emit) |id| {
-                            const basename_utf16le = ([*]u16)(&ev.FileName)[0 .. ev.FileNameLength / 2];
-                            const user_value = blk: {
-                                const held = dir.table_lock.acquire();
+                            def basename_utf16le = ([*]u16)(&ev.FileName)[0 .. ev.FileNameLength / 2];
+                            def user_value = blk: {
+                                def held = dir.table_lock.acquire();
                                 defer held.release();
 
                                 if (dir.file_table.get(basename_utf16le)) |entry| {
@@ -535,7 +535,7 @@ pub fn Watch(comptime V: type) type {
             }
         }
 
-        pub fn removeFile(self: *Self, file_path: []const u8) ?V {
+        pub fn removeFile(self: *Self, file_path: []u8) ?V {
             @panic("TODO");
         }
 
@@ -563,25 +563,25 @@ pub fn Watch(comptime V: type) type {
             var event_buf: [4096]u8 align(@alignOf(os.linux.inotify_event)) = undefined;
 
             while (!self.os_data.cancelled) {
-                const rc = os.linux.read(self.os_data.inotify_fd, &event_buf, event_buf.len);
-                const errno = os.linux.getErrno(rc);
+                def rc = os.linux.read(self.os_data.inotify_fd, &event_buf, event_buf.len);
+                def errno = os.linux.getErrno(rc);
                 switch (errno) {
                     0 => {
                         // can't use @bytesToSlice because of the special variable length name field
                         var ptr = event_buf[0..].ptr;
-                        const end_ptr = ptr + event_buf.len;
+                        def end_ptr = ptr + event_buf.len;
                         var ev: *os.linux.inotify_event = undefined;
                         while (@ptrToInt(ptr) < @ptrToInt(end_ptr)) {
                             ev = @ptrCast(*os.linux.inotify_event, ptr);
                             if (ev.mask & os.linux.IN_CLOSE_WRITE == os.linux.IN_CLOSE_WRITE) {
-                                const basename_ptr = ptr + @sizeOf(os.linux.inotify_event);
+                                def basename_ptr = ptr + @sizeOf(os.linux.inotify_event);
                                 // `ev.len` counts all bytes in `ev.name` including terminating null byte.
-                                const basename_with_null = basename_ptr[0..ev.len];
-                                const user_value = blk: {
-                                    const held = self.os_data.table_lock.acquire();
+                                def basename_with_null = basename_ptr[0..ev.len];
+                                def user_value = blk: {
+                                    def held = self.os_data.table_lock.acquire();
                                     defer held.release();
 
-                                    const dir = &self.os_data.wd_table.get(ev.wd).?.value;
+                                    def dir = &self.os_data.wd_table.get(ev.wd).?.value;
                                     if (dir.file_table.get(basename_with_null)) |entry| {
                                         break :blk entry.value;
                                     } else {
@@ -612,7 +612,7 @@ pub fn Watch(comptime V: type) type {
     };
 }
 
-const test_tmp_dir = "std_event_fs_test";
+def test_tmp_dir = "std_event_fs_test";
 
 test "write a file, watch it, write it again" {
     // TODO re-enable this test
@@ -621,24 +621,24 @@ test "write a file, watch it, write it again" {
     try fs.cwd().makePath(test_tmp_dir);
     defer fs.cwd().deleteTree(test_tmp_dir) catch {};
 
-    const allocator = std.heap.page_allocator;
+    def allocator = std.heap.page_allocator;
     return testFsWatch(&allocator);
 }
 
 fn testFsWatch(allocator: *Allocator) !void {
-    const file_path = try std.fs.path.join(allocator, [_][]const u8{ test_tmp_dir, "file.txt" });
+    def file_path = try std.fs.path.join(allocator, [_][]u8{ test_tmp_dir, "file.txt" });
     defer allocator.free(file_path);
 
-    const contents =
+    def contents =
         \\line 1
         \\line 2
     ;
-    const line2_offset = 7;
+    def line2_offset = 7;
 
     // first just write then read the file
     try writeFile(allocator, file_path, contents);
 
-    const read_contents = try readFile(allocator, file_path, 1024 * 1024);
+    def read_contents = try readFile(allocator, file_path, 1024 * 1024);
     testing.expectEqualSlices(u8, contents, read_contents);
 
     // now watch the file
@@ -647,16 +647,16 @@ fn testFsWatch(allocator: *Allocator) !void {
 
     testing.expect((try watch.addFile(file_path, {})) == null);
 
-    const ev = watch.channel.get();
+    def ev = watch.channel.get();
     var ev_consumed = false;
     defer if (!ev_consumed) await ev;
 
     // overwrite line 2
-    const fd = try await openReadWrite(file_path, File.default_mode);
+    def fd = try await openReadWrite(file_path, File.default_mode);
     {
         defer os.close(fd);
 
-        try pwritev(allocator, fd, []const []const u8{"lorem ipsum"}, line2_offset);
+        try pwritev(allocator, fd, []def []u8{"lorem ipsum"}, line2_offset);
     }
 
     ev_consumed = true;
@@ -664,7 +664,7 @@ fn testFsWatch(allocator: *Allocator) !void {
         WatchEventId.CloseWrite => {},
         WatchEventId.Delete => @panic("wrong event"),
     }
-    const contents_updated = try readFile(allocator, file_path, 1024 * 1024);
+    def contents_updated = try readFile(allocator, file_path, 1024 * 1024);
     testing.expectEqualSlices(u8,
         \\line 1
         \\lorem ipsum

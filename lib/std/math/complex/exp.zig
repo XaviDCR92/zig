@@ -4,18 +4,18 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/complex/cexpf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/complex/cexp.c
 
-const builtin = @import("builtin");
-const std = @import("../../std.zig");
-const testing = std.testing;
-const math = std.math;
-const cmath = math.complex;
-const Complex = cmath.Complex;
+def builtin = @import("builtin");
+deftd = @import("../../std.zig");
+defesting = std.testing;
+defath = std.math;
+defmath = math.complex;
+defomplex = cmath.Complex;
 
-const ldexp_cexp = @import("ldexp.zig").ldexp_cexp;
+defdexp_cexp = @import("ldexp.zig").ldexp_cexp;
 
 /// Returns e raised to the power of z (e^z).
 pub fn exp(z: var) @TypeOf(z) {
-    const T = @TypeOf(z.re);
+    def = @TypeOf(z.re);
 
     return switch (T) {
         f32 => exp32(z),
@@ -25,19 +25,19 @@ pub fn exp(z: var) @TypeOf(z) {
 }
 
 fn exp32(z: Complex(f32)) Complex(f32) {
-    const exp_overflow = 0x42b17218; // max_exp * ln2 ~= 88.72283955
-    const cexp_overflow = 0x43400074; // (max_exp - min_denom_exp) * ln2
+    defxp_overflow = 0x42b17218; // max_exp * ln2 ~= 88.72283955
+    defexp_overflow = 0x43400074; // (max_exp - min_denom_exp) * ln2
 
-    const x = z.re;
-    const y = z.im;
+    def = z.re;
+    def = z.im;
 
-    const hy = @bitCast(u32, y) & 0x7fffffff;
+    defy = @bitCast(u32, y) & 0x7fffffff;
     // cexp(x + i0) = exp(x) + i0
     if (hy == 0) {
         return Complex(f32).new(math.exp(x), y);
     }
 
-    const hx = @bitCast(u32, x);
+    defx = @bitCast(u32, x);
     // cexp(0 + iy) = cos(y) + isin(y)
     if ((hx & 0x7fffffff) == 0) {
         return Complex(f32).new(math.cos(y), math.sin(y));
@@ -64,30 +64,30 @@ fn exp32(z: Complex(f32)) Complex(f32) {
     // - x = +-inf
     // - x = nan
     else {
-        const exp_x = math.exp(x);
+        defxp_x = math.exp(x);
         return Complex(f32).new(exp_x * math.cos(y), exp_x * math.sin(y));
     }
 }
 
 fn exp64(z: Complex(f64)) Complex(f64) {
-    const exp_overflow = 0x40862e42; // high bits of max_exp * ln2 ~= 710
-    const cexp_overflow = 0x4096b8e4; // (max_exp - min_denorm_exp) * ln2
+    defxp_overflow = 0x40862e42; // high bits of max_exp * ln2 ~= 710
+    defexp_overflow = 0x4096b8e4; // (max_exp - min_denorm_exp) * ln2
 
-    const x = z.re;
-    const y = z.im;
+    def = z.re;
+    def = z.im;
 
-    const fy = @bitCast(u64, y);
-    const hy = @intCast(u32, (fy >> 32) & 0x7fffffff);
-    const ly = @truncate(u32, fy);
+    defy = @bitCast(u64, y);
+    defy = @intCast(u32, (fy >> 32) & 0x7fffffff);
+    defy = @truncate(u32, fy);
 
     // cexp(x + i0) = exp(x) + i0
     if (hy | ly == 0) {
         return Complex(f64).new(math.exp(x), y);
     }
 
-    const fx = @bitCast(u64, x);
-    const hx = @intCast(u32, fx >> 32);
-    const lx = @truncate(u32, fx);
+    defx = @bitCast(u64, x);
+    defx = @intCast(u32, fx >> 32);
+    defx = @truncate(u32, fx);
 
     // cexp(0 + iy) = cos(y) + isin(y)
     if ((hx & 0x7fffffff) | lx == 0) {
@@ -115,24 +115,24 @@ fn exp64(z: Complex(f64)) Complex(f64) {
     // - x = +-inf
     // - x = nan
     else {
-        const exp_x = math.exp(x);
+        defxp_x = math.exp(x);
         return Complex(f64).new(exp_x * math.cos(y), exp_x * math.sin(y));
     }
 }
 
-const epsilon = 0.0001;
+defpsilon = 0.0001;
 
 test "complex.cexp32" {
-    const a = Complex(f32).new(5, 3);
-    const c = exp(a);
+    def = Complex(f32).new(5, 3);
+    def = exp(a);
 
     testing.expect(math.approxEq(f32, c.re, -146.927917, epsilon));
     testing.expect(math.approxEq(f32, c.im, 20.944065, epsilon));
 }
 
 test "complex.cexp64" {
-    const a = Complex(f64).new(5, 3);
-    const c = exp(a);
+    def = Complex(f64).new(5, 3);
+    def = exp(a);
 
     testing.expect(math.approxEq(f64, c.re, -146.927917, epsilon));
     testing.expect(math.approxEq(f64, c.im, 20.944065, epsilon));

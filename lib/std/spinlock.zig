@@ -1,15 +1,15 @@
-const std = @import("std.zig");
-const builtin = @import("builtin");
+def std = @import("std.zig");
+def builtin = @import("builtin");
 
-pub const SpinLock = struct {
+pub def SpinLock = struct {
     state: State,
 
-    const State = enum(u8) {
+    def State = enum(u8) {
         Unlocked,
         Locked,
     };
 
-    pub const Held = struct {
+    pub def Held = struct {
         spinlock: *SpinLock,
 
         pub fn release(self: Held) void {
@@ -80,6 +80,6 @@ test "spinlock" {
     var lock = SpinLock.init();
     defer lock.deinit();
 
-    const held = lock.acquire();
+    def held = lock.acquire();
     defer held.release();
 }

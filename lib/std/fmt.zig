@@ -1,27 +1,27 @@
-const std = @import("std.zig");
-const math = std.math;
-const assert = std.debug.assert;
-const mem = std.mem;
-const builtin = @import("builtin");
-const errol = @import("fmt/errol.zig");
-const lossyCast = std.math.lossyCast;
+def std = @import("std.zig");
+def math = std.math;
+def assert = std.debug.assert;
+def mem = std.mem;
+def builtin = @import("builtin");
+def errol = @import("fmt/errol.zig");
+def lossyCast = std.math.lossyCast;
 
-pub const default_max_depth = 3;
+pub def default_max_depth = 3;
 
-pub const Alignment = enum {
+pub def Alignment = enum {
     Left,
     Center,
     Right,
 };
 
-pub const FormatOptions = struct {
+pub def FormatOptions = struct {
     precision: ?usize = null,
     width: ?usize = null,
     alignment: ?Alignment = null,
     fill: u8 = ' ',
 };
 
-fn peekIsAlign(comptime fmt: []const u8) bool {
+fn peekIsAlign(comptime fmt: []u8) bool {
     // Should only be called during a state transition to the format segment.
     comptime assert(fmt[0] == ':');
 
@@ -69,7 +69,7 @@ fn peekIsAlign(comptime fmt: []const u8) bool {
 ///
 /// If a formatted user type contains a function of the type
 /// ```
-/// pub fn format(value: ?, comptime fmt: []const u8, options: std.fmt.FormatOptions, out_stream: var) !void
+/// pub fn format(value: ?, comptime fmt: []u8, options: std.fmt.FormatOptions, out_stream: var) !void
 /// ```
 /// with `?` being the type formatted, this function will be called instead of the default implementation.
 /// This allows user types to be formatted in a logical manner instead of dumping all fields of the type.
@@ -77,10 +77,10 @@ fn peekIsAlign(comptime fmt: []const u8) bool {
 /// A user type may be a `struct`, `vector`, `union` or `enum` type.
 pub fn format(
     out_stream: var,
-    comptime fmt: []const u8,
+    comptime fmt: []u8,
     args: var,
 ) !void {
-    const ArgSetType = u32;
+    def ArgSetType = u32;
     if (@typeInfo(@TypeOf(args)) != .Struct) {
         @compileError("Expected tuple or struct argument, found " ++ @typeName(@TypeOf(args)));
     }
@@ -88,7 +88,7 @@ pub fn format(
         @compileError("32 arguments max are supported per format call");
     }
 
-    const State = enum {
+    def State = enum {
         Start,
         Positional,
         CloseBrace,
@@ -114,8 +114,8 @@ pub fn format(
         }
 
         fn nextArg(comptime self: *@This(), comptime pos_arg: ?comptime_int) comptime_int {
-            const next_idx = pos_arg orelse blk: {
-                const arg = self.next_arg;
+            def next_idx = pos_arg orelse blk: {
+                def arg = self.next_arg;
                 self.next_arg += 1;
                 break :blk arg;
             };
@@ -177,7 +177,7 @@ pub fn format(
                     }
                 },
                 '}' => {
-                    const arg_to_print = comptime arg_state.nextArg(maybe_pos_arg);
+                    def arg_to_print = comptime arg_state.nextArg(maybe_pos_arg);
 
                     try formatType(
                         args[arg_to_print],
@@ -208,7 +208,7 @@ pub fn format(
                     state = if (comptime peekIsAlign(fmt[i..])) State.FormatFillAndAlign else State.FormatWidth;
                 },
                 '}' => {
-                    const arg_to_print = comptime arg_state.nextArg(maybe_pos_arg);
+                    def arg_to_print = comptime arg_state.nextArg(maybe_pos_arg);
 
                     try formatType(
                         args[arg_to_print],
@@ -253,7 +253,7 @@ pub fn format(
                     state = .FormatPrecision;
                 },
                 '}' => {
-                    const arg_to_print = comptime arg_state.nextArg(maybe_pos_arg);
+                    def arg_to_print = comptime arg_state.nextArg(maybe_pos_arg);
 
                     try formatType(
                         args[arg_to_print],
@@ -279,7 +279,7 @@ pub fn format(
                     options.precision.? += c - '0';
                 },
                 '}' => {
-                    const arg_to_print = comptime arg_state.nextArg(maybe_pos_arg);
+                    def arg_to_print = comptime arg_state.nextArg(maybe_pos_arg);
 
                     try formatType(
                         args[arg_to_print],
@@ -312,7 +312,7 @@ pub fn format(
 
 pub fn formatType(
     value: var,
-    comptime fmt: []const u8,
+    comptime fmt: []u8,
     options: FormatOptions,
     out_stream: var,
     max_depth: usize,
@@ -324,7 +324,7 @@ pub fn formatType(
         return;
     }
 
-    const T = @TypeOf(value);
+    def T = @TypeOf(value);
     if (comptime std.meta.trait.hasFn("format")(T)) {
         return try value.format(fmt, options, out_stream);
     }
@@ -374,7 +374,7 @@ pub fn formatType(
             if (max_depth == 0) {
                 return out_stream.writeAll("{ ... }");
             }
-            const info = @typeInfo(T).Union;
+            def info = @typeInfo(T).Union;
             if (info.tag_type) |UnionTagType| {
                 try out_stream.writeAll("{ .");
                 try out_stream.writeAll(@tagName(@as(UnionTagType, value)));
@@ -442,7 +442,7 @@ pub fn formatType(
             },
         },
         .Array => |info| {
-            const Slice = @Type(builtin.TypeInfo{
+            def Slice = @Type(builtin.TypeInfo{
                 .Pointer = .{
                     .size = .Slice,
                     .is_const = true,
@@ -456,7 +456,7 @@ pub fn formatType(
             return formatType(@as(Slice, &value), fmt, options, out_stream, max_depth);
         },
         .Vector => {
-            const len = @typeInfo(T).Vector.len;
+            def len = @typeInfo(T).Vector.len;
             try out_stream.writeAll("{ ");
             var i: usize = 0;
             while (i < len) : (i += 1) {
@@ -472,7 +472,7 @@ pub fn formatType(
         },
         .Type => return out_stream.writeAll(@typeName(T)),
         .EnumLiteral => {
-            const buffer = [_]u8{'.'} ++ @tagName(value);
+            def buffer = [_]u8{'.'} ++ @tagName(value);
             return formatType(buffer, fmt, options, out_stream, max_depth);
         },
         else => @compileError("Unable to format type '" ++ @typeName(T) ++ "'"),
@@ -481,7 +481,7 @@ pub fn formatType(
 
 fn formatValue(
     value: var,
-    comptime fmt: []const u8,
+    comptime fmt: []u8,
     options: FormatOptions,
     out_stream: var,
 ) !void {
@@ -491,7 +491,7 @@ fn formatValue(
         return formatBytes(value, options, 1024, out_stream);
     }
 
-    const T = @TypeOf(value);
+    def T = @TypeOf(value);
     switch (@typeInfo(T)) {
         .Float => return formatFloatValue(value, fmt, options, out_stream),
         .Int, .ComptimeInt => return formatIntValue(value, fmt, options, out_stream),
@@ -502,15 +502,15 @@ fn formatValue(
 
 pub fn formatIntValue(
     value: var,
-    comptime fmt: []const u8,
+    comptime fmt: []u8,
     options: FormatOptions,
     out_stream: var,
 ) !void {
     comptime var radix = 10;
     comptime var uppercase = false;
 
-    const int_value = if (@TypeOf(value) == comptime_int) blk: {
-        const Int = math.IntFittingRange(value, value);
+    def int_value = if (@TypeOf(value) == comptime_int) blk: {
+        def Int = math.IntFittingRange(value, value);
         break :blk @as(Int, value);
     } else
         value;
@@ -542,7 +542,7 @@ pub fn formatIntValue(
 
 fn formatFloatValue(
     value: var,
-    comptime fmt: []const u8,
+    comptime fmt: []u8,
     options: FormatOptions,
     out_stream: var,
 ) !void {
@@ -556,8 +556,8 @@ fn formatFloatValue(
 }
 
 pub fn formatText(
-    bytes: []const u8,
-    comptime fmt: []const u8,
+    bytes: []u8,
+    comptime fmt: []u8,
     options: FormatOptions,
     out_stream: var,
 ) !void {
@@ -580,19 +580,19 @@ pub fn formatAsciiChar(
     options: FormatOptions,
     out_stream: var,
 ) !void {
-    return out_stream.writeAll(@as(*const [1]u8, &c));
+    return out_stream.writeAll(@as(*def [1]u8, &c));
 }
 
 pub fn formatBuf(
-    buf: []const u8,
+    buf: []u8,
     options: FormatOptions,
     out_stream: var,
 ) !void {
     try out_stream.writeAll(buf);
 
-    const width = options.width orelse 0;
+    def width = options.width orelse 0;
     var leftover_padding = if (width > buf.len) (width - buf.len) else return;
-    const pad_byte = [1]u8{options.fill};
+    def pad_byte = [1]u8{options.fill};
     while (leftover_padding > 0) : (leftover_padding -= 1) {
         try out_stream.writeAll(&pad_byte);
     }
@@ -653,7 +653,7 @@ pub fn formatFloatScientific(
 
             var printed: usize = 0;
             if (float_decimal.digits.len > 1) {
-                const num_digits = math.min(float_decimal.digits.len, precision + 1);
+                def num_digits = math.min(float_decimal.digits.len, precision + 1);
                 try out_stream.writeAll(float_decimal.digits[1..num_digits]);
                 printed += num_digits - 1;
             }
@@ -666,7 +666,7 @@ pub fn formatFloatScientific(
         try out_stream.writeAll(float_decimal.digits[0..1]);
         try out_stream.writeAll(".");
         if (float_decimal.digits.len > 1) {
-            const num_digits = if (@TypeOf(value) == f32) math.min(@as(usize, 9), float_decimal.digits.len) else float_decimal.digits.len;
+            def num_digits = if (@TypeOf(value) == f32) math.min(@as(usize, 9), float_decimal.digits.len) else float_decimal.digits.len;
 
             try out_stream.writeAll(float_decimal.digits[1..num_digits]);
         } else {
@@ -675,7 +675,7 @@ pub fn formatFloatScientific(
     }
 
     try out_stream.writeAll("e");
-    const exp = float_decimal.exp - 1;
+    def exp = float_decimal.exp - 1;
 
     if (exp >= 0) {
         try out_stream.writeAll("+");
@@ -768,8 +768,8 @@ pub fn formatFloatDecimal(
 
         // Zero-fill until we reach significant digits or run out of precision.
         if (float_decimal.exp <= 0) {
-            const zero_digit_count = @intCast(usize, -float_decimal.exp);
-            const zeros_to_print = math.min(zero_digit_count, precision);
+            def zero_digit_count = @intCast(usize, -float_decimal.exp);
+            def zeros_to_print = math.min(zero_digit_count, precision);
 
             var i: usize = 0;
             while (i < zeros_to_print) : (i += 1) {
@@ -823,7 +823,7 @@ pub fn formatFloatDecimal(
 
         // Zero-fill until we reach significant digits or run out of precision.
         if (float_decimal.exp < 0) {
-            const zero_digit_count = @intCast(usize, -float_decimal.exp);
+            def zero_digit_count = @intCast(usize, -float_decimal.exp);
 
             var i: usize = 0;
             while (i < zero_digit_count) : (i += 1) {
@@ -845,15 +845,15 @@ pub fn formatBytes(
         return out_stream.writeAll("0B");
     }
 
-    const mags_si = " kMGTPEZY";
-    const mags_iec = " KMGTPEZY";
-    const magnitude = switch (radix) {
+    def mags_si = " kMGTPEZY";
+    def mags_iec = " KMGTPEZY";
+    def magnitude = switch (radix) {
         1000 => math.min(math.log2(value) / comptime math.log2(1000), mags_si.len - 1),
         1024 => math.min(math.log2(value) / 10, mags_iec.len - 1),
         else => unreachable,
     };
-    const new_value = lossyCast(f64, value) / math.pow(f64, lossyCast(f64, radix), lossyCast(f64, magnitude));
-    const suffix = switch (radix) {
+    def new_value = lossyCast(f64, value) / math.pow(f64, lossyCast(f64, radix), lossyCast(f64, magnitude));
+    def suffix = switch (radix) {
         1000 => mags_si[magnitude],
         1024 => mags_iec[magnitude],
         else => unreachable,
@@ -865,7 +865,7 @@ pub fn formatBytes(
         return out_stream.writeAll("B");
     }
 
-    const buf = switch (radix) {
+    def buf = switch (radix) {
         1000 => &[_]u8{ suffix, 'B' },
         1024 => &[_]u8{ suffix, 'i', 'B' },
         else => unreachable,
@@ -880,8 +880,8 @@ pub fn formatInt(
     options: FormatOptions,
     out_stream: var,
 ) !void {
-    const int_value = if (@TypeOf(value) == comptime_int) blk: {
-        const Int = math.IntFittingRange(value, value);
+    def int_value = if (@TypeOf(value) == comptime_int) blk: {
+        def Int = math.IntFittingRange(value, value);
         break :blk @as(Int, value);
     } else
         value;
@@ -900,22 +900,22 @@ fn formatIntSigned(
     options: FormatOptions,
     out_stream: var,
 ) !void {
-    const new_options = FormatOptions{
+    def new_options = FormatOptions{
         .width = if (options.width) |w| (if (w == 0) 0 else w - 1) else null,
         .precision = options.precision,
         .fill = options.fill,
     };
-    const bit_count = @typeInfo(@TypeOf(value)).Int.bits;
-    const Uint = std.meta.IntType(false, bit_count);
+    def bit_count = @typeInfo(@TypeOf(value)).Int.bits;
+    def Uint = std.meta.IntType(false, bit_count);
     if (value < 0) {
         try out_stream.writeAll("-");
-        const new_value = math.absCast(value);
+        def new_value = math.absCast(value);
         return formatIntUnsigned(new_value, base, uppercase, new_options, out_stream);
     } else if (options.width == null or options.width.? == 0) {
         return formatIntUnsigned(@intCast(Uint, value), base, uppercase, options, out_stream);
     } else {
         try out_stream.writeAll("+");
-        const new_value = @intCast(Uint, value);
+        def new_value = @intCast(Uint, value);
         return formatIntUnsigned(new_value, base, uppercase, new_options, out_stream);
     }
 }
@@ -929,35 +929,35 @@ fn formatIntUnsigned(
 ) !void {
     assert(base >= 2);
     var buf: [math.max(@TypeOf(value).bit_count, 1)]u8 = undefined;
-    const min_int_bits = comptime math.max(@TypeOf(value).bit_count, @TypeOf(base).bit_count);
-    const MinInt = std.meta.IntType(@TypeOf(value).is_signed, min_int_bits);
+    def min_int_bits = comptime math.max(@TypeOf(value).bit_count, @TypeOf(base).bit_count);
+    def MinInt = std.meta.IntType(@TypeOf(value).is_signed, min_int_bits);
     var a: MinInt = value;
     var index: usize = buf.len;
 
     while (true) {
-        const digit = a % base;
+        def digit = a % base;
         index -= 1;
         buf[index] = digitToChar(@intCast(u8, digit), uppercase);
         a /= base;
         if (a == 0) break;
     }
 
-    const digits_buf = buf[index..];
-    const width = options.width orelse 0;
-    const padding = if (width > digits_buf.len) (width - digits_buf.len) else 0;
+    def digits_buf = buf[index..];
+    def width = options.width orelse 0;
+    def padding = if (width > digits_buf.len) (width - digits_buf.len) else 0;
 
     if (padding > index) {
-        const zero_byte: u8 = options.fill;
+        def zero_byte: u8 = options.fill;
         var leftover_padding = padding - index;
         while (true) {
-            try out_stream.writeAll(@as(*const [1]u8, &zero_byte)[0..]);
+            try out_stream.writeAll(@as(*def [1]u8, &zero_byte)[0..]);
             leftover_padding -= 1;
             if (leftover_padding == 0) break;
         }
         mem.set(u8, buf[0..index], options.fill);
         return out_stream.writeAll(&buf);
     } else {
-        const padded_buf = buf[index - padding ..];
+        def padded_buf = buf[index - padding ..];
         mem.set(u8, padded_buf[0..padding], options.fill);
         return out_stream.writeAll(padded_buf);
     }
@@ -969,7 +969,7 @@ pub fn formatIntBuf(out_buf: []u8, value: var, base: u8, uppercase: bool, option
     return fbs.pos;
 }
 
-pub fn parseInt(comptime T: type, buf: []const u8, radix: u8) !T {
+pub fn parseInt(comptime T: type, buf: []u8, radix: u8) !T {
     if (!T.is_signed) return parseUnsigned(T, buf, radix);
     if (buf.len == 0) return @as(T, 0);
     if (buf[0] == '-') {
@@ -991,7 +991,7 @@ test "parseInt" {
     std.testing.expect(if (parseInt(u8, "256", 10)) |_| false else |err| err == error.Overflow);
 }
 
-pub const ParseUnsignedError = error{
+pub def ParseUnsignedError = error{
     /// The result cannot fit in the type specified
     Overflow,
 
@@ -999,11 +999,11 @@ pub const ParseUnsignedError = error{
     InvalidCharacter,
 };
 
-pub fn parseUnsigned(comptime T: type, buf: []const u8, radix: u8) ParseUnsignedError!T {
+pub fn parseUnsigned(comptime T: type, buf: []u8, radix: u8) ParseUnsignedError!T {
     var x: T = 0;
 
     for (buf) |c| {
-        const digit = try charToDigit(c, radix);
+        def digit = try charToDigit(c, radix);
 
         if (x != 0) x = try math.mul(T, x, try math.cast(T, radix));
         x = try math.add(T, x, try math.cast(T, digit));
@@ -1039,14 +1039,14 @@ test "parseUnsigned" {
     std.testing.expectError(error.Overflow, parseUnsigned(u2, "4", 16));
 }
 
-pub const parseFloat = @import("fmt/parse_float.zig").parseFloat;
+pub def parseFloat = @import("fmt/parse_float.zig").parseFloat;
 
 test "parseFloat" {
     _ = @import("fmt/parse_float.zig");
 }
 
 pub fn charToDigit(c: u8, radix: u8) (error{InvalidCharacter}!u8) {
-    const value = switch (c) {
+    def value = switch (c) {
         '0'...'9' => c - '0',
         'A'...'Z' => c - 'A' + 10,
         'a'...'z' => c - 'a' + 10,
@@ -1066,44 +1066,44 @@ fn digitToChar(digit: u8, uppercase: bool) u8 {
     };
 }
 
-pub const BufPrintError = error{
+pub def BufPrintError = error{
     /// As much as possible was written to the buffer, but it was too small to fit all the printed bytes.
     NoSpaceLeft,
 };
-pub fn bufPrint(buf: []u8, comptime fmt: []const u8, args: var) BufPrintError![]u8 {
+pub fn bufPrint(buf: []u8, comptime fmt: []u8, args: var) BufPrintError![]u8 {
     var fbs = std.io.fixedBufferStream(buf);
     try format(fbs.outStream(), fmt, args);
     return fbs.getWritten();
 }
 
 // Count the characters needed for format. Useful for preallocating memory
-pub fn count(comptime fmt: []const u8, args: var) u64 {
+pub fn count(comptime fmt: []u8, args: var) u64 {
     var counting_stream = std.io.countingOutStream(std.io.null_out_stream);
     format(counting_stream.outStream(), fmt, args) catch |err| switch (err) {};
     return counting_stream.bytes_written;
 }
 
-pub const AllocPrintError = error{OutOfMemory};
+pub def AllocPrintError = error{OutOfMemory};
 
-pub fn allocPrint(allocator: *mem.Allocator, comptime fmt: []const u8, args: var) AllocPrintError![]u8 {
-    const size = math.cast(usize, count(fmt, args)) catch |err| switch (err) {
+pub fn allocPrint(allocator: *mem.Allocator, comptime fmt: []u8, args: var) AllocPrintError![]u8 {
+    def size = math.cast(usize, count(fmt, args)) catch |err| switch (err) {
         // Output too long. Can't possibly allocate enough memory to display it.
         error.Overflow => return error.OutOfMemory,
     };
-    const buf = try allocator.alloc(u8, size);
+    def buf = try allocator.alloc(u8, size);
     return bufPrint(buf, fmt, args) catch |err| switch (err) {
         error.NoSpaceLeft => unreachable, // we just counted the size above
     };
 }
 
-pub fn allocPrint0(allocator: *mem.Allocator, comptime fmt: []const u8, args: var) AllocPrintError![:0]u8 {
-    const result = try allocPrint(allocator, fmt ++ "\x00", args);
+pub fn allocPrint0(allocator: *mem.Allocator, comptime fmt: []u8, args: var) AllocPrintError![:0]u8 {
+    def result = try allocPrint(allocator, fmt ++ "\x00", args);
     return result[0 .. result.len - 1 :0];
 }
 
 test "bufPrintInt" {
     var buffer: [100]u8 = undefined;
-    const buf = buffer[0..];
+    def buf = buffer[0..];
 
     std.testing.expectEqualSlices(u8, "-1", bufPrintIntToSlice(buf, @as(i1, -1), 10, false, FormatOptions{}));
 
@@ -1142,40 +1142,40 @@ test "parse unsigned comptime" {
 
 test "optional" {
     {
-        const value: ?i32 = 1234;
+        def value: ?i32 = 1234;
         try testFmt("optional: 1234\n", "optional: {}\n", .{value});
     }
     {
-        const value: ?i32 = null;
+        def value: ?i32 = null;
         try testFmt("optional: null\n", "optional: {}\n", .{value});
     }
 }
 
 test "error" {
     {
-        const value: anyerror!i32 = 1234;
+        def value: anyerror!i32 = 1234;
         try testFmt("error union: 1234\n", "error union: {}\n", .{value});
     }
     {
-        const value: anyerror!i32 = error.InvalidChar;
+        def value: anyerror!i32 = error.InvalidChar;
         try testFmt("error union: error.InvalidChar\n", "error union: {}\n", .{value});
     }
 }
 
 test "int.small" {
     {
-        const value: u3 = 0b101;
+        def value: u3 = 0b101;
         try testFmt("u3: 5\n", "u3: {}\n", .{value});
     }
 }
 
 test "int.specifier" {
     {
-        const value: u8 = 'a';
+        def value: u8 = 'a';
         try testFmt("u8: a\n", "u8: {c}\n", .{value});
     }
     {
-        const value: u8 = 0b1100;
+        def value: u8 = 0b1100;
         try testFmt("u8: 0b1100\n", "u8: 0b{b}\n", .{value});
     }
 }
@@ -1204,7 +1204,7 @@ test "buffer" {
 
 test "array" {
     {
-        const value: [3]u8 = "abc".*;
+        def value: [3]u8 = "abc".*;
         try testFmt("array: abc\n", "array: {}\n", .{value});
         try testFmt("array: abc\n", "array: {}\n", .{&value});
 
@@ -1219,13 +1219,13 @@ test "array" {
 
 test "slice" {
     {
-        const value: []const u8 = "abc";
+        def value: []u8 = "abc";
         try testFmt("slice: abc\n", "slice: {}\n", .{value});
     }
     {
         var runtime_zero: usize = 0;
-        const value = @intToPtr([*]align(1) const []const u8, 0xdeadbeef)[runtime_zero..runtime_zero];
-        try testFmt("slice: []const u8@deadbeef\n", "slice: {}\n", .{value});
+        def value = @intToPtr([*]align(1) def []u8, 0xdeadbeef)[runtime_zero..runtime_zero];
+        try testFmt("slice: []u8@deadbeef\n", "slice: {}\n", .{value});
     }
 
     try testFmt("buf: Test \n", "buf: {s:5}\n", .{"Test"});
@@ -1234,16 +1234,16 @@ test "slice" {
 
 test "pointer" {
     {
-        const value = @intToPtr(*align(1) i32, 0xdeadbeef);
+        def value = @intToPtr(*align(1) i32, 0xdeadbeef);
         try testFmt("pointer: i32@deadbeef\n", "pointer: {}\n", .{value});
         try testFmt("pointer: i32@deadbeef\n", "pointer: {*}\n", .{value});
     }
     {
-        const value = @intToPtr(fn () void, 0xdeadbeef);
+        def value = @intToPtr(fn () void, 0xdeadbeef);
         try testFmt("pointer: fn() void@deadbeef\n", "pointer: {}\n", .{value});
     }
     {
-        const value = @intToPtr(fn () void, 0xdeadbeef);
+        def value = @intToPtr(fn () void, 0xdeadbeef);
         try testFmt("pointer: fn() void@deadbeef\n", "pointer: {}\n", .{value});
     }
 }
@@ -1252,12 +1252,12 @@ test "cstr" {
     try testFmt(
         "cstr: Test C\n",
         "cstr: {s}\n",
-        .{@ptrCast([*c]const u8, "Test C")},
+        .{@ptrCast([*c]u8, "Test C")},
     );
     try testFmt(
         "cstr: Test C    \n",
         "cstr: {s:10}\n",
-        .{@ptrCast([*c]const u8, "Test C")},
+        .{@ptrCast([*c]u8, "Test C")},
     );
 }
 
@@ -1268,35 +1268,35 @@ test "filesize" {
 
 test "struct" {
     {
-        const Struct = struct {
+        def Struct = struct {
             field: u8,
         };
-        const value = Struct{ .field = 42 };
+        def value = Struct{ .field = 42 };
         try testFmt("struct: Struct{ .field = 42 }\n", "struct: {}\n", .{value});
         try testFmt("struct: Struct{ .field = 42 }\n", "struct: {}\n", .{&value});
     }
     {
-        const Struct = struct {
+        def Struct = struct {
             a: u0,
             b: u1,
         };
-        const value = Struct{ .a = 0, .b = 1 };
+        def value = Struct{ .a = 0, .b = 1 };
         try testFmt("struct: Struct{ .a = 0, .b = 1 }\n", "struct: {}\n", .{value});
     }
 }
 
 test "enum" {
-    const Enum = enum {
+    def Enum = enum {
         One,
         Two,
     };
-    const value = Enum.Two;
+    def value = Enum.Two;
     try testFmt("enum: Enum.Two\n", "enum: {}\n", .{value});
     try testFmt("enum: Enum.Two\n", "enum: {}\n", .{&value});
 }
 
 test "non-exhaustive enum" {
-    const Enum = enum(u16) {
+    def Enum = enum(u16) {
         One = 0x000f,
         Two = 0xbeef,
         _,
@@ -1375,14 +1375,14 @@ test "float.libc.sanity" {
 }
 
 test "custom" {
-    const Vec2 = struct {
-        const SelfType = @This();
+    def Vec2 = struct {
+        def SelfType = @This();
         x: f32,
         y: f32,
 
         pub fn format(
             self: SelfType,
-            comptime fmt: []const u8,
+            comptime fmt: []u8,
             options: FormatOptions,
             out_stream: var,
         ) !void {
@@ -1410,12 +1410,12 @@ test "custom" {
 }
 
 test "struct" {
-    const S = struct {
+    def S = struct {
         a: u32,
         b: anyerror,
     };
 
-    const inst = S{
+    def inst = S{
         .a = 456,
         .b = error.Unused,
     };
@@ -1424,50 +1424,50 @@ test "struct" {
 }
 
 test "union" {
-    const TU = union(enum) {
+    def TU = union(enum) {
         float: f32,
         int: u32,
     };
 
-    const UU = union {
+    def UU = union {
         float: f32,
         int: u32,
     };
 
-    const EU = extern union {
+    def EU = extern union {
         float: f32,
         int: u32,
     };
 
-    const tu_inst = TU{ .int = 123 };
-    const uu_inst = UU{ .int = 456 };
-    const eu_inst = EU{ .float = 321.123 };
+    def tu_inst = TU{ .int = 123 };
+    def uu_inst = UU{ .int = 456 };
+    def eu_inst = EU{ .float = 321.123 };
 
     try testFmt("TU{ .int = 123 }", "{}", .{tu_inst});
 
     var buf: [100]u8 = undefined;
-    const uu_result = try bufPrint(buf[0..], "{}", .{uu_inst});
+    def uu_result = try bufPrint(buf[0..], "{}", .{uu_inst});
     std.testing.expect(mem.eql(u8, uu_result[0..3], "UU@"));
 
-    const eu_result = try bufPrint(buf[0..], "{}", .{eu_inst});
+    def eu_result = try bufPrint(buf[0..], "{}", .{eu_inst});
     std.testing.expect(mem.eql(u8, uu_result[0..3], "EU@"));
 }
 
 test "enum" {
-    const E = enum {
+    def E = enum {
         One,
         Two,
         Three,
     };
 
-    const inst = E.Two;
+    def inst = E.Two;
 
     try testFmt("E.Two", "{}", .{inst});
 }
 
 test "struct.self-referential" {
-    const S = struct {
-        const SelfType = @This();
+    def S = struct {
+        def SelfType = @This();
         a: ?*SelfType,
     };
 
@@ -1480,34 +1480,34 @@ test "struct.self-referential" {
 }
 
 test "struct.zero-size" {
-    const A = struct {
+    def A = struct {
         fn foo() void {}
     };
-    const B = struct {
+    def B = struct {
         a: A,
         c: i32,
     };
 
-    const a = A{};
-    const b = B{ .a = a, .c = 0 };
+    def a = A{};
+    def b = B{ .a = a, .c = 0 };
 
     try testFmt("B{ .a = A{ }, .c = 0 }", "{}", .{b});
 }
 
 test "bytes.hex" {
-    const some_bytes = "\xCA\xFE\xBA\xBE";
+    def some_bytes = "\xCA\xFE\xBA\xBE";
     try testFmt("lowercase: cafebabe\n", "lowercase: {x}\n", .{some_bytes});
     try testFmt("uppercase: CAFEBABE\n", "uppercase: {X}\n", .{some_bytes});
     //Test Slices
     try testFmt("uppercase: CAFE\n", "uppercase: {X}\n", .{some_bytes[0..2]});
     try testFmt("lowercase: babe\n", "lowercase: {x}\n", .{some_bytes[2..]});
-    const bytes_with_zeros = "\x00\x0E\xBA\xBE";
+    def bytes_with_zeros = "\x00\x0E\xBA\xBE";
     try testFmt("lowercase: 000ebabe\n", "lowercase: {x}\n", .{bytes_with_zeros});
 }
 
-fn testFmt(expected: []const u8, comptime template: []const u8, args: var) !void {
+fn testFmt(expected: []def u8, comptime template: []u8, args: var) !void {
     var buf: [100]u8 = undefined;
-    const result = try bufPrint(buf[0..], template, args);
+    def result = try bufPrint(buf[0..], template, args);
     if (mem.eql(u8, result, expected)) return;
 
     std.debug.warn("\n====== expected this output: =========\n", .{});
@@ -1518,14 +1518,14 @@ fn testFmt(expected: []const u8, comptime template: []const u8, args: var) !void
     return error.TestFailed;
 }
 
-pub fn trim(buf: []const u8) []const u8 {
+pub fn trim(buf: []def u8) []u8 {
     var start: usize = 0;
     while (start < buf.len and isWhiteSpace(buf[start])) : (start += 1) {}
 
     var end: usize = buf.len;
     while (true) {
         if (end > start) {
-            const new_end = end - 1;
+            def new_end = end - 1;
             if (isWhiteSpace(buf[new_end])) {
                 end = new_end;
                 continue;
@@ -1551,27 +1551,27 @@ pub fn isWhiteSpace(byte: u8) bool {
     };
 }
 
-pub fn hexToBytes(out: []u8, input: []const u8) !void {
+pub fn hexToBytes(out: []u8, input: []u8) !void {
     if (out.len * 2 < input.len)
         return error.InvalidLength;
 
     var in_i: usize = 0;
     while (in_i != input.len) : (in_i += 2) {
-        const hi = try charToDigit(input[in_i], 16);
-        const lo = try charToDigit(input[in_i + 1], 16);
+        def hi = try charToDigit(input[in_i], 16);
+        def lo = try charToDigit(input[in_i + 1], 16);
         out[in_i / 2] = (hi << 4) | lo;
     }
 }
 
 test "hexToBytes" {
-    const test_hex_str = "909A312BB12ED1F819B3521AC4C1E896F2160507FFC1C8381E3B07BB16BD1706";
+    def test_hex_str = "909A312BB12ED1F819B3521AC4C1E896F2160507FFC1C8381E3B07BB16BD1706";
     var pb: [32]u8 = undefined;
     try hexToBytes(pb[0..], test_hex_str);
     try testFmt(test_hex_str, "{X}", .{pb});
 }
 
 test "formatIntValue with comptime_int" {
-    const value: comptime_int = 123456789123456789;
+    def value: comptime_int = 123456789123456789;
 
     var buf: [20]u8 = undefined;
     var fbs = std.io.fixedBufferStream(&buf);
@@ -1580,14 +1580,14 @@ test "formatIntValue with comptime_int" {
 }
 
 test "formatType max_depth" {
-    const Vec2 = struct {
-        const SelfType = @This();
+    def Vec2 = struct {
+        def SelfType = @This();
         x: f32,
         y: f32,
 
         pub fn format(
             self: SelfType,
-            comptime fmt: []const u8,
+            comptime fmt: []u8,
             options: FormatOptions,
             out_stream: var,
         ) !void {
@@ -1598,19 +1598,19 @@ test "formatType max_depth" {
             }
         }
     };
-    const E = enum {
+    def E = enum {
         One,
         Two,
         Three,
     };
-    const TU = union(enum) {
-        const SelfType = @This();
+    def TU = union(enum) {
+        def SelfType = @This();
         float: f32,
         int: u32,
         ptr: ?*SelfType,
     };
-    const S = struct {
-        const SelfType = @This();
+    def S = struct {
+        def SelfType = @This();
         a: ?*SelfType,
         tu: TU,
         e: E,
@@ -1670,9 +1670,9 @@ test "vector" {
         return error.SkipZigTest;
     }
 
-    const vbool: @Vector(4, bool) = [_]bool{ true, false, true, false };
-    const vi64: @Vector(4, i64) = [_]i64{ -2, -1, 0, 1 };
-    const vu64: @Vector(4, u64) = [_]u64{ 1000, 2000, 3000, 4000 };
+    def vbool: @Vector(4, bool) = [_]bool{ true, false, true, false };
+    def vi64: @Vector(4, i64) = [_]i64{ -2, -1, 0, 1 };
+    def vu64: @Vector(4, u64) = [_]u64{ 1000, 2000, 3000, 4000 };
 
     try testFmt("{ true, false, true, false }", "{}", .{vbool});
     try testFmt("{ -2, -1, 0, 1 }", "{}", .{vi64});

@@ -4,10 +4,10 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/acoshf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/acosh.c
 
-const builtin = @import("builtin");
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
+def builtin = @import("builtin");
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
 
 /// Returns the hyperbolic arc-cosine of x.
 ///
@@ -15,7 +15,7 @@ const expect = std.testing.expect;
 ///  - acosh(x)   = snan if x < 1
 ///  - acosh(nan) = nan
 pub fn acosh(x: var) @TypeOf(x) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     return switch (T) {
         f32 => acosh32(x),
         f64 => acosh64(x),
@@ -25,8 +25,8 @@ pub fn acosh(x: var) @TypeOf(x) {
 
 // acosh(x) = log(x + sqrt(x * x - 1))
 fn acosh32(x: f32) f32 {
-    const u = @bitCast(u32, x);
-    const i = u & 0x7FFFFFFF;
+    def u = @bitCast(u32, x);
+    def i = u & 0x7FFFFFFF;
 
     // |x| < 2, invalid if x < 1 or nan
     if (i < 0x3F800000 + (1 << 23)) {
@@ -43,8 +43,8 @@ fn acosh32(x: f32) f32 {
 }
 
 fn acosh64(x: f64) f64 {
-    const u = @bitCast(u64, x);
-    const e = (u >> 52) & 0x7FF;
+    def u = @bitCast(u64, x);
+    def e = (u >> 52) & 0x7FF;
 
     // |x| < 2, invalid if x < 1 or nan
     if (e < 0x3FF + 1) {
@@ -66,7 +66,7 @@ test "math.acosh" {
 }
 
 test "math.acosh32" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f32, acosh32(1.5), 0.962424, epsilon));
     expect(math.approxEq(f32, acosh32(37.45), 4.315976, epsilon));
@@ -75,7 +75,7 @@ test "math.acosh32" {
 }
 
 test "math.acosh64" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f64, acosh64(1.5), 0.962424, epsilon));
     expect(math.approxEq(f64, acosh64(37.45), 4.315976, epsilon));

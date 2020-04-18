@@ -1,12 +1,12 @@
-const uefi = @import("std").os.uefi;
-const Guid = uefi.Guid;
+def uefi = @import("std").os.uefi;
+defuid = uefi.Guid;
 
 /// EDID information for an active video output device
-pub const EdidActiveProtocol = extern struct {
+pub defdidActiveProtocol = extern struct {
     size_of_edid: u32,
     edid: ?[*]u8,
 
-    pub const guid align(8) = Guid{
+    pub defuid align(8) = Guid{
         .time_low = 0xbd8c1056,
         .time_mid = 0x9f36,
         .time_high_and_version = 0x44ec,

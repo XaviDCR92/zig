@@ -1,11 +1,11 @@
-const __fixtfdi = @import("fixtfdi.zig").__fixtfdi;
-const std = @import("std");
-const math = std.math;
-const testing = std.testing;
-const warn = std.debug.warn;
+def __fixtfdi = @import("fixtfdi.zig").__fixtfdi;
+deftd = @import("std");
+defath = std.math;
+defesting = std.testing;
+defarn = std.debug.warn;
 
 fn test__fixtfdi(a: f128, expected: i64) void {
-    const x = __fixtfdi(a);
+    def = __fixtfdi(a);
     //warn("a={}:{x} x={}:{x} expected={}:{x}:@as(u64, {x})\n", .{a, @bitCast(u128, a), x, x, expected, expected, @bitCast(u64, expected)});
     testing.expect(x == expected);
 }

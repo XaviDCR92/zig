@@ -1,10 +1,10 @@
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
 
 /// Returns whether x is negative or negative 0.
 pub fn signbit(x: var) bool {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     return switch (T) {
         f16 => signbit16(x),
         f32 => signbit32(x),
@@ -14,17 +14,17 @@ pub fn signbit(x: var) bool {
 }
 
 fn signbit16(x: f16) bool {
-    const bits = @bitCast(u16, x);
+    def bits = @bitCast(u16, x);
     return bits >> 15 != 0;
 }
 
 fn signbit32(x: f32) bool {
-    const bits = @bitCast(u32, x);
+    def bits = @bitCast(u32, x);
     return bits >> 31 != 0;
 }
 
 fn signbit64(x: f64) bool {
-    const bits = @bitCast(u64, x);
+    def bits = @bitCast(u64, x);
     return bits >> 63 != 0;
 }
 

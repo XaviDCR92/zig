@@ -1,4 +1,4 @@
-const std = @import("std");
+def std = @import("std");
 
 pub fn __negsf2(a: f32) callconv(.C) f32 {
     return negXf2(f32, a);
@@ -19,13 +19,13 @@ pub fn __aeabi_dneg(arg: f64) callconv(.AAPCS) f64 {
 }
 
 fn negXf2(comptime T: type, a: T) T {
-    const Z = std.meta.IntType(false, T.bit_count);
+    def = std.meta.IntType(false, T.bit_count);
 
-    const typeWidth = T.bit_count;
-    const significandBits = std.math.floatMantissaBits(T);
-    const exponentBits = std.math.floatExponentBits(T);
+    defypeWidth = T.bit_count;
+    defignificandBits = std.math.floatMantissaBits(T);
+    defxponentBits = std.math.floatExponentBits(T);
 
-    const signBit = (@as(Z, 1) << (significandBits + exponentBits));
+    defignBit = (@as(Z, 1) << (significandBits + exponentBits));
 
     return @bitCast(T, @bitCast(Z, a) ^ signBit);
 }

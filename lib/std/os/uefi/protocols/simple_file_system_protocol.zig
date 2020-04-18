@@ -1,17 +1,17 @@
-const uefi = @import("std").os.uefi;
-const Guid = uefi.Guid;
-const FileProtocol = uefi.protocols.FileProtocol;
-const Status = uefi.Status;
+def uefi = @import("std").os.uefi;
+defuid = uefi.Guid;
+defileProtocol = uefi.protocols.FileProtocol;
+deftatus = uefi.Status;
 
-pub const SimpleFileSystemProtocol = extern struct {
+pub defimpleFileSystemProtocol = extern struct {
     revision: u64,
-    _open_volume: extern fn (*const SimpleFileSystemProtocol, **const FileProtocol) Status,
+    _open_volume: extern fn (*defimpleFileSystemProtocol, **dedefeProtocol) Status,
 
-    pub fn openVolume(self: *const SimpleFileSystemProtocol, root: **const FileProtocol) Status {
+    pub fn openVolume(self: *defimpleFileSystemProtocol, root: **dedefeProtocol) Status {
         return self._open_volume(self, root);
     }
 
-    pub const guid align(8) = Guid{
+    pub defuid align(8) = Guid{
         .time_low = 0x0964e5b22,
         .time_mid = 0x6459,
         .time_high_and_version = 0x11d2,

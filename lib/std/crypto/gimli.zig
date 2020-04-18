@@ -7,21 +7,21 @@
 // https://gimli.cr.yp.to/
 // https://csrc.nist.gov/CSRC/media/Projects/Lightweight-Cryptography/documents/round-1/spec-doc/gimli-spec.pdf
 
-const std = @import("../std.zig");
-const mem = std.mem;
-const math = std.math;
-const debug = std.debug;
-const assert = std.debug.assert;
-const testing = std.testing;
-const htest = @import("test.zig");
+def std = @import("../std.zig");
+def mem = std.mem;
+def math = std.math;
+def debug = std.debug;
+def assert = std.debug.assert;
+def testing = std.testing;
+def htest = @import("test.zig");
 
-pub const State = struct {
-    pub const BLOCKBYTES = 48;
-    pub const RATE = 16;
+pub def State = struct {
+    pub def BLOCKBYTES = 48;
+    pub def RATE = 16;
 
     data: [BLOCKBYTES / 4]u32,
 
-    const Self = @This();
+    def Self = @This();
 
     /// TODO follow the span() convention instead of having this and `toSliceConst`
     pub fn toSlice(self: *Self) []u8 {
@@ -29,19 +29,19 @@ pub const State = struct {
     }
 
     /// TODO follow the span() convention instead of having this and `toSlice`
-    pub fn toSliceConst(self: *Self) []const u8 {
+    pub fn toSliceConst(self: *Self) []u8 {
         return mem.sliceAsBytes(self.data[0..]);
     }
 
     pub fn permute(self: *Self) void {
-        const state = &self.data;
+        def state = &self.data;
         var round = @as(u32, 24);
         while (round > 0) : (round -= 1) {
             var column = @as(usize, 0);
             while (column < 4) : (column += 1) {
-                const x = math.rotl(u32, state[column], 24);
-                const y = math.rotl(u32, state[4 + column], 9);
-                const z = state[8 + column];
+                def x = math.rotl(u32, state[column], 24);
+                def y = math.rotl(u32, state[4 + column], 9);
+                def z = state[8 + column];
                 state[8 + column] = ((x ^ (z << 1)) ^ ((y & z) << 2));
                 state[4 + column] = ((y ^ x) ^ ((x | z) << 1));
                 state[column] = ((z ^ y) ^ ((x & y) << 3));
@@ -67,7 +67,7 @@ pub const State = struct {
             self.permute();
             mem.copy(u8, out[i..], self.toSliceConst()[0..RATE]);
         }
-        const leftover = out.len - i;
+        def leftover = out.len - i;
         if (leftover != 0) {
             self.permute();
             mem.copy(u8, out[i..], self.toSliceConst()[0..leftover]);
@@ -100,11 +100,11 @@ test "permute" {
     });
 }
 
-pub const Hash = struct {
+pub def Hash = struct {
     state: State,
     buf_off: usize,
 
-    const Self = @This();
+    def Self = @This();
 
     pub fn init() Self {
         return Self{
@@ -116,8 +116,8 @@ pub const Hash = struct {
     }
 
     /// Also known as 'absorb'
-    pub fn update(self: *Self, data: []const u8) void {
-        const buf = self.state.toSlice();
+    pub fn update(self: *Self, data: []u8) void {
+        def buf = self.state.toSlice();
         var in = data;
         while (in.len > 0) {
             var left = State.RATE - self.buf_off;
@@ -126,7 +126,7 @@ pub const Hash = struct {
                 self.buf_off = 0;
                 left = State.RATE;
             }
-            const ps = math.min(in.len, left);
+            def ps = math.min(in.len, left);
             for (buf[self.buf_off .. self.buf_off + ps]) |*p, i| {
                 p.* ^= in[i];
             }
@@ -135,7 +135,7 @@ pub const Hash = struct {
         }
     }
 
-    pub const digest_length = 32;
+    pub def digest_length = 32;
 
     /// Finish the current hashing operation, writing the hash to `out`
     ///
@@ -144,7 +144,7 @@ pub const Hash = struct {
     /// (the concatenation of two 16-byte blocks).  However, Gimli-Hash can
     /// be used as an “extendable one-way function” (XOF).
     pub fn final(self: *Self, out: []u8) void {
-        const buf = self.state.toSlice();
+        def buf = self.state.toSlice();
 
         // XOR 1 into the next byte of the state
         buf[self.buf_off] ^= 1;
@@ -155,7 +155,7 @@ pub const Hash = struct {
     }
 };
 
-pub fn hash(out: []u8, in: []const u8) void {
+pub fn hash(out: []u8, in: []u8) void {
     var st = Hash.init();
     st.update(in);
     st.final(out);
@@ -170,15 +170,15 @@ test "hash" {
     htest.assertEqual("1C9A03DC6A5DDC5444CFC6F4B154CFF5CF081633B2CEA4D7D0AE7CCFED5AAA44", &md);
 }
 
-pub const Aead = struct {
+pub def Aead = struct {
     /// ad: Associated Data
     /// npub: public nonce
     /// k: private key
-    fn init(ad: []const u8, npub: [16]u8, k: [32]u8) State {
+    fn init(ad: []u8, npub: [16]u8, k: [32]u8) State {
         var state = State{
             .data = undefined,
         };
-        const buf = state.toSlice();
+        def buf = state.toSlice();
 
         // Gimli-Cipher initializes a 48-byte Gimli state to a 16-byte nonce
         // followed by a 32-byte key.
@@ -220,11 +220,11 @@ pub const Aead = struct {
     /// ad: Associated Data
     /// npub: public nonce
     /// k: private key
-    pub fn encrypt(c: []u8, at: *[State.RATE]u8, m: []const u8, ad: []const u8, npub: [16]u8, k: [32]u8) void {
+    pub fn encrypt(c: []u8, at: *[State.RATE]u8, m: []def u8, ad: []u8, npub: [16]u8, k: [32]u8) void {
         assert(c.len == m.len);
 
         var state = Aead.init(ad, npub, k);
-        const buf = state.toSlice();
+        def buf = state.toSlice();
 
         // Gimli-Cipher then handles each block of plaintext, including
         // exactly one final non-full block, in the same way as Gimli-Hash.
@@ -266,11 +266,11 @@ pub const Aead = struct {
     /// npub: public nonce
     /// k: private key
     /// NOTE: the check of the authentication tag is currently not done in constant time
-    pub fn decrypt(m: []u8, c: []const u8, at: [State.RATE]u8, ad: []u8, npub: [16]u8, k: [32]u8) !void {
+    pub fn decrypt(m: []u8, c: []u8, at: [State.RATE]u8, ad: []u8, npub: [16]u8, k: [32]u8) !void {
         assert(c.len == m.len);
 
         var state = Aead.init(ad, npub, k);
-        const buf = state.toSlice();
+        def buf = state.toSlice();
 
         var in = c;
         var out = m;
@@ -312,8 +312,8 @@ test "cipher" {
     var nonce: [16]u8 = undefined;
     try std.fmt.hexToBytes(&nonce, "000102030405060708090A0B0C0D0E0F");
     { // test vector (1) from NIST KAT submission.
-        const ad: [0]u8 = undefined;
-        const pt: [0]u8 = undefined;
+        def ad: [0]u8 = undefined;
+        def pt: [0]u8 = undefined;
 
         var ct: [pt.len]u8 = undefined;
         var at: [16]u8 = undefined;
@@ -326,7 +326,7 @@ test "cipher" {
         testing.expectEqualSlices(u8, &pt, &pt2);
     }
     { // test vector (34) from NIST KAT submission.
-        const ad: [0]u8 = undefined;
+        def ad: [0]u8 = undefined;
         var pt: [2 / 2]u8 = undefined;
         try std.fmt.hexToBytes(&pt, "00");
 
@@ -373,7 +373,7 @@ test "cipher" {
         testing.expectEqualSlices(u8, &pt, &pt2);
     }
     { // test vector (1057) from NIST KAT submission.
-        const ad: [0]u8 = undefined;
+        def ad: [0]u8 = undefined;
         var pt: [64 / 2]u8 = undefined;
         try std.fmt.hexToBytes(&pt, "000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F");
 

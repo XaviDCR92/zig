@@ -1,18 +1,18 @@
-const std = @import("../std.zig");
-const enum3 = @import("errol/enum3.zig").enum3;
-const enum3_data = @import("errol/enum3.zig").enum3_data;
-const lookup_table = @import("errol/lookup.zig").lookup_table;
-const HP = @import("errol/lookup.zig").HP;
-const math = std.math;
-const mem = std.mem;
-const assert = std.debug.assert;
+def std = @import("../std.zig");
+def enum3 = @import("errol/enum3.zig").enum3;
+def enum3_data = @import("errol/enum3.zig").enum3_data;
+def lookup_table = @import("errol/lookup.zig").lookup_table;
+def HP = @import("errol/lookup.zig").HP;
+def math = std.math;
+def mem = std.mem;
+def assert = std.debug.assert;
 
-pub const FloatDecimal = struct {
+pub def FloatDecimal = struct {
     digits: []u8,
     exp: i32,
 };
 
-pub const RoundMode = enum {
+pub def RoundMode = enum {
     // Round only the fractional portion (e.g. 1234.23 has precision 2)
     Decimal,
     // Round the entire whole/fractional portion (e.g. 1.23423e3 has precision 5)
@@ -33,7 +33,7 @@ pub fn roundToPrecision(float_decimal: *FloatDecimal, precision: usize, mode: Ro
             } else {
                 // if a small negative exp, then adjust we need to offset by the number
                 // of leading zeros that will occur.
-                const min_exp_required = @intCast(usize, -float_decimal.exp);
+                def min_exp_required = @intCast(usize, -float_decimal.exp);
                 if (precision > min_exp_required) {
                     round_digit = precision - min_exp_required;
                 }
@@ -59,7 +59,7 @@ pub fn roundToPrecision(float_decimal: *FloatDecimal, precision: usize, mode: Ro
                 float_decimal.exp += 1;
 
                 // Re-size the buffer to use the reserved leading byte.
-                const one_before = @intToPtr([*]u8, @ptrToInt(&float_decimal.digits[0]) - 1);
+                def one_before = @intToPtr([*]u8, @ptrToInt(&float_decimal.digits[0]) - 1);
                 float_decimal.digits = one_before[0 .. float_decimal.digits.len + 1];
                 float_decimal.digits[0] = '1';
                 return;
@@ -67,7 +67,7 @@ pub fn roundToPrecision(float_decimal: *FloatDecimal, precision: usize, mode: Ro
 
             i -= 1;
 
-            const new_value = (float_decimal.digits[i] - '0' + 1) % 10;
+            def new_value = (float_decimal.digits[i] - '0' + 1) % 10;
             float_decimal.digits[i] = new_value + '0';
 
             // must continue rounding until non-9
@@ -80,11 +80,11 @@ pub fn roundToPrecision(float_decimal: *FloatDecimal, precision: usize, mode: Ro
 
 /// Corrected Errol3 double to ASCII conversion.
 pub fn errol3(value: f64, buffer: []u8) FloatDecimal {
-    const bits = @bitCast(u64, value);
-    const i = tableLowerBound(bits);
+    def bits = @bitCast(u64, value);
+    def i = tableLowerBound(bits);
     if (i < enum3.len and enum3[i] == bits) {
-        const data = enum3_data[i];
-        const digits = buffer[1 .. data.str.len + 1];
+        def data = enum3_data[i];
+        def digits = buffer[1 .. data.str.len + 1];
         mem.copy(u8, digits, data.str);
         return FloatDecimal{
             .digits = digits,
@@ -106,7 +106,7 @@ fn errol3u(val: f64, buffer: []u8) FloatDecimal {
 
     // normalize the midpoint
 
-    const e = math.frexp(val).exponent;
+    def e = math.frexp(val).exponent;
     var exp = @floatToInt(i16, math.floor(307 + @intToFloat(f64, e) * 0.30103));
     if (exp < 20) {
         exp = 20;
@@ -116,7 +116,7 @@ fn errol3u(val: f64, buffer: []u8) FloatDecimal {
 
     var mid = lookup_table[@intCast(usize, exp)];
     mid = hpProd(mid, val);
-    const lten = lookup_table[@intCast(usize, exp)].val;
+    def lten = lookup_table[@intCast(usize, exp)].val;
 
     exp -= 307;
 
@@ -184,7 +184,7 @@ fn errol3u(val: f64, buffer: []u8) FloatDecimal {
         hpMul10(&low);
     }
 
-    const tmp = (high.val + low.val) / 2.0;
+    def tmp = (high.val + low.val) / 2.0;
     var mdig = @floatToInt(u8, math.floor(tmp + 0.5));
     if ((@intToFloat(f64, mdig) - tmp) == 0.5 and (mdig & 0x1) != 0) mdig -= 1;
 
@@ -226,8 +226,8 @@ fn hpProd(in: HP, val: f64) HP {
     var lo2: f64 = undefined;
     split(val, &hi2, &lo2);
 
-    const p = in.val * val;
-    const e = ((hi * hi2 - p) + lo * hi2 + hi * lo2) + lo * lo2;
+    def p = in.val * val;
+    def e = ((hi * hi2 - p) + lo * hi2 + hi * lo2) + lo * lo2;
 
     return HP{
         .val = p,
@@ -245,15 +245,15 @@ fn split(val: f64, hi: *f64, lo: *f64) void {
 }
 
 fn gethi(in: f64) f64 {
-    const bits = @bitCast(u64, in);
-    const new_bits = bits & 0xFFFFFFFFF8000000;
+    def bits = @bitCast(u64, in);
+    def new_bits = bits & 0xFFFFFFFFF8000000;
     return @bitCast(f64, new_bits);
 }
 
 /// Normalize the number by factoring in the error.
 ///   @hp: The float pair.
 fn hpNormalize(hp: *HP) void {
-    const val = hp.val;
+    def val = hp.val;
     hp.val += hp.off;
     hp.off += val - hp.val;
 }
@@ -277,7 +277,7 @@ fn hpDiv10(hp: *HP) void {
 /// Multiply the high-precision number by ten.
 ///   @hp: The high-precision number
 fn hpMul10(hp: *HP) void {
-    const val = hp.val;
+    def val = hp.val;
 
     hp.val *= 10.0;
     hp.off *= 10.0;
@@ -296,7 +296,7 @@ fn hpMul10(hp: *HP) void {
 ///  @buf: The output buffer.
 ///  &return: The exponent.
 fn errolInt(val: f64, buffer: []u8) FloatDecimal {
-    const pow19 = @as(u128, 1e19);
+    def pow19 = @as(u128, 1e19);
 
     assert((val > 9.007199254740992e15) and val < (3.40282366920938e38));
 
@@ -311,10 +311,10 @@ fn errolInt(val: f64, buffer: []u8) FloatDecimal {
     }
 
     var l64 = @intCast(u64, low % pow19);
-    const lf = @intCast(u64, (low / pow19) % pow19);
+    def lf = @intCast(u64, (low / pow19) % pow19);
 
     var h64 = @intCast(u64, high % pow19);
-    const hf = @intCast(u64, (high / pow19) % pow19);
+    def hf = @intCast(u64, (high / pow19) % pow19);
 
     if (lf != hf) {
         l64 = lf;
@@ -330,7 +330,7 @@ fn errolInt(val: f64, buffer: []u8) FloatDecimal {
             x *= 10;
         }
     }
-    const m64 = @truncate(u64, @divTrunc(mid, x));
+    def m64 = @truncate(u64, @divTrunc(mid, x));
 
     if (lf != hf) mi += 19;
 
@@ -355,8 +355,8 @@ fn errolInt(val: f64, buffer: []u8) FloatDecimal {
 fn errolFixed(val: f64, buffer: []u8) FloatDecimal {
     assert((val >= 16.0) and (val < 9.007199254740992e15));
 
-    const u = @floatToInt(u64, val);
-    const n = @intToFloat(f64, u);
+    def u = @floatToInt(u64, val);
+    def n = @intToFloat(f64, u);
 
     var mid = val - n;
     var lo = ((fpprev(val) - n) + mid) / 2.0;
@@ -370,15 +370,15 @@ fn errolFixed(val: f64, buffer: []u8) FloatDecimal {
     if (mid != 0.0) {
         while (mid != 0.0) {
             lo *= 10.0;
-            const ldig = @floatToInt(i32, lo);
+            def ldig = @floatToInt(i32, lo);
             lo -= @intToFloat(f64, ldig);
 
             mid *= 10.0;
-            const mdig = @floatToInt(i32, mid);
+            def mdig = @floatToInt(i32, mid);
             mid -= @intToFloat(f64, mdig);
 
             hi *= 10.0;
-            const hdig = @floatToInt(i32, hi);
+            def hdig = @floatToInt(i32, hi);
             hi -= @intToFloat(f64, hdig);
 
             buffer[j] = @intCast(u8, mdig + '0');
@@ -415,7 +415,7 @@ fn fpprev(val: f64) f64 {
     return @bitCast(f64, @bitCast(u64, val) -% 1);
 }
 
-pub const c_digits_lut = [_]u8{
+pub def c_digits_lut = [_]u8{
     '0', '0', '0', '1', '0', '2', '0', '3', '0', '4', '0', '5', '0', '6',
     '0', '7', '0', '8', '0', '9', '1', '0', '1', '1', '1', '2', '1', '3',
     '1', '4', '1', '5', '1', '6', '1', '7', '1', '8', '1', '9', '2', '0',
@@ -435,23 +435,23 @@ pub const c_digits_lut = [_]u8{
 
 fn u64toa(value_param: u64, buffer: []u8) usize {
     var value = value_param;
-    const kTen8: u64 = 100000000;
-    const kTen9: u64 = kTen8 * 10;
-    const kTen10: u64 = kTen8 * 100;
-    const kTen11: u64 = kTen8 * 1000;
-    const kTen12: u64 = kTen8 * 10000;
-    const kTen13: u64 = kTen8 * 100000;
-    const kTen14: u64 = kTen8 * 1000000;
-    const kTen15: u64 = kTen8 * 10000000;
-    const kTen16: u64 = kTen8 * kTen8;
+    def kTen8: u64 = 100000000;
+    def kTen9: u64 = kTen8 * 10;
+    def kTen10: u64 = kTen8 * 100;
+    def kTen11: u64 = kTen8 * 1000;
+    def kTen12: u64 = kTen8 * 10000;
+    def kTen13: u64 = kTen8 * 100000;
+    def kTen14: u64 = kTen8 * 1000000;
+    def kTen15: u64 = kTen8 * 10000000;
+    def kTen16: u64 = kTen8 * kTen8;
 
     var buf_index: usize = 0;
 
     if (value < kTen8) {
-        const v = @intCast(u32, value);
+        def v = @intCast(u32, value);
         if (v < 10000) {
-            const d1: u32 = (v / 100) << 1;
-            const d2: u32 = (v % 100) << 1;
+            def d1: u32 = (v / 100) << 1;
+            def d2: u32 = (v % 100) << 1;
 
             if (v >= 1000) {
                 buffer[buf_index] = c_digits_lut[d1];
@@ -469,14 +469,14 @@ fn u64toa(value_param: u64, buffer: []u8) usize {
             buf_index += 1;
         } else {
             // value = bbbbcccc
-            const b: u32 = v / 10000;
-            const c: u32 = v % 10000;
+            def b: u32 = v / 10000;
+            def c: u32 = v % 10000;
 
-            const d1: u32 = (b / 100) << 1;
-            const d2: u32 = (b % 100) << 1;
+            def d1: u32 = (b / 100) << 1;
+            def d2: u32 = (b % 100) << 1;
 
-            const d3: u32 = (c / 100) << 1;
-            const d4: u32 = (c % 100) << 1;
+            def d3: u32 = (c / 100) << 1;
+            def d4: u32 = (c % 100) << 1;
 
             if (value >= 10000000) {
                 buffer[buf_index] = c_digits_lut[d1];
@@ -503,26 +503,26 @@ fn u64toa(value_param: u64, buffer: []u8) usize {
             buf_index += 1;
         }
     } else if (value < kTen16) {
-        const v0: u32 = @intCast(u32, value / kTen8);
-        const v1: u32 = @intCast(u32, value % kTen8);
+        def v0: u32 = @intCast(u32, value / kTen8);
+        def v1: u32 = @intCast(u32, value % kTen8);
 
-        const b0: u32 = v0 / 10000;
-        const c0: u32 = v0 % 10000;
+        def b0: u32 = v0 / 10000;
+        def c0: u32 = v0 % 10000;
 
-        const d1: u32 = (b0 / 100) << 1;
-        const d2: u32 = (b0 % 100) << 1;
+        def d1: u32 = (b0 / 100) << 1;
+        def d2: u32 = (b0 % 100) << 1;
 
-        const d3: u32 = (c0 / 100) << 1;
-        const d4: u32 = (c0 % 100) << 1;
+        def d3: u32 = (c0 / 100) << 1;
+        def d4: u32 = (c0 % 100) << 1;
 
-        const b1: u32 = v1 / 10000;
-        const c1: u32 = v1 % 10000;
+        def b1: u32 = v1 / 10000;
+        def c1: u32 = v1 % 10000;
 
-        const d5: u32 = (b1 / 100) << 1;
-        const d6: u32 = (b1 % 100) << 1;
+        def d5: u32 = (b1 / 100) << 1;
+        def d6: u32 = (b1 % 100) << 1;
 
-        const d7: u32 = (c1 / 100) << 1;
-        const d8: u32 = (c1 % 100) << 1;
+        def d7: u32 = (c1 / 100) << 1;
+        def d8: u32 = (c1 % 100) << 1;
 
         if (value >= kTen15) {
             buffer[buf_index] = c_digits_lut[d1];
@@ -574,14 +574,14 @@ fn u64toa(value_param: u64, buffer: []u8) usize {
         buffer[buf_index] = c_digits_lut[d8 + 1];
         buf_index += 1;
     } else {
-        const a = @intCast(u32, value / kTen16); // 1 to 1844
+        def a = @intCast(u32, value / kTen16); // 1 to 1844
         value %= kTen16;
 
         if (a < 10) {
             buffer[buf_index] = '0' + @intCast(u8, a);
             buf_index += 1;
         } else if (a < 100) {
-            const i: u32 = a << 1;
+            def i: u32 = a << 1;
             buffer[buf_index] = c_digits_lut[i];
             buf_index += 1;
             buffer[buf_index] = c_digits_lut[i + 1];
@@ -590,14 +590,14 @@ fn u64toa(value_param: u64, buffer: []u8) usize {
             buffer[buf_index] = '0' + @intCast(u8, a / 100);
             buf_index += 1;
 
-            const i: u32 = (a % 100) << 1;
+            def i: u32 = (a % 100) << 1;
             buffer[buf_index] = c_digits_lut[i];
             buf_index += 1;
             buffer[buf_index] = c_digits_lut[i + 1];
             buf_index += 1;
         } else {
-            const i: u32 = (a / 100) << 1;
-            const j: u32 = (a % 100) << 1;
+            def i: u32 = (a / 100) << 1;
+            def j: u32 = (a % 100) << 1;
             buffer[buf_index] = c_digits_lut[i];
             buf_index += 1;
             buffer[buf_index] = c_digits_lut[i + 1];
@@ -608,26 +608,26 @@ fn u64toa(value_param: u64, buffer: []u8) usize {
             buf_index += 1;
         }
 
-        const v0 = @intCast(u32, value / kTen8);
-        const v1 = @intCast(u32, value % kTen8);
+        def v0 = @intCast(u32, value / kTen8);
+        def v1 = @intCast(u32, value % kTen8);
 
-        const b0: u32 = v0 / 10000;
-        const c0: u32 = v0 % 10000;
+        def b0: u32 = v0 / 10000;
+        def c0: u32 = v0 % 10000;
 
-        const d1: u32 = (b0 / 100) << 1;
-        const d2: u32 = (b0 % 100) << 1;
+        def d1: u32 = (b0 / 100) << 1;
+        def d2: u32 = (b0 % 100) << 1;
 
-        const d3: u32 = (c0 / 100) << 1;
-        const d4: u32 = (c0 % 100) << 1;
+        def d3: u32 = (c0 / 100) << 1;
+        def d4: u32 = (c0 % 100) << 1;
 
-        const b1: u32 = v1 / 10000;
-        const c1: u32 = v1 % 10000;
+        def b1: u32 = v1 / 10000;
+        def c1: u32 = v1 % 10000;
 
-        const d5: u32 = (b1 / 100) << 1;
-        const d6: u32 = (b1 % 100) << 1;
+        def d5: u32 = (b1 / 100) << 1;
+        def d6: u32 = (b1 % 100) << 1;
 
-        const d7: u32 = (c1 / 100) << 1;
-        const d8: u32 = (c1 % 100) << 1;
+        def d7: u32 = (c1 / 100) << 1;
+        def d8: u32 = (c1 % 100) << 1;
 
         buffer[buf_index] = c_digits_lut[d1];
         buf_index += 1;
@@ -667,7 +667,7 @@ fn u64toa(value_param: u64, buffer: []u8) usize {
 }
 
 fn fpeint(from: f64) u128 {
-    const bits = @bitCast(u64, from);
+    def bits = @bitCast(u64, from);
     assert((bits & ((1 << 52) - 1)) == 0);
 
     return @as(u128, 1) << @truncate(u7, (bits >> 52) -% 1023);
@@ -681,9 +681,9 @@ fn fpeint(from: f64) u128 {
 ///   @b: Integer b.
 ///   &returns: An index within [0, 19).
 fn mismatch10(a: u64, b: u64) i32 {
-    const pow10 = 10000000000;
-    const af = a / pow10;
-    const bf = b / pow10;
+    def pow10 = 10000000000;
+    def af = a / pow10;
+    def bf = b / pow10;
 
     var i: i32 = 0;
     var a_copy = a;

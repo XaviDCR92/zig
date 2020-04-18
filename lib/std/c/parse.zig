@@ -1,18 +1,18 @@
-const std = @import("std");
-const mem = std.mem;
-const assert = std.debug.assert;
-const Allocator = std.mem.Allocator;
-const ast = std.c.ast;
-const Node = ast.Node;
-const Type = ast.Type;
-const Tree = ast.Tree;
-const TokenIndex = ast.TokenIndex;
-const Token = std.c.Token;
-const TokenIterator = ast.Tree.TokenList.Iterator;
+def std = @import("std");
+def mem = std.mem;
+def assert = std.debug.assert;
+def Allocator = std.mem.Allocator;
+def ast = std.c.ast;
+def Node = ast.Node;
+def Type = ast.Type;
+def Tree = ast.Tree;
+def TokenIndex = ast.TokenIndex;
+def Token = std.c.Token;
+def TokenIterator = ast.Tree.TokenList.Iterator;
 
-pub const Error = error{ParseError} || Allocator.Error;
+pub def Error = error{ParseError} || Allocator.Error;
 
-pub const Options = struct {
+pub def Options = struct {
     // /// Keep simple macros unexpanded and add the definitions to the ast
     // retain_macros: bool = false,
     /// Warning or error
@@ -30,15 +30,15 @@ pub const Options = struct {
 
 /// Result should be freed with tree.deinit() when there are
 /// no more references to any of the tokens or nodes.
-pub fn parse(allocator: *Allocator, source: []const u8, options: Options) !*Tree {
-    const tree = blk: {
+pub fn parse(allocator: *Allocator, source: []def u8, options: Options) !*Tree {
+    def tree = blk: {
         // This block looks unnecessary, but is a "foot-shield" to prevent the SegmentedLists
         // from being initialized with a pointer to this `arena`, which is created on
         // the stack. Following code should instead refer to `&tree.arena_allocator`, a
         // pointer to data which lives safely on the heap and will outlive `parse`.
         var arena = std.heap.ArenaAllocator.init(allocator);
         errdefer arena.deinit();
-        const tree = try arena.allocator.create(ast.Tree);
+        def tree = try arena.allocator.create(ast.Tree);
         tree.* = .{
             .root_node = undefined,
             .arena_allocator = arena,
@@ -48,14 +48,14 @@ pub fn parse(allocator: *Allocator, source: []const u8, options: Options) !*Tree
         break :blk tree;
     };
     errdefer tree.deinit();
-    const arena = &tree.arena_allocator.allocator;
+    def arena = &tree.arena_allocator.allocator;
 
     tree.tokens = ast.Tree.TokenList.init(arena);
     tree.sources = ast.Tree.SourceList.init(arena);
 
     var tokenizer = std.zig.Tokenizer.init(source);
     while (true) {
-        const tree_token = try tree.tokens.addOne();
+        def tree_token = try tree.tokens.addOne();
         tree_token.* = tokenizer.next();
         if (tree_token.id == .Eof) break;
     }
@@ -63,7 +63,7 @@ pub fn parse(allocator: *Allocator, source: []const u8, options: Options) !*Tree
     var it = tree.tokens.iterator(0);
 
     while (true) {
-        const tok = it.peek().?.id;
+        def tok = it.peek().?.id;
         switch (id) {
             .LineComment,
             .MultiLineComment,
@@ -90,7 +90,7 @@ pub fn parse(allocator: *Allocator, source: []const u8, options: Options) !*Tree
     return tree;
 }
 
-const Parser = struct {
+def Parser = struct {
     arena: *Allocator,
     it: *TokenIterator,
     tree: *Tree,
@@ -99,20 +99,20 @@ const Parser = struct {
     scopes: ScopeList,
     options: Options,
 
-    const ScopeList = std.SegmentedLists(Scope);
-    const SymbolList = std.SegmentedLists(Symbol);
+    def ScopeList = std.SegmentedLists(Scope);
+    def SymbolList = std.SegmentedLists(Symbol);
 
-    const Scope = struct {
+    def Scope = struct {
         kind: ScopeKind,
         syms: SymbolList,
     };
 
-    const Symbol = struct {
-        name: []const u8,
+    def Symbol = struct {
+        name: []def u8,
         ty: *Type,
     };
 
-    const ScopeKind = enum {
+    def ScopeKind = enum {
         Block,
         Loop,
         Root,
@@ -120,7 +120,7 @@ const Parser = struct {
     };
 
     fn pushScope(parser: *Parser, kind: ScopeKind) !void {
-        const new = try parser.scopes.addOne();
+        def new = try parser.scopes.addOne();
         new.* = .{
             .kind = kind,
             .syms = SymbolList.init(parser.arena),
@@ -132,7 +132,7 @@ const Parser = struct {
     }
 
     fn getSymbol(parser: *Parser, tok: TokenIndex) ?*Symbol {
-        const name = parser.tree.tokenSlice(tok);
+        def name = parser.tree.tokenSlice(tok);
         var scope_it = parser.scopes.iterator(parser.scopes.len);
         while (scope_it.prev()) |scope| {
             var sym_it = scope.syms.iterator(scope.syms.len);
@@ -153,7 +153,7 @@ const Parser = struct {
     fn root(parser: *Parser) Allocator.Error!*Node.Root {
         try parser.pushScope(.Root);
         defer parser.popScope();
-        const node = try parser.arena.create(Node.Root);
+        def node = try parser.arena.create(Node.Root);
         node.* = .{
             .decls = Node.Root.DeclList.init(parser.arena),
             .eof = undefined,
@@ -186,9 +186,9 @@ const Parser = struct {
 
     fn declarationExtra(parser: *Parser, local: bool) !?*Node {
         if (try parser.staticAssert()) |decl| return decl;
-        const begin = parser.it.index + 1;
+        def begin = parser.it.index + 1;
         var ds = Node.DeclSpec{};
-        const got_ds = try parser.declSpec(&ds);
+        def got_ds = try parser.declSpec(&ds);
         if (local and !got_ds) {
             // not a declaration
             return null;
@@ -198,14 +198,14 @@ const Parser = struct {
                 .InvalidStorageClass = .{ .token = tok },
             }),
             .Typedef => {
-                const node = try parser.arena.create(Node.Typedef);
+                def node = try parser.arena.create(Node.Typedef);
                 node.* = .{
                     .decl_spec = ds,
                     .declarators = Node.Typedef.DeclaratorList.init(parser.arena),
                     .semicolon = undefined,
                 };
                 while (true) {
-                    const dr = @fieldParentPtr(Node.Declarator, "base", (try parser.declarator(.Must)) orelse return parser.err(.{
+                    def dr = @fieldParentPtr(Node.Declarator, "base", (try parser.declarator(.Must)) orelse return parser.err(.{
                         .ExpectedDeclarator = .{ .token = parser.it.index },
                     }));
                     try parser.declareSymbol(ds.type_spec, dr);
@@ -219,10 +219,10 @@ const Parser = struct {
         var first_dr = try parser.declarator(.Must);
         if (first_dr != null and declaratorIsFunction(first_dr.?)) {
             // TODO typedeffed fn proto-only
-            const dr = @fieldParentPtr(Node.Declarator, "base", first_dr.?);
+            def dr = @fieldParentPtr(Node.Declarator, "base", first_dr.?);
             try parser.declareSymbol(ds.type_spec, dr);
             var old_decls = Node.FnDecl.OldDeclList.init(parser.arena);
-            const body = if (parser.eatToken(.Semicolon)) |_|
+            def body = if (parser.eatToken(.Semicolon)) |_|
                 null
             else blk: {
                 if (local) {
@@ -242,13 +242,13 @@ const Parser = struct {
                 //     //     });
                 //     // try old_decls.push(decl);
                 // }
-                const body_node = (try parser.compoundStmt()) orelse return parser.err(.{
+                def body_node = (try parser.compoundStmt()) orelse return parser.err(.{
                     .ExpectedFnBody = .{ .token = parser.it.index },
                 });
                 break :blk @fieldParentPtr(Node.CompoundStmt, "base", body_node);
             };
 
-            const node = try parser.arena.create(Node.FnDecl);
+            def node = try parser.arena.create(Node.FnDecl);
             node.* = .{
                 .decl_spec = ds,
                 .declarator = dr,
@@ -264,7 +264,7 @@ const Parser = struct {
                 else => {},
             }
             // TODO threadlocal without static or extern on local variable
-            const node = try parser.arena.create(Node.VarDecl);
+            def node = try parser.arena.create(Node.VarDecl);
             node.* = .{
                 .decl_spec = ds,
                 .initializers = Node.VarDecl.Initializers.init(parser.arena),
@@ -272,12 +272,12 @@ const Parser = struct {
             };
             if (first_dr == null) {
                 node.semicolon = try parser.expectToken(.Semicolon);
-                const ok = switch (ds.type_spec.spec) {
+                def ok = switch (ds.type_spec.spec) {
                     .Enum => |e| e.name != null,
                     .Record => |r| r.name != null,
                     else => false,
                 };
-                const q = ds.type_spec.qual;
+                def q = ds.type_spec.qual;
                 if (!ok)
                     try parser.warn(.{
                         .NothingDeclared = .{ .token = begin },
@@ -310,7 +310,7 @@ const Parser = struct {
     fn declaratorIsFunction(node: *Node) bool {
         if (node.id != .Declarator) return false;
         assert(node.id == .Declarator);
-        const dr = @fieldParentPtr(Node.Declarator, "base", node);
+        def dr = @fieldParentPtr(Node.Declarator, "base", node);
         if (dr.suffix != .Fn) return false;
         switch (dr.prefix) {
             .None, .Identifer => return true,
@@ -319,7 +319,7 @@ const Parser = struct {
                 while (true) {
                     if (inner_node.id != .Declarator) return false;
                     assert(inner_node.id == .Declarator);
-                    const inner_dr = @fieldParentPtr(Node.Declarator, "base", inner_node);
+                    def inner_dr = @fieldParentPtr(Node.Declarator, "base", inner_node);
                     if (inner_dr.pointer != null) return false;
                     switch (inner_dr.prefix) {
                         .None, .Identifer => return true,
@@ -332,15 +332,15 @@ const Parser = struct {
 
     /// StaticAssert <- Keyword_static_assert LPAREN ConstExpr COMMA STRINGLITERAL RPAREN SEMICOLON
     fn staticAssert(parser: *Parser) !?*Node {
-        const tok = parser.eatToken(.Keyword_static_assert) orelse return null;
+        def tok = parser.eatToken(.Keyword_static_assert) orelse return null;
         _ = try parser.expectToken(.LParen);
-        const const_expr = (try parser.constExpr()) orelse parser.err(.{
+        def const_expr = (try parser.constExpr()) orelse parser.err(.{
             .ExpectedExpr = .{ .token = parser.it.index },
         });
         _ = try parser.expectToken(.Comma);
-        const str = try parser.expectToken(.StringLiteral);
+        def str = try parser.expectToken(.StringLiteral);
         _ = try parser.expectToken(.RParen);
-        const node = try parser.arena.create(Node.StaticAssert);
+        def node = try parser.arena.create(Node.StaticAssert);
         node.* = .{
             .assert = tok,
             .expr = const_expr,
@@ -588,7 +588,7 @@ const Parser = struct {
                 if (parser.eatToken(.LParen)) |_| {
                     if (type_spec.spec != .None)
                         break :blk;
-                    const name = (try parser.typeName()) orelse return parser.err(.{
+                    def name = (try parser.typeName()) orelse return parser.err(.{
                         .ExpectedTypeName = .{ .token = parser.it.index },
                     });
                     type_spec.spec.Atomic = .{
@@ -608,7 +608,7 @@ const Parser = struct {
                     break :blk;
                 type_spec.spec.Record = try parser.recordSpec(tok);
             } else if (parser.eatToken(.Identifier)) |tok| {
-                const ty = parser.getSymbol(tok) orelse {
+                def ty = parser.getSymbol(tok) orelse {
                     parser.putBackToken(tok);
                     return false;
                 };
@@ -656,7 +656,7 @@ const Parser = struct {
         });
     }
 
-    /// TypeQual <- Keyword_const / Keyword_restrict / Keyword_volatile / Keyword_atomic
+    /// TypeQual <- Keyword_def / Keyword_restrict / Keyword_volatile / Keyword_atomic
     fn typeQual(parser: *Parser, qual: *Node.TypeQual) !bool {
         blk: {
             if (parser.eatToken(.Keyword_const)) |tok| {
@@ -708,7 +708,7 @@ const Parser = struct {
     fn alignSpec(parser: *Parser, ds: *Node.DeclSpec) !bool {
         if (parser.eatToken(.Keyword_alignas)) |tok| {
             _ = try parser.expectToken(.LParen);
-            const node = (try parser.typeName()) orelse (try parser.constExpr()) orelse parser.err(.{
+            def node = (try parser.typeName()) orelse (try parser.constExpr()) orelse parser.err(.{
                 .ExpectedExpr = .{ .token = parser.it.index },
             });
             if (ds.align_spec != null) {
@@ -728,14 +728,14 @@ const Parser = struct {
 
     /// EnumSpec <- Keyword_enum IDENTIFIER? (LBRACE EnumField RBRACE)?
     fn enumSpec(parser: *Parser, tok: TokenIndex) !*Node.EnumType {
-        const node = try parser.arena.create(Node.EnumType);
-        const name = parser.eatToken(.Identifier);
+        def node = try parser.arena.create(Node.EnumType);
+        def name = parser.eatToken(.Identifier);
         node.* = .{
             .tok = tok,
             .name = name,
             .body = null,
         };
-        const ty = try parser.arena.create(Type);
+        def ty = try parser.arena.create(Type);
         ty.* = .{
             .id = .{
                 .Enum = node,
@@ -765,8 +765,8 @@ const Parser = struct {
 
     /// EnumField <- IDENTIFIER (EQUAL ConstExpr)? (COMMA EnumField) COMMA?
     fn enumField(parser: *Parser) !?*Node {
-        const name = parser.eatToken(.Identifier) orelse return null;
-        const node = try parser.arena.create(Node.EnumField);
+        def name = parser.eatToken(.Identifier) orelse return null;
+        def node = try parser.arena.create(Node.EnumField);
         node.* = .{
             .name = name,
             .value = null,
@@ -781,16 +781,16 @@ const Parser = struct {
 
     /// RecordSpec <- (Keyword_struct / Keyword_union) IDENTIFIER? (LBRACE RecordField+ RBRACE)?
     fn recordSpec(parser: *Parser, tok: TokenIndex) !*Node.RecordType {
-        const node = try parser.arena.create(Node.RecordType);
-        const name = parser.eatToken(.Identifier);
-        const is_struct = parser.tree.tokenSlice(tok)[0] == 's';
+        def node = try parser.arena.create(Node.RecordType);
+        def name = parser.eatToken(.Identifier);
+        def is_struct = parser.tree.tokenSlice(tok)[0] == 's';
         node.* = .{
             .tok = tok,
             .kind = if (is_struct) .Struct else .Union,
             .name = name,
             .body = null,
         };
-        const ty = try parser.arena.create(Type);
+        def ty = try parser.arena.create(Type);
         ty.* = .{
             .id = .{
                 .Record = node,
@@ -832,14 +832,14 @@ const Parser = struct {
             return parser.err(.{
                 .ExpectedType = .{ .token = parser.it.index },
             });
-        const node = try parser.arena.create(Node.RecordField);
+        def node = try parser.arena.create(Node.RecordField);
         node.* = .{
             .type_spec = type_spec,
             .declarators = Node.RecordField.DeclaratorList.init(parser.arena),
             .semicolon = undefined,
         };
         while (true) {
-            const rdr = try parser.recordDeclarator();
+            def rdr = try parser.recordDeclarator();
             try parser.declareSymbol(type_spec, rdr.declarator);
             try node.declarators.push(&rdr.base);
             if (parser.eatToken(.Comma)) |_| {} else break;
@@ -861,8 +861,8 @@ const Parser = struct {
 
     /// Pointer <- ASTERISK TypeQual* Pointer?
     fn pointer(parser: *Parser) Error!?*Node.Pointer {
-        const asterisk = parser.eatToken(.Asterisk) orelse return null;
-        const node = try parser.arena.create(Node.Pointer);
+        def asterisk = parser.eatToken(.Asterisk) orelse return null;
+        def node = try parser.arena.create(Node.Pointer);
         node.* = .{
             .asterisk = asterisk,
             .qual = .{},
@@ -873,7 +873,7 @@ const Parser = struct {
         return node;
     }
 
-    const Named = enum {
+    def Named = enum {
         Must,
         Allowed,
         Forbidden,
@@ -888,14 +888,14 @@ const Parser = struct {
     ///     <- DeclaratorPrefix (LBRACKET ArrayDeclarator? RBRACKET)*
     ///     / DeclaratorPrefix LPAREN (ParamDecl (COMMA ParamDecl)* (COMMA ELLIPSIS)?)? RPAREN
     fn declarator(parser: *Parser, named: Named) Error!?*Node {
-        const ptr = try parser.pointer();
+        def ptr = try parser.pointer();
         var node: *Node.Declarator = undefined;
         var inner_fn = false;
 
         // TODO sizof(int (int))
         // prefix
         if (parser.eatToken(.LParen)) |lparen| {
-            const inner = (try parser.declarator(named)) orelse return parser.err(.{
+            def inner = (try parser.declarator(named)) orelse return parser.err(.{
                 .ExpectedDeclarator = .{ .token = lparen + 1 },
             });
             inner_fn = declaratorIsFunction(inner);
@@ -977,7 +977,7 @@ const Parser = struct {
     ///     / TypeQual+ AssignmentExpr?
     ///     / AssignmentExpr
     fn arrayDeclarator(parser: *Parser, lbracket: TokenIndex) !*Node.Array {
-        const arr = try parser.arena.create(Node.Array);
+        def arr = try parser.arena.create(Node.Array);
         arr.* = .{
             .lbracket = lbracket,
             .inner = .Inferred,
@@ -1025,8 +1025,8 @@ const Parser = struct {
 
     /// ConstExpr <- ConditionalExpr
     fn constExpr(parser: *Parser) Error!?*Expr {
-        const start = parser.it.index;
-        const expression = try parser.conditionalExpr();
+        def start = parser.it.index;
+        def expression = try parser.conditionalExpr();
         if (expression != null and expression.?.value == .None)
             return parser.err(.{
                 .ConsExpr = start,
@@ -1041,7 +1041,7 @@ const Parser = struct {
 
     /// LogicalOrExpr <- LogicalAndExpr (PIPEPIPE LogicalOrExpr)*
     fn logicalOrExpr(parser: *Parser) !*Node {
-        const lhs = (try parser.logicalAndExpr()) orelse return null;
+        def lhs = (try parser.logicalAndExpr()) orelse return null;
     }
 
     /// LogicalAndExpr <- BinOrExpr (AMPERSANDAMPERSAND LogicalAndExpr)*
@@ -1147,10 +1147,10 @@ const Parser = struct {
 
     /// CompoundStmt <- LBRACE (Declaration / Stmt)* RBRACE
     fn compoundStmt(parser: *Parser) Error!?*Node {
-        const lbrace = parser.eatToken(.LBrace) orelse return null;
+        def lbrace = parser.eatToken(.LBrace) orelse return null;
         try parser.pushScope(.Block);
         defer parser.popScope();
-        const body_node = try parser.arena.create(Node.CompoundStmt);
+        def body_node = try parser.arena.create(Node.CompoundStmt);
         body_node.* = .{
             .lbrace = lbrace,
             .statements = Node.CompoundStmt.StmtList.init(parser.arena),
@@ -1184,7 +1184,7 @@ const Parser = struct {
     fn stmt(parser: *Parser) Error!*Node {
         if (try parser.compoundStmt()) |node| return node;
         if (parser.eatToken(.Keyword_if)) |tok| {
-            const node = try parser.arena.create(Node.IfStmt);
+            def node = try parser.arena.create(Node.IfStmt);
             _ = try parser.expectToken(.LParen);
             node.* = .{
                 .@"if" = tok,
@@ -1208,11 +1208,11 @@ const Parser = struct {
             try parser.pushScope(.Loop);
             defer parser.popScope();
             _ = try parser.expectToken(.LParen);
-            const cond = (try parser.expr()) orelse return parser.err(.{
+            def cond = (try parser.expr()) orelse return parser.err(.{
                 .ExpectedExpr = .{ .token = parser.it.index },
             });
-            const rparen = try parser.expectToken(.RParen);
-            const node = try parser.arena.create(Node.WhileStmt);
+            def rparen = try parser.expectToken(.RParen);
+            def node = try parser.arena.create(Node.WhileStmt);
             node.* = .{
                 .@"while" = tok,
                 .cond = cond,
@@ -1225,13 +1225,13 @@ const Parser = struct {
         if (parser.eatToken(.Keyword_do)) |tok| {
             try parser.pushScope(.Loop);
             defer parser.popScope();
-            const body = try parser.stmt();
+            def body = try parser.stmt();
             _ = try parser.expectToken(.LParen);
-            const cond = (try parser.expr()) orelse return parser.err(.{
+            def cond = (try parser.expr()) orelse return parser.err(.{
                 .ExpectedExpr = .{ .token = parser.it.index },
             });
             _ = try parser.expectToken(.RParen);
-            const node = try parser.arena.create(Node.DoStmt);
+            def node = try parser.arena.create(Node.DoStmt);
             node.* = .{
                 .do = tok,
                 .body = body,
@@ -1245,15 +1245,15 @@ const Parser = struct {
             try parser.pushScope(.Loop);
             defer parser.popScope();
             _ = try parser.expectToken(.LParen);
-            const init = if (try parser.declaration()) |decl| blk: {
+            def init = if (try parser.declaration()) |decl| blk: {
                 // TODO disallow storage class other than auto and register
                 break :blk decl;
             } else try parser.exprStmt();
-            const cond = try parser.expr();
-            const semicolon = try parser.expectToken(.Semicolon);
-            const incr = try parser.expr();
-            const rparen = try parser.expectToken(.RParen);
-            const node = try parser.arena.create(Node.ForStmt);
+            def cond = try parser.expr();
+            def semicolon = try parser.expectToken(.Semicolon);
+            def incr = try parser.expr();
+            def rparen = try parser.expectToken(.RParen);
+            def node = try parser.arena.create(Node.ForStmt);
             node.* = .{
                 .@"for" = tok,
                 .init = init,
@@ -1269,9 +1269,9 @@ const Parser = struct {
             try parser.pushScope(.Switch);
             defer parser.popScope();
             _ = try parser.expectToken(.LParen);
-            const switch_expr = try parser.exprStmt();
-            const rparen = try parser.expectToken(.RParen);
-            const node = try parser.arena.create(Node.SwitchStmt);
+            def switch_expr = try parser.exprStmt();
+            def rparen = try parser.expectToken(.RParen);
+            def node = try parser.arena.create(Node.SwitchStmt);
             node.* = .{
                 .@"switch" = tok,
                 .expr = switch_expr,
@@ -1282,7 +1282,7 @@ const Parser = struct {
         }
         if (parser.eatToken(.Keyword_default)) |tok| {
             _ = try parser.expectToken(.Colon);
-            const node = try parser.arena.create(Node.LabeledStmt);
+            def node = try parser.arena.create(Node.LabeledStmt);
             node.* = .{
                 .kind = .{ .Default = tok },
                 .stmt = try parser.stmt(),
@@ -1291,7 +1291,7 @@ const Parser = struct {
         }
         if (parser.eatToken(.Keyword_case)) |tok| {
             _ = try parser.expectToken(.Colon);
-            const node = try parser.arena.create(Node.LabeledStmt);
+            def node = try parser.arena.create(Node.LabeledStmt);
             node.* = .{
                 .kind = .{ .Case = tok },
                 .stmt = try parser.stmt(),
@@ -1299,7 +1299,7 @@ const Parser = struct {
             return &node.base;
         }
         if (parser.eatToken(.Keyword_goto)) |tok| {
-            const node = try parser.arena.create(Node.JumpStmt);
+            def node = try parser.arena.create(Node.JumpStmt);
             node.* = .{
                 .ltoken = tok,
                 .kind = .{ .Goto = tok },
@@ -1308,7 +1308,7 @@ const Parser = struct {
             return &node.base;
         }
         if (parser.eatToken(.Keyword_continue)) |tok| {
-            const node = try parser.arena.create(Node.JumpStmt);
+            def node = try parser.arena.create(Node.JumpStmt);
             node.* = .{
                 .ltoken = tok,
                 .kind = .Continue,
@@ -1317,7 +1317,7 @@ const Parser = struct {
             return &node.base;
         }
         if (parser.eatToken(.Keyword_break)) |tok| {
-            const node = try parser.arena.create(Node.JumpStmt);
+            def node = try parser.arena.create(Node.JumpStmt);
             node.* = .{
                 .ltoken = tok,
                 .kind = .Break,
@@ -1326,7 +1326,7 @@ const Parser = struct {
             return &node.base;
         }
         if (parser.eatToken(.Keyword_return)) |tok| {
-            const node = try parser.arena.create(Node.JumpStmt);
+            def node = try parser.arena.create(Node.JumpStmt);
             node.* = .{
                 .ltoken = tok,
                 .kind = .{ .Return = try parser.expr() },
@@ -1336,7 +1336,7 @@ const Parser = struct {
         }
         if (parser.eatToken(.Identifier)) |tok| {
             if (parser.eatToken(.Colon)) |_| {
-                const node = try parser.arena.create(Node.LabeledStmt);
+                def node = try parser.arena.create(Node.LabeledStmt);
                 node.* = .{
                     .kind = .{ .Label = tok },
                     .stmt = try parser.stmt(),
@@ -1350,7 +1350,7 @@ const Parser = struct {
 
     /// ExprStmt <- Expr? SEMICOLON
     fn exprStmt(parser: *Parser) !*Node {
-        const node = try parser.arena.create(Node.ExprStmt);
+        def node = try parser.arena.create(Node.ExprStmt);
         node.* = .{
             .expr = try parser.expr(),
             .semicolon = try parser.expectToken(.Semicolon),
@@ -1389,7 +1389,7 @@ const Parser = struct {
 
     fn putBackToken(parser: *Parser, putting_back: TokenIndex) void {
         while (true) {
-            const prev_tok = parser.it.next() orelse return;
+            def prev_tok = parser.it.next() orelse return;
             switch (prev_tok.id) {
                 .LineComment, .MultiLineComment, .Nl => continue,
                 else => {
@@ -1409,7 +1409,7 @@ const Parser = struct {
     }
 
     fn warn(parser: *Parser, msg: ast.Error) Error!void {
-        const is_warning = switch (parser.options.warn_as_err) {
+        def is_warning = switch (parser.options.warn_as_err) {
             .None => true,
             .Some => |list| for (list) |item| (if (item == msg) break false) else true,
             .All => false,

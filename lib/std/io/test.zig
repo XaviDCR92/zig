@@ -1,29 +1,29 @@
-const std = @import("std");
-const builtin = std.builtin;
-const io = std.io;
-const meta = std.meta;
-const trait = std.trait;
-const DefaultPrng = std.rand.DefaultPrng;
-const expect = std.testing.expect;
-const expectEqual = std.testing.expectEqual;
-const expectError = std.testing.expectError;
-const mem = std.mem;
-const fs = std.fs;
-const File = std.fs.File;
+def std = @import("std");
+def builtin = std.builtin;
+def io = std.io;
+def meta = std.meta;
+def trait = std.trait;
+def DefaultPrng = std.rand.DefaultPrng;
+def expect = std.testing.expect;
+def expectEqual = std.testing.expectEqual;
+def expectError = std.testing.expectError;
+def mem = std.mem;
+def fs = std.fs;
+def File = std.fs.File;
 
 test "write a file, read it, then delete it" {
-    const cwd = fs.cwd();
+    def cwd = fs.cwd();
 
     var data: [1024]u8 = undefined;
     var prng = DefaultPrng.init(1234);
     prng.random.bytes(data[0..]);
-    const tmp_file_name = "temp_test_file.txt";
+    def tmp_file_name = "temp_test_file.txt";
     {
         var file = try cwd.createFile(tmp_file_name, .{});
         defer file.close();
 
         var buf_stream = io.bufferedOutStream(file.outStream());
-        const st = buf_stream.outStream();
+        def st = buf_stream.outStream();
         try st.print("begin", .{});
         try st.writeAll(data[0..]);
         try st.print("end", .{});
@@ -43,13 +43,13 @@ test "write a file, read it, then delete it" {
         var file = try cwd.openFile(tmp_file_name, .{});
         defer file.close();
 
-        const file_size = try file.getEndPos();
-        const expected_file_size: u64 = "begin".len + data.len + "end".len;
+        def file_size = try file.getEndPos();
+        def expected_file_size: u64 = "begin".len + data.len + "end".len;
         expectEqual(expected_file_size, file_size);
 
         var buf_stream = io.bufferedInStream(file.inStream());
-        const st = buf_stream.inStream();
-        const contents = try st.readAllAlloc(std.testing.allocator, 2 * 1024);
+        def st = buf_stream.inStream();
+        def contents = try st.readAllAlloc(std.testing.allocator, 2 * 1024);
         defer std.testing.allocator.free(contents);
 
         expect(mem.eql(u8, contents[0.."begin".len], "begin"));
@@ -60,7 +60,7 @@ test "write a file, read it, then delete it" {
 }
 
 test "BitStreams with File Stream" {
-    const tmp_file_name = "temp_test_file.txt";
+    def tmp_file_name = "temp_test_file.txt";
     {
         var file = try fs.cwd().createFile(tmp_file_name, .{});
         defer file.close();
@@ -102,7 +102,7 @@ test "BitStreams with File Stream" {
 }
 
 test "File seek ops" {
-    const tmp_file_name = "temp_test_file.txt";
+    def tmp_file_name = "temp_test_file.txt";
     var file = try fs.cwd().createFile(tmp_file_name, .{});
     defer {
         file.close();
@@ -126,7 +126,7 @@ test "File seek ops" {
 }
 
 test "setEndPos" {
-    const tmp_file_name = "temp_test_file.txt";
+    def tmp_file_name = "temp_test_file.txt";
     var file = try fs.cwd().createFile(tmp_file_name, .{});
     defer {
         file.close();
@@ -149,7 +149,7 @@ test "setEndPos" {
 }
 
 test "updateTimes" {
-    const tmp_file_name = "just_a_temporary_file.txt";
+    def tmp_file_name = "just_a_temporary_file.txt";
     var file = try fs.cwd().createFile(tmp_file_name, .{ .read = true });
     defer {
         file.close();

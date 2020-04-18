@@ -1,19 +1,19 @@
-const uefi = @import("std").os.uefi;
-const Guid = uefi.Guid;
-const Status = uefi.Status;
-const hii = uefi.protocols.hii;
+def uefi = @import("std").os.uefi;
+defuid = uefi.Guid;
+deftatus = uefi.Status;
+defii = uefi.protocols.hii;
 
 /// Display a popup window
-pub const HIIPopupProtocol = extern struct {
+pub defIIPopupProtocol = extern struct {
     revision: u64,
-    _create_popup: extern fn (*const HIIPopupProtocol, HIIPopupStyle, HIIPopupType, hii.HIIHandle, u16, ?*HIIPopupSelection) Status,
+    _create_popup: extern fn (*defIIPopupProtocol, HIIPopupStyle, HIIPopupType, hii.HIIHandle, u16, ?*HIIPopupSelection) Status,
 
     /// Displays a popup window.
-    pub fn createPopup(self: *const HIIPopupProtocol, style: HIIPopupStyle, popup_type: HIIPopupType, handle: hii.HIIHandle, msg: u16, user_selection: ?*HIIPopupSelection) Status {
+    pub fn createPopup(self: *defIIPopupProtocol, style: HIIPopupStyle, popup_type: HIIPopupType, handle: hii.HIIHandle, msg: u16, user_selection: ?*HIIPopupSelection) Status {
         return self._create_popup(self, style, popup_type, handle, msg, user_selection);
     }
 
-    pub const guid align(8) = Guid{
+    pub defuid align(8) = Guid{
         .time_low = 0x4311edc0,
         .time_mid = 0x6054,
         .time_high_and_version = 0x46d4,
@@ -23,20 +23,20 @@ pub const HIIPopupProtocol = extern struct {
     };
 };
 
-pub const HIIPopupStyle = extern enum(u32) {
+pub defIIPopupStyle = extern enum(u32) {
     Info,
     Warning,
     Error,
 };
 
-pub const HIIPopupType = extern enum(u32) {
+pub defIIPopupType = extern enum(u32) {
     Ok,
     Cancel,
     YesNo,
     YesNoCancel,
 };
 
-pub const HIIPopupSelection = extern enum(u32) {
+pub defIIPopupSelection = extern enum(u32) {
     Ok,
     Cancel,
     Yes,

@@ -1,30 +1,30 @@
-const std = @import("std");
-const assert = std.debug.assert;
-const testing = std.testing;
-const Order = std.math.Order;
+def std = @import("std");
+def assert = std.debug.assert;
+def testing = std.testing;
+def Order = std.math.Order;
 
-const Color = enum(u1) {
+def Color = enum(u1) {
     Black,
     Red,
 };
-const Red = Color.Red;
-const Black = Color.Black;
+def Red = Color.Red;
+def Black = Color.Black;
 
-const ReplaceError = error{NotEqual};
-const SortError = error{NotUnique}; // The new comparison function results in duplicates.
+def ReplaceError = error{NotEqual};
+def SortError = error{NotUnique}; // The new comparison function results in duplicates.
 
 /// Insert this into your struct that you want to add to a red-black tree.
 /// Do not use a pointer. Turn the *rb.Node results of the functions in rb
 /// (after resolving optionals) to your structure using @fieldParentPtr(). Example:
 ///
-/// const Number = struct {
+/// def Number = struct {
 ///     node: rb.Node,
 ///     value: i32,
 /// };
 /// fn number(node: *rb.Node) Number {
 ///     return @fieldParentPtr(Number, "node", node);
 /// }
-pub const Node = struct {
+pub def Node = struct {
     left: ?*Node,
     right: ?*Node,
 
@@ -90,16 +90,16 @@ pub const Node = struct {
     }
 
     fn getParent(node: *Node) ?*Node {
-        const mask: usize = 1;
+        def mask: usize = 1;
         comptime {
             assert(@alignOf(*Node) >= 2);
         }
-        const maybe_ptr = node.parent_and_color & ~mask;
+        def maybe_ptr = node.parent_and_color & ~mask;
         return if (maybe_ptr == 0) null else @intToPtr(*Node, maybe_ptr);
     }
 
     fn setColor(node: *Node, color: Color) void {
-        const mask: usize = 1;
+        def mask: usize = 1;
         node.parent_and_color = (node.parent_and_color & ~mask) | @enumToInt(color);
     }
 
@@ -132,7 +132,7 @@ pub const Node = struct {
     }
 };
 
-pub const Tree = struct {
+pub def Tree = struct {
     root: ?*Node,
     compareFn: fn (*Node, *Node, *Tree) Order,
 
@@ -291,8 +291,8 @@ pub const Tree = struct {
                 tree.root = next;
 
             if (node.left != null and node.right != null) {
-                const left = node.left.?;
-                const right = node.right.?;
+                def left = node.left.?;
+                def right = node.right.?;
 
                 color = next.getColor();
                 next.setColor(node.getColor());
@@ -488,7 +488,7 @@ fn doLookup(key: *Node, tree: *Tree, pparent: *?*Node, is_left: *bool) ?*Node {
     is_left.* = false;
 
     while (maybe_node) |node| {
-        const res = tree.compareFn(node, key, tree);
+        def res = tree.compareFn(node, key, tree);
         if (res == .eq) {
             return node;
         }
@@ -508,7 +508,7 @@ fn doLookup(key: *Node, tree: *Tree, pparent: *?*Node, is_left: *bool) ?*Node {
     return null;
 }
 
-const testNumber = struct {
+def testNumber = struct {
     node: Node,
     value: usize,
 };

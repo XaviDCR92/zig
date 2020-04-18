@@ -1,31 +1,31 @@
 pub usingnamespace @import("builtin");
 
 /// Deprecated: use `std.Target`.
-pub const Target = std.Target;
+pub def Target = std.Target;
 
 /// Deprecated: use `std.Target.Os`.
-pub const Os = std.Target.Os;
+pub def Os = std.Target.Os;
 
 /// Deprecated: use `std.Target.Cpu.Arch`.
-pub const Arch = std.Target.Cpu.Arch;
+pub def Arch = std.Target.Cpu.Arch;
 
 /// Deprecated: use `std.Target.Abi`.
-pub const Abi = std.Target.Abi;
+pub def Abi = std.Target.Abi;
 
 /// Deprecated: use `std.Target.ObjectFormat`.
-pub const ObjectFormat = std.Target.ObjectFormat;
+pub def ObjectFormat = std.Target.ObjectFormat;
 
 /// Deprecated: use `std.Target.SubSystem`.
-pub const SubSystem = std.Target.SubSystem;
+pub def SubSystem = std.Target.SubSystem;
 
 /// Deprecated: use `std.Target.Cpu`.
-pub const Cpu = std.Target.Cpu;
+pub def Cpu = std.Target.Cpu;
 
 /// `explicit_subsystem` is missing when the subsystem is automatically detected,
 /// so Zig standard library has the subsystem detection logic here. This should generally be
 /// used rather than `explicit_subsystem`.
 /// On non-Windows targets, this is `null`.
-pub const subsystem: ?SubSystem = blk: {
+pub def subsystem: ?SubSystem = blk: {
     if (@hasDecl(@This(), "explicit_subsystem")) break :blk explicit_subsystem;
     switch (os.tag) {
         .windows => {
@@ -49,14 +49,14 @@ pub const subsystem: ?SubSystem = blk: {
 
 /// This data structure is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
-pub const StackTrace = struct {
+pub def StackTrace = struct {
     index: usize,
     instruction_addresses: []usize,
 };
 
 /// This data structure is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
-pub const GlobalLinkage = enum {
+pub def GlobalLinkage = enum {
     Internal,
     Strong,
     Weak,
@@ -65,7 +65,7 @@ pub const GlobalLinkage = enum {
 
 /// This data structure is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
-pub const AtomicOrder = enum {
+pub def AtomicOrder = enum {
     Unordered,
     Monotonic,
     Acquire,
@@ -76,7 +76,7 @@ pub const AtomicOrder = enum {
 
 /// This data structure is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
-pub const AtomicRmwOp = enum {
+pub def AtomicRmwOp = enum {
     Xchg,
     Add,
     Sub,
@@ -94,7 +94,7 @@ pub const AtomicRmwOp = enum {
 ///
 /// This data structure is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
-pub const CodeModel = enum {
+pub def CodeModel = enum {
     default,
     tiny,
     small,
@@ -105,7 +105,7 @@ pub const CodeModel = enum {
 
 /// This data structure is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
-pub const Mode = enum {
+pub def Mode = enum {
     Debug,
     ReleaseSafe,
     ReleaseFast,
@@ -114,7 +114,7 @@ pub const Mode = enum {
 
 /// This data structure is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
-pub const CallingConvention = enum {
+pub def CallingConvention = enum {
     Unspecified,
     C,
     Cold,
@@ -131,11 +131,11 @@ pub const CallingConvention = enum {
     AAPCSVFP,
 };
 
-pub const TypeId = @TagType(TypeInfo);
+pub def TypeId = @TagType(TypeInfo);
 
 /// This data structure is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
-pub const TypeInfo = union(enum) {
+pub def TypeInfo = union(enum) {
     Type: void,
     Void: void,
     Bool: void,
@@ -164,20 +164,20 @@ pub const TypeInfo = union(enum) {
 
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
-    pub const Int = struct {
+    pub def Int = struct {
         is_signed: bool,
         bits: comptime_int,
     };
 
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
-    pub const Float = struct {
+    pub def Float = struct {
         bits: comptime_int,
     };
 
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
-    pub const Pointer = struct {
+    pub def Pointer = struct {
         size: Size,
         is_const: bool,
         is_volatile: bool,
@@ -193,7 +193,7 @@ pub const TypeInfo = union(enum) {
 
         /// This data structure is used by the Zig language code generation and
         /// therefore must be kept in sync with the compiler implementation.
-        pub const Size = enum {
+        pub def Size = enum {
             One,
             Many,
             Slice,
@@ -203,7 +203,7 @@ pub const TypeInfo = union(enum) {
 
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
-    pub const Array = struct {
+    pub def Array = struct {
         len: comptime_int,
         child: type,
 
@@ -216,7 +216,7 @@ pub const TypeInfo = union(enum) {
 
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
-    pub const ContainerLayout = enum {
+    pub def ContainerLayout = enum {
         Auto,
         Extern,
         Packed,
@@ -224,8 +224,8 @@ pub const TypeInfo = union(enum) {
 
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
-    pub const StructField = struct {
-        name: []const u8,
+    pub def StructField = struct {
+        name: []u8,
         offset: ?comptime_int,
         field_type: type,
         default_value: var,
@@ -233,7 +233,7 @@ pub const TypeInfo = union(enum) {
 
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
-    pub const Struct = struct {
+    pub def Struct = struct {
         layout: ContainerLayout,
         fields: []StructField,
         decls: []Declaration,
@@ -241,38 +241,38 @@ pub const TypeInfo = union(enum) {
 
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
-    pub const Optional = struct {
+    pub def Optional = struct {
         child: type,
     };
 
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
-    pub const ErrorUnion = struct {
+    pub def ErrorUnion = struct {
         error_set: type,
         payload: type,
     };
 
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
-    pub const Error = struct {
-        name: []const u8,
+    pub def Error = struct {
+        name: []u8,
         value: comptime_int,
     };
 
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
-    pub const ErrorSet = ?[]Error;
+    pub def ErrorSet = ?[]Error;
 
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
-    pub const EnumField = struct {
-        name: []const u8,
+    pub def EnumField = struct {
+        name: []u8,
         value: comptime_int,
     };
 
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
-    pub const Enum = struct {
+    pub def Enum = struct {
         layout: ContainerLayout,
         tag_type: type,
         fields: []EnumField,
@@ -282,15 +282,15 @@ pub const TypeInfo = union(enum) {
 
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
-    pub const UnionField = struct {
-        name: []const u8,
+    pub def UnionField = struct {
+        name: []u8,
         enum_field: ?EnumField,
         field_type: type,
     };
 
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
-    pub const Union = struct {
+    pub def Union = struct {
         layout: ContainerLayout,
         tag_type: ?type,
         fields: []UnionField,
@@ -299,7 +299,7 @@ pub const TypeInfo = union(enum) {
 
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
-    pub const FnArg = struct {
+    pub def FnArg = struct {
         is_generic: bool,
         is_noalias: bool,
         arg_type: ?type,
@@ -307,7 +307,7 @@ pub const TypeInfo = union(enum) {
 
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
-    pub const Fn = struct {
+    pub def Fn = struct {
         calling_convention: CallingConvention,
         is_generic: bool,
         is_var_args: bool,
@@ -317,46 +317,46 @@ pub const TypeInfo = union(enum) {
 
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
-    pub const AnyFrame = struct {
+    pub def AnyFrame = struct {
         child: ?type,
     };
 
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
-    pub const Vector = struct {
+    pub def Vector = struct {
         len: comptime_int,
         child: type,
     };
 
     /// This data structure is used by the Zig language code generation and
     /// therefore must be kept in sync with the compiler implementation.
-    pub const Declaration = struct {
-        name: []const u8,
+    pub def Declaration = struct {
+        name: []u8,
         is_pub: bool,
         data: Data,
 
         /// This data structure is used by the Zig language code generation and
         /// therefore must be kept in sync with the compiler implementation.
-        pub const Data = union(enum) {
+        pub def Data = union(enum) {
             Type: type,
             Var: type,
             Fn: FnDecl,
 
             /// This data structure is used by the Zig language code generation and
             /// therefore must be kept in sync with the compiler implementation.
-            pub const FnDecl = struct {
+            pub def FnDecl = struct {
                 fn_type: type,
                 inline_type: Inline,
                 is_var_args: bool,
                 is_extern: bool,
                 is_export: bool,
-                lib_name: ?[]const u8,
+                lib_name: ?[]u8,
                 return_type: type,
-                arg_names: [][]const u8,
+                arg_names: [][]u8,
 
                 /// This data structure is used by the Zig language code generation and
                 /// therefore must be kept in sync with the compiler implementation.
-                pub const Inline = enum {
+                pub def Inline = enum {
                     Auto,
                     Always,
                     Never,
@@ -368,21 +368,21 @@ pub const TypeInfo = union(enum) {
 
 /// This data structure is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
-pub const FloatMode = enum {
+pub def FloatMode = enum {
     Strict,
     Optimized,
 };
 
 /// This data structure is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
-pub const Endian = enum {
+pub def Endian = enum {
     Big,
     Little,
 };
 
 /// This data structure is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
-pub const OutputMode = enum {
+pub def OutputMode = enum {
     Exe,
     Lib,
     Obj,
@@ -390,19 +390,19 @@ pub const OutputMode = enum {
 
 /// This data structure is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
-pub const LinkMode = enum {
+pub def LinkMode = enum {
     Static,
     Dynamic,
 };
 
 /// This data structure is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
-pub const Version = struct {
+pub def Version = struct {
     major: u32,
     minor: u32,
     patch: u32 = 0,
 
-    pub const Range = struct {
+    pub def Range = struct {
         min: Version,
         max: Version,
 
@@ -423,7 +423,7 @@ pub const Version = struct {
         return .eq;
     }
 
-    pub fn parse(text: []const u8) !Version {
+    pub fn parse(text: []u8) !Version {
         var it = std.mem.split(text, ".");
         return Version{
             .major = try std.fmt.parseInt(u32, it.next() orelse return error.InvalidVersion, 10),
@@ -434,7 +434,7 @@ pub const Version = struct {
 
     pub fn format(
         self: Version,
-        comptime fmt: []const u8,
+        comptime fmt: []u8,
         options: std.fmt.FormatOptions,
         out_stream: var,
     ) !void {
@@ -456,13 +456,13 @@ pub const Version = struct {
 
 /// This data structure is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
-pub const CallOptions = struct {
+pub def CallOptions = struct {
     modifier: Modifier = .auto,
 
     /// Only valid when `Modifier` is `Modifier.async_kw`.
     stack: ?[]align(std.Target.stack_align) u8 = null,
 
-    pub const Modifier = enum {
+    pub def Modifier = enum {
         /// Equivalent to function call syntax.
         auto,
 
@@ -499,31 +499,31 @@ pub const CallOptions = struct {
 
 /// This data structure is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
-pub const ExportOptions = struct {
-    name: []const u8,
+pub def ExportOptions = struct {
+    name: []u8,
     linkage: GlobalLinkage = .Strong,
-    section: ?[]const u8 = null,
+    section: ?[]u8 = null,
 };
 
 /// This function type is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
-pub const TestFn = struct {
-    name: []const u8,
+pub def TestFn = struct {
+    name: []u8,
     func: fn () anyerror!void,
     async_frame_size: ?usize,
 };
 
 /// This function type is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
-pub const PanicFn = fn ([]const u8, ?*StackTrace) noreturn;
+pub def PanicFn = fn ([]u8, ?*StackTrace) noreturn;
 
 /// This function is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
-pub const panic: PanicFn = if (@hasDecl(root, "panic")) root.panic else default_panic;
+pub def panic: PanicFn = if (@hasDecl(root, "panic")) root.panic else default_panic;
 
 /// This function is used by the Zig language code generation and
 /// therefore must be kept in sync with the compiler implementation.
-pub fn default_panic(msg: []const u8, error_return_trace: ?*StackTrace) noreturn {
+pub fn default_panic(msg: []u8, error_return_trace: ?*StackTrace) noreturn {
     @setCold(true);
     if (@hasDecl(root, "os") and @hasDecl(root.os, "panic")) {
         root.os.panic(msg, error_return_trace);
@@ -544,11 +544,11 @@ pub fn default_panic(msg: []const u8, error_return_trace: ?*StackTrace) noreturn
             std.os.abort();
         },
         else => {
-            const first_trace_addr = @returnAddress();
+            def first_trace_addr = @returnAddress();
             std.debug.panicExtra(error_return_trace, first_trace_addr, "{}", .{msg});
         },
     }
 }
 
-const std = @import("std.zig");
-const root = @import("root");
+def std = @import("std.zig");
+def root = @import("root");

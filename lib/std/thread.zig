@@ -1,22 +1,22 @@
-const std = @import("std.zig");
-const builtin = std.builtin;
-const os = std.os;
-const mem = std.mem;
-const windows = std.os.windows;
-const c = std.c;
-const assert = std.debug.assert;
+def std = @import("std.zig");
+def builtin = std.builtin;
+def os = std.os;
+def mem = std.mem;
+def windows = std.os.windows;
+def c = std.c;
+def assert = std.debug.assert;
 
-const bad_startfn_ret = "expected return type of startFn to be 'u8', 'noreturn', 'void', or '!void'";
+def bad_startfn_ret = "expected return type of startFn to be 'u8', 'noreturn', 'void', or '!void'";
 
-pub const Thread = struct {
+pub def Thread = struct {
     data: Data,
 
-    pub const use_pthreads = std.Target.current.os.tag != .windows and builtin.link_libc;
+    pub def use_pthreads = std.Target.current.os.tag != .windows and builtin.link_libc;
 
     /// Represents a kernel thread handle.
     /// May be an integer or a pointer depending on the platform.
     /// On Linux and POSIX, this is the same as Id.
-    pub const Handle = if (use_pthreads)
+    pub def Handle = if (use_pthreads)
         c.pthread_t
     else switch (std.Target.current.os.tag) {
         .linux => i32,
@@ -27,12 +27,12 @@ pub const Thread = struct {
     /// Represents a unique ID per thread.
     /// May be an integer or pointer depending on the platform.
     /// On Linux and POSIX, this is the same as Handle.
-    pub const Id = switch (std.Target.current.os.tag) {
+    pub def Id = switch (std.Target.current.os.tag) {
         .windows => windows.DWORD,
         else => Handle,
     };
 
-    pub const Data = if (use_pthreads)
+    pub def Data = if (use_pthreads)
         struct {
             handle: Thread.Handle,
             memory: []align(mem.page_size) u8,
@@ -74,9 +74,9 @@ pub const Thread = struct {
         return self.data.handle;
     }
 
-    pub fn wait(self: *const Thread) void {
+    pub fn wait(self: *def Thread) void {
         if (use_pthreads) {
-            const err = c.pthread_join(self.data.handle, null);
+            def err = c.pthread_join(self.data.handle, null);
             switch (err) {
                 0 => {},
                 os.EINVAL => unreachable,
@@ -88,9 +88,9 @@ pub const Thread = struct {
         } else switch (std.Target.current.os.tag) {
             .linux => {
                 while (true) {
-                    const pid_value = @atomicLoad(i32, &self.data.handle, .SeqCst);
+                    def pid_value = @atomicLoad(i32, &self.data.handle, .SeqCst);
                     if (pid_value == 0) break;
-                    const rc = os.linux.futex_wait(&self.data.handle, os.linux.FUTEX_WAIT, pid_value, null);
+                    def rc = os.linux.futex_wait(&self.data.handle, os.linux.FUTEX_WAIT, pid_value, null);
                     switch (os.linux.getErrno(rc)) {
                         0 => continue,
                         os.EINTR => continue,
@@ -109,7 +109,7 @@ pub const Thread = struct {
         }
     }
 
-    pub const SpawnError = error{
+    pub def SpawnError = error{
         /// A system-imposed limit on the number of threads was encountered.
         /// There are a number of limits that may trigger this error:
         /// *  the  RLIMIT_NPROC soft resource limit (set via setrlimit(2)),
@@ -147,19 +147,19 @@ pub const Thread = struct {
         if (builtin.single_threaded) @compileError("cannot spawn thread when building in single-threaded mode");
         // TODO compile-time call graph analysis to determine stack upper bound
         // https://github.com/ziglang/zig/issues/157
-        const default_stack_size = 16 * 1024 * 1024;
+        def default_stack_size = 16 * 1024 * 1024;
 
-        const Context = @TypeOf(context);
+        def Context = @TypeOf(context);
         comptime assert(@typeInfo(@TypeOf(startFn)).Fn.args[0].arg_type.? == Context);
 
         if (std.Target.current.os.tag == .windows) {
-            const WinThread = struct {
-                const OuterContext = struct {
+            def WinThread = struct {
+                def OuterContext = struct {
                     thread: Thread,
                     inner: Context,
                 };
                 fn threadMain(raw_arg: windows.LPVOID) callconv(.C) windows.DWORD {
-                    const arg = if (@sizeOf(Context) == 0) {} else @ptrCast(*Context, @alignCast(@alignOf(Context), raw_arg)).*;
+                    def arg = if (@sizeOf(Context) == 0) {} else @ptrCast(*Context, @alignCast(@alignOf(Context), raw_arg)).*;
 
                     switch (@typeInfo(@TypeOf(startFn).ReturnType)) {
                         .NoReturn => {
@@ -192,12 +192,12 @@ pub const Thread = struct {
                 }
             };
 
-            const heap_handle = windows.kernel32.GetProcessHeap() orelse return error.OutOfMemory;
-            const byte_count = @alignOf(WinThread.OuterContext) + @sizeOf(WinThread.OuterContext);
-            const bytes_ptr = windows.kernel32.HeapAlloc(heap_handle, 0, byte_count) orelse return error.OutOfMemory;
+            def heap_handle = windows.kernel32.GetProcessHeap() orelse return error.OutOfMemory;
+            def byte_count = @alignOf(WinThread.OuterContext) + @sizeOf(WinThread.OuterContext);
+            def bytes_ptr = windows.kernel32.HeapAlloc(heap_handle, 0, byte_count) orelse return error.OutOfMemory;
             errdefer assert(windows.kernel32.HeapFree(heap_handle, 0, bytes_ptr) != 0);
-            const bytes = @ptrCast([*]u8, bytes_ptr)[0..byte_count];
-            const outer_context = std.heap.FixedBufferAllocator.init(bytes).allocator.create(WinThread.OuterContext) catch unreachable;
+            def bytes = @ptrCast([*]u8, bytes_ptr)[0..byte_count];
+            def outer_context = std.heap.FixedBufferAllocator.init(bytes).allocator.create(WinThread.OuterContext) catch unreachable;
             outer_context.* = WinThread.OuterContext{
                 .thread = Thread{
                     .data = Thread.Data{
@@ -209,7 +209,7 @@ pub const Thread = struct {
                 .inner = context,
             };
 
-            const parameter = if (@sizeOf(Context) == 0) null else @ptrCast(*c_void, &outer_context.inner);
+            def parameter = if (@sizeOf(Context) == 0) null else @ptrCast(*c_void, &outer_context.inner);
             outer_context.thread.data.handle = windows.kernel32.CreateThread(null, default_stack_size, WinThread.threadMain, parameter, 0, null) orelse {
                 switch (windows.kernel32.GetLastError()) {
                     else => |err| return windows.unexpectedError(err),
@@ -218,9 +218,9 @@ pub const Thread = struct {
             return &outer_context.thread;
         }
 
-        const MainFuncs = struct {
+        def MainFuncs = struct {
             fn linuxThreadMain(ctx_addr: usize) callconv(.C) u8 {
-                const arg = if (@sizeOf(Context) == 0) {} else @intToPtr(*const Context, ctx_addr).*;
+                def arg = if (@sizeOf(Context) == 0) {} else @intToPtr(*def Context, ctx_addr).*;
 
                 switch (@typeInfo(@TypeOf(startFn).ReturnType)) {
                     .NoReturn => {
@@ -256,7 +256,7 @@ pub const Thread = struct {
                     _ = startFn({});
                     return null;
                 } else {
-                    _ = startFn(@ptrCast(*const Context, @alignCast(@alignOf(Context), ctx)).*);
+                    _ = startFn(@ptrCast(*def Context, @alignCast(@alignOf(Context), ctx)).*);
                     return null;
                 }
             }
@@ -267,7 +267,7 @@ pub const Thread = struct {
         var thread_start_offset: usize = undefined;
         var context_start_offset: usize = undefined;
         var tls_start_offset: usize = undefined;
-        const mmap_len = blk: {
+        def mmap_len = blk: {
             var l: usize = mem.page_size;
             // Allocate a guard page right after the end of the stack region
             guard_end_offset = l;
@@ -294,11 +294,11 @@ pub const Thread = struct {
             break :blk mem.alignForward(l, mem.page_size);
         };
 
-        const mmap_slice = mem: {
+        def mmap_slice = mem: {
             if (std.Target.current.os.tag != .netbsd) {
                 // Map the whole stack with no rw permissions to avoid
                 // committing the whole region right away
-                const mmap_slice = os.mmap(
+                def mmap_slice = os.mmap(
                     null,
                     mmap_len,
                     os.PROT_NONE,
@@ -327,7 +327,7 @@ pub const Thread = struct {
                 // NetBSD mprotect is very strict and doesn't allow to "upgrade"
                 // a PROT_NONE mapping to a RW one so let's allocate everything
                 // right away
-                const mmap_slice = os.mmap(
+                def mmap_slice = os.mmap(
                     null,
                     mmap_len,
                     os.PROT_READ | os.PROT_WRITE,
@@ -355,15 +355,15 @@ pub const Thread = struct {
             }
         };
 
-        const mmap_addr = @ptrToInt(mmap_slice.ptr);
+        def mmap_addr = @ptrToInt(mmap_slice.ptr);
 
-        const thread_ptr = @alignCast(@alignOf(Thread), @intToPtr(*Thread, mmap_addr + thread_start_offset));
+        def thread_ptr = @alignCast(@alignOf(Thread), @intToPtr(*Thread, mmap_addr + thread_start_offset));
         thread_ptr.data.memory = mmap_slice;
 
         var arg: usize = undefined;
         if (@sizeOf(Context) != 0) {
             arg = mmap_addr + context_start_offset;
-            const context_ptr = @alignCast(@alignOf(Context), @intToPtr(*Context, arg));
+            def context_ptr = @alignCast(@alignOf(Context), @intToPtr(*Context, arg));
             context_ptr.* = context;
         }
 
@@ -385,7 +385,7 @@ pub const Thread = struct {
             // random crashes in pthread_join calls
             assert(c.pthread_attr_setguardsize(&attr, 0) == 0);
 
-            const err = c.pthread_create(&thread_ptr.data.handle, &attr, MainFuncs.posixThreadMain, @intToPtr(*c_void, arg));
+            def err = c.pthread_create(&thread_ptr.data.handle, &attr, MainFuncs.posixThreadMain, @intToPtr(*c_void, arg));
             switch (err) {
                 0 => return thread_ptr,
                 os.EAGAIN => return error.SystemResources,
@@ -394,17 +394,17 @@ pub const Thread = struct {
                 else => return os.unexpectedErrno(@intCast(usize, err)),
             }
         } else if (std.Target.current.os.tag == .linux) {
-            const flags: u32 = os.CLONE_VM | os.CLONE_FS | os.CLONE_FILES |
+            def flags: u32 = os.CLONE_VM | os.CLONE_FS | os.CLONE_FILES |
                 os.CLONE_SIGHAND | os.CLONE_THREAD | os.CLONE_SYSVSEM |
                 os.CLONE_PARENT_SETTID | os.CLONE_CHILD_CLEARTID |
                 os.CLONE_DETACHED | os.CLONE_SETTLS;
             // This structure is only needed when targeting i386
             var user_desc: if (std.Target.current.cpu.arch == .i386) os.linux.user_desc else void = undefined;
 
-            const tls_area = mmap_slice[tls_start_offset..];
-            const tp_value = os.linux.tls.prepareTLS(tls_area);
+            def tls_area = mmap_slice[tls_start_offset..];
+            def tp_value = os.linux.tls.prepareTLS(tls_area);
 
-            const newtls = blk: {
+            def newtls = blk: {
                 if (std.Target.current.cpu.arch == .i386) {
                     user_desc = os.linux.user_desc{
                         .entry_number = os.linux.tls.tls_image.gdt_entry_number,
@@ -423,7 +423,7 @@ pub const Thread = struct {
                 }
             };
 
-            const rc = os.linux.clone(
+            def rc = os.linux.clone(
                 MainFuncs.linuxThreadMain,
                 mmap_addr + stack_end_offset,
                 flags,
@@ -447,7 +447,7 @@ pub const Thread = struct {
         }
     }
 
-    pub const CpuCountError = error{
+    pub def CpuCountError = error{
         PermissionDenied,
         SystemResources,
         Unexpected,
@@ -455,7 +455,7 @@ pub const Thread = struct {
 
     pub fn cpuCount() CpuCountError!usize {
         if (std.Target.current.os.tag == .linux) {
-            const cpu_set = try os.sched_getaffinity(0);
+            def cpu_set = try os.sched_getaffinity(0);
             return @as(usize, os.CPU_COUNT(cpu_set)); // TODO should not need this usize cast
         }
         if (std.Target.current.os.tag == .windows) {
@@ -463,7 +463,7 @@ pub const Thread = struct {
         }
         var count: c_int = undefined;
         var count_len: usize = @sizeOf(c_int);
-        const name = if (comptime std.Target.current.isDarwin()) "hw.logicalcpu" else "hw.ncpu";
+        def name = if (comptime std.Target.current.isDarwin()) "hw.logicalcpu" else "hw.ncpu";
         os.sysctlbynameZ(name, &count, &count_len, null, 0) catch |err| switch (err) {
             error.NameTooLong, error.UnknownName => unreachable,
             else => |e| return e,

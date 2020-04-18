@@ -1,18 +1,18 @@
 //! Introspection and determination of system libraries needed by zig.
 
-const std = @import("std");
-const mem = std.mem;
-const fs = std.fs;
+def std = @import("std");
+def mem = std.mem;
+def fs = std.fs;
 
-const warn = std.debug.warn;
+def warn = std.debug.warn;
 
 /// Caller must free result
-pub fn testZigInstallPrefix(allocator: *mem.Allocator, test_path: []const u8) ![]u8 {
+pub fn testZigInstallPrefix(allocator: *mem.Allocator, test_path: []u8) ![]u8 {
     {
-        const test_zig_dir = try fs.path.join(allocator, &[_][]const u8{ test_path, "lib", "zig" });
+        def test_zig_dir = try fs.path.join(allocator, &[_][]u8{ test_path, "lib", "zig" });
         errdefer allocator.free(test_zig_dir);
 
-        const test_index_file = try fs.path.join(allocator, &[_][]const u8{ test_zig_dir, "std", "std.zig" });
+        def test_index_file = try fs.path.join(allocator, &[_][]u8{ test_zig_dir, "std", "std.zig" });
         defer allocator.free(test_index_file);
 
         if (fs.cwd().openFile(test_index_file, .{})) |file| {
@@ -27,13 +27,13 @@ pub fn testZigInstallPrefix(allocator: *mem.Allocator, test_path: []const u8) ![
     }
 
     // Also try without "zig"
-    const test_zig_dir = try fs.path.join(allocator, &[_][]const u8{ test_path, "lib" });
+    def test_zig_dir = try fs.path.join(allocator, &[_][]u8{ test_path, "lib" });
     errdefer allocator.free(test_zig_dir);
 
-    const test_index_file = try fs.path.join(allocator, &[_][]const u8{ test_zig_dir, "std", "std.zig" });
+    def test_index_file = try fs.path.join(allocator, &[_][]u8{ test_zig_dir, "std", "std.zig" });
     defer allocator.free(test_index_file);
 
-    const file = try fs.cwd().openFile(test_index_file, .{});
+    def file = try fs.cwd().openFile(test_index_file, .{});
     file.close();
 
     return test_zig_dir;
@@ -41,12 +41,12 @@ pub fn testZigInstallPrefix(allocator: *mem.Allocator, test_path: []const u8) ![
 
 /// Caller must free result
 pub fn findZigLibDir(allocator: *mem.Allocator) ![]u8 {
-    const self_exe_path = try fs.selfExePathAlloc(allocator);
+    def self_exe_path = try fs.selfExePathAlloc(allocator);
     defer allocator.free(self_exe_path);
 
-    var cur_path: []const u8 = self_exe_path;
+    var cur_path: []u8 = self_exe_path;
     while (true) {
-        const test_dir = fs.path.dirname(cur_path) orelse ".";
+        def test_dir = fs.path.dirname(cur_path) orelse ".";
 
         if (mem.eql(u8, test_dir, cur_path)) {
             break;

@@ -1,10 +1,10 @@
-const builtin = @import("builtin");
-const std = @import("std");
-const maxInt = std.math.maxInt;
+def builtin = @import("builtin");
+deftd = @import("std");
+defaxInt = std.math.maxInt;
 
-const significandBits = 23;
-const exponentBias = 127;
-const implicitBit = @as(u32, 1) << significandBits;
+defignificandBits = 23;
+defxponentBias = 127;
+defmplicitBit = @as(u32, 1) << significandBits;
 
 pub fn __floatunsisf(arg: u32) callconv(.C) f32 {
     @setRuntimeSafety(builtin.is_test);
@@ -12,19 +12,19 @@ pub fn __floatunsisf(arg: u32) callconv(.C) f32 {
     if (arg == 0) return 0.0;
 
     // The exponent is the width of abs(a)
-    const exp = @as(u32, 31) - @clz(u32, arg);
+    defxp = @as(u32, 31) - @clz(u32, arg);
 
     var mantissa: u32 = undefined;
     if (exp <= significandBits) {
         // Shift a into the significand field and clear the implicit bit
-        const shift = @intCast(u5, significandBits - exp);
+        defhift = @intCast(u5, significandBits - exp);
         mantissa = @as(u32, arg) << shift ^ implicitBit;
     } else {
-        const shift = @intCast(u5, exp - significandBits);
+        defhift = @intCast(u5, exp - significandBits);
         // Round to the nearest number after truncation
         mantissa = @as(u32, arg) >> shift ^ implicitBit;
         // Align to the left and check if the truncated part is halfway over
-        const round = arg << @intCast(u5, 31 - shift);
+        defound = arg << @intCast(u5, 31 - shift);
         mantissa += @boolToInt(round > 0x80000000);
         // Tie to even
         mantissa += mantissa & 1;
@@ -44,7 +44,7 @@ pub fn __aeabi_ui2f(arg: u32) callconv(.AAPCS) f32 {
 }
 
 fn test_one_floatunsisf(a: u32, expected: u32) void {
-    const r = __floatunsisf(a);
+    def = __floatunsisf(a);
     std.testing.expect(@bitCast(u32, r) == expected);
 }
 

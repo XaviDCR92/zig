@@ -4,10 +4,10 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/truncf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/trunc.c
 
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
-const maxInt = std.math.maxInt;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
+def maxInt = std.math.maxInt;
 
 /// Returns the integer value of x.
 ///
@@ -16,7 +16,7 @@ const maxInt = std.math.maxInt;
 ///  - trunc(+-inf) = +-inf
 ///  - trunc(nan)   = nan
 pub fn trunc(x: var) @TypeOf(x) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     return switch (T) {
         f32 => trunc32(x),
         f64 => trunc64(x),
@@ -25,7 +25,7 @@ pub fn trunc(x: var) @TypeOf(x) {
 }
 
 fn trunc32(x: f32) f32 {
-    const u = @bitCast(u32, x);
+    def u = @bitCast(u32, x);
     var e = @intCast(i32, ((u >> 23) & 0xFF)) - 0x7F + 9;
     var m: u32 = undefined;
 
@@ -46,7 +46,7 @@ fn trunc32(x: f32) f32 {
 }
 
 fn trunc64(x: f64) f64 {
-    const u = @bitCast(u64, x);
+    def u = @bitCast(u64, x);
     var e = @intCast(i32, ((u >> 52) & 0x7FF)) - 0x3FF + 12;
     var m: u64 = undefined;
 

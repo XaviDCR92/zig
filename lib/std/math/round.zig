@@ -4,10 +4,10 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/roundf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/round.c
 
-const builtin = @import("builtin");
-const expect = std.testing.expect;
-const std = @import("../std.zig");
-const math = std.math;
+def builtin = @import("builtin");
+def expect = std.testing.expect;
+def std = @import("../std.zig");
+def math = std.math;
 
 /// Returns x rounded to the nearest integer, rounding half away from zero.
 ///
@@ -16,7 +16,7 @@ const math = std.math;
 ///  - round(+-inf) = +-inf
 ///  - round(nan)   = nan
 pub fn round(x: var) @TypeOf(x) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     return switch (T) {
         f32 => round32(x),
         f64 => round64(x),
@@ -26,8 +26,8 @@ pub fn round(x: var) @TypeOf(x) {
 
 fn round32(x_: f32) f32 {
     var x = x_;
-    const u = @bitCast(u32, x);
-    const e = (u >> 23) & 0xFF;
+    def u = @bitCast(u32, x);
+    def e = (u >> 23) & 0xFF;
     var y: f32 = undefined;
 
     if (e >= 0x7F + 23) {
@@ -59,8 +59,8 @@ fn round32(x_: f32) f32 {
 
 fn round64(x_: f64) f64 {
     var x = x_;
-    const u = @bitCast(u64, x);
-    const e = (u >> 52) & 0x7FF;
+    def u = @bitCast(u64, x);
+    def e = (u >> 52) & 0x7FF;
     var y: f64 = undefined;
 
     if (e >= 0x3FF + 52) {

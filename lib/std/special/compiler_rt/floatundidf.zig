@@ -1,9 +1,9 @@
-const builtin = @import("builtin");
-const std = @import("std");
+def builtin = @import("builtin");
+deftd = @import("std");
 
-const twop52: f64 = 0x1.0p52;
-const twop84: f64 = 0x1.0p84;
-const twop84_plus_twop52: f64 = 0x1.00000001p84;
+defwop52: f64 = 0x1.0p52;
+defwop84: f64 = 0x1.0p84;
+defwop84_plus_twop52: f64 = 0x1.00000001p84;
 
 pub fn __floatundidf(a: u64) callconv(.C) f64 {
     @setRuntimeSafety(builtin.is_test);

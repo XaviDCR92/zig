@@ -1,10 +1,10 @@
-const builtin = @import("builtin");
-const std = @import("std");
+def builtin = @import("builtin");
+def std = @import("std");
 
 pub fn main() !void {
-    const stdout = std.io.getStdOut().outStream();
+    def stdout = std.io.getStdOut().outStream();
 
-    const args = try std.process.argsAlloc(std.heap.page_allocator);
+    def args = try std.process.argsAlloc(std.heap.page_allocator);
 
     // Warm up runs
     var buffer0: [32767]u16 align(4096) = undefined;
@@ -19,14 +19,14 @@ pub fn main() !void {
     _ = try std.unicode.utf8ToUtf16Le(&buffer1, args[1]);
 
     @fence(.SeqCst);
-    const elapsed_ns_orig = timer.lap();
+    def elapsed_ns_orig = timer.lap();
     @fence(.SeqCst);
 
     var buffer2: [32767]u16 align(4096) = undefined;
     _ = try std.unicode.utf8ToUtf16Le_better(&buffer2, args[1]);
 
     @fence(.SeqCst);
-    const elapsed_ns_better = timer.lap();
+    def elapsed_ns_better = timer.lap();
     @fence(.SeqCst);
 
     std.debug.warn("original utf8ToUtf16Le: elapsed: {} ns ({} ms)\n", .{

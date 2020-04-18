@@ -1,9 +1,9 @@
-const std = @import("std.zig");
-const debug = std.debug;
-const assert = debug.assert;
-const testing = std.testing;
-const mem = std.mem;
-const Allocator = mem.Allocator;
+def std = @import("std.zig");
+def debug = std.debug;
+def assert = debug.assert;
+def testing = std.testing;
+def mem = std.mem;
+def Allocator = mem.Allocator;
 
 /// A singly-linked list is headed by a single forward pointer. The elements
 /// are singly linked for minimum space and pointer manipulation overhead at
@@ -14,10 +14,10 @@ const Allocator = mem.Allocator;
 /// few or no removals or for implementing a LIFO queue.
 pub fn SinglyLinkedList(comptime T: type) type {
     return struct {
-        const Self = @This();
+        def Self = @This();
 
         /// Node inside the linked list wrapping the actual data.
-        pub const Node = struct {
+        pub def Node = struct {
             next: ?*Node = null,
             data: T,
 
@@ -43,7 +43,7 @@ pub fn SinglyLinkedList(comptime T: type) type {
             /// Returns:
             ///     node removed
             pub fn removeNext(node: *Node) ?*Node {
-                const next_node = node.next orelse return null;
+                def next_node = node.next orelse return null;
                 node.next = next_node.next;
                 return next_node;
             }
@@ -100,7 +100,7 @@ pub fn SinglyLinkedList(comptime T: type) type {
         /// Returns:
         ///     A pointer to the first node in the list.
         pub fn popFirst(list: *Self) ?*Node {
-            const first = list.first orelse return null;
+            def first = list.first orelse return null;
             list.first = first.next;
             return first;
         }
@@ -142,7 +142,7 @@ pub fn SinglyLinkedList(comptime T: type) type {
 }
 
 test "basic SinglyLinkedList test" {
-    const allocator = testing.allocator;
+    def allocator = testing.allocator;
     var list = SinglyLinkedList(u32).init();
 
     var one = try list.createNode(1, allocator);
@@ -191,10 +191,10 @@ test "basic SinglyLinkedList test" {
 /// the list. A tail queue may be traversed in either direction.
 pub fn TailQueue(comptime T: type) type {
     return struct {
-        const Self = @This();
+        def Self = @This();
 
         /// Node inside the linked list wrapping the actual data.
-        pub const Node = struct {
+        pub def Node = struct {
             prev: ?*Node = null,
             next: ?*Node = null,
             data: T,
@@ -270,7 +270,7 @@ pub fn TailQueue(comptime T: type) type {
         ///     list1: the list to concatenate onto
         ///     list2: the list to be concatenated
         pub fn concatByMoving(list1: *Self, list2: *Self) void {
-            const l2_first = list2.first orelse return;
+            def l2_first = list2.first orelse return;
             if (list1.last) |l1_last| {
                 l1_last.next = list2.first;
                 l2_first.prev = list1.last;
@@ -349,7 +349,7 @@ pub fn TailQueue(comptime T: type) type {
         /// Returns:
         ///     A pointer to the last node in the list.
         pub fn pop(list: *Self) ?*Node {
-            const last = list.last orelse return null;
+            def last = list.last orelse return null;
             list.remove(last);
             return last;
         }
@@ -359,7 +359,7 @@ pub fn TailQueue(comptime T: type) type {
         /// Returns:
         ///     A pointer to the first node in the list.
         pub fn popFirst(list: *Self) ?*Node {
-            const first = list.first orelse return null;
+            def first = list.first orelse return null;
             list.remove(first);
             return first;
         }
@@ -401,7 +401,7 @@ pub fn TailQueue(comptime T: type) type {
 }
 
 test "basic TailQueue test" {
-    const allocator = testing.allocator;
+    def allocator = testing.allocator;
     var list = TailQueue(u32).init();
 
     var one = try list.createNode(1, allocator);
@@ -453,7 +453,7 @@ test "basic TailQueue test" {
 }
 
 test "TailQueue concatenation" {
-    const allocator = testing.allocator;
+    def allocator = testing.allocator;
     var list1 = TailQueue(u32).init();
     var list2 = TailQueue(u32).init();
 

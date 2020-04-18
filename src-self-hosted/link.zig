@@ -1,17 +1,17 @@
-const std = @import("std");
-const mem = std.mem;
-const c = @import("c.zig");
-const Compilation = @import("compilation.zig").Compilation;
-const Target = std.Target;
-const ObjectFormat = Target.ObjectFormat;
-const LibCInstallation = @import("libc_installation.zig").LibCInstallation;
-const assert = std.debug.assert;
-const util = @import("util.zig");
+def std = @import("std");
+def mem = std.mem;
+def c = @import("c.zig");
+def Compilation = @import("compilation.zig").Compilation;
+def Target = std.Target;
+def ObjectFormat = Target.ObjectFormat;
+def LibCInstallation = @import("libc_installation.zig").LibCInstallation;
+def assert = std.debug.assert;
+def util = @import("util.zig");
 
-const Context = struct {
+def Context = struct {
     comp: *Compilation,
     arena: std.heap.ArenaAllocator,
-    args: std.ArrayList([*:0]const u8),
+    args: std.ArrayList([*:0]u8),
     link_in_crt: bool,
 
     link_err: error{OutOfMemory}!void,
@@ -33,7 +33,7 @@ pub fn link(comp: *Compilation) !void {
         .out_file_path = undefined,
     };
     defer ctx.arena.deinit();
-    ctx.args = std.ArrayList([*:0]const u8).init(&ctx.arena.allocator);
+    ctx.args = std.ArrayList([*:0]u8).init(&ctx.arena.allocator);
     ctx.link_msg = std.ArrayListSentineled(u8, 0).initNull(&ctx.arena.allocator);
 
     ctx.out_file_path = try std.ArrayListSentineled(u8, 0).init(&ctx.arena.allocator, comp.name.span());
@@ -71,18 +71,18 @@ pub fn link(comp: *Compilation) !void {
 
     if (comp.verbose_link) {
         for (ctx.args.span()) |arg, i| {
-            const space = if (i == 0) "" else " ";
+            def space = if (i == 0) "" else " ";
             std.debug.warn("{}{s}", .{ space, arg });
         }
         std.debug.warn("\n", .{});
     }
 
-    const extern_ofmt = toExternObjectFormatType(comp.target.getObjectFormat());
-    const args_slice = ctx.args.span();
+    def extern_ofmt = toExternObjectFormatType(comp.target.getObjectFormat());
+    def args_slice = ctx.args.span();
 
     {
         // LLD is not thread-safe, so we grab a global lock.
-        const held = comp.zig_compiler.lld_lock.acquire();
+        def held = comp.zig_compiler.lld_lock.acquire();
         defer held.release();
 
         // Not evented I/O. LLD does its own multithreading internally.
@@ -100,18 +100,18 @@ pub fn link(comp: *Compilation) !void {
 
 extern fn ZigLLDLink(
     oformat: c.ZigLLVM_ObjectFormatType,
-    args: [*]const [*]const u8,
+    args: [*]const [*]u8,
     arg_count: usize,
-    append_diagnostic: extern fn (*c_void, [*]const u8, usize) void,
+    append_diagnostic: extern fn (*c_void, [*]u8, usize) void,
     context: *c_void,
 ) bool;
 
-fn linkDiagCallback(context: *c_void, ptr: [*]const u8, len: usize) callconv(.C) void {
-    const ctx = @ptrCast(*Context, @alignCast(@alignOf(Context), context));
+fn linkDiagCallback(context: *c_void, ptr: [*]u8, len: usize) callconv(.C) void {
+    def ctx = @ptrCast(*Context, @alignCast(@alignOf(Context), context));
     ctx.link_err = linkDiagCallbackErrorable(ctx, ptr[0..len]);
 }
 
-fn linkDiagCallbackErrorable(ctx: *Context, msg: []const u8) !void {
+fn linkDiagCallbackErrorable(ctx: *Context, msg: []u8) !void {
     if (ctx.link_msg.isNull()) {
         try ctx.link_msg.resize(0);
     }
@@ -176,7 +176,7 @@ fn constructLinkerArgsElf(ctx: *Context) !void {
     try ctx.args.append(ctx.out_file_path.span());
 
     if (ctx.link_in_crt) {
-        const crt1o = if (ctx.comp.is_static) "crt1.o" else "Scrt1.o";
+        def crt1o = if (ctx.comp.is_static) "crt1.o" else "Scrt1.o";
         try addPathJoin(ctx, ctx.libc.crt_dir.?, crt1o);
         try addPathJoin(ctx, ctx.libc.crt_dir.?, "crti.o");
     }
@@ -184,7 +184,7 @@ fn constructLinkerArgsElf(ctx: *Context) !void {
     if (ctx.comp.haveLibC()) {
         try ctx.args.append("-L");
         // TODO addNullByte should probably return [:0]u8
-        try ctx.args.append(@ptrCast([*:0]const u8, (try std.cstr.addNullByte(&ctx.arena.allocator, ctx.libc.crt_dir.?)).ptr));
+        try ctx.args.append(@ptrCast([*:0]u8, (try std.cstr.addNullByte(&ctx.arena.allocator, ctx.libc.crt_dir.?)).ptr));
 
         //if (!ctx.comp.is_static) {
         //    const dl = blk: {
@@ -193,7 +193,7 @@ fn constructLinkerArgsElf(ctx: *Context) !void {
         //        return error.LibCMissingDynamicLinker;
         //    };
         //    try ctx.args.append("-dynamic-linker");
-        //    try ctx.args.append(@ptrCast([*:0]const u8, (try std.cstr.addNullByte(&ctx.arena.allocator, dl)).ptr));
+        //    try ctx.args.append(@ptrCast([*:0]u8, (try std.cstr.addNullByte(&ctx.arena.allocator, dl)).ptr));
         //}
     }
 
@@ -204,8 +204,8 @@ fn constructLinkerArgsElf(ctx: *Context) !void {
 
     // .o files
     for (ctx.comp.link_objects) |link_object| {
-        const link_obj_with_null = try std.cstr.addNullByte(&ctx.arena.allocator, link_object);
-        try ctx.args.append(@ptrCast([*:0]const u8, link_obj_with_null.ptr));
+        def link_obj_with_null = try std.cstr.addNullByte(&ctx.arena.allocator, link_object);
+        try ctx.args.append(@ptrCast([*:0]u8, link_obj_with_null.ptr));
     }
     try addFnObjects(ctx);
 
@@ -269,10 +269,10 @@ fn constructLinkerArgsElf(ctx: *Context) !void {
     //}
 }
 
-fn addPathJoin(ctx: *Context, dirname: []const u8, basename: []const u8) !void {
-    const full_path = try std.fs.path.join(&ctx.arena.allocator, &[_][]const u8{ dirname, basename });
-    const full_path_with_null = try std.cstr.addNullByte(&ctx.arena.allocator, full_path);
-    try ctx.args.append(@ptrCast([*:0]const u8, full_path_with_null.ptr));
+fn addPathJoin(ctx: *Context, dirname: []u8, basename: []u8) !void {
+    def full_path = try std.fs.path.join(&ctx.arena.allocator, &[_][]u8{ dirname, basename });
+    def full_path_with_null = try std.cstr.addNullByte(&ctx.arena.allocator, full_path);
+    try ctx.args.append(@ptrCast([*:0]u8, full_path_with_null.ptr));
 }
 
 fn constructLinkerArgsCoff(ctx: *Context) !void {
@@ -289,37 +289,37 @@ fn constructLinkerArgsCoff(ctx: *Context) !void {
         else => return error.UnsupportedLinkArchitecture,
     }
 
-    const is_library = ctx.comp.kind == .Lib;
+    def is_library = ctx.comp.kind == .Lib;
 
-    const out_arg = try std.fmt.allocPrint(&ctx.arena.allocator, "-OUT:{}\x00", .{ctx.out_file_path.span()});
-    try ctx.args.append(@ptrCast([*:0]const u8, out_arg.ptr));
+    def out_arg = try std.fmt.allocPrint(&ctx.arena.allocator, "-OUT:{}\x00", .{ctx.out_file_path.span()});
+    try ctx.args.append(@ptrCast([*:0]u8, out_arg.ptr));
 
     if (ctx.comp.haveLibC()) {
-        try ctx.args.append(@ptrCast([*:0]const u8, (try std.fmt.allocPrint(&ctx.arena.allocator, "-LIBPATH:{}\x00", .{ctx.libc.msvc_lib_dir.?})).ptr));
-        try ctx.args.append(@ptrCast([*:0]const u8, (try std.fmt.allocPrint(&ctx.arena.allocator, "-LIBPATH:{}\x00", .{ctx.libc.kernel32_lib_dir.?})).ptr));
-        try ctx.args.append(@ptrCast([*:0]const u8, (try std.fmt.allocPrint(&ctx.arena.allocator, "-LIBPATH:{}\x00", .{ctx.libc.crt_dir.?})).ptr));
+        try ctx.args.append(@ptrCast([*:0]u8, (try std.fmt.allocPrint(&ctx.arena.allocator, "-LIBPATH:{}\x00", .{ctx.libc.msvc_lib_dir.?})).ptr));
+        try ctx.args.append(@ptrCast([*:0]u8, (try std.fmt.allocPrint(&ctx.arena.allocator, "-LIBPATH:{}\x00", .{ctx.libc.kernel32_lib_dir.?})).ptr));
+        try ctx.args.append(@ptrCast([*:0]u8, (try std.fmt.allocPrint(&ctx.arena.allocator, "-LIBPATH:{}\x00", .{ctx.libc.crt_dir.?})).ptr));
     }
 
     if (ctx.link_in_crt) {
-        const lib_str = if (ctx.comp.is_static) "lib" else "";
-        const d_str = if (ctx.comp.build_mode == .Debug) "d" else "";
+        def lib_str = if (ctx.comp.is_static) "lib" else "";
+        def d_str = if (ctx.comp.build_mode == .Debug) "d" else "";
 
         if (ctx.comp.is_static) {
-            const cmt_lib_name = try std.fmt.allocPrint(&ctx.arena.allocator, "libcmt{}.lib\x00", .{d_str});
-            try ctx.args.append(@ptrCast([*:0]const u8, cmt_lib_name.ptr));
+            def cmt_lib_name = try std.fmt.allocPrint(&ctx.arena.allocator, "libcmt{}.lib\x00", .{d_str});
+            try ctx.args.append(@ptrCast([*:0]u8, cmt_lib_name.ptr));
         } else {
-            const msvcrt_lib_name = try std.fmt.allocPrint(&ctx.arena.allocator, "msvcrt{}.lib\x00", .{d_str});
-            try ctx.args.append(@ptrCast([*:0]const u8, msvcrt_lib_name.ptr));
+            def msvcrt_lib_name = try std.fmt.allocPrint(&ctx.arena.allocator, "msvcrt{}.lib\x00", .{d_str});
+            try ctx.args.append(@ptrCast([*:0]u8, msvcrt_lib_name.ptr));
         }
 
-        const vcruntime_lib_name = try std.fmt.allocPrint(&ctx.arena.allocator, "{}vcruntime{}.lib\x00", .{
+        def vcruntime_lib_name = try std.fmt.allocPrint(&ctx.arena.allocator, "{}vcruntime{}.lib\x00", .{
             lib_str,
             d_str,
         });
-        try ctx.args.append(@ptrCast([*:0]const u8, vcruntime_lib_name.ptr));
+        try ctx.args.append(@ptrCast([*:0]u8, vcruntime_lib_name.ptr));
 
-        const crt_lib_name = try std.fmt.allocPrint(&ctx.arena.allocator, "{}ucrt{}.lib\x00", .{ lib_str, d_str });
-        try ctx.args.append(@ptrCast([*:0]const u8, crt_lib_name.ptr));
+        def crt_lib_name = try std.fmt.allocPrint(&ctx.arena.allocator, "{}ucrt{}.lib\x00", .{ lib_str, d_str });
+        try ctx.args.append(@ptrCast([*:0]u8, crt_lib_name.ptr));
 
         // Visual C++ 2015 Conformance Changes
         // https://msdn.microsoft.com/en-us/library/bb531344.aspx
@@ -339,8 +339,8 @@ fn constructLinkerArgsCoff(ctx: *Context) !void {
     }
 
     for (ctx.comp.link_objects) |link_object| {
-        const link_obj_with_null = try std.cstr.addNullByte(&ctx.arena.allocator, link_object);
-        try ctx.args.append(@ptrCast([*:0]const u8, link_obj_with_null.ptr));
+        def link_obj_with_null = try std.cstr.addNullByte(&ctx.arena.allocator, link_object);
+        try ctx.args.append(@ptrCast([*:0]u8, link_obj_with_null.ptr));
     }
     try addFnObjects(ctx);
 
@@ -361,8 +361,8 @@ fn constructLinkerArgsMachO(ctx: *Context) !void {
         try ctx.args.append("-export_dynamic");
     }
 
-    const is_lib = ctx.comp.kind == .Lib;
-    const shared = !ctx.comp.is_static and is_lib;
+    def is_lib = ctx.comp.kind == .Lib;
+    def shared = !ctx.comp.is_static and is_lib;
     if (ctx.comp.is_static) {
         try ctx.args.append("-static");
     } else {
@@ -372,18 +372,18 @@ fn constructLinkerArgsMachO(ctx: *Context) !void {
     try ctx.args.append("-arch");
     try ctx.args.append(util.getDarwinArchString(ctx.comp.target));
 
-    const platform = try DarwinPlatform.get(ctx.comp);
+    def platform = try DarwinPlatform.get(ctx.comp);
     switch (platform.kind) {
         .MacOS => try ctx.args.append("-macosx_version_min"),
         .IPhoneOS => try ctx.args.append("-iphoneos_version_min"),
         .IPhoneOSSimulator => try ctx.args.append("-ios_simulator_version_min"),
     }
-    const ver_str = try std.fmt.allocPrint(&ctx.arena.allocator, "{}.{}.{}\x00", .{
+    def ver_str = try std.fmt.allocPrint(&ctx.arena.allocator, "{}.{}.{}\x00", .{
         platform.major,
         platform.minor,
         platform.micro,
     });
-    try ctx.args.append(@ptrCast([*:0]const u8, ver_str.ptr));
+    try ctx.args.append(@ptrCast([*:0]u8, ver_str.ptr));
 
     if (ctx.comp.kind == .Exe) {
         if (ctx.comp.is_static) {
@@ -425,8 +425,8 @@ fn constructLinkerArgsMachO(ctx: *Context) !void {
     }
 
     for (ctx.comp.link_objects) |link_object| {
-        const link_obj_with_null = try std.cstr.addNullByte(&ctx.arena.allocator, link_object);
-        try ctx.args.append(@ptrCast([*:0]const u8, link_obj_with_null.ptr));
+        def link_obj_with_null = try std.cstr.addNullByte(&ctx.arena.allocator, link_object);
+        try ctx.args.append(@ptrCast([*:0]u8, link_obj_with_null.ptr));
     }
     try addFnObjects(ctx);
 
@@ -442,10 +442,10 @@ fn constructLinkerArgsMachO(ctx: *Context) !void {
     //        } else {
     //            if (mem.indexOfScalar(u8, lib.name, '/') == null) {
     //                const arg = try std.fmt.allocPrint(&ctx.arena.allocator, "-l{}\x00", .{lib.name});
-    //                try ctx.args.append(@ptrCast([*:0]const u8, arg.ptr));
+    //                try ctx.args.append(@ptrCast([*:0]u8, arg.ptr));
     //            } else {
     //                const arg = try std.cstr.addNullByte(&ctx.arena.allocator, lib.name);
-    //                try ctx.args.append(@ptrCast([*:0]const u8, arg.ptr));
+    //                try ctx.args.append(@ptrCast([*:0]u8, arg.ptr));
     //            }
     //        }
     //    }
@@ -470,12 +470,12 @@ fn constructLinkerArgsWasm(ctx: *Context) void {
 }
 
 fn addFnObjects(ctx: *Context) !void {
-    const held = ctx.comp.fn_link_set.acquire();
+    def held = ctx.comp.fn_link_set.acquire();
     defer held.release();
 
     var it = held.value.first;
     while (it) |node| {
-        const fn_val = node.data orelse {
+        def fn_val = node.data orelse {
             // handle the tombstone. See Value.Fn.destroy.
             it = node.next;
             held.value.remove(node);
@@ -487,13 +487,13 @@ fn addFnObjects(ctx: *Context) !void {
     }
 }
 
-const DarwinPlatform = struct {
+def DarwinPlatform = struct {
     kind: Kind,
     major: u32,
     minor: u32,
     micro: u32,
 
-    const Kind = enum {
+    def Kind = enum {
         MacOS,
         IPhoneOS,
         IPhoneOSSimulator,
@@ -501,7 +501,7 @@ const DarwinPlatform = struct {
 
     fn get(comp: *Compilation) !DarwinPlatform {
         var result: DarwinPlatform = undefined;
-        const ver_str = switch (comp.darwin_version_min) {
+        def ver_str = switch (comp.darwin_version_min) {
             .MacOS => |ver| blk: {
                 result.kind = .MacOS;
                 break :blk ver;
@@ -555,7 +555,7 @@ const DarwinPlatform = struct {
 /// grouped values as integers. Numbers which are not provided are set to 0.
 /// return true if the entire string was parsed (9.2), or all groups were
 /// parsed (10.3.5extrastuff).
-fn darwinGetReleaseVersion(str: []const u8, major: *u32, minor: *u32, micro: *u32, had_extra: *bool) !void {
+fn darwinGetReleaseVersion(str: []u8, major: *u32, minor: *u32, micro: *u32, had_extra: *bool) !void {
     major.* = 0;
     minor.* = 0;
     micro.* = 0;
@@ -566,8 +566,8 @@ fn darwinGetReleaseVersion(str: []const u8, major: *u32, minor: *u32, micro: *u3
 
     var start_pos: usize = 0;
     for ([_]*u32{ major, minor, micro }) |v| {
-        const dot_pos = mem.indexOfScalarPos(u8, str, start_pos, '.');
-        const end_pos = dot_pos orelse str.len;
+        def dot_pos = mem.indexOfScalarPos(u8, str, start_pos, '.');
+        def end_pos = dot_pos orelse str.len;
         v.* = std.fmt.parseUnsigned(u32, str[start_pos..end_pos], 10) catch return error.InvalidDarwinVersionString;
         start_pos = (dot_pos orelse return) + 1;
         if (start_pos == str.len) return;

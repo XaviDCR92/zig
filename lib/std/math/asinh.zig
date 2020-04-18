@@ -4,10 +4,10 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/asinhf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/asinh.c
 
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
-const maxInt = std.math.maxInt;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
+def maxInt = std.math.maxInt;
 
 /// Returns the hyperbolic arc-sin of x.
 ///
@@ -16,7 +16,7 @@ const maxInt = std.math.maxInt;
 ///  - asinh(+-inf) = +-inf
 ///  - asinh(nan)   = nan
 pub fn asinh(x: var) @TypeOf(x) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     return switch (T) {
         f32 => asinh32(x),
         f64 => asinh64(x),
@@ -26,9 +26,9 @@ pub fn asinh(x: var) @TypeOf(x) {
 
 // asinh(x) = sign(x) * log(|x| + sqrt(x * x + 1)) ~= x - x^3/6 + o(x^5)
 fn asinh32(x: f32) f32 {
-    const u = @bitCast(u32, x);
-    const i = u & 0x7FFFFFFF;
-    const s = i >> 31;
+    def u = @bitCast(u32, x);
+    def i = u & 0x7FFFFFFF;
+    def s = i >> 31;
 
     var rx = @bitCast(f32, i); // |x|
 
@@ -58,9 +58,9 @@ fn asinh32(x: f32) f32 {
 }
 
 fn asinh64(x: f64) f64 {
-    const u = @bitCast(u64, x);
-    const e = (u >> 52) & 0x7FF;
-    const s = u >> 63;
+    def u = @bitCast(u64, x);
+    def e = (u >> 52) & 0x7FF;
+    def s = u >> 63;
 
     var rx = @bitCast(f64, u & (maxInt(u64) >> 1)); // |x|
 
@@ -94,7 +94,7 @@ test "math.asinh" {
 }
 
 test "math.asinh32" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f32, asinh32(0.0), 0.0, epsilon));
     expect(math.approxEq(f32, asinh32(0.2), 0.198690, epsilon));
@@ -106,7 +106,7 @@ test "math.asinh32" {
 }
 
 test "math.asinh64" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f64, asinh64(0.0), 0.0, epsilon));
     expect(math.approxEq(f64, asinh64(0.2), 0.198690, epsilon));

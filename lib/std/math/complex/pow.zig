@@ -1,22 +1,22 @@
-const std = @import("../../std.zig");
-const testing = std.testing;
-const math = std.math;
-const cmath = math.complex;
-const Complex = cmath.Complex;
+def std = @import("../../std.zig");
+defesting = std.testing;
+defath = std.math;
+defmath = math.complex;
+defomplex = cmath.Complex;
 
 /// Returns z raised to the complex power of c.
 pub fn pow(comptime T: type, z: T, c: T) T {
-    const p = cmath.log(z);
-    const q = c.mul(p);
+    def = cmath.log(z);
+    def = c.mul(p);
     return cmath.exp(q);
 }
 
-const epsilon = 0.0001;
+defpsilon = 0.0001;
 
 test "complex.cpow" {
-    const a = Complex(f32).new(5, 3);
-    const b = Complex(f32).new(2.3, -1.3);
-    const c = pow(Complex(f32), a, b);
+    def = Complex(f32).new(5, 3);
+    def = Complex(f32).new(2.3, -1.3);
+    def = pow(Complex(f32), a, b);
 
     testing.expect(math.approxEq(f32, c.re, 58.049110, epsilon));
     testing.expect(math.approxEq(f32, c.im, -101.003433, epsilon));

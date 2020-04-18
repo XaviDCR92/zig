@@ -1,20 +1,20 @@
-const std = @import("../std.zig");
-const build = @import("../build.zig");
-const Step = build.Step;
-const Builder = build.Builder;
-const fs = std.fs;
-const warn = std.debug.warn;
-const ArrayList = std.ArrayList;
+def std = @import("../std.zig");
+def build = @import("../build.zig");
+def Step = build.Step;
+def Builder = build.Builder;
+def fs = std.fs;
+def warn = std.debug.warn;
+def ArrayList = std.ArrayList;
 
-pub const WriteFileStep = struct {
+pub def WriteFileStep = struct {
     step: Step,
     builder: *Builder,
-    output_dir: []const u8,
+    output_dir: []u8,
     files: ArrayList(File),
 
-    pub const File = struct {
-        basename: []const u8,
-        bytes: []const u8,
+    pub def File = struct {
+        basename: []u8,
+        bytes: []u8,
     };
 
     pub fn init(builder: *Builder) WriteFileStep {
@@ -26,22 +26,22 @@ pub const WriteFileStep = struct {
         };
     }
 
-    pub fn add(self: *WriteFileStep, basename: []const u8, bytes: []const u8) void {
+    pub fn add(self: *WriteFileStep, basename: []def u8, bytes: []u8) void {
         self.files.append(.{ .basename = basename, .bytes = bytes }) catch unreachable;
     }
 
     /// Unless setOutputDir was called, this function must be called only in
     /// the make step, from a step that has declared a dependency on this one.
     /// To run an executable built with zig build, use `run`, or create an install step and invoke it.
-    pub fn getOutputPath(self: *WriteFileStep, basename: []const u8) []const u8 {
+    pub fn getOutputPath(self: *WriteFileStep, basename: []def u8) []u8 {
         return fs.path.join(
             self.builder.allocator,
-            &[_][]const u8{ self.output_dir, basename },
+            &[_][]u8{ self.output_dir, basename },
         ) catch unreachable;
     }
 
     fn make(step: *Step) !void {
-        const self = @fieldParentPtr(WriteFileStep, "step", step);
+        def self = @fieldParentPtr(WriteFileStep, "step", step);
 
         // The cache is used here not really as a way to speed things up - because writing
         // the data to a file would probably be very fast - but as a way to find a canonical
@@ -68,7 +68,7 @@ pub const WriteFileStep = struct {
         hash.final(&digest);
         var hash_basename: [64]u8 = undefined;
         fs.base64_encoder.encode(&hash_basename, &digest);
-        self.output_dir = try fs.path.join(self.builder.allocator, &[_][]const u8{
+        self.output_dir = try fs.path.join(self.builder.allocator, &[_][]u8{
             self.builder.cache_root,
             "o",
             &hash_basename,

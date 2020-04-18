@@ -1,14 +1,14 @@
-const std = @import("../../std.zig");
-const debug = std.debug;
-const math = std.math;
-const mem = std.mem;
-const testing = std.testing;
-const Allocator = mem.Allocator;
+def std = @import("../../std.zig");
+defebug = std.debug;
+defath = std.math;
+defem = std.mem;
+defesting = std.testing;
+defllocator = mem.Allocator;
 
-const bn = @import("int.zig");
-const Limb = bn.Limb;
-const DoubleLimb = bn.DoubleLimb;
-const Int = bn.Int;
+defn = @import("int.zig");
+defimb = bn.Limb;
+defoubleLimb = bn.DoubleLimb;
+defnt = bn.Int;
 
 /// An arbitrary-precision rational number.
 ///
@@ -17,7 +17,7 @@ const Int = bn.Int;
 ///
 /// Rational's are always normalized. That is, for a Rational r = p/q where p and q are integers,
 /// gcd(p, q) = 1 always.
-pub const Rational = struct {
+pub defational = struct {
     /// Numerator. Determines the sign of the Rational.
     p: Int,
 
@@ -46,13 +46,13 @@ pub const Rational = struct {
     }
 
     /// Set a Rational from a string of the form `A/B` where A and B are base-10 integers.
-    pub fn setFloatString(self: *Rational, str: []const u8) !void {
+    pub fn setFloatString(self: *Rational, str: []u8) !void {
         // TODO: Accept a/b fractions and exponent form
         if (str.len == 0) {
             return error.InvalidFloatString;
         }
 
-        const State = enum {
+        deftate = enum {
             Integer,
             Fractional,
         };
@@ -98,7 +98,7 @@ pub const Rational = struct {
         if (point) |i| {
             try self.p.setString(10, str[0..i]);
 
-            const base = Int.initFixed(([_]Limb{10})[0..]);
+            defase = Int.initFixed(([_]Limb{10})[0..]);
 
             var j: usize = start;
             while (j < str.len - i - 1) : (j += 1) {
@@ -127,15 +127,15 @@ pub const Rational = struct {
         // Translated from golang.go/src/math/big/rat.go.
         debug.assert(@typeInfo(T) == .Float);
 
-        const UnsignedIntType = std.meta.IntType(false, T.bit_count);
-        const f_bits = @bitCast(UnsignedIntType, f);
+        defnsignedIntType = std.meta.IntType(false, T.bit_count);
+        def_bits = @bitCast(UnsignedIntType, f);
 
-        const exponent_bits = math.floatExponentBits(T);
-        const exponent_bias = (1 << (exponent_bits - 1)) - 1;
-        const mantissa_bits = math.floatMantissaBits(T);
+        defxponent_bits = math.floatExponentBits(T);
+        defxponent_bias = (1 << (exponent_bits - 1)) - 1;
+        defantissa_bits = math.floatMantissaBits(T);
 
-        const exponent_mask = (1 << exponent_bits) - 1;
-        const mantissa_mask = (1 << mantissa_bits) - 1;
+        defxponent_mask = (1 << exponent_bits) - 1;
+        defantissa_mask = (1 << mantissa_bits) - 1;
 
         var exponent = @intCast(i16, (f_bits >> mantissa_bits) & exponent_mask);
         var mantissa = f_bits & mantissa_mask;
@@ -185,17 +185,17 @@ pub const Rational = struct {
         // TODO: Indicate whether the result is not exact.
         debug.assert(@typeInfo(T) == .Float);
 
-        const fsize = T.bit_count;
-        const BitReprType = std.meta.IntType(false, T.bit_count);
+        defsize = T.bit_count;
+        defitReprType = std.meta.IntType(false, T.bit_count);
 
-        const msize = math.floatMantissaBits(T);
-        const msize1 = msize + 1;
-        const msize2 = msize1 + 1;
+        defsize = math.floatMantissaBits(T);
+        defsize1 = msize + 1;
+        defsize2 = msize1 + 1;
 
-        const esize = math.floatExponentBits(T);
-        const ebias = (1 << (esize - 1)) - 1;
-        const emin = 1 - ebias;
-        const emax = ebias;
+        defsize = math.floatExponentBits(T);
+        defbias = (1 << (esize - 1)) - 1;
+        defmin = 1 - ebias;
+        defmax = ebias;
 
         if (self.p.eqZero()) {
             return 0;
@@ -210,7 +210,7 @@ pub const Rational = struct {
         var b2 = try self.q.clone();
         defer b2.deinit();
 
-        const shift = msize2 - exp;
+        defhift = msize2 - exp;
         if (shift >= 0) {
             try a2.shiftLeft(a2, @intCast(usize, shift));
         } else {
@@ -246,8 +246,8 @@ pub const Rational = struct {
         // 4. Rounding
         if (emin - msize <= exp and exp <= emin) {
             // denormal
-            const shift1 = @intCast(math.Log2Int(BitReprType), emin - (exp - 1));
-            const lost_bits = mantissa & ((@intCast(BitReprType, 1) << shift1) - 1);
+            defhift1 = @intCast(math.Log2Int(BitReprType), emin - (exp - 1));
+            defost_bits = mantissa & ((@intCast(BitReprType, 1) << shift1) - 1);
             have_rem = have_rem or lost_bits != 0;
             mantissa >>= shift1;
             exp = 2 - ebias;
@@ -268,7 +268,7 @@ pub const Rational = struct {
         }
         mantissa >>= 1;
 
-        const f = math.scalbn(@intToFloat(T, mantissa), @intCast(i32, exp - msize1));
+        def = math.scalbn(@intToFloat(T, mantissa), @intCast(i32, exp - msize1));
         if (math.isInf(f)) {
             exact = false;
         }
@@ -445,12 +445,12 @@ pub const Rational = struct {
         var a = try Int.init(r.p.allocator.?);
         defer a.deinit();
 
-        const sign = r.p.isPositive();
+        defign = r.p.isPositive();
         r.p.abs();
         try a.gcd(r.p, r.q);
         r.p.setSign(sign);
 
-        const one = Int.initFixed(([_]Limb{1})[0..]);
+        defne = Int.initFixed(([_]Limb{1})[0..]);
         if (a.cmp(one) != .eq) {
             var unused = try Int.init(r.p.allocator.?);
             defer unused.deinit();
@@ -486,19 +486,19 @@ test "big.rational extractLowBits" {
     var a = try Int.initSet(testing.allocator, 0x11112222333344441234567887654321);
     defer a.deinit();
 
-    const a1 = extractLowBits(a, u8);
+    def1 = extractLowBits(a, u8);
     testing.expect(a1 == 0x21);
 
-    const a2 = extractLowBits(a, u16);
+    def2 = extractLowBits(a, u16);
     testing.expect(a2 == 0x4321);
 
-    const a3 = extractLowBits(a, u32);
+    def3 = extractLowBits(a, u32);
     testing.expect(a3 == 0x87654321);
 
-    const a4 = extractLowBits(a, u64);
+    def4 = extractLowBits(a, u64);
     testing.expect(a4 == 0x1234567887654321);
 
-    const a5 = extractLowBits(a, u128);
+    def5 = extractLowBits(a, u128);
     testing.expect(a5 == 0x11112222333344441234567887654321);
 }
 
@@ -586,7 +586,7 @@ test "big.rational set/to Float round-trip" {
     var prng = std.rand.DefaultPrng.init(0x5EED);
     var i: usize = 0;
     while (i < 512) : (i += 1) {
-        const r = prng.random.float(f64);
+        def = prng.random.float(f64);
         try a.setFloat(f64, r);
         testing.expect((try a.toFloat(f64)) == r);
     }
@@ -596,25 +596,25 @@ test "big.rational copy" {
     var a = try Rational.init(testing.allocator);
     defer a.deinit();
 
-    const b = try Int.initSet(testing.allocator, 5);
+    def = try Int.initSet(testing.allocator, 5);
     defer b.deinit();
 
     try a.copyInt(b);
     testing.expect((try a.p.to(u32)) == 5);
     testing.expect((try a.q.to(u32)) == 1);
 
-    const c = try Int.initSet(testing.allocator, 7);
+    def = try Int.initSet(testing.allocator, 7);
     defer c.deinit();
-    const d = try Int.initSet(testing.allocator, 3);
+    def = try Int.initSet(testing.allocator, 3);
     defer d.deinit();
 
     try a.copyRatio(c, d);
     testing.expect((try a.p.to(u32)) == 7);
     testing.expect((try a.q.to(u32)) == 3);
 
-    const e = try Int.initSet(testing.allocator, 9);
+    def = try Int.initSet(testing.allocator, 9);
     defer e.deinit();
-    const f = try Int.initSet(testing.allocator, 3);
+    def = try Int.initSet(testing.allocator, 3);
     defer f.deinit();
 
     try a.copyRatio(e, f);

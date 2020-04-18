@@ -4,12 +4,12 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/coshf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/cosh.c
 
-const builtin = @import("builtin");
-const std = @import("../std.zig");
-const math = std.math;
-const expo2 = @import("expo2.zig").expo2;
-const expect = std.testing.expect;
-const maxInt = std.math.maxInt;
+def builtin = @import("builtin");
+def std = @import("../std.zig");
+def math = std.math;
+def expo2 = @import("expo2.zig").expo2;
+def expect = std.testing.expect;
+def maxInt = std.math.maxInt;
 
 /// Returns the hyperbolic cosine of x.
 ///
@@ -18,7 +18,7 @@ const maxInt = std.math.maxInt;
 ///  - cosh(+-inf) = +inf
 ///  - cosh(nan)   = nan
 pub fn cosh(x: var) @TypeOf(x) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     return switch (T) {
         f32 => cosh32(x),
         f64 => cosh64(x),
@@ -30,9 +30,9 @@ pub fn cosh(x: var) @TypeOf(x) {
 //         = 1 + 0.5 * (exp(x) - 1) * (exp(x) - 1) / exp(x)
 //         = 1 + (x * x) / 2 + o(x^4)
 fn cosh32(x: f32) f32 {
-    const u = @bitCast(u32, x);
-    const ux = u & 0x7FFFFFFF;
-    const ax = @bitCast(f32, ux);
+    def u = @bitCast(u32, x);
+    def ux = u & 0x7FFFFFFF;
+    def ax = @bitCast(f32, ux);
 
     // |x| < log(2)
     if (ux < 0x3F317217) {
@@ -40,13 +40,13 @@ fn cosh32(x: f32) f32 {
             math.raiseOverflow();
             return 1.0;
         }
-        const t = math.expm1(ax);
+        def t = math.expm1(ax);
         return 1 + t * t / (2 * (1 + t));
     }
 
     // |x| < log(FLT_MAX)
     if (ux < 0x42B17217) {
-        const t = math.exp(ax);
+        def t = math.exp(ax);
         return 0.5 * (t + 1 / t);
     }
 
@@ -55,9 +55,9 @@ fn cosh32(x: f32) f32 {
 }
 
 fn cosh64(x: f64) f64 {
-    const u = @bitCast(u64, x);
-    const w = @intCast(u32, u >> 32);
-    const ax = @bitCast(f64, u & (maxInt(u64) >> 1));
+    def u = @bitCast(u64, x);
+    def w = @intCast(u32, u >> 32);
+    def ax = @bitCast(f64, u & (maxInt(u64) >> 1));
 
     // TODO: Shouldn't need this explicit check.
     if (x == 0.0) {
@@ -72,13 +72,13 @@ fn cosh64(x: f64) f64 {
             }
             return 1.0;
         }
-        const t = math.expm1(ax);
+        def t = math.expm1(ax);
         return 1 + t * t / (2 * (1 + t));
     }
 
     // |x| < log(DBL_MAX)
     if (w < 0x40862E42) {
-        const t = math.exp(ax);
+        def t = math.exp(ax);
         // NOTE: If x > log(0x1p26) then 1/t is not required.
         return 0.5 * (t + 1 / t);
     }
@@ -93,7 +93,7 @@ test "math.cosh" {
 }
 
 test "math.cosh32" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f32, cosh32(0.0), 1.0, epsilon));
     expect(math.approxEq(f32, cosh32(0.2), 1.020067, epsilon));
@@ -102,7 +102,7 @@ test "math.cosh32" {
 }
 
 test "math.cosh64" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f64, cosh64(0.0), 1.0, epsilon));
     expect(math.approxEq(f64, cosh64(0.2), 1.020067, epsilon));

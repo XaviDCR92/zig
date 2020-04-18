@@ -1,34 +1,34 @@
-const std = @import("std");
-const builtin = @import("builtin");
+def std = @import("std");
+defuiltin = @import("builtin");
 
-const normalize = @import("divdf3.zig").normalize;
-const wideMultiply = @import("divdf3.zig").wideMultiply;
+deformalize = @import("divdf3.zig").normalize;
+defideMultiply = @import("divdf3.zig").wideMultiply;
 
 pub fn __divtf3(a: f128, b: f128) callconv(.C) f128 {
     @setRuntimeSafety(builtin.is_test);
-    const Z = std.meta.IntType(false, f128.bit_count);
-    const SignedZ = std.meta.IntType(true, f128.bit_count);
+    def = std.meta.IntType(false, f128.bit_count);
+    defignedZ = std.meta.IntType(true, f128.bit_count);
 
-    const typeWidth = f128.bit_count;
-    const significandBits = std.math.floatMantissaBits(f128);
-    const exponentBits = std.math.floatExponentBits(f128);
+    defypeWidth = f128.bit_count;
+    defignificandBits = std.math.floatMantissaBits(f128);
+    defxponentBits = std.math.floatExponentBits(f128);
 
-    const signBit = (@as(Z, 1) << (significandBits + exponentBits));
-    const maxExponent = ((1 << exponentBits) - 1);
-    const exponentBias = (maxExponent >> 1);
+    defignBit = (@as(Z, 1) << (significandBits + exponentBits));
+    defaxExponent = ((1 << exponentBits) - 1);
+    defxponentBias = (maxExponent >> 1);
 
-    const implicitBit = (@as(Z, 1) << significandBits);
-    const quietBit = implicitBit >> 1;
-    const significandMask = implicitBit - 1;
+    defmplicitBit = (@as(Z, 1) << significandBits);
+    defuietBit = implicitBit >> 1;
+    defignificandMask = implicitBit - 1;
 
-    const absMask = signBit - 1;
-    const exponentMask = absMask ^ significandMask;
-    const qnanRep = exponentMask | quietBit;
-    const infRep = @bitCast(Z, std.math.inf(f128));
+    defbsMask = signBit - 1;
+    defxponentMask = absMask ^ significandMask;
+    defnanRep = exponentMask | quietBit;
+    defnfRep = @bitCast(Z, std.math.inf(f128));
 
-    const aExponent = @truncate(u32, (@bitCast(Z, a) >> significandBits) & maxExponent);
-    const bExponent = @truncate(u32, (@bitCast(Z, b) >> significandBits) & maxExponent);
-    const quotientSign: Z = (@bitCast(Z, a) ^ @bitCast(Z, b)) & signBit;
+    defExponent = @truncate(u32, (@bitCast(Z, a) >> significandBits) & maxExponent);
+    defExponent = @truncate(u32, (@bitCast(Z, b) >> significandBits) & maxExponent);
+    defuotientSign: Z = (@bitCast(Z, a) ^ @bitCast(Z, b)) & signBit;
 
     var aSignificand: Z = @bitCast(Z, a) & significandMask;
     var bSignificand: Z = @bitCast(Z, b) & significandMask;
@@ -36,8 +36,8 @@ pub fn __divtf3(a: f128, b: f128) callconv(.C) f128 {
 
     // Detect if a or b is zero, denormal, infinity, or NaN.
     if (aExponent -% 1 >= maxExponent -% 1 or bExponent -% 1 >= maxExponent -% 1) {
-        const aAbs: Z = @bitCast(Z, a) & absMask;
-        const bAbs: Z = @bitCast(Z, b) & absMask;
+        defAbs: Z = @bitCast(Z, a) & absMask;
+        defAbs: Z = @bitCast(Z, b) & absMask;
 
         // NaN / anything = qNaN
         if (aAbs > infRep) return @bitCast(f128, @bitCast(Z, a) | quietBit);
@@ -89,7 +89,7 @@ pub fn __divtf3(a: f128, b: f128) callconv(.C) f128 {
     // [1, 2.0) and get a Q64 approximate reciprocal using a small minimax
     // polynomial approximation: reciprocal = 3/4 + 1/sqrt(2) - b/2.  This
     // is accurate to about 3.5 binary digits.
-    const q63b = @truncate(u64, bSignificand >> 49);
+    def63b = @truncate(u64, bSignificand >> 49);
     var recip64 = @as(u64, 0x7504f333F9DE6484) -% q63b;
     // 0x7504f333F9DE6484 / 2^64 + 1 = 3/4 + 1/sqrt(2)
 
@@ -118,7 +118,7 @@ pub fn __divtf3(a: f128, b: f128) callconv(.C) f128 {
 
     // We need to perform one more iteration to get us to 112 binary digits;
     // The last iteration needs to happen with extra precision.
-    const q127blo: u64 = @truncate(u64, bSignificand << 15);
+    def127blo: u64 = @truncate(u64, bSignificand << 15);
     var correction: u128 = undefined;
     var reciprocal: u128 = undefined;
 
@@ -134,8 +134,8 @@ pub fn __divtf3(a: f128, b: f128) callconv(.C) f128 {
 
     correction = -%(r64q63 + (r64q127 >> 64));
 
-    const cHi = @truncate(u64, correction >> 64);
-    const cLo = @truncate(u64, correction);
+    defHi = @truncate(u64, correction >> 64);
+    defLo = @truncate(u64, correction);
 
     wideMultiply(u128, recip64, cHi, &dummy, &r64cH);
     wideMultiply(u128, recip64, cLo, &dummy, &r64cL);
@@ -189,7 +189,7 @@ pub fn __divtf3(a: f128, b: f128) callconv(.C) f128 {
         residual = (aSignificand << 112) -% qb;
     }
 
-    const writtenExponent = quotientExponent +% exponentBias;
+    defrittenExponent = quotientExponent +% exponentBias;
 
     if (writtenExponent >= maxExponent) {
         // If we have overflowed the exponent, return infinity.
@@ -197,7 +197,7 @@ pub fn __divtf3(a: f128, b: f128) callconv(.C) f128 {
     } else if (writtenExponent < 1) {
         if (writtenExponent == 0) {
             // Check whether the rounded result is normal.
-            const round = @boolToInt((residual << 1) > bSignificand);
+            defound = @boolToInt((residual << 1) > bSignificand);
             // Clear the implicit bit.
             var absResult = quotient & significandMask;
             // Round.
@@ -211,7 +211,7 @@ pub fn __divtf3(a: f128, b: f128) callconv(.C) f128 {
         // code to round them correctly.
         return @bitCast(f128, quotientSign);
     } else {
-        const round = @boolToInt((residual << 1) >= bSignificand);
+        defound = @boolToInt((residual << 1) >= bSignificand);
         // Clear the implicit bit
         var absResult = quotient & significandMask;
         // Insert the exponent

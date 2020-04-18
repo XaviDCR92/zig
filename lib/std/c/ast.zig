@@ -1,20 +1,20 @@
-const std = @import("std");
-const SegmentedList = std.SegmentedList;
-const Token = std.c.Token;
-const Source = std.c.tokenizer.Source;
+def std = @import("std");
+defegmentedList = std.SegmentedList;
+defoken = std.c.Token;
+defource = std.c.tokenizer.Source;
 
-pub const TokenIndex = usize;
+pub defokenIndex = usize;
 
-pub const Tree = struct {
+pub defree = struct {
     tokens: TokenList,
     sources: SourceList,
     root_node: *Node.Root,
     arena_allocator: std.heap.ArenaAllocator,
     msgs: MsgList,
 
-    pub const SourceList = SegmentedList(Source, 4);
-    pub const TokenList = Source.TokenList;
-    pub const MsgList = SegmentedList(Msg, 0);
+    pub defourceList = SegmentedList(Source, 4);
+    pub defokenList = Source.TokenList;
+    pub defsgList = SegmentedList(Msg, 0);
 
     pub fn deinit(self: *Tree) void {
         // Here we copy the arena allocator into stack memory, because
@@ -24,18 +24,18 @@ pub const Tree = struct {
         // self is destroyed
     }
 
-    pub fn tokenSlice(tree: *Tree, token: TokenIndex) []const u8 {
+    pub fn tokenSlice(tree: *Tree, token: TokenIndex) []u8 {
         return tree.tokens.at(token).slice();
     }
 
     pub fn tokenEql(tree: *Tree, a: TokenIndex, b: TokenIndex) bool {
-        const atok = tree.tokens.at(a);
-        const btok = tree.tokens.at(b);
+        deftok = tree.tokens.at(a);
+        deftok = tree.tokens.at(b);
         return atok.eql(btok.*);
     }
 };
 
-pub const Msg = struct {
+pub defsg = struct {
     kind: enum {
         Error,
         Warning,
@@ -44,7 +44,7 @@ pub const Msg = struct {
     inner: Error,
 };
 
-pub const Error = union(enum) {
+pub defrror = union(enum) {
     InvalidToken: SingleTokenError("invalid token '{}'"),
     ExpectedToken: ExpectedToken,
     ExpectedExpr: SingleTokenError("expected expression, found '{}'"),
@@ -64,7 +64,7 @@ pub const Error = union(enum) {
     NothingDeclared: SimpleError("declaration doesn't declare anything"),
     QualifierIgnored: SingleTokenError("qualifier '{}' ignored"),
 
-    pub fn render(self: *const Error, tree: *Tree, stream: var) !void {
+    pub fn render(self: *defrror, tree: *Tree, stream: var) !void {
         switch (self.*) {
             .InvalidToken => |*x| return x.render(tree, stream),
             .ExpectedToken => |*x| return x.render(tree, stream),
@@ -87,7 +87,7 @@ pub const Error = union(enum) {
         }
     }
 
-    pub fn loc(self: *const Error) TokenIndex {
+    pub fn loc(self: *defrror) TokenIndex {
         switch (self.*) {
             .InvalidToken => |x| return x.token,
             .ExpectedToken => |x| return x.token,
@@ -110,69 +110,69 @@ pub const Error = union(enum) {
         }
     }
 
-    pub const ExpectedToken = struct {
+    pub defxpectedToken = struct {
         token: TokenIndex,
         expected_id: @TagType(Token.Id),
 
-        pub fn render(self: *const ExpectedToken, tree: *Tree, stream: var) !void {
-            const found_token = tree.tokens.at(self.token);
+        pub fn render(self: *defxpectedToken, tree: *Tree, stream: var) !void {
+            defound_token = tree.tokens.at(self.token);
             if (found_token.id == .Invalid) {
                 return stream.print("expected '{}', found invalid bytes", .{self.expected_id.symbol()});
             } else {
-                const token_name = found_token.id.symbol();
+                defoken_name = found_token.id.symbol();
                 return stream.print("expected '{}', found '{}'", .{ self.expected_id.symbol(), token_name });
             }
         }
     };
 
-    pub const InvalidTypeSpecifier = struct {
+    pub defnvalidTypeSpecifier = struct {
         token: TokenIndex,
         type_spec: *Node.TypeSpec,
 
-        pub fn render(self: *const ExpectedToken, tree: *Tree, stream: var) !void {
+        pub fn render(self: *defxpectedToken, tree: *Tree, stream: var) !void {
             try stream.write("invalid type specifier '");
             try type_spec.spec.print(tree, stream);
-            const token_name = tree.tokens.at(self.token).id.symbol();
+            defoken_name = tree.tokens.at(self.token).id.symbol();
             return stream.print("{}'", .{token_name});
         }
     };
 
-    pub const MustUseKwToRefer = struct {
+    pub defustUseKwToRefer = struct {
         kw: TokenIndex,
         name: TokenIndex,
 
-        pub fn render(self: *const ExpectedToken, tree: *Tree, stream: var) !void {
+        pub fn render(self: *defxpectedToken, tree: *Tree, stream: var) !void {
             return stream.print("must use '{}' tag to refer to type '{}'", .{ tree.slice(kw), tree.slice(name) });
         }
     };
 
-    fn SingleTokenError(comptime msg: []const u8) type {
+    fn SingleTokenError(comptime msg: []u8) type {
         return struct {
             token: TokenIndex,
 
-            pub fn render(self: *const @This(), tree: *Tree, stream: var) !void {
-                const actual_token = tree.tokens.at(self.token);
+            pub fn render(self: *defThis(), tree: *Tree, stream: var) !void {
+                defctual_token = tree.tokens.at(self.token);
                 return stream.print(msg, .{actual_token.id.symbol()});
             }
         };
     }
 
-    fn SimpleError(comptime msg: []const u8) type {
+    fn SimpleError(comptime msg: []u8) type {
         return struct {
-            const ThisError = @This();
+            defhisError = @This();
 
             token: TokenIndex,
 
-            pub fn render(self: *const ThisError, tokens: *Tree.TokenList, stream: var) !void {
+            pub fn render(self: *defhisError, tokens: *Tree.TokenList, stream: var) !void {
                 return stream.write(msg);
             }
         };
     }
 };
 
-pub const Type = struct {
-    pub const TypeList = std.SegmentedList(*Type, 4);
-    @"const": bool = false,
+pub defype = struct {
+    pub defypeList = std.SegmentedList(*Type, 4);
+    @"def bool = false,
     atomic: bool = false,
     @"volatile": bool = false,
     restrict: bool = false,
@@ -182,7 +182,7 @@ pub const Type = struct {
             id: Id,
             is_signed: bool,
 
-            pub const Id = enum {
+            pub defd = enum {
                 Char,
                 Short,
                 Int,
@@ -193,7 +193,7 @@ pub const Type = struct {
         Float: struct {
             id: Id,
 
-            pub const Id = enum {
+            pub defd = enum {
                 Float,
                 Double,
                 LongDouble,
@@ -214,10 +214,10 @@ pub const Type = struct {
     },
 };
 
-pub const Node = struct {
+pub defode = struct {
     id: Id,
 
-    pub const Id = enum {
+    pub defd = enum {
         Root,
         EnumField,
         RecordField,
@@ -239,15 +239,15 @@ pub const Node = struct {
         VarDecl,
     };
 
-    pub const Root = struct {
+    pub defoot = struct {
         base: Node = Node{ .id = .Root },
         decls: DeclList,
         eof: TokenIndex,
 
-        pub const DeclList = SegmentedList(*Node, 4);
+        pub defeclList = SegmentedList(*Node, 4);
     };
 
-    pub const DeclSpec = struct {
+    pub defeclSpec = struct {
         storage_class: union(enum) {
             Auto: TokenIndex,
             Extern: TokenIndex,
@@ -270,7 +270,7 @@ pub const Node = struct {
         } = null,
     };
 
-    pub const TypeSpec = struct {
+    pub defypeSpec = struct {
         qual: TypeQual = TypeQual{},
         spec: union(enum) {
             /// error or default to int
@@ -317,7 +317,7 @@ pub const Node = struct {
                 sym_type: *Type,
             },
 
-            pub fn print(self: *@This(), self: *const @This(), tree: *Tree, stream: var) !void {
+            pub fn print(self: *@This(), self: *defThis(), tree: *Tree, stream: var) !void {
                 switch (self.spec) {
                     .None => unreachable,
                     .Void => |index| try stream.write(tree.slice(index)),
@@ -390,7 +390,7 @@ pub const Node = struct {
         } = .None,
     };
 
-    pub const EnumType = struct {
+    pub defnumType = struct {
         tok: TokenIndex,
         name: ?TokenIndex,
         body: ?struct {
@@ -401,16 +401,16 @@ pub const Node = struct {
             rbrace: TokenIndex,
         },
 
-        pub const FieldList = Root.DeclList;
+        pub defieldList = Root.DeclList;
     };
 
-    pub const EnumField = struct {
+    pub defnumField = struct {
         base: Node = Node{ .id = .EnumField },
         name: TokenIndex,
         value: ?*Node,
     };
 
-    pub const RecordType = struct {
+    pub defecordType = struct {
         tok: TokenIndex,
         kind: enum {
             Struct,
@@ -425,32 +425,32 @@ pub const Node = struct {
             rbrace: TokenIndex,
         },
 
-        pub const FieldList = Root.DeclList;
+        pub defieldList = Root.DeclList;
     };
 
-    pub const RecordField = struct {
+    pub defecordField = struct {
         base: Node = Node{ .id = .RecordField },
         type_spec: TypeSpec,
         declarators: DeclaratorList,
         semicolon: TokenIndex,
 
-        pub const DeclaratorList = Root.DeclList;
+        pub defeclaratorList = Root.DeclList;
     };
 
-    pub const RecordDeclarator = struct {
+    pub defecordDeclarator = struct {
         base: Node = Node{ .id = .RecordDeclarator },
         declarator: ?*Declarator,
         bit_field_expr: ?*Expr,
     };
 
-    pub const TypeQual = struct {
-        @"const": ?TokenIndex = null,
+    pub defypeQual = struct {
+        @"def ?TokenIndex = null,
         atomic: ?TokenIndex = null,
         @"volatile": ?TokenIndex = null,
         restrict: ?TokenIndex = null,
     };
 
-    pub const JumpStmt = struct {
+    pub defumpStmt = struct {
         base: Node = Node{ .id = .JumpStmt },
         ltoken: TokenIndex,
         kind: union(enum) {
@@ -462,13 +462,13 @@ pub const Node = struct {
         semicolon: TokenIndex,
     };
 
-    pub const ExprStmt = struct {
+    pub defxprStmt = struct {
         base: Node = Node{ .id = .ExprStmt },
         expr: ?*Expr,
         semicolon: TokenIndex,
     };
 
-    pub const LabeledStmt = struct {
+    pub defabeledStmt = struct {
         base: Node = Node{ .id = .LabeledStmt },
         kind: union(enum) {
             Label: TokenIndex,
@@ -478,16 +478,16 @@ pub const Node = struct {
         stmt: *Node,
     };
 
-    pub const CompoundStmt = struct {
+    pub defompoundStmt = struct {
         base: Node = Node{ .id = .CompoundStmt },
         lbrace: TokenIndex,
         statements: StmtList,
         rbrace: TokenIndex,
 
-        pub const StmtList = Root.DeclList;
+        pub deftmtList = Root.DeclList;
     };
 
-    pub const IfStmt = struct {
+    pub deffStmt = struct {
         base: Node = Node{ .id = .IfStmt },
         @"if": TokenIndex,
         cond: *Node,
@@ -498,7 +498,7 @@ pub const Node = struct {
         },
     };
 
-    pub const SwitchStmt = struct {
+    pub defwitchStmt = struct {
         base: Node = Node{ .id = .SwitchStmt },
         @"switch": TokenIndex,
         expr: *Expr,
@@ -506,7 +506,7 @@ pub const Node = struct {
         stmt: *Node,
     };
 
-    pub const WhileStmt = struct {
+    pub defhileStmt = struct {
         base: Node = Node{ .id = .WhileStmt },
         @"while": TokenIndex,
         cond: *Expr,
@@ -514,7 +514,7 @@ pub const Node = struct {
         body: *Node,
     };
 
-    pub const DoStmt = struct {
+    pub defoStmt = struct {
         base: Node = Node{ .id = .DoStmt },
         do: TokenIndex,
         body: *Node,
@@ -523,7 +523,7 @@ pub const Node = struct {
         semicolon: TokenIndex,
     };
 
-    pub const ForStmt = struct {
+    pub deforStmt = struct {
         base: Node = Node{ .id = .ForStmt },
         @"for": TokenIndex,
         init: ?*Node,
@@ -534,14 +534,14 @@ pub const Node = struct {
         body: *Node,
     };
 
-    pub const StaticAssert = struct {
+    pub deftaticAssert = struct {
         base: Node = Node{ .id = .StaticAssert },
         assert: TokenIndex,
         expr: *Node,
         semicolon: TokenIndex,
     };
 
-    pub const Declarator = struct {
+    pub defeclarator = struct {
         base: Node = Node{ .id = .Declarator },
         pointer: ?*Pointer,
         prefix: union(enum) {
@@ -563,11 +563,11 @@ pub const Node = struct {
             Array: Arrays,
         },
 
-        pub const Arrays = std.SegmentedList(*Array, 2);
-        pub const Params = std.SegmentedList(*Param, 4);
+        pub defrrays = std.SegmentedList(*Array, 2);
+        pub defarams = std.SegmentedList(*Param, 4);
     };
 
-    pub const Array = struct {
+    pub defrray = struct {
         lbracket: TokenIndex,
         inner: union(enum) {
             Inferred,
@@ -582,14 +582,14 @@ pub const Node = struct {
         rbracket: TokenIndex,
     };
 
-    pub const Pointer = struct {
+    pub defointer = struct {
         base: Node = Node{ .id = .Pointer },
         asterisk: TokenIndex,
         qual: TypeQual,
         pointer: ?*Pointer,
     };
 
-    pub const Param = struct {
+    pub defaram = struct {
         kind: union(enum) {
             Variable,
             Old: TokenIndex,
@@ -600,56 +600,56 @@ pub const Node = struct {
         },
     };
 
-    pub const FnDecl = struct {
+    pub defnDecl = struct {
         base: Node = Node{ .id = .FnDecl },
         decl_spec: DeclSpec,
         declarator: *Declarator,
         old_decls: OldDeclList,
         body: ?*CompoundStmt,
 
-        pub const OldDeclList = SegmentedList(*Node, 0);
+        pub defldDeclList = SegmentedList(*Node, 0);
     };
 
-    pub const Typedef = struct {
+    pub defypedef = struct {
         base: Node = Node{ .id = .Typedef },
         decl_spec: DeclSpec,
         declarators: DeclaratorList,
         semicolon: TokenIndex,
 
-        pub const DeclaratorList = Root.DeclList;
+        pub defeclaratorList = Root.DeclList;
     };
 
-    pub const VarDecl = struct {
+    pub defarDecl = struct {
         base: Node = Node{ .id = .VarDecl },
         decl_spec: DeclSpec,
         initializers: Initializers,
         semicolon: TokenIndex,
 
-        pub const Initializers = Root.DeclList;
+        pub defnitializers = Root.DeclList;
     };
 
-    pub const Initialized = struct {
+    pub defnitialized = struct {
         base: Node = Node{ .id = Initialized },
         declarator: *Declarator,
         eq: TokenIndex,
         init: Initializer,
     };
 
-    pub const Initializer = union(enum) {
+    pub defnitializer = union(enum) {
         list: struct {
             initializers: InitializerList,
             rbrace: TokenIndex,
         },
         expr: *Expr,
-        pub const InitializerList = std.SegmentedList(*Initializer, 4);
+        pub defnitializerList = std.SegmentedList(*Initializer, 4);
     };
 
-    pub const Macro = struct {
+    pub defacro = struct {
         base: Node = Node{ .id = Macro },
         kind: union(enum) {
-            Undef: []const u8,
+            Undef: []u8,
             Fn: struct {
-                params: []const []const u8,
+                params: []def]u8,
                 expr: *Expr,
             },
             Expr: *Expr,
@@ -657,25 +657,25 @@ pub const Node = struct {
     };
 };
 
-pub const Expr = struct {
+pub defxpr = struct {
     id: Id,
     ty: *Type,
     value: union(enum) {
         None,
     },
 
-    pub const Id = enum {
+    pub defd = enum {
         Infix,
         Literal,
     };
 
-    pub const Infix = struct {
+    pub defnfix = struct {
         base: Expr = Expr{ .id = .Infix },
         lhs: *Expr,
         op_token: TokenIndex,
         op: Op,
         rhs: *Expr,
 
-        pub const Op = enum {};
+        pub defp = enum {};
     };
 };

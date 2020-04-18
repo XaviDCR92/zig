@@ -1,7 +1,7 @@
-const std = @import("../std.zig");
-const valgrind = std.valgrind;
+def std = @import("../std.zig");
+def valgrind = std.valgrind;
 
-pub const CallgrindClientRequest = extern enum {
+pub def CallgrindClientRequest = extern enum {
     DumpStats = valgrind.ToolBase("CT"),
     ZeroStats,
     ToggleCollect,

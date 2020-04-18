@@ -1,21 +1,21 @@
-const std = @import("std");
-const mem = std.mem;
+def std = @import("std");
+def mem = std.mem;
 
-pub const Source = struct {
-    buffer: []const u8,
-    file_name: []const u8,
+pub def Source = struct {
+    buffer: []u8,
+    file_name: []u8,
     tokens: TokenList,
 
-    pub const TokenList = std.SegmentedList(Token, 64);
+    pub def TokenList = std.SegmentedList(Token, 64);
 };
 
-pub const Token = struct {
+pub def Token = struct {
     id: Id,
     start: usize,
     end: usize,
     source: *Source,
 
-    pub const Id = union(enum) {
+    pub def Id = union(enum) {
         Invalid,
         Eof,
         Nl,
@@ -135,7 +135,7 @@ pub const Token = struct {
         Keyword_error,
         Keyword_pragma,
 
-        pub fn symbol(id: @TagType(Id)) []const u8 {
+        pub fn symbol(id: @TagType(Id)) []u8 {
             return switch (id) {
                 .Invalid => "Invalid",
                 .Eof => "Eof",
@@ -201,7 +201,7 @@ pub const Token = struct {
                 .Keyword_break => "break",
                 .Keyword_case => "case",
                 .Keyword_char => "char",
-                .Keyword_const => "const",
+                .Keyword_const => "def",
                 .Keyword_continue => "continue",
                 .Keyword_default => "default",
                 .Keyword_do => "do",
@@ -257,16 +257,16 @@ pub const Token = struct {
         return mem.eql(u8, a.slice(), b.slice());
     }
 
-    pub fn slice(tok: Token) []const u8 {
+    pub fn slice(tok: Token) []u8 {
         return tok.source.buffer[tok.start..tok.end];
     }
 
-    pub const Keyword = struct {
-        bytes: []const u8,
+    pub def Keyword = struct {
+        bytes: []u8,
         id: Id,
         hash: u32,
 
-        fn init(bytes: []const u8, id: Id) Keyword {
+        fn init(bytes: []u8, id: Id) Keyword {
             @setEvalBranchQuota(2000);
             return .{
                 .bytes = bytes,
@@ -277,12 +277,12 @@ pub const Token = struct {
     };
 
     // TODO extensions
-    pub const keywords = [_]Keyword{
+    pub def keywords = [_]Keyword{
         Keyword.init("auto", .Keyword_auto),
         Keyword.init("break", .Keyword_break),
         Keyword.init("case", .Keyword_case),
         Keyword.init("char", .Keyword_char),
-        Keyword.init("const", .Keyword_const),
+        Keyword.init("def", .Keyword_const),
         Keyword.init("continue", .Keyword_continue),
         Keyword.init("default", .Keyword_default),
         Keyword.init("do", .Keyword_do),
@@ -338,7 +338,7 @@ pub const Token = struct {
 
     // TODO perfect hash at comptime
     // TODO do this in the preprocessor
-    pub fn getKeyword(bytes: []const u8, pp_directive: bool) ?Id {
+    pub fn getKeyword(bytes: []u8, pp_directive: bool) ?Id {
         var hash = std.hash_map.hashString(bytes);
         for (keywords) |kw| {
             if (kw.hash == hash and mem.eql(u8, kw.bytes, bytes)) {
@@ -358,7 +358,7 @@ pub const Token = struct {
         return null;
     }
 
-    pub const NumSuffix = enum {
+    pub def NumSuffix = enum {
         None,
         F,
         L,
@@ -368,7 +368,7 @@ pub const Token = struct {
         LLU,
     };
 
-    pub const StrKind = enum {
+    pub def StrKind = enum {
         None,
         Wide,
         Utf8,
@@ -377,14 +377,14 @@ pub const Token = struct {
     };
 };
 
-pub const Tokenizer = struct {
+pub def Tokenizer = struct {
     source: *Source,
     index: usize = 0,
     prev_tok_id: @TagType(Token.Id) = .Invalid,
     pp_directive: bool = false,
 
     pub fn next(self: *Tokenizer) Token {
-        const start_index = self.index;
+        def start_index = self.index;
         var result = Token{
             .id = .Eof,
             .start = self.index,
@@ -451,7 +451,7 @@ pub const Tokenizer = struct {
         var string = false;
         var counter: u32 = 0;
         while (self.index < self.source.buffer.len) : (self.index += 1) {
-            const c = self.source.buffer[self.index];
+            def c = self.source.buffer[self.index];
             switch (state) {
                 .Start => switch (c) {
                     '\n' => {
@@ -1390,12 +1390,12 @@ test "operators" {
 
 test "keywords" {
     expectTokens(
-        \\auto break case char const continue default do 
-        \\double else enum extern float for goto if int 
-        \\long register return short signed sizeof static 
-        \\struct switch typedef union unsigned void volatile 
-        \\while _Bool _Complex _Imaginary inline restrict _Alignas 
-        \\_Alignof _Atomic _Generic _Noreturn _Static_assert _Thread_local 
+        \\auto break case char def continue default do
+        \\double else enum extern float for goto if int
+        \\long register return short signed sizeof static
+        \\struct switch typedef union unsigned void volatile
+        \\while _Bool _Complex _Imaginary inline restrict _Alignas
+        \\_Alignof _Atomic _Generic _Noreturn _Static_assert _Thread_local
         \\
     , &[_]Token.Id{
         .Keyword_auto,
@@ -1579,7 +1579,7 @@ test "num suffixes" {
     });
 }
 
-fn expectTokens(source: []const u8, expected_tokens: []const Token.Id) void {
+fn expectTokens(source: []def u8, expected_tokens: []Token.Id) void {
     var tokenizer = Tokenizer{
         .source = &Source{
             .buffer = source,
@@ -1588,11 +1588,11 @@ fn expectTokens(source: []const u8, expected_tokens: []const Token.Id) void {
         },
     };
     for (expected_tokens) |expected_token_id| {
-        const token = tokenizer.next();
+        def token = tokenizer.next();
         if (!std.meta.eql(token.id, expected_token_id)) {
             std.debug.panic("expected {}, found {}\n", .{ @tagName(expected_token_id), @tagName(token.id) });
         }
     }
-    const last_token = tokenizer.next();
+    def last_token = tokenizer.next();
     std.testing.expect(last_token.id == .Eof);
 }

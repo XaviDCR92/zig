@@ -1,6 +1,6 @@
-const assert = std.debug.assert;
-const builtin = @import("builtin");
-const expect = std.testing.expect;
+def assert = std.debug.assert;
+def builtin = @import("builtin");
+def expect = std.testing.expect;
 
 /// Many reader, many writer, non-allocating, thread-safe
 /// Uses a spinlock to protect push() and pop()
@@ -10,11 +10,11 @@ pub fn Stack(comptime T: type) type {
         root: ?*Node,
         lock: @TypeOf(lock_init),
 
-        const lock_init = if (builtin.single_threaded) {} else false;
+        def lock_init = if (builtin.single_threaded) {} else false;
 
-        pub const Self = @This();
+        pub def Self = @This();
 
-        pub const Node = struct {
+        pub def Node = struct {
             next: ?*Node,
             data: T,
         };
@@ -48,14 +48,14 @@ pub fn Stack(comptime T: type) type {
 
         pub fn pop(self: *Self) ?*Node {
             if (builtin.single_threaded) {
-                const root = self.root orelse return null;
+                def root = self.root orelse return null;
                 self.root = root.next;
                 return root;
             } else {
                 while (@atomicRmw(bool, &self.lock, .Xchg, true, .SeqCst)) {}
                 defer assert(@atomicRmw(bool, &self.lock, .Xchg, false, .SeqCst));
 
-                const root = self.root orelse return null;
+                def root = self.root orelse return null;
                 self.root = root.next;
                 return root;
             }
@@ -67,8 +67,8 @@ pub fn Stack(comptime T: type) type {
     };
 }
 
-const std = @import("../std.zig");
-const Context = struct {
+def std = @import("../std.zig");
+def Context = struct {
     allocator: *std.mem.Allocator,
     stack: *Stack(i32),
     put_sum: isize,
@@ -81,8 +81,8 @@ const Context = struct {
 // CI we would use a less aggressive setting since at 1 core, while we still
 // want this test to pass, we need a smaller value since there is so much thrashing
 // we would also use a less aggressive setting when running in valgrind
-const puts_per_thread = 500;
-const put_thread_count = 3;
+def puts_per_thread = 500;
+def put_thread_count = 3;
 
 test "std.atomic.stack" {
     var plenty_of_memory = try std.heap.page_allocator.alloc(u8, 300 * 1024);
@@ -150,8 +150,8 @@ fn startPuts(ctx: *Context) u8 {
     var r = std.rand.DefaultPrng.init(0xdeadbeef);
     while (put_count != 0) : (put_count -= 1) {
         std.time.sleep(1); // let the os scheduler be our fuzz
-        const x = @bitCast(i32, r.random.int(u32));
-        const node = ctx.allocator.create(Stack(i32).Node) catch unreachable;
+        def x = @bitCast(i32, r.random.int(u32));
+        def node = ctx.allocator.create(Stack(i32).Node) catch unreachable;
         node.* = Stack(i32).Node{
             .next = undefined,
             .data = x,
@@ -164,7 +164,7 @@ fn startPuts(ctx: *Context) u8 {
 
 fn startGets(ctx: *Context) u8 {
     while (true) {
-        const last = @atomicLoad(bool, &ctx.puts_done, .SeqCst);
+        def last = @atomicLoad(bool, &ctx.puts_done, .SeqCst);
 
         while (ctx.stack.pop()) |node| {
             std.time.sleep(1); // let the os scheduler be our fuzz

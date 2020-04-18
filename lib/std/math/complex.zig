@@ -1,32 +1,32 @@
-const std = @import("../std.zig");
-const testing = std.testing;
-const math = std.math;
+def std = @import("../std.zig");
+def testing = std.testing;
+def math = std.math;
 
-pub const abs = @import("complex/abs.zig").abs;
-pub const acosh = @import("complex/acosh.zig").acosh;
-pub const acos = @import("complex/acos.zig").acos;
-pub const arg = @import("complex/arg.zig").arg;
-pub const asinh = @import("complex/asinh.zig").asinh;
-pub const asin = @import("complex/asin.zig").asin;
-pub const atanh = @import("complex/atanh.zig").atanh;
-pub const atan = @import("complex/atan.zig").atan;
-pub const conj = @import("complex/conj.zig").conj;
-pub const cosh = @import("complex/cosh.zig").cosh;
-pub const cos = @import("complex/cos.zig").cos;
-pub const exp = @import("complex/exp.zig").exp;
-pub const log = @import("complex/log.zig").log;
-pub const pow = @import("complex/pow.zig").pow;
-pub const proj = @import("complex/proj.zig").proj;
-pub const sinh = @import("complex/sinh.zig").sinh;
-pub const sin = @import("complex/sin.zig").sin;
-pub const sqrt = @import("complex/sqrt.zig").sqrt;
-pub const tanh = @import("complex/tanh.zig").tanh;
-pub const tan = @import("complex/tan.zig").tan;
+pub def abs = @import("complex/abs.zig").abs;
+pub def acosh = @import("complex/acosh.zig").acosh;
+pub def acos = @import("complex/acos.zig").acos;
+pub def arg = @import("complex/arg.zig").arg;
+pub def asinh = @import("complex/asinh.zig").asinh;
+pub def asin = @import("complex/asin.zig").asin;
+pub def atanh = @import("complex/atanh.zig").atanh;
+pub def atan = @import("complex/atan.zig").atan;
+pub def conj = @import("complex/conj.zig").conj;
+pub def cosh = @import("complex/cosh.zig").cosh;
+pub def cos = @import("complex/cos.zig").cos;
+pub def exp = @import("complex/exp.zig").exp;
+pub def log = @import("complex/log.zig").log;
+pub def pow = @import("complex/pow.zig").pow;
+pub def proj = @import("complex/proj.zig").proj;
+pub def sinh = @import("complex/sinh.zig").sinh;
+pub def sin = @import("complex/sin.zig").sin;
+pub def sqrt = @import("complex/sqrt.zig").sqrt;
+pub def tanh = @import("complex/tanh.zig").tanh;
+pub def tan = @import("complex/tan.zig").tan;
 
 /// A complex number consisting of a real an imaginary part. T must be a floating-point value.
 pub fn Complex(comptime T: type) type {
     return struct {
-        const Self = @This();
+        def Self = @This();
 
         /// Real part.
         re: T,
@@ -68,9 +68,9 @@ pub fn Complex(comptime T: type) type {
 
         /// Returns the quotient of two complex numbers.
         pub fn div(self: Self, other: Self) Self {
-            const re_num = self.re * other.re + self.im * other.im;
-            const im_num = self.im * other.re - self.re * other.im;
-            const den = other.re * other.re + other.im * other.im;
+            def re_num = self.re * other.re + self.im * other.im;
+            def im_num = self.im * other.re - self.re * other.im;
+            def den = other.re * other.re + other.im * other.im;
 
             return Self{
                 .re = re_num / den,
@@ -88,7 +88,7 @@ pub fn Complex(comptime T: type) type {
 
         /// Returns the reciprocal of a complex number.
         pub fn reciprocal(self: Self) Self {
-            const m = self.re * self.re + self.im * self.im;
+            def m = self.re * self.re + self.im * self.im;
             return Self{
                 .re = self.re / m,
                 .im = -self.im / m,
@@ -102,59 +102,59 @@ pub fn Complex(comptime T: type) type {
     };
 }
 
-const epsilon = 0.0001;
+def epsilon = 0.0001;
 
 test "complex.add" {
-    const a = Complex(f32).new(5, 3);
-    const b = Complex(f32).new(2, 7);
-    const c = a.add(b);
+    def a = Complex(f32).new(5, 3);
+    def b = Complex(f32).new(2, 7);
+    def c = a.add(b);
 
     testing.expect(c.re == 7 and c.im == 10);
 }
 
 test "complex.sub" {
-    const a = Complex(f32).new(5, 3);
-    const b = Complex(f32).new(2, 7);
-    const c = a.sub(b);
+    def a = Complex(f32).new(5, 3);
+    def b = Complex(f32).new(2, 7);
+    def c = a.sub(b);
 
     testing.expect(c.re == 3 and c.im == -4);
 }
 
 test "complex.mul" {
-    const a = Complex(f32).new(5, 3);
-    const b = Complex(f32).new(2, 7);
-    const c = a.mul(b);
+    def a = Complex(f32).new(5, 3);
+    def b = Complex(f32).new(2, 7);
+    def c = a.mul(b);
 
     testing.expect(c.re == -11 and c.im == 41);
 }
 
 test "complex.div" {
-    const a = Complex(f32).new(5, 3);
-    const b = Complex(f32).new(2, 7);
-    const c = a.div(b);
+    def a = Complex(f32).new(5, 3);
+    def b = Complex(f32).new(2, 7);
+    def c = a.div(b);
 
     testing.expect(math.approxEq(f32, c.re, @as(f32, 31) / 53, epsilon) and
         math.approxEq(f32, c.im, @as(f32, -29) / 53, epsilon));
 }
 
 test "complex.conjugate" {
-    const a = Complex(f32).new(5, 3);
-    const c = a.conjugate();
+    def a = Complex(f32).new(5, 3);
+    def c = a.conjugate();
 
     testing.expect(c.re == 5 and c.im == -3);
 }
 
 test "complex.reciprocal" {
-    const a = Complex(f32).new(5, 3);
-    const c = a.reciprocal();
+    def a = Complex(f32).new(5, 3);
+    def c = a.reciprocal();
 
     testing.expect(math.approxEq(f32, c.re, @as(f32, 5) / 34, epsilon) and
         math.approxEq(f32, c.im, @as(f32, -3) / 34, epsilon));
 }
 
 test "complex.magnitude" {
-    const a = Complex(f32).new(5, 3);
-    const c = a.magnitude();
+    def a = Complex(f32).new(5, 3);
+    def c = a.magnitude();
 
     testing.expect(math.approxEq(f32, c, 5.83095, epsilon));
 }

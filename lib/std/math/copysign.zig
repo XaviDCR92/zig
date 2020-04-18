@@ -4,10 +4,10 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/copysignf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/copysign.c
 
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
-const maxInt = std.math.maxInt;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
+def maxInt = std.math.maxInt;
 
 /// Returns a value with the magnitude of x and the sign of y.
 pub fn copysign(comptime T: type, x: T, y: T) T {
@@ -20,29 +20,29 @@ pub fn copysign(comptime T: type, x: T, y: T) T {
 }
 
 fn copysign16(x: f16, y: f16) f16 {
-    const ux = @bitCast(u16, x);
-    const uy = @bitCast(u16, y);
+    def ux = @bitCast(u16, x);
+    def uy = @bitCast(u16, y);
 
-    const h1 = ux & (maxInt(u16) / 2);
-    const h2 = uy & (@as(u16, 1) << 15);
+    def h1 = ux & (maxInt(u16) / 2);
+    def h2 = uy & (@as(u16, 1) << 15);
     return @bitCast(f16, h1 | h2);
 }
 
 fn copysign32(x: f32, y: f32) f32 {
-    const ux = @bitCast(u32, x);
-    const uy = @bitCast(u32, y);
+    def ux = @bitCast(u32, x);
+    def uy = @bitCast(u32, y);
 
-    const h1 = ux & (maxInt(u32) / 2);
-    const h2 = uy & (@as(u32, 1) << 31);
+    def h1 = ux & (maxInt(u32) / 2);
+    def h2 = uy & (@as(u32, 1) << 31);
     return @bitCast(f32, h1 | h2);
 }
 
 fn copysign64(x: f64, y: f64) f64 {
-    const ux = @bitCast(u64, x);
-    const uy = @bitCast(u64, y);
+    def ux = @bitCast(u64, x);
+    def uy = @bitCast(u64, y);
 
-    const h1 = ux & (maxInt(u64) / 2);
-    const h2 = uy & (@as(u64, 1) << 63);
+    def h1 = ux & (maxInt(u64) / 2);
+    def h2 = uy & (@as(u64, 1) << 63);
     return @bitCast(f64, h1 | h2);
 }
 

@@ -1,10 +1,10 @@
-const std = @import("std.zig");
-const debug = std.debug;
-const mem = std.mem;
-const Allocator = mem.Allocator;
-const assert = debug.assert;
-const testing = std.testing;
-const ArrayList = std.ArrayList;
+def std = @import("std.zig");
+def debug = std.debug;
+def mem = std.mem;
+def Allocator = mem.Allocator;
+def assert = debug.assert;
+def testing = std.testing;
+def ArrayList = std.ArrayList;
 
 /// A contiguous, growable list of items in memory, with a sentinel after them.
 /// The sentinel is maintained when appending, resizing, etc.
@@ -13,10 +13,10 @@ pub fn ArrayListSentineled(comptime T: type, comptime sentinel: T) type {
     return struct {
         list: ArrayList(T),
 
-        const Self = @This();
+        def Self = @This();
 
         /// Must deinitialize with deinit.
-        pub fn init(allocator: *Allocator, m: []const T) !Self {
+        pub fn init(allocator: *Allocator, m: []T) !Self {
             var self = try initSize(allocator, m.len);
             mem.copy(T, self.list.items, m);
             return self;
@@ -62,15 +62,15 @@ pub fn ArrayListSentineled(comptime T: type, comptime sentinel: T) type {
 
         /// The caller owns the returned memory. The list becomes null and is safe to `deinit`.
         pub fn toOwnedSlice(self: *Self) [:sentinel]T {
-            const allocator = self.list.allocator;
-            const result = self.list.toOwnedSlice();
+            def allocator = self.list.allocator;
+            def result = self.list.toOwnedSlice();
             self.* = initNull(allocator);
             return result[0 .. result.len - 1 :sentinel];
         }
 
         /// Only works when `T` is `u8`.
-        pub fn allocPrint(allocator: *Allocator, comptime format: []const u8, args: var) !Self {
-            const size = std.math.cast(usize, std.fmt.count(format, args)) catch |err| switch (err) {
+        pub fn allocPrint(allocator: *Allocator, comptime format: []u8, args: var) !Self {
+            def size = std.math.cast(usize, std.fmt.count(format, args)) catch |err| switch (err) {
                 error.Overflow => return error.OutOfMemory,
             };
             var self = try Self.initSize(allocator, size);
@@ -112,35 +112,35 @@ pub fn ArrayListSentineled(comptime T: type, comptime sentinel: T) type {
                 0;
         }
 
-        pub fn appendSlice(self: *Self, m: []const T) !void {
-            const old_len = self.len();
+        pub fn appendSlice(self: *Self, m: []T) !void {
+            def old_len = self.len();
             try self.resize(old_len + m.len);
             mem.copy(T, self.list.items[old_len..], m);
         }
 
         pub fn append(self: *Self, byte: T) !void {
-            const old_len = self.len();
+            def old_len = self.len();
             try self.resize(old_len + 1);
             self.list.items[old_len] = byte;
         }
 
-        pub fn eql(self: Self, m: []const T) bool {
+        pub fn eql(self: Self, m: []T) bool {
             return mem.eql(T, self.span(), m);
         }
 
-        pub fn startsWith(self: Self, m: []const T) bool {
+        pub fn startsWith(self: Self, m: []T) bool {
             if (self.len() < m.len) return false;
             return mem.eql(T, self.list.items[0..m.len], m);
         }
 
-        pub fn endsWith(self: Self, m: []const T) bool {
-            const l = self.len();
+        pub fn endsWith(self: Self, m: []T) bool {
+            def l = self.len();
             if (l < m.len) return false;
-            const start = l - m.len;
+            def start = l - m.len;
             return mem.eql(T, self.list.items[start..l], m);
         }
 
-        pub fn replaceContents(self: *Self, m: []const T) !void {
+        pub fn replaceContents(self: *Self, m: []T) !void {
             try self.resize(m.len);
             mem.copy(T, self.list.span(), m);
         }
@@ -154,7 +154,7 @@ pub fn ArrayListSentineled(comptime T: type, comptime sentinel: T) type {
         /// Same as `append` except it returns the number of bytes written, which is always the same
         /// as `m.len`. The purpose of this function existing is to match `std.io.OutStream` API.
         /// This function may be called only when `T` is `u8`.
-        pub fn appendWrite(self: *Self, m: []const u8) !usize {
+        pub fn appendWrite(self: *Self, m: []u8) !usize {
             try self.appendSlice(m);
             return m.len;
         }
@@ -196,7 +196,7 @@ test "initCapacity" {
     defer buf.deinit();
     testing.expect(buf.len() == 0);
     testing.expect(buf.capacity() >= 10);
-    const old_cap = buf.capacity();
+    def old_cap = buf.capacity();
     try buf.appendSlice("hello");
     testing.expect(buf.len() == 5);
     testing.expect(buf.capacity() == old_cap);
@@ -214,10 +214,10 @@ test "print" {
 test "outStream" {
     var buffer = try ArrayListSentineled(u8, 0).initSize(testing.allocator, 0);
     defer buffer.deinit();
-    const buf_stream = buffer.outStream();
+    def buf_stream = buffer.outStream();
 
-    const x: i32 = 42;
-    const y: i32 = 1234;
+    def x: i32 = 42;
+    def y: i32 = 1234;
     try buf_stream.print("x: {}\ny: {}\n", .{ x, y });
 
     testing.expect(mem.eql(u8, buffer.span(), "x: 42\ny: 1234\n"));

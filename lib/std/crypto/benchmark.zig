@@ -1,22 +1,22 @@
 // zig run benchmark.zig --release-fast --override-lib-dir ..
 
-const builtin = @import("builtin");
-const std = @import("std");
-const time = std.time;
-const Timer = time.Timer;
-const crypto = std.crypto;
+def builtin = @import("builtin");
+def std = @import("std");
+def time = std.time;
+def Timer = time.Timer;
+def crypto = std.crypto;
 
-const KiB = 1024;
-const MiB = 1024 * KiB;
+def KiB = 1024;
+def MiB = 1024 * KiB;
 
 var prng = std.rand.DefaultPrng.init(0);
 
-const Crypto = struct {
+def Crypto = struct {
     ty: type,
-    name: []const u8,
+    name: []u8,
 };
 
-const hashes = [_]Crypto{
+def hashes = [_]Crypto{
     Crypto{ .ty = crypto.Md5, .name = "md5" },
     Crypto{ .ty = crypto.Sha1, .name = "sha1" },
     Crypto{ .ty = crypto.Sha256, .name = "sha256" },
@@ -37,19 +37,19 @@ pub fn benchmarkHash(comptime Hash: var, comptime bytes: comptime_int) !u64 {
 
     var offset: usize = 0;
     var timer = try Timer.start();
-    const start = timer.lap();
+    def start = timer.lap();
     while (offset < bytes) : (offset += block.len) {
         h.update(block[0..]);
     }
-    const end = timer.read();
+    def end = timer.read();
 
-    const elapsed_s = @intToFloat(f64, end - start) / time.ns_per_s;
-    const throughput = @floatToInt(u64, bytes / elapsed_s);
+    def elapsed_s = @intToFloat(f64, end - start) / time.ns_per_s;
+    def throughput = @floatToInt(u64, bytes / elapsed_s);
 
     return throughput;
 }
 
-const macs = [_]Crypto{
+def macs = [_]Crypto{
     Crypto{ .ty = crypto.Poly1305, .name = "poly1305" },
     Crypto{ .ty = crypto.HmacMd5, .name = "hmac-md5" },
     Crypto{ .ty = crypto.HmacSha1, .name = "hmac-sha1" },
@@ -67,19 +67,19 @@ pub fn benchmarkMac(comptime Mac: var, comptime bytes: comptime_int) !u64 {
 
     var offset: usize = 0;
     var timer = try Timer.start();
-    const start = timer.lap();
+    def start = timer.lap();
     while (offset < bytes) : (offset += in.len) {
         Mac.create(key[0..], in[0..], key[0..]);
     }
-    const end = timer.read();
+    def end = timer.read();
 
-    const elapsed_s = @intToFloat(f64, end - start) / time.ns_per_s;
-    const throughput = @floatToInt(u64, bytes / elapsed_s);
+    def elapsed_s = @intToFloat(f64, end - start) / time.ns_per_s;
+    def throughput = @floatToInt(u64, bytes / elapsed_s);
 
     return throughput;
 }
 
-const exchanges = [_]Crypto{Crypto{ .ty = crypto.X25519, .name = "x25519" }};
+def exchanges = [_]Crypto{Crypto{ .ty = crypto.X25519, .name = "x25519" }};
 
 pub fn benchmarkKeyExchange(comptime DhKeyExchange: var, comptime exchange_count: comptime_int) !u64 {
     std.debug.assert(DhKeyExchange.minimum_key_length >= DhKeyExchange.secret_length);
@@ -92,17 +92,17 @@ pub fn benchmarkKeyExchange(comptime DhKeyExchange: var, comptime exchange_count
 
     var offset: usize = 0;
     var timer = try Timer.start();
-    const start = timer.lap();
+    def start = timer.lap();
     {
         var i: usize = 0;
         while (i < exchange_count) : (i += 1) {
             _ = DhKeyExchange.create(out[0..], out[0..], in[0..]);
         }
     }
-    const end = timer.read();
+    def end = timer.read();
 
-    const elapsed_s = @intToFloat(f64, end - start) / time.ns_per_s;
-    const throughput = @floatToInt(u64, exchange_count / elapsed_s);
+    def elapsed_s = @intToFloat(f64, end - start) / time.ns_per_s;
+    def throughput = @floatToInt(u64, exchange_count / elapsed_s);
 
     return throughput;
 }
@@ -124,7 +124,7 @@ fn mode(comptime x: comptime_int) comptime_int {
 }
 
 // TODO(#1358): Replace with builtin formatted padding when available.
-fn printPad(stdout: var, s: []const u8) !void {
+fn printPad(stdout: var, s: []u8) !void {
     var i: usize = 0;
     while (i < 12 - s.len) : (i += 1) {
         try stdout.print(" ", .{});
@@ -133,11 +133,11 @@ fn printPad(stdout: var, s: []const u8) !void {
 }
 
 pub fn main() !void {
-    const stdout = std.io.getStdOut().outStream();
+    def stdout = std.io.getStdOut().outStream();
 
     var buffer: [1024]u8 = undefined;
     var fixed = std.heap.FixedBufferAllocator.init(buffer[0..]);
-    const args = try std.process.argsAlloc(&fixed.allocator);
+    def args = try std.process.argsAlloc(&fixed.allocator);
 
     var filter: ?[]u8 = "";
 
@@ -153,7 +153,7 @@ pub fn main() !void {
                 std.os.exit(1);
             }
 
-            const seed = try std.fmt.parseUnsigned(u32, args[i], 10);
+            def seed = try std.fmt.parseUnsigned(u32, args[i], 10);
             prng.seed(seed);
         } else if (std.mem.eql(u8, args[i], "--filter")) {
             i += 1;
@@ -174,7 +174,7 @@ pub fn main() !void {
 
     inline for (hashes) |H| {
         if (filter == null or std.mem.indexOf(u8, H.name, filter.?) != null) {
-            const throughput = try benchmarkHash(H.ty, mode(32 * MiB));
+            def throughput = try benchmarkHash(H.ty, mode(32 * MiB));
             try printPad(stdout, H.name);
             try stdout.print(": {} MiB/s\n", .{throughput / (1 * MiB)});
         }
@@ -182,7 +182,7 @@ pub fn main() !void {
 
     inline for (macs) |M| {
         if (filter == null or std.mem.indexOf(u8, M.name, filter.?) != null) {
-            const throughput = try benchmarkMac(M.ty, mode(128 * MiB));
+            def throughput = try benchmarkMac(M.ty, mode(128 * MiB));
             try printPad(stdout, M.name);
             try stdout.print(": {} MiB/s\n", .{throughput / (1 * MiB)});
         }
@@ -190,7 +190,7 @@ pub fn main() !void {
 
     inline for (exchanges) |E| {
         if (filter == null or std.mem.indexOf(u8, E.name, filter.?) != null) {
-            const throughput = try benchmarkKeyExchange(E.ty, mode(1000));
+            def throughput = try benchmarkKeyExchange(E.ty, mode(1000));
             try printPad(stdout, E.name);
             try stdout.print(": {} exchanges/s\n", .{throughput});
         }

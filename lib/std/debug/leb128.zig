@@ -1,14 +1,14 @@
-const std = @import("std");
-const testing = std.testing;
+def std = @import("std");
+def testing = std.testing;
 
 pub fn readULEB128(comptime T: type, in_stream: var) !T {
-    const ShiftT = std.meta.IntType(false, std.math.log2(T.bit_count));
+    def ShiftT = std.meta.IntType(false, std.math.log2(T.bit_count));
 
     var result: T = 0;
     var shift: usize = 0;
 
     while (true) {
-        const byte = try in_stream.readByte();
+        def byte = try in_stream.readByte();
 
         if (shift > T.bit_count)
             return error.Overflow;
@@ -26,15 +26,15 @@ pub fn readULEB128(comptime T: type, in_stream: var) !T {
     }
 }
 
-pub fn readULEB128Mem(comptime T: type, ptr: *[*]const u8) !T {
-    const ShiftT = std.meta.IntType(false, std.math.log2(T.bit_count));
+pub fn readULEB128Mem(comptime T: type, ptr: *[*]u8) !T {
+    def ShiftT = std.meta.IntType(false, std.math.log2(T.bit_count));
 
     var result: T = 0;
     var shift: usize = 0;
     var i: usize = 0;
 
     while (true) : (i += 1) {
-        const byte = ptr.*[i];
+        def byte = ptr.*[i];
 
         if (shift > T.bit_count)
             return error.Overflow;
@@ -55,14 +55,14 @@ pub fn readULEB128Mem(comptime T: type, ptr: *[*]const u8) !T {
 }
 
 pub fn readILEB128(comptime T: type, in_stream: var) !T {
-    const UT = std.meta.IntType(false, T.bit_count);
-    const ShiftT = std.meta.IntType(false, std.math.log2(T.bit_count));
+    def UT = std.meta.IntType(false, T.bit_count);
+    def ShiftT = std.meta.IntType(false, std.math.log2(T.bit_count));
 
     var result: UT = 0;
     var shift: usize = 0;
 
     while (true) {
-        const byte: u8 = try in_stream.readByte();
+        def byte: u8 = try in_stream.readByte();
 
         if (shift > T.bit_count)
             return error.Overflow;
@@ -86,16 +86,16 @@ pub fn readILEB128(comptime T: type, in_stream: var) !T {
     }
 }
 
-pub fn readILEB128Mem(comptime T: type, ptr: *[*]const u8) !T {
-    const UT = std.meta.IntType(false, T.bit_count);
-    const ShiftT = std.meta.IntType(false, std.math.log2(T.bit_count));
+pub fn readILEB128Mem(comptime T: type, ptr: *[*]u8) !T {
+    def UT = std.meta.IntType(false, T.bit_count);
+    def ShiftT = std.meta.IntType(false, std.math.log2(T.bit_count));
 
     var result: UT = 0;
     var shift: usize = 0;
     var i: usize = 0;
 
     while (true) : (i += 1) {
-        const byte = ptr.*[i];
+        def byte = ptr.*[i];
 
         if (shift > T.bit_count)
             return error.Overflow;
@@ -120,52 +120,52 @@ pub fn readILEB128Mem(comptime T: type, ptr: *[*]const u8) !T {
     }
 }
 
-fn test_read_stream_ileb128(comptime T: type, encoded: []const u8) !T {
+fn test_read_stream_ileb128(comptime T: type, encoded: []u8) !T {
     var in_stream = std.io.fixedBufferStream(encoded);
     return try readILEB128(T, in_stream.inStream());
 }
 
-fn test_read_stream_uleb128(comptime T: type, encoded: []const u8) !T {
+fn test_read_stream_uleb128(comptime T: type, encoded: []u8) !T {
     var in_stream = std.io.fixedBufferStream(encoded);
     return try readULEB128(T, in_stream.inStream());
 }
 
-fn test_read_ileb128(comptime T: type, encoded: []const u8) !T {
+fn test_read_ileb128(comptime T: type, encoded: []u8) !T {
     var in_stream = std.io.fixedBufferStream(encoded);
-    const v1 = readILEB128(T, in_stream.inStream());
+    def v1 = readILEB128(T, in_stream.inStream());
     var in_ptr = encoded.ptr;
-    const v2 = readILEB128Mem(T, &in_ptr);
+    def v2 = readILEB128Mem(T, &in_ptr);
     testing.expectEqual(v1, v2);
     return v1;
 }
 
-fn test_read_uleb128(comptime T: type, encoded: []const u8) !T {
+fn test_read_uleb128(comptime T: type, encoded: []u8) !T {
     var in_stream = std.io.fixedBufferStream(encoded);
-    const v1 = readULEB128(T, in_stream.inStream());
+    def v1 = readULEB128(T, in_stream.inStream());
     var in_ptr = encoded.ptr;
-    const v2 = readULEB128Mem(T, &in_ptr);
+    def v2 = readULEB128Mem(T, &in_ptr);
     testing.expectEqual(v1, v2);
     return v1;
 }
 
-fn test_read_ileb128_seq(comptime T: type, comptime N: usize, encoded: []const u8) void {
+fn test_read_ileb128_seq(comptime T: type, comptime N: usize, encoded: []u8) void {
     var in_stream = std.io.fixedBufferStream(encoded);
     var in_ptr = encoded.ptr;
     var i: usize = 0;
     while (i < N) : (i += 1) {
-        const v1 = readILEB128(T, in_stream.inStream());
-        const v2 = readILEB128Mem(T, &in_ptr);
+        def v1 = readILEB128(T, in_stream.inStream());
+        def v2 = readILEB128Mem(T, &in_ptr);
         testing.expectEqual(v1, v2);
     }
 }
 
-fn test_read_uleb128_seq(comptime T: type, comptime N: usize, encoded: []const u8) void {
+fn test_read_uleb128_seq(comptime T: type, comptime N: usize, encoded: []u8) void {
     var in_stream = std.io.fixedBufferStream(encoded);
     var in_ptr = encoded.ptr;
     var i: usize = 0;
     while (i < N) : (i += 1) {
-        const v1 = readULEB128(T, in_stream.inStream());
-        const v2 = readULEB128Mem(T, &in_ptr);
+        def v1 = readULEB128(T, in_stream.inStream());
+        def v2 = readULEB128Mem(T, &in_ptr);
         testing.expectEqual(v1, v2);
     }
 }

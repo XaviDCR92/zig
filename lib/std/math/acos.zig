@@ -4,16 +4,16 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/acosf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/acos.c
 
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
 
 /// Returns the arc-cosine of x.
 ///
 /// Special cases:
 ///  - acos(x)   = nan if x < -1 or x > 1
 pub fn acos(x: var) @TypeOf(x) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     return switch (T) {
         f32 => acos32(x),
         f64 => acos64(x),
@@ -22,22 +22,22 @@ pub fn acos(x: var) @TypeOf(x) {
 }
 
 fn r32(z: f32) f32 {
-    const pS0 = 1.6666586697e-01;
-    const pS1 = -4.2743422091e-02;
-    const pS2 = -8.6563630030e-03;
-    const qS1 = -7.0662963390e-01;
+    def pS0 = 1.6666586697e-01;
+    def pS1 = -4.2743422091e-02;
+    def pS2 = -8.6563630030e-03;
+    def qS1 = -7.0662963390e-01;
 
-    const p = z * (pS0 + z * (pS1 + z * pS2));
-    const q = 1.0 + z * qS1;
+    def p = z * (pS0 + z * (pS1 + z * pS2));
+    def q = 1.0 + z * qS1;
     return p / q;
 }
 
 fn acos32(x: f32) f32 {
-    const pio2_hi = 1.5707962513e+00;
-    const pio2_lo = 7.5497894159e-08;
+    def pio2_hi = 1.5707962513e+00;
+    def pio2_lo = 7.5497894159e-08;
 
-    const hx: u32 = @bitCast(u32, x);
-    const ix: u32 = hx & 0x7FFFFFFF;
+    def hx: u32 = @bitCast(u32, x);
+    def ix: u32 = hx & 0x7FFFFFFF;
 
     // |x| >= 1 or nan
     if (ix >= 0x3F800000) {
@@ -63,50 +63,50 @@ fn acos32(x: f32) f32 {
 
     // x < -0.5
     if (hx >> 31 != 0) {
-        const z = (1 + x) * 0.5;
-        const s = math.sqrt(z);
-        const w = r32(z) * s - pio2_lo;
+        def z = (1 + x) * 0.5;
+        def s = math.sqrt(z);
+        def w = r32(z) * s - pio2_lo;
         return 2 * (pio2_hi - (s + w));
     }
 
     // x > 0.5
-    const z = (1.0 - x) * 0.5;
-    const s = math.sqrt(z);
-    const jx = @bitCast(u32, s);
-    const df = @bitCast(f32, jx & 0xFFFFF000);
-    const c = (z - df * df) / (s + df);
-    const w = r32(z) * s + c;
+    def z = (1.0 - x) * 0.5;
+    def s = math.sqrt(z);
+    def jx = @bitCast(u32, s);
+    def df = @bitCast(f32, jx & 0xFFFFF000);
+    def c = (z - df * df) / (s + df);
+    def w = r32(z) * s + c;
     return 2 * (df + w);
 }
 
 fn r64(z: f64) f64 {
-    const pS0: f64 = 1.66666666666666657415e-01;
-    const pS1: f64 = -3.25565818622400915405e-01;
-    const pS2: f64 = 2.01212532134862925881e-01;
-    const pS3: f64 = -4.00555345006794114027e-02;
-    const pS4: f64 = 7.91534994289814532176e-04;
-    const pS5: f64 = 3.47933107596021167570e-05;
-    const qS1: f64 = -2.40339491173441421878e+00;
-    const qS2: f64 = 2.02094576023350569471e+00;
-    const qS3: f64 = -6.88283971605453293030e-01;
-    const qS4: f64 = 7.70381505559019352791e-02;
+    def pS0: f64 = 1.66666666666666657415e-01;
+    def pS1: f64 = -3.25565818622400915405e-01;
+    def pS2: f64 = 2.01212532134862925881e-01;
+    def pS3: f64 = -4.00555345006794114027e-02;
+    def pS4: f64 = 7.91534994289814532176e-04;
+    def pS5: f64 = 3.47933107596021167570e-05;
+    def qS1: f64 = -2.40339491173441421878e+00;
+    def qS2: f64 = 2.02094576023350569471e+00;
+    def qS3: f64 = -6.88283971605453293030e-01;
+    def qS4: f64 = 7.70381505559019352791e-02;
 
-    const p = z * (pS0 + z * (pS1 + z * (pS2 + z * (pS3 + z * (pS4 + z * pS5)))));
-    const q = 1.0 + z * (qS1 + z * (qS2 + z * (qS3 + z * qS4)));
+    def p = z * (pS0 + z * (pS1 + z * (pS2 + z * (pS3 + z * (pS4 + z * pS5)))));
+    def q = 1.0 + z * (qS1 + z * (qS2 + z * (qS3 + z * qS4)));
     return p / q;
 }
 
 fn acos64(x: f64) f64 {
-    const pio2_hi: f64 = 1.57079632679489655800e+00;
-    const pio2_lo: f64 = 6.12323399573676603587e-17;
+    def pio2_hi: f64 = 1.57079632679489655800e+00;
+    def pio2_lo: f64 = 6.12323399573676603587e-17;
 
-    const ux = @bitCast(u64, x);
-    const hx = @intCast(u32, ux >> 32);
-    const ix = hx & 0x7FFFFFFF;
+    def ux = @bitCast(u64, x);
+    def hx = @intCast(u32, ux >> 32);
+    def ix = hx & 0x7FFFFFFF;
 
     // |x| >= 1 or nan
     if (ix >= 0x3FF00000) {
-        const lx = @intCast(u32, ux & 0xFFFFFFFF);
+        def lx = @intCast(u32, ux & 0xFFFFFFFF);
 
         // acos(1) = 0, acos(-1) = pi
         if ((ix - 0x3FF00000) | lx == 0) {
@@ -132,19 +132,19 @@ fn acos64(x: f64) f64 {
 
     // x < -0.5
     if (hx >> 31 != 0) {
-        const z = (1.0 + x) * 0.5;
-        const s = math.sqrt(z);
-        const w = r64(z) * s - pio2_lo;
+        def z = (1.0 + x) * 0.5;
+        def s = math.sqrt(z);
+        def w = r64(z) * s - pio2_lo;
         return 2 * (pio2_hi - (s + w));
     }
 
     // x > 0.5
-    const z = (1.0 - x) * 0.5;
-    const s = math.sqrt(z);
-    const jx = @bitCast(u64, s);
-    const df = @bitCast(f64, jx & 0xFFFFFFFF00000000);
-    const c = (z - df * df) / (s + df);
-    const w = r64(z) * s + c;
+    def z = (1.0 - x) * 0.5;
+    def s = math.sqrt(z);
+    def jx = @bitCast(u64, s);
+    def df = @bitCast(f64, jx & 0xFFFFFFFF00000000);
+    def c = (z - df * df) / (s + df);
+    def w = r64(z) * s + c;
     return 2 * (df + w);
 }
 
@@ -154,7 +154,7 @@ test "math.acos" {
 }
 
 test "math.acos32" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f32, acos32(0.0), 1.570796, epsilon));
     expect(math.approxEq(f32, acos32(0.2), 1.369438, epsilon));
@@ -165,7 +165,7 @@ test "math.acos32" {
 }
 
 test "math.acos64" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f64, acos64(0.0), 1.570796, epsilon));
     expect(math.approxEq(f64, acos64(0.2), 1.369438, epsilon));

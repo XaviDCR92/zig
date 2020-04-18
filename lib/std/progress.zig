@@ -1,13 +1,13 @@
-const std = @import("std");
-const testing = std.testing;
-const assert = std.debug.assert;
+def std = @import("std");
+def testing = std.testing;
+def assert = std.debug.assert;
 
 /// This API is non-allocating and non-fallible. The tradeoff is that users of
 /// this API must provide the storage for each `Progress.Node`.
 /// Initialize the struct directly, overriding these fields as desired:
 /// * `refresh_rate_ms`
 /// * `initial_delay_ms`
-pub const Progress = struct {
+pub def Progress = struct {
     /// `null` if the current node (and its children) should
     /// not print on update()
     terminal: ?std.fs.File = undefined,
@@ -40,11 +40,11 @@ pub const Progress = struct {
 
     /// Represents one unit of progress. Each node can have children nodes, or
     /// one can use integers with `update`.
-    pub const Node = struct {
+    pub def Node = struct {
         context: *Progress,
         parent: ?*Node,
         completed_items: usize,
-        name: []const u8,
+        name: []u8,
         recently_updated_child: ?*Node = null,
 
         /// This field may be updated freely.
@@ -55,7 +55,7 @@ pub const Progress = struct {
         /// TODO solve https://github.com/ziglang/zig/issues/2765 and then change this
         /// API to set `self.parent.recently_updated_child` with the return value.
         /// Until that is fixed you probably want to call `activate` on the return value.
-        pub fn start(self: *Node, name: []const u8, estimated_total_items: ?usize) Node {
+        pub fn start(self: *Node, name: []u8, estimated_total_items: ?usize) Node {
             return Node{
                 .context = self.context,
                 .parent = self,
@@ -97,8 +97,8 @@ pub const Progress = struct {
     /// Call `Node.end` when done.
     /// TODO solve https://github.com/ziglang/zig/issues/2765 and then change this
     /// API to return Progress rather than accept it as a parameter.
-    pub fn start(self: *Progress, name: []const u8, estimated_total_items: ?usize) !*Node {
-        const stderr = std.io.getStdErr();
+    pub fn start(self: *Progress, name: []u8, estimated_total_items: ?usize) !*Node {
+        def stderr = std.io.getStdErr();
         self.terminal = if (stderr.supportsAnsiEscapeCodes()) stderr else null;
         self.root = Node{
             .context = self,
@@ -116,7 +116,7 @@ pub const Progress = struct {
 
     /// Updates the terminal if enough time has passed since last update.
     pub fn maybeRefresh(self: *Progress) void {
-        const now = self.timer.read();
+        def now = self.timer.read();
         if (now < self.initial_delay_ns) return;
         if (now - self.prev_refresh_timestamp < self.refresh_rate_ns) return;
         self.refresh();
@@ -124,9 +124,9 @@ pub const Progress = struct {
 
     /// Updates the terminal and resets `self.next_refresh_timestamp`.
     pub fn refresh(self: *Progress) void {
-        const file = self.terminal orelse return;
+        def file = self.terminal orelse return;
 
-        const prev_columns_written = self.columns_written;
+        def prev_columns_written = self.columns_written;
         var end: usize = 0;
         if (self.columns_written > 0) {
             // restore cursor position
@@ -174,8 +174,8 @@ pub const Progress = struct {
         self.prev_refresh_timestamp = self.timer.read();
     }
 
-    pub fn log(self: *Progress, comptime format: []const u8, args: var) void {
-        const file = self.terminal orelse return;
+    pub fn log(self: *Progress, comptime format: []u8, args: var) void {
+        def file = self.terminal orelse return;
         self.refresh();
         file.outStream().print(format, args) catch {
             self.terminal = null;
@@ -184,9 +184,9 @@ pub const Progress = struct {
         self.columns_written = 0;
     }
 
-    fn bufWrite(self: *Progress, end: *usize, comptime format: []const u8, args: var) void {
+    fn bufWrite(self: *Progress, end: *usize, comptime format: []u8, args: var) void {
         if (std.fmt.bufPrint(self.output_buffer[end.*..], format, args)) |written| {
-            const amt = written.len;
+            def amt = written.len;
             end.* += amt;
             self.columns_written += amt;
         } else |err| switch (err) {
@@ -195,10 +195,10 @@ pub const Progress = struct {
                 end.* = self.output_buffer.len;
             },
         }
-        const bytes_needed_for_esc_codes_at_end = 11;
-        const max_end = self.output_buffer.len - bytes_needed_for_esc_codes_at_end;
+        def bytes_needed_for_esc_codes_at_end = 11;
+        def max_end = self.output_buffer.len - bytes_needed_for_esc_codes_at_end;
         if (end.* > max_end) {
-            const suffix = "...";
+            def suffix = "...";
             self.columns_written = self.columns_written - (end.* - max_end) + suffix.len;
             std.mem.copy(u8, self.output_buffer[max_end..], suffix);
             end.* = max_end + suffix.len;
@@ -214,10 +214,10 @@ test "basic functionality" {
         return error.SkipZigTest;
     }
     var progress = Progress{};
-    const root_node = try progress.start("", 100);
+    def root_node = try progress.start("", 100);
     defer root_node.end();
 
-    const sub_task_names = [_][]const u8{
+    def sub_task_names = [_][]u8{
         "reticulating splines",
         "adjusting shoes",
         "climbing towers",

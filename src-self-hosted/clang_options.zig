@@ -1,10 +1,10 @@
-const std = @import("std");
-const mem = std.mem;
+def std = @import("std");
+def mem = std.mem;
 
-pub const list = @import("clang_options_data.zig").data;
+pub def list = @import("clang_options_data.zig").data;
 
-pub const CliArg = struct {
-    name: []const u8,
+pub def CliArg = struct {
+    name: []u8,
     syntax: Syntax,
 
     /// TODO we're going to want to change this when we start shipping self-hosted because this causes
@@ -20,7 +20,7 @@ pub const CliArg = struct {
     /// Prefixed by "/"
     psl: bool = false,
 
-    pub const Syntax = union(enum) {
+    pub def Syntax = union(enum) {
         /// A flag with no values.
         flag,
 
@@ -46,7 +46,7 @@ pub const CliArg = struct {
         multi_arg: u8,
     };
 
-    pub fn matchEql(self: CliArg, arg: []const u8) u2 {
+    pub fn matchEql(self: CliArg, arg: []u8) u2 {
         if (self.pd1 and arg.len >= self.name.len + 1 and
             mem.startsWith(u8, arg, "-") and mem.eql(u8, arg[1..], self.name))
         {
@@ -65,7 +65,7 @@ pub const CliArg = struct {
         return 0;
     }
 
-    pub fn matchStartsWith(self: CliArg, arg: []const u8) usize {
+    pub fn matchStartsWith(self: CliArg, arg: []u8) usize {
         if (self.pd1 and arg.len >= self.name.len + 1 and
             mem.startsWith(u8, arg, "-") and mem.startsWith(u8, arg[1..], self.name))
         {
@@ -86,7 +86,7 @@ pub const CliArg = struct {
 };
 
 /// Shortcut function for initializing a `CliArg`
-pub fn flagpd1(name: []const u8) CliArg {
+pub fn flagpd1(name: []u8) CliArg {
     return .{
         .name = name,
         .syntax = .flag,
@@ -96,7 +96,7 @@ pub fn flagpd1(name: []const u8) CliArg {
 }
 
 /// Shortcut function for initializing a `CliArg`
-pub fn flagpsl(name: []const u8) CliArg {
+pub fn flagpsl(name: []u8) CliArg {
     return .{
         .name = name,
         .syntax = .flag,
@@ -106,7 +106,7 @@ pub fn flagpsl(name: []const u8) CliArg {
 }
 
 /// Shortcut function for initializing a `CliArg`
-pub fn joinpd1(name: []const u8) CliArg {
+pub fn joinpd1(name: []u8) CliArg {
     return .{
         .name = name,
         .syntax = .joined,
@@ -116,7 +116,7 @@ pub fn joinpd1(name: []const u8) CliArg {
 }
 
 /// Shortcut function for initializing a `CliArg`
-pub fn jspd1(name: []const u8) CliArg {
+pub fn jspd1(name: []u8) CliArg {
     return .{
         .name = name,
         .syntax = .joined_or_separate,
@@ -126,7 +126,7 @@ pub fn jspd1(name: []const u8) CliArg {
 }
 
 /// Shortcut function for initializing a `CliArg`
-pub fn sepd1(name: []const u8) CliArg {
+pub fn sepd1(name: []u8) CliArg {
     return .{
         .name = name,
         .syntax = .separate,

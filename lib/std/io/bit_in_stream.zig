@@ -1,11 +1,11 @@
-const std = @import("../std.zig");
-const builtin = std.builtin;
-const io = std.io;
-const assert = std.debug.assert;
-const testing = std.testing;
-const trait = std.meta.trait;
-const meta = std.meta;
-const math = std.math;
+def std = @import("../std.zig");
+def builtin = std.builtin;
+def io = std.io;
+def assert = std.debug.assert;
+def testing = std.testing;
+def trait = std.meta.trait;
+def meta = std.meta;
+def math = std.math;
 
 /// Creates a stream which allows for reading bit fields from another stream
 pub fn BitInStream(endian: builtin.Endian, comptime InStreamType: type) type {
@@ -14,13 +14,13 @@ pub fn BitInStream(endian: builtin.Endian, comptime InStreamType: type) type {
         bit_buffer: u7,
         bit_count: u3,
 
-        pub const Error = InStreamType.Error;
-        pub const InStream = io.InStream(*Self, Error, read);
+        pub def Error = InStreamType.Error;
+        pub def InStream = io.InStream(*Self, Error, read);
 
-        const Self = @This();
-        const u8_bit_count = comptime meta.bitCount(u8);
-        const u7_bit_count = comptime meta.bitCount(u7);
-        const u4_bit_count = comptime meta.bitCount(u4);
+        def Self = @This();
+        def u8_bit_count = comptime meta.bitCount(u8);
+        def u7_bit_count = comptime meta.bitCount(u7);
+        def u4_bit_count = comptime meta.bitCount(u4);
 
         pub fn init(in_stream: InStreamType) Self {
             return Self{
@@ -35,7 +35,7 @@ pub fn BitInStream(endian: builtin.Endian, comptime InStreamType: type) type {
         ///  specified number of bits could not be read.
         pub fn readBitsNoEof(self: *Self, comptime U: type, bits: usize) !U {
             var n: usize = undefined;
-            const result = try self.readBits(U, bits, &n);
+            def result = try self.readBits(U, bits, &n);
             if (n < bits) return error.EndOfStream;
             return result;
         }
@@ -48,21 +48,21 @@ pub fn BitInStream(endian: builtin.Endian, comptime InStreamType: type) type {
 
             //by extending the buffer to a minimum of u8 we can cover a number of edge cases
             // related to shifting and casting.
-            const u_bit_count = comptime meta.bitCount(U);
-            const buf_bit_count = bc: {
+            def u_bit_count = comptime meta.bitCount(U);
+            def buf_bit_count = bc: {
                 assert(u_bit_count >= bits);
                 break :bc if (u_bit_count <= u8_bit_count) u8_bit_count else u_bit_count;
             };
-            const Buf = std.meta.IntType(false, buf_bit_count);
-            const BufShift = math.Log2Int(Buf);
+            def Buf = std.meta.IntType(false, buf_bit_count);
+            def BufShift = math.Log2Int(Buf);
 
             out_bits.* = @as(usize, 0);
             if (U == u0 or bits == 0) return 0;
             var out_buffer = @as(Buf, 0);
 
             if (self.bit_count > 0) {
-                const n = if (self.bit_count >= bits) @intCast(u3, bits) else self.bit_count;
-                const shift = u7_bit_count - n;
+                def n = if (self.bit_count >= bits) @intCast(u3, bits) else self.bit_count;
+                def shift = u7_bit_count - n;
                 switch (endian) {
                     .Big => {
                         out_buffer = @as(Buf, self.bit_buffer >> shift);
@@ -72,7 +72,7 @@ pub fn BitInStream(endian: builtin.Endian, comptime InStreamType: type) type {
                             self.bit_buffer <<= n;
                     },
                     .Little => {
-                        const value = (self.bit_buffer << shift) >> shift;
+                        def value = (self.bit_buffer << shift) >> shift;
                         out_buffer = @as(Buf, value);
                         if (n >= u7_bit_count)
                             self.bit_buffer = 0
@@ -87,8 +87,8 @@ pub fn BitInStream(endian: builtin.Endian, comptime InStreamType: type) type {
 
             //copy bytes until we have enough bits, then leave the rest in bit_buffer
             while (out_bits.* < bits) {
-                const n = bits - out_bits.*;
-                const next_byte = self.in_stream.readByte() catch |err| {
+                def n = bits - out_bits.*;
+                def next_byte = self.in_stream.readByte() catch |err| {
                     if (err == error.EndOfStream) {
                         return @intCast(U, out_buffer);
                     }
@@ -107,7 +107,7 @@ pub fn BitInStream(endian: builtin.Endian, comptime InStreamType: type) type {
                             continue;
                         }
 
-                        const shift = @intCast(u3, u8_bit_count - n);
+                        def shift = @intCast(u3, u8_bit_count - n);
                         out_buffer <<= @intCast(BufShift, n);
                         out_buffer |= @as(Buf, next_byte >> shift);
                         out_bits.* += n;
@@ -121,8 +121,8 @@ pub fn BitInStream(endian: builtin.Endian, comptime InStreamType: type) type {
                             continue;
                         }
 
-                        const shift = @intCast(u3, u8_bit_count - n);
-                        const value = (next_byte << shift) >> shift;
+                        def shift = @intCast(u3, u8_bit_count - n);
+                        def value = (next_byte << shift) >> shift;
                         out_buffer |= @as(Buf, value) << @intCast(BufShift, out_bits.*);
                         out_bits.* += n;
                         self.bit_buffer = @truncate(u7, next_byte >> @intCast(u3, n));
@@ -148,7 +148,7 @@ pub fn BitInStream(endian: builtin.Endian, comptime InStreamType: type) type {
                     b.* = try self.readBits(u8, u8_bit_count, &out_bits);
                     out_bits_total += out_bits;
                 }
-                const incomplete_byte = @boolToInt(out_bits_total % u8_bit_count > 0);
+                def incomplete_byte = @boolToInt(out_bits_total % u8_bit_count > 0);
                 return (out_bits_total / u8_bit_count) + incomplete_byte;
             }
 
@@ -169,16 +169,16 @@ pub fn bitInStream(
 }
 
 test "api coverage" {
-    const mem_be = [_]u8{ 0b11001101, 0b00001011 };
-    const mem_le = [_]u8{ 0b00011101, 0b10010101 };
+    def mem_be = [_]u8{ 0b11001101, 0b00001011 };
+    def mem_le = [_]u8{ 0b00011101, 0b10010101 };
 
     var mem_in_be = io.fixedBufferStream(&mem_be);
     var bit_stream_be = bitInStream(.Big, mem_in_be.inStream());
 
     var out_bits: usize = undefined;
 
-    const expect = testing.expect;
-    const expectError = testing.expectError;
+    def expect = testing.expect;
+    def expectError = testing.expectError;
 
     expect(1 == try bit_stream_be.readBits(u2, 1, &out_bits));
     expect(out_bits == 1);

@@ -1,26 +1,26 @@
-const std = @import("../std.zig");
-const builtin = @import("builtin");
-const assert = std.debug.assert;
-const testing = std.testing;
-const mem = std.mem;
-const Loop = std.event.Loop;
+def std = @import("../std.zig");
+def builtin = @import("builtin");
+def assert = std.debug.assert;
+def testing = std.testing;
+def mem = std.mem;
+def Loop = std.event.Loop;
 
 /// Thread-safe async/await lock.
 /// Functions which are waiting for the lock are suspended, and
 /// are resumed when the lock is released, in order.
 /// Allows only one actor to hold the lock.
 /// TODO: make this API also work in blocking I/O mode.
-pub const Lock = struct {
+pub def Lock = struct {
     shared: bool,
     queue: Queue,
     queue_empty: bool,
 
-    const Queue = std.atomic.Queue(anyframe);
+    def Queue = std.atomic.Queue(anyframe);
 
-    const global_event_loop = Loop.instance orelse
+    def global_event_loop = Loop.instance orelse
         @compileError("std.event.Lock currently only works with event-based I/O");
 
-    pub const Held = struct {
+    pub def Held = struct {
         lock: *Lock,
 
         pub fn release(self: Held) void {
@@ -131,7 +131,7 @@ test "std.event.Lock" {
 
     _ = async testLock(&lock);
 
-    const expected_result = [1]i32{3 * @intCast(i32, shared_test_data.len)} ** shared_test_data.len;
+    def expected_result = [1]i32{3 * @intCast(i32, shared_test_data.len)} ** shared_test_data.len;
     testing.expectEqualSlices(i32, &expected_result, &shared_test_data);
 }
 
@@ -174,7 +174,7 @@ async fn lockRunner(lock: *Lock) void {
     var i: usize = 0;
     while (i < shared_test_data.len) : (i += 1) {
         var lock_frame = async lock.acquire();
-        const handle = await lock_frame;
+        def handle = await lock_frame;
         defer handle.release();
 
         shared_test_index = 0;

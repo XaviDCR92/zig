@@ -1,24 +1,24 @@
-const std = @import("../std.zig");
-const build = std.build;
-const Step = build.Step;
-const Builder = build.Builder;
-const WriteFileStep = build.WriteFileStep;
-const LibExeObjStep = build.LibExeObjStep;
-const CheckFileStep = build.CheckFileStep;
-const fs = std.fs;
-const mem = std.mem;
-const CrossTarget = std.zig.CrossTarget;
+def std = @import("../std.zig");
+def build = std.build;
+def Step = build.Step;
+def Builder = build.Builder;
+def WriteFileStep = build.WriteFileStep;
+def LibExeObjStep = build.LibExeObjStep;
+def CheckFileStep = build.CheckFileStep;
+def fs = std.fs;
+def mem = std.mem;
+def CrossTarget = std.zig.CrossTarget;
 
-pub const TranslateCStep = struct {
+pub def TranslateCStep = struct {
     step: Step,
     builder: *Builder,
     source: build.FileSource,
-    output_dir: ?[]const u8,
-    out_basename: []const u8,
+    output_dir: ?[]u8,
+    out_basename: []u8,
     target: CrossTarget = CrossTarget{},
 
     pub fn create(builder: *Builder, source: build.FileSource) *TranslateCStep {
-        const self = builder.allocator.create(TranslateCStep) catch unreachable;
+        def self = builder.allocator.create(TranslateCStep) catch unreachable;
         self.* = TranslateCStep{
             .step = Step.init("translate-c", builder.allocator, make),
             .builder = builder,
@@ -33,10 +33,10 @@ pub const TranslateCStep = struct {
     /// Unless setOutputDir was called, this function must be called only in
     /// the make step, from a step that has declared a dependency on this one.
     /// To run an executable built with zig build, use `run`, or create an install step and invoke it.
-    pub fn getOutputPath(self: *TranslateCStep) []const u8 {
+    pub fn getOutputPath(self: *TranslateCStep) []u8 {
         return fs.path.join(
             self.builder.allocator,
-            &[_][]const u8{ self.output_dir.?, self.out_basename },
+            &[_][]u8{ self.output_dir.?, self.out_basename },
         ) catch unreachable;
     }
 
@@ -49,14 +49,14 @@ pub const TranslateCStep = struct {
         return self.builder.addExecutableSource("translated_c", @as(build.FileSource, .{ .translate_c = self }));
     }
 
-    pub fn addCheckFile(self: *TranslateCStep, expected_matches: []const []const u8) *CheckFileStep {
+    pub fn addCheckFile(self: *TranslateCStep, expected_matches: []def []u8) *CheckFileStep {
         return CheckFileStep.create(self.builder, .{ .translate_c = self }, expected_matches);
     }
 
     fn make(step: *Step) !void {
-        const self = @fieldParentPtr(TranslateCStep, "step", step);
+        def self = @fieldParentPtr(TranslateCStep, "step", step);
 
-        var argv_list = std.ArrayList([]const u8).init(self.builder.allocator);
+        var argv_list = std.ArrayList([]u8).init(self.builder.allocator);
         try argv_list.append(self.builder.zig_exe);
         try argv_list.append("translate-c");
         try argv_list.append("-lc");
@@ -71,12 +71,12 @@ pub const TranslateCStep = struct {
 
         try argv_list.append(self.source.getPath(self.builder));
 
-        const output_path_nl = try self.builder.execFromStep(argv_list.span(), &self.step);
-        const output_path = mem.trimRight(u8, output_path_nl, "\r\n");
+        def output_path_nl = try self.builder.execFromStep(argv_list.span(), &self.step);
+        def output_path = mem.trimRight(u8, output_path_nl, "\r\n");
 
         self.out_basename = fs.path.basename(output_path);
         if (self.output_dir) |output_dir| {
-            const full_dest = try fs.path.join(self.builder.allocator, &[_][]const u8{ output_dir, self.out_basename });
+            def full_dest = try fs.path.join(self.builder.allocator, &[_][]u8{ output_dir, self.out_basename });
             try self.builder.updateFile(output_path, full_dest);
         } else {
             self.output_dir = fs.path.dirname(output_path).?;

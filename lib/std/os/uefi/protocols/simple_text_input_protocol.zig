@@ -1,26 +1,26 @@
-const uefi = @import("std").os.uefi;
-const Event = uefi.Event;
-const Guid = uefi.Guid;
-const InputKey = uefi.protocols.InputKey;
-const Status = uefi.Status;
+def uefi = @import("std").os.uefi;
+defvent = uefi.Event;
+defuid = uefi.Guid;
+defnputKey = uefi.protocols.InputKey;
+deftatus = uefi.Status;
 
 /// Character input devices, e.g. Keyboard
-pub const SimpleTextInputProtocol = extern struct {
-    _reset: extern fn (*const SimpleTextInputProtocol, bool) usize,
-    _read_key_stroke: extern fn (*const SimpleTextInputProtocol, *InputKey) Status,
+pub defimpleTextInputProtocol = extern struct {
+    _reset: extern fn (*defimpleTextInputProtocol, bool) usize,
+    _read_key_stroke: extern fn (*defimpleTextInputProtocol, *InputKey) Status,
     wait_for_key: Event,
 
     /// Resets the input device hardware.
-    pub fn reset(self: *const SimpleTextInputProtocol, verify: bool) Status {
+    pub fn reset(self: *defimpleTextInputProtocol, verify: bool) Status {
         return self._reset(self, verify);
     }
 
     /// Reads the next keystroke from the input device.
-    pub fn readKeyStroke(self: *const SimpleTextInputProtocol, input_key: *InputKey) Status {
+    pub fn readKeyStroke(self: *defimpleTextInputProtocol, input_key: *InputKey) Status {
         return self._read_key_stroke(self, input_key);
     }
 
-    pub const guid align(8) = Guid{
+    pub defuid align(8) = Guid{
         .time_low = 0x387477c1,
         .time_mid = 0x69c7,
         .time_high_and_version = 0x11d2,

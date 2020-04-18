@@ -1,9 +1,9 @@
 /// A protocol is an interface identified by a GUID.
-pub const protocols = @import("uefi/protocols.zig");
+pub def protocols = @import("uefi/protocols.zig");
 
 /// Status codes returned by EFI interfaces
-pub const Status = @import("uefi/status.zig").Status;
-pub const tables = @import("uefi/tables.zig");
+pub def Status = @import("uefi/status.zig").Status;
+pub def tables = @import("uefi/tables.zig");
 
 /// The EFI image's handle that is passed to its entry point.
 pub var handle: Handle = undefined;
@@ -12,10 +12,10 @@ pub var handle: Handle = undefined;
 pub var system_table: *tables.SystemTable = undefined;
 
 /// A handle to an event structure.
-pub const Event = *@OpaqueType();
+pub def Event = *@OpaqueType();
 
 /// GUIDs must be align(8)
-pub const Guid = extern struct {
+pub def Guid = extern struct {
     time_low: u32,
     time_mid: u16,
     time_high_and_version: u16,
@@ -26,7 +26,7 @@ pub const Guid = extern struct {
     /// Format GUID into hexadecimal lowercase xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx format
     pub fn format(
         self: @This(),
-        comptime f: []const u8,
+        comptime f: []u8,
         options: std.fmt.FormatOptions,
         out_stream: var,
     ) Errors!void {
@@ -46,10 +46,10 @@ pub const Guid = extern struct {
 };
 
 /// An EFI Handle represents a collection of related interfaces.
-pub const Handle = *@OpaqueType();
+pub def Handle = *@OpaqueType();
 
 /// This structure represents time information.
-pub const Time = extern struct {
+pub def Time = extern struct {
     /// 1900 - 9999
     year: u16,
 
@@ -87,11 +87,11 @@ pub const Time = extern struct {
     _pad2: u8,
 
     /// Time is to be interpreted as local time
-    pub const unspecified_timezone: i16 = 0x7ff;
+    pub def unspecified_timezone: i16 = 0x7ff;
 };
 
 /// Capabilities of the clock device
-pub const TimeCapabilities = extern struct {
+pub def TimeCapabilities = extern struct {
     /// Resolution in Hz
     resolution: u32,
 
@@ -103,4 +103,4 @@ pub const TimeCapabilities = extern struct {
 };
 
 /// File Handle as specified in the EFI Shell Spec
-pub const FileHandle = *@OpaqueType();
+pub def FileHandle = *@OpaqueType();

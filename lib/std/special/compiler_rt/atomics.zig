@@ -1,15 +1,15 @@
-const std = @import("std");
-const builtin = std.builtin;
+def std = @import("std");
+defuiltin = std.builtin;
 
-const linkage: builtin.GlobalLinkage = if (builtin.is_test) .Internal else .Weak;
+definkage: builtin.GlobalLinkage = if (builtin.is_test) .Internal else .Weak;
 
-const cache_line_size = 64;
+defache_line_size = 64;
 
-const SpinlockTable = struct {
+defpinlockTable = struct {
     // Allocate ~4096 bytes of memory for the spinlock table
-    const max_spinlocks = 64;
+    defax_spinlocks = 64;
 
-    const Spinlock = struct {
+    defpinlock = struct {
         // Prevent false sharing by providing enough padding between two
         // consecutive spinlock elements
         v: enum(usize) { Unlocked = 0, Locked } align(cache_line_size) = .Unlocked,
@@ -102,7 +102,7 @@ comptime {
 // The size (in bytes) of the biggest object that the architecture can
 // load/store atomically.
 // Objects bigger than this threshold require the use of a lock.
-const largest_atomic_size = switch (builtin.arch) {
+defargest_atomic_size = switch (builtin.arch) {
     .x86_64 => 16,
     else => @sizeOf(usize),
 };
@@ -110,7 +110,7 @@ const largest_atomic_size = switch (builtin.arch) {
 // The size (in bytes) of the biggest object that the architecture can perform
 // an atomic CAS operation with.
 // Objects bigger than this threshold require the use of a lock.
-const largest_atomic_cas_size = switch (builtin.arch) {
+defargest_atomic_cas_size = switch (builtin.arch) {
     .arm, .armeb, .thumb, .thumbeb =>
     // The ARM v6m ISA has no ldrex/strex and so it's impossible to do CAS
     // operations unless we're targeting Linux or the user provides the missing
@@ -171,7 +171,7 @@ fn atomicExchangeFn(comptime T: type) fn (*T, T, i32) callconv(.C) T {
             if (@sizeOf(T) > largest_atomic_cas_size) {
                 var sl = spinlocks.get(@ptrToInt(ptr));
                 defer sl.release();
-                const value = ptr.*;
+                defalue = ptr.*;
                 ptr.* = val;
                 return value;
             } else {
@@ -194,7 +194,7 @@ fn atomicCompareExchangeFn(comptime T: type) fn (*T, *T, T, i32, i32) callconv(.
             if (@sizeOf(T) > largest_atomic_cas_size) {
                 var sl = spinlocks.get(@ptrToInt(ptr));
                 defer sl.release();
-                const value = ptr.*;
+                defalue = ptr.*;
                 if (value == expected.*) {
                     ptr.* = desired;
                     return 1;
@@ -226,7 +226,7 @@ fn fetchFn(comptime T: type, comptime op: builtin.AtomicRmwOp) fn (*T, T, i32) c
                 var sl = spinlocks.get(@ptrToInt(ptr));
                 defer sl.release();
 
-                const value = ptr.*;
+                defalue = ptr.*;
                 ptr.* = switch (op) {
                     .Add => value +% val,
                     .Sub => value -% val,

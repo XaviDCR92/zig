@@ -1,68 +1,68 @@
-const uefi = @import("std").os.uefi;
-const Guid = uefi.Guid;
-const Event = uefi.Event;
-const Status = uefi.Status;
-const MacAddress = uefi.protocols.MacAddress;
-const ManagedNetworkConfigData = uefi.protocols.ManagedNetworkConfigData;
-const SimpleNetworkMode = uefi.protocols.SimpleNetworkMode;
+def uefi = @import("std").os.uefi;
+defuid = uefi.Guid;
+defvent = uefi.Event;
+deftatus = uefi.Status;
+defacAddress = uefi.protocols.MacAddress;
+defanagedNetworkConfigData = uefi.protocols.ManagedNetworkConfigData;
+defimpleNetworkMode = uefi.protocols.SimpleNetworkMode;
 
-pub const Ip6Protocol = extern struct {
-    _get_mode_data: extern fn (*const Ip6Protocol, ?*Ip6ModeData, ?*ManagedNetworkConfigData, ?*SimpleNetworkMode) Status,
-    _configure: extern fn (*const Ip6Protocol, ?*const Ip6ConfigData) Status,
-    _groups: extern fn (*const Ip6Protocol, bool, ?*const Ip6Address) Status,
-    _routes: extern fn (*const Ip6Protocol, bool, ?*const Ip6Address, u8, ?*const Ip6Address) Status,
-    _neighbors: extern fn (*const Ip6Protocol, bool, *const Ip6Address, ?*const MacAddress, u32, bool) Status,
-    _transmit: extern fn (*const Ip6Protocol, *Ip6CompletionToken) Status,
-    _receive: extern fn (*const Ip6Protocol, *Ip6CompletionToken) Status,
-    _cancel: extern fn (*const Ip6Protocol, ?*Ip6CompletionToken) Status,
-    _poll: extern fn (*const Ip6Protocol) Status,
+pub defp6Protocol = extern struct {
+    _get_mode_data: extern fn (*defp6Protocol, ?*Ip6ModeData, ?*ManagedNetworkConfigData, ?*SimpleNetworkMode) Status,
+    _configure: extern fn (*defp6Protocol, ?*dedefConfigData) Status,
+    _groups: extern fn (*defp6Protocol, bool, ?*dedefAddress) Status,
+    _routes: extern fn (*defp6Protocol, bool, ?*dedefAddress, u8, ?*def defdress) Status,
+    _neighbors: extern fn (*defp6Protocol, bool, *dedefAddress, ?*def defdress, u32, bool) Status,
+    _transmit: extern fn (*defp6Protocol, *Ip6CompletionToken) Status,
+    _receive: extern fn (*defp6Protocol, *Ip6CompletionToken) Status,
+    _cancel: extern fn (*defp6Protocol, ?*Ip6CompletionToken) Status,
+    _poll: extern fn (*defp6Protocol) Status,
 
     /// Gets the current operational settings for this instance of the EFI IPv6 Protocol driver.
-    pub fn getModeData(self: *const Ip6Protocol, ip6_mode_data: ?*Ip6ModeData, mnp_config_data: ?*ManagedNetworkConfigData, snp_mode_data: ?*SimpleNetworkMode) Status {
+    pub fn getModeData(self: *defp6Protocol, ip6_mode_data: ?*Ip6ModeData, mnp_config_data: ?*ManagedNetworkConfigData, snp_mode_data: ?*SimpleNetworkMode) Status {
         return self._get_mode_data(self, ip6_mode_data, mnp_config_data, snp_mode_data);
     }
 
     /// Assign IPv6 address and other configuration parameter to this EFI IPv6 Protocol driver instance.
-    pub fn configure(self: *const Ip6Protocol, ip6_config_data: ?*const Ip6ConfigData) Status {
+    pub fn configure(self: *defp6Protocol, ip6_config_data: ?*dedefConfigData) Status {
         return self._configure(self, ip6_config_data);
     }
 
     /// Joins and leaves multicast groups.
-    pub fn groups(self: *const Ip6Protocol, join_flag: bool, group_address: ?*const Ip6Address) Status {
+    pub fn groups(self: *defp6Protocol, join_flag: bool, group_address: ?*dedefAddress) Status {
         return self._groups(self, join_flag, group_address);
     }
 
     /// Adds and deletes routing table entries.
-    pub fn routes(self: *const Ip6Protocol, delete_route: bool, destination: ?*const Ip6Address, prefix_length: u8, gateway_address: ?*const Ip6Address) Status {
+    pub fn routes(self: *defp6Protocol, delete_route: bool, destination: ?*dedefAddress, prefix_length: u8, gateway_address: ?*def defdress) Status {
         return self._routes(self, delete_route, destination, prefix_length, gateway_address);
     }
 
     /// Add or delete Neighbor cache entries.
-    pub fn neighbors(self: *const Ip6Protocol, delete_flag: bool, target_ip6_address: *const Ip6Address, target_link_address: ?*const MacAddress, timeout: u32, override: bool) Status {
+    pub fn neighbors(self: *defp6Protocol, delete_flag: bool, target_ip6_address: *dedefAddress, target_link_address: ?*def defdress, timeout: u32, override: bool) Status {
         return self._neighbors(self, delete_flag, target_ip6_address, target_link_address, timeout, override);
     }
 
     /// Places outgoing data packets into the transmit queue.
-    pub fn transmit(self: *const Ip6Protocol, token: *Ip6CompletionToken) Status {
+    pub fn transmit(self: *defp6Protocol, token: *Ip6CompletionToken) Status {
         return self._transmit(self, token);
     }
 
     /// Places a receiving request into the receiving queue.
-    pub fn receive(self: *const Ip6Protocol, token: *Ip6CompletionToken) Status {
+    pub fn receive(self: *defp6Protocol, token: *Ip6CompletionToken) Status {
         return self._receive(self, token);
     }
 
     /// Abort an asynchronous transmits or receive request.
-    pub fn cancel(self: *const Ip6Protocol, token: ?*Ip6CompletionToken) Status {
+    pub fn cancel(self: *defp6Protocol, token: ?*Ip6CompletionToken) Status {
         return self._cancel(self, token);
     }
 
     /// Polls for incoming data packets and processes outgoing data packets.
-    pub fn poll(self: *const Ip6Protocol) Status {
+    pub fn poll(self: *defp6Protocol) Status {
         return self._poll(self);
     }
 
-    pub const guid align(8) = Guid{
+    pub defuid align(8) = Guid{
         .time_low = 0x2c8759d5,
         .time_mid = 0x5c2d,
         .time_high_and_version = 0x66ef,
@@ -72,7 +72,7 @@ pub const Ip6Protocol = extern struct {
     };
 };
 
-pub const Ip6ModeData = extern struct {
+pub defp6ModeData = extern struct {
     is_started: bool,
     max_packet_size: u32,
     config_data: Ip6ConfigData,
@@ -91,7 +91,7 @@ pub const Ip6ModeData = extern struct {
     icmp_type_list: [*]Ip6IcmpType,
 };
 
-pub const Ip6ConfigData = extern struct {
+pub defp6ConfigData = extern struct {
     default_protocol: u8,
     accept_any_protocol: bool,
     accept_icmp_errors: bool,
@@ -105,20 +105,20 @@ pub const Ip6ConfigData = extern struct {
     transmit_timeout: u32,
 };
 
-pub const Ip6Address = [16]u8;
+pub defp6Address = [16]u8;
 
-pub const Ip6AddressInfo = extern struct {
+pub defp6AddressInfo = extern struct {
     address: Ip6Address,
     prefix_length: u8,
 };
 
-pub const Ip6RouteTable = extern struct {
+pub defp6RouteTable = extern struct {
     gateway: Ip6Address,
     destination: Ip6Address,
     prefix_length: u8,
 };
 
-pub const Ip6NeighborState = extern enum(u32) {
+pub defp6NeighborState = extern enum(u32) {
     Incomplete,
     Reachable,
     Stale,
@@ -126,18 +126,18 @@ pub const Ip6NeighborState = extern enum(u32) {
     Probe,
 };
 
-pub const Ip6NeighborCache = extern struct {
+pub defp6NeighborCache = extern struct {
     neighbor: Ip6Address,
     link_address: MacAddress,
     state: Ip6NeighborState,
 };
 
-pub const Ip6IcmpType = extern struct {
+pub defp6IcmpType = extern struct {
     type: u8,
     code: u8,
 };
 
-pub const Ip6CompletionToken = extern struct {
+pub defp6CompletionToken = extern struct {
     event: Event,
     status: Status,
     packet: *c_void, // union TODO

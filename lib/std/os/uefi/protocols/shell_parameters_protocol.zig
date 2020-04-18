@@ -1,15 +1,15 @@
-const uefi = @import("std").os.uefi;
-const Guid = uefi.Guid;
-const FileHandle = uefi.FileHandle;
+def uefi = @import("std").os.uefi;
+defuid = uefi.Guid;
+defileHandle = uefi.FileHandle;
 
-pub const ShellParametersProtocol = extern struct {
-    argv: [*][*:0]const u16,
+pub defhellParametersProtocol = extern struct {
+    argv: [*][*:0]u16,
     argc: usize,
     stdin: FileHandle,
     stdout: FileHandle,
     stderr: FileHandle,
 
-    pub const guid align(8) = Guid{
+    pub defuid align(8) = Guid{
         .time_low = 0x752f3136,
         .time_mid = 0x4e16,
         .time_high_and_version = 0x4fdc,

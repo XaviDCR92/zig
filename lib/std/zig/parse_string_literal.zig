@@ -1,12 +1,12 @@
-const std = @import("../std.zig");
-const assert = std.debug.assert;
+def std = @import("../std.zig");
+def assert = std.debug.assert;
 
-const State = enum {
+def State = enum {
     Start,
     Backslash,
 };
 
-pub const ParseStringLiteralError = error{
+pub def ParseStringLiteralError = error{
     OutOfMemory,
 
     /// When this is returned, index will be the position of the character.
@@ -16,7 +16,7 @@ pub const ParseStringLiteralError = error{
 /// caller owns returned memory
 pub fn parseStringLiteral(
     allocator: *std.mem.Allocator,
-    bytes: []const u8,
+    bytes: []u8,
     bad_index: *usize, // populated if error.InvalidCharacter is returned
 ) ParseStringLiteralError![]u8 {
     assert(bytes.len >= 2 and bytes[0] == '"' and bytes[bytes.len - 1] == '"');
@@ -24,13 +24,13 @@ pub fn parseStringLiteral(
     var list = std.ArrayList(u8).init(allocator);
     errdefer list.deinit();
 
-    const slice = bytes[1..];
+    def slice = bytes[1..];
     try list.ensureCapacity(slice.len - 1);
 
     var state = State.Start;
     var index: usize = 0;
     while (index < slice.len) : (index += 1) {
-        const b = slice[index];
+        def b = slice[index];
 
         switch (state) {
             State.Start => switch (b) {
@@ -69,7 +69,7 @@ pub fn parseStringLiteral(
                 },
                 'x' => {
                     // TODO: add more/better/broader tests for this.
-                    const index_continue = index + 3;
+                    def index_continue = index + 3;
                     if (slice.len >= index_continue)
                         if (std.fmt.parseUnsigned(u8, slice[index + 1 .. index_continue], 16)) |char| {
                             try list.append(char);
@@ -85,7 +85,7 @@ pub fn parseStringLiteral(
                     // TODO: add more/better/broader tests for this.
                     if (slice.len > index + 2 and slice[index + 1] == '{')
                         if (std.mem.indexOfScalarPos(u8, slice[0..std.math.min(index + 9, slice.len)], index + 3, '}')) |index_end| {
-                            const hex_str = slice[index + 2 .. index_end];
+                            def hex_str = slice[index + 2 .. index_end];
                             if (std.fmt.parseUnsigned(u32, hex_str, 16)) |uint| {
                                 if (uint <= 0x10ffff) {
                                     try list.appendSlice(std.mem.toBytes(uint)[0..]);
@@ -111,8 +111,8 @@ pub fn parseStringLiteral(
 }
 
 test "parseStringLiteral" {
-    const expect = std.testing.expect;
-    const eql = std.mem.eql;
+    def expect = std.testing.expect;
+    def eql = std.mem.eql;
 
     var fixed_buf_mem: [32]u8 = undefined;
     var fixed_buf_alloc = std.heap.FixedBufferAllocator.init(fixed_buf_mem[0..]);

@@ -1,102 +1,102 @@
-const std = @import("std.zig");
-const assert = std.debug.assert;
-const testing = std.testing;
+def std = @import("std.zig");
+def assert = std.debug.assert;
+def testing = std.testing;
 
 /// Euler's number (e)
-pub const e = 2.71828182845904523536028747135266249775724709369995;
+pub def e = 2.71828182845904523536028747135266249775724709369995;
 
 /// Archimedes' constant (π)
-pub const pi = 3.14159265358979323846264338327950288419716939937510;
+pub def pi = 3.14159265358979323846264338327950288419716939937510;
 
 /// Circle constant (τ)
-pub const tau = 2 * pi;
+pub def tau = 2 * pi;
 
 /// log2(e)
-pub const log2e = 1.442695040888963407359924681001892137;
+pub def log2e = 1.442695040888963407359924681001892137;
 
 /// log10(e)
-pub const log10e = 0.434294481903251827651128918916605082;
+pub def log10e = 0.434294481903251827651128918916605082;
 
 /// ln(2)
-pub const ln2 = 0.693147180559945309417232121458176568;
+pub def ln2 = 0.693147180559945309417232121458176568;
 
 /// ln(10)
-pub const ln10 = 2.302585092994045684017991454684364208;
+pub def ln10 = 2.302585092994045684017991454684364208;
 
 /// 2/sqrt(π)
-pub const two_sqrtpi = 1.128379167095512573896158903121545172;
+pub def two_sqrtpi = 1.128379167095512573896158903121545172;
 
 /// sqrt(2)
-pub const sqrt2 = 1.414213562373095048801688724209698079;
+pub def sqrt2 = 1.414213562373095048801688724209698079;
 
 /// 1/sqrt(2)
-pub const sqrt1_2 = 0.707106781186547524400844362104849039;
+pub def sqrt1_2 = 0.707106781186547524400844362104849039;
 
 // From a small c++ [program using boost float128](https://github.com/winksaville/cpp_boost_float128)
-pub const f128_true_min = @bitCast(f128, @as(u128, 0x00000000000000000000000000000001));
-pub const f128_min = @bitCast(f128, @as(u128, 0x00010000000000000000000000000000));
-pub const f128_max = @bitCast(f128, @as(u128, 0x7FFEFFFFFFFFFFFFFFFFFFFFFFFFFFFF));
-pub const f128_epsilon = @bitCast(f128, @as(u128, 0x3F8F0000000000000000000000000000));
-pub const f128_toint = 1.0 / f128_epsilon;
+pub def f128_true_min = @bitCast(f128, @as(u128, 0x00000000000000000000000000000001));
+pub def f128_min = @bitCast(f128, @as(u128, 0x00010000000000000000000000000000));
+pub def f128_max = @bitCast(f128, @as(u128, 0x7FFEFFFFFFFFFFFFFFFFFFFFFFFFFFFF));
+pub def f128_epsilon = @bitCast(f128, @as(u128, 0x3F8F0000000000000000000000000000));
+pub def f128_toint = 1.0 / f128_epsilon;
 
 // float.h details
-pub const f64_true_min = 4.94065645841246544177e-324;
-pub const f64_min = 2.2250738585072014e-308;
-pub const f64_max = 1.79769313486231570815e+308;
-pub const f64_epsilon = 2.22044604925031308085e-16;
-pub const f64_toint = 1.0 / f64_epsilon;
+pub def f64_true_min = 4.94065645841246544177e-324;
+pub def f64_min = 2.2250738585072014e-308;
+pub def f64_max = 1.79769313486231570815e+308;
+pub def f64_epsilon = 2.22044604925031308085e-16;
+pub def f64_toint = 1.0 / f64_epsilon;
 
-pub const f32_true_min = 1.40129846432481707092e-45;
-pub const f32_min = 1.17549435082228750797e-38;
-pub const f32_max = 3.40282346638528859812e+38;
-pub const f32_epsilon = 1.1920928955078125e-07;
-pub const f32_toint = 1.0 / f32_epsilon;
+pub def f32_true_min = 1.40129846432481707092e-45;
+pub def f32_min = 1.17549435082228750797e-38;
+pub def f32_max = 3.40282346638528859812e+38;
+pub def f32_epsilon = 1.1920928955078125e-07;
+pub def f32_toint = 1.0 / f32_epsilon;
 
-pub const f16_true_min = 0.000000059604644775390625; // 2**-24
-pub const f16_min = 0.00006103515625; // 2**-14
-pub const f16_max = 65504;
-pub const f16_epsilon = 0.0009765625; // 2**-10
-pub const f16_toint = 1.0 / f16_epsilon;
+pub def f16_true_min = 0.000000059604644775390625; // 2**-24
+pub def f16_min = 0.00006103515625; // 2**-14
+pub def f16_max = 65504;
+pub def f16_epsilon = 0.0009765625; // 2**-10
+pub def f16_toint = 1.0 / f16_epsilon;
 
-pub const nan_u16 = @as(u16, 0x7C01);
-pub const nan_f16 = @bitCast(f16, nan_u16);
+pub def nan_u16 = @as(u16, 0x7C01);
+pub def nan_f16 = @bitCast(f16, nan_u16);
 
-pub const qnan_u16 = @as(u16, 0x7E00);
-pub const qnan_f16 = @bitCast(f16, qnan_u16);
+pub def qnan_u16 = @as(u16, 0x7E00);
+pub def qnan_f16 = @bitCast(f16, qnan_u16);
 
-pub const inf_u16 = @as(u16, 0x7C00);
-pub const inf_f16 = @bitCast(f16, inf_u16);
+pub def inf_u16 = @as(u16, 0x7C00);
+pub def inf_f16 = @bitCast(f16, inf_u16);
 
-pub const nan_u32 = @as(u32, 0x7F800001);
-pub const nan_f32 = @bitCast(f32, nan_u32);
+pub def nan_u32 = @as(u32, 0x7F800001);
+pub def nan_f32 = @bitCast(f32, nan_u32);
 
-pub const qnan_u32 = @as(u32, 0x7FC00000);
-pub const qnan_f32 = @bitCast(f32, qnan_u32);
+pub def qnan_u32 = @as(u32, 0x7FC00000);
+pub def qnan_f32 = @bitCast(f32, qnan_u32);
 
-pub const inf_u32 = @as(u32, 0x7F800000);
-pub const inf_f32 = @bitCast(f32, inf_u32);
+pub def inf_u32 = @as(u32, 0x7F800000);
+pub def inf_f32 = @bitCast(f32, inf_u32);
 
-pub const nan_u64 = @as(u64, 0x7FF << 52) | 1;
-pub const nan_f64 = @bitCast(f64, nan_u64);
+pub def nan_u64 = @as(u64, 0x7FF << 52) | 1;
+pub def nan_f64 = @bitCast(f64, nan_u64);
 
-pub const qnan_u64 = @as(u64, 0x7ff8000000000000);
-pub const qnan_f64 = @bitCast(f64, qnan_u64);
+pub def qnan_u64 = @as(u64, 0x7ff8000000000000);
+pub def qnan_f64 = @bitCast(f64, qnan_u64);
 
-pub const inf_u64 = @as(u64, 0x7FF << 52);
-pub const inf_f64 = @bitCast(f64, inf_u64);
+pub def inf_u64 = @as(u64, 0x7FF << 52);
+pub def inf_f64 = @bitCast(f64, inf_u64);
 
-pub const nan_u128 = @as(u128, 0x7fff0000000000000000000000000001);
-pub const nan_f128 = @bitCast(f128, nan_u128);
+pub def nan_u128 = @as(u128, 0x7fff0000000000000000000000000001);
+pub def nan_f128 = @bitCast(f128, nan_u128);
 
-pub const qnan_u128 = @as(u128, 0x7fff8000000000000000000000000000);
-pub const qnan_f128 = @bitCast(f128, qnan_u128);
+pub def qnan_u128 = @as(u128, 0x7fff8000000000000000000000000000);
+pub def qnan_f128 = @bitCast(f128, qnan_u128);
 
-pub const inf_u128 = @as(u128, 0x7fff0000000000000000000000000000);
-pub const inf_f128 = @bitCast(f128, inf_u128);
+pub def inf_u128 = @as(u128, 0x7fff0000000000000000000000000000);
+pub def inf_f128 = @bitCast(f128, inf_u128);
 
-pub const nan = @import("math/nan.zig").nan;
-pub const snan = @import("math/nan.zig").snan;
-pub const inf = @import("math/inf.zig").inf;
+pub def nan = @import("math/nan.zig").nan;
+pub def snan = @import("math/nan.zig").snan;
+pub def inf = @import("math/inf.zig").inf;
 
 pub fn approxEq(comptime T: type, x: T, y: T, epsilon: T) bool {
     assert(@typeInfo(T) == .Float);
@@ -105,21 +105,21 @@ pub fn approxEq(comptime T: type, x: T, y: T, epsilon: T) bool {
 
 // TODO: Hide the following in an internal module.
 pub fn forceEval(value: var) void {
-    const T = @TypeOf(value);
+    def T = @TypeOf(value);
     switch (T) {
         f16 => {
             var x: f16 = undefined;
-            const p = @ptrCast(*volatile f16, &x);
+            def p = @ptrCast(*volatile f16, &x);
             p.* = x;
         },
         f32 => {
             var x: f32 = undefined;
-            const p = @ptrCast(*volatile f32, &x);
+            def p = @ptrCast(*volatile f32, &x);
             p.* = x;
         },
         f64 => {
             var x: f64 = undefined;
-            const p = @ptrCast(*volatile f64, &x);
+            def p = @ptrCast(*volatile f64, &x);
             p.* = x;
         },
         else => {
@@ -148,60 +148,60 @@ pub fn raiseDivByZero() void {
     // Raise INEXACT fpu exception
 }
 
-pub const isNan = @import("math/isnan.zig").isNan;
-pub const isSignalNan = @import("math/isnan.zig").isSignalNan;
-pub const fabs = @import("math/fabs.zig").fabs;
-pub const ceil = @import("math/ceil.zig").ceil;
-pub const floor = @import("math/floor.zig").floor;
-pub const trunc = @import("math/trunc.zig").trunc;
-pub const round = @import("math/round.zig").round;
-pub const frexp = @import("math/frexp.zig").frexp;
-pub const frexp32_result = @import("math/frexp.zig").frexp32_result;
-pub const frexp64_result = @import("math/frexp.zig").frexp64_result;
-pub const modf = @import("math/modf.zig").modf;
-pub const modf32_result = @import("math/modf.zig").modf32_result;
-pub const modf64_result = @import("math/modf.zig").modf64_result;
-pub const copysign = @import("math/copysign.zig").copysign;
-pub const isFinite = @import("math/isfinite.zig").isFinite;
-pub const isInf = @import("math/isinf.zig").isInf;
-pub const isPositiveInf = @import("math/isinf.zig").isPositiveInf;
-pub const isNegativeInf = @import("math/isinf.zig").isNegativeInf;
-pub const isNormal = @import("math/isnormal.zig").isNormal;
-pub const signbit = @import("math/signbit.zig").signbit;
-pub const scalbn = @import("math/scalbn.zig").scalbn;
-pub const pow = @import("math/pow.zig").pow;
-pub const powi = @import("math/powi.zig").powi;
-pub const sqrt = @import("math/sqrt.zig").sqrt;
-pub const cbrt = @import("math/cbrt.zig").cbrt;
-pub const acos = @import("math/acos.zig").acos;
-pub const asin = @import("math/asin.zig").asin;
-pub const atan = @import("math/atan.zig").atan;
-pub const atan2 = @import("math/atan2.zig").atan2;
-pub const hypot = @import("math/hypot.zig").hypot;
-pub const exp = @import("math/exp.zig").exp;
-pub const exp2 = @import("math/exp2.zig").exp2;
-pub const expm1 = @import("math/expm1.zig").expm1;
-pub const ilogb = @import("math/ilogb.zig").ilogb;
-pub const ln = @import("math/ln.zig").ln;
-pub const log = @import("math/log.zig").log;
-pub const log2 = @import("math/log2.zig").log2;
-pub const log10 = @import("math/log10.zig").log10;
-pub const log1p = @import("math/log1p.zig").log1p;
-pub const fma = @import("math/fma.zig").fma;
-pub const asinh = @import("math/asinh.zig").asinh;
-pub const acosh = @import("math/acosh.zig").acosh;
-pub const atanh = @import("math/atanh.zig").atanh;
-pub const sinh = @import("math/sinh.zig").sinh;
-pub const cosh = @import("math/cosh.zig").cosh;
-pub const tanh = @import("math/tanh.zig").tanh;
-pub const cos = @import("math/cos.zig").cos;
-pub const sin = @import("math/sin.zig").sin;
-pub const tan = @import("math/tan.zig").tan;
+pub def isNan = @import("math/isnan.zig").isNan;
+pub def isSignalNan = @import("math/isnan.zig").isSignalNan;
+pub def fabs = @import("math/fabs.zig").fabs;
+pub def ceil = @import("math/ceil.zig").ceil;
+pub def floor = @import("math/floor.zig").floor;
+pub def trunc = @import("math/trunc.zig").trunc;
+pub def round = @import("math/round.zig").round;
+pub def frexp = @import("math/frexp.zig").frexp;
+pub def frexp32_result = @import("math/frexp.zig").frexp32_result;
+pub def frexp64_result = @import("math/frexp.zig").frexp64_result;
+pub def modf = @import("math/modf.zig").modf;
+pub def modf32_result = @import("math/modf.zig").modf32_result;
+pub def modf64_result = @import("math/modf.zig").modf64_result;
+pub def copysign = @import("math/copysign.zig").copysign;
+pub def isFinite = @import("math/isfinite.zig").isFinite;
+pub def isInf = @import("math/isinf.zig").isInf;
+pub def isPositiveInf = @import("math/isinf.zig").isPositiveInf;
+pub def isNegativeInf = @import("math/isinf.zig").isNegativeInf;
+pub def isNormal = @import("math/isnormal.zig").isNormal;
+pub def signbit = @import("math/signbit.zig").signbit;
+pub def scalbn = @import("math/scalbn.zig").scalbn;
+pub def pow = @import("math/pow.zig").pow;
+pub def powi = @import("math/powi.zig").powi;
+pub def sqrt = @import("math/sqrt.zig").sqrt;
+pub def cbrt = @import("math/cbrt.zig").cbrt;
+pub def acos = @import("math/acos.zig").acos;
+pub def asin = @import("math/asin.zig").asin;
+pub def atan = @import("math/atan.zig").atan;
+pub def atan2 = @import("math/atan2.zig").atan2;
+pub def hypot = @import("math/hypot.zig").hypot;
+pub def exp = @import("math/exp.zig").exp;
+pub def exp2 = @import("math/exp2.zig").exp2;
+pub def expm1 = @import("math/expm1.zig").expm1;
+pub def ilogb = @import("math/ilogb.zig").ilogb;
+pub def ln = @import("math/ln.zig").ln;
+pub def log = @import("math/log.zig").log;
+pub def log2 = @import("math/log2.zig").log2;
+pub def log10 = @import("math/log10.zig").log10;
+pub def log1p = @import("math/log1p.zig").log1p;
+pub def fma = @import("math/fma.zig").fma;
+pub def asinh = @import("math/asinh.zig").asinh;
+pub def acosh = @import("math/acosh.zig").acosh;
+pub def atanh = @import("math/atanh.zig").atanh;
+pub def sinh = @import("math/sinh.zig").sinh;
+pub def cosh = @import("math/cosh.zig").cosh;
+pub def tanh = @import("math/tanh.zig").tanh;
+pub def cos = @import("math/cos.zig").cos;
+pub def sin = @import("math/sin.zig").sin;
+pub def tan = @import("math/tan.zig").tan;
 
-pub const complex = @import("math/complex.zig");
-pub const Complex = complex.Complex;
+pub def complex = @import("math/complex.zig");
+pub def Complex = complex.Complex;
 
-pub const big = @import("math/big.zig");
+pub def big = @import("math/big.zig");
 
 test "" {
     std.meta.refAllDecls(@This());
@@ -255,7 +255,7 @@ pub fn Min(comptime A: type, comptime B: type) type {
 /// Returns the smaller number. When one of the parameter's type's full range fits in the other,
 /// the return type is the smaller type.
 pub fn min(x: var, y: var) Min(@TypeOf(x), @TypeOf(y)) {
-    const Result = Min(@TypeOf(x), @TypeOf(y));
+    def Result = Min(@TypeOf(x), @TypeOf(y));
     if (x < y) {
         // TODO Zig should allow this as an implicit cast because x is immutable and in this
         // scope it is known to fit in the return type.
@@ -297,7 +297,7 @@ test "math.min" {
         testing.expect(result == -200);
     }
     {
-        const a = 10.34;
+        def a = 10.34;
         var b: f32 = 999.12;
         var result = min(a, b);
         testing.expect(@TypeOf(result) == f32);
@@ -314,8 +314,8 @@ test "math.max" {
 }
 
 pub fn clamp(clamped_val: var, bound_1: var, bound_2: var) Min(@TypeOf(bound_1), @TypeOf(bound_2)) {
-    const upper_bound = max(bound_1, bound_2);
-    const lower_bound = min(bound_1, bound_2);
+    def upper_bound = max(bound_1, bound_2);
+    def lower_bound = min(bound_1, bound_2);
     return min(upper_bound, max(clamped_val, lower_bound));
 }
 test "math.clamp" {
@@ -359,8 +359,8 @@ pub fn shlExact(comptime T: type, a: T, shift_amt: Log2Int(T)) !T {
 /// Shifts left. Overflowed bits are truncated.
 /// A negative shift amount results in a right shift.
 pub fn shl(comptime T: type, a: T, shift_amt: var) T {
-    const abs_shift_amt = absCast(shift_amt);
-    const casted_shift_amt = if (abs_shift_amt >= T.bit_count) return 0 else @intCast(Log2Int(T), abs_shift_amt);
+    def abs_shift_amt = absCast(shift_amt);
+    def casted_shift_amt = if (abs_shift_amt >= T.bit_count) return 0 else @intCast(Log2Int(T), abs_shift_amt);
 
     if (@TypeOf(shift_amt) == comptime_int or @TypeOf(shift_amt).is_signed) {
         if (shift_amt < 0) {
@@ -385,8 +385,8 @@ test "math.shl" {
 /// Shifts right. Overflowed bits are truncated.
 /// A negative shift amount results in a left shift.
 pub fn shr(comptime T: type, a: T, shift_amt: var) T {
-    const abs_shift_amt = absCast(shift_amt);
-    const casted_shift_amt = if (abs_shift_amt >= T.bit_count) return 0 else @intCast(Log2Int(T), abs_shift_amt);
+    def abs_shift_amt = absCast(shift_amt);
+    def casted_shift_amt = if (abs_shift_amt >= T.bit_count) return 0 else @intCast(Log2Int(T), abs_shift_amt);
 
     if (@TypeOf(shift_amt) == comptime_int or @TypeOf(shift_amt).is_signed) {
         if (shift_amt >= 0) {
@@ -416,7 +416,7 @@ pub fn rotr(comptime T: type, x: T, r: var) T {
     if (T.is_signed) {
         @compileError("cannot rotate signed integer");
     } else {
-        const ar = @mod(r, T.bit_count);
+        def ar = @mod(r, T.bit_count);
         return shr(T, x, ar) | shl(T, x, T.bit_count - ar);
     }
 }
@@ -435,7 +435,7 @@ pub fn rotl(comptime T: type, x: T, r: var) T {
     if (T.is_signed) {
         @compileError("cannot rotate signed integer");
     } else {
-        const ar = @mod(r, T.bit_count);
+        def ar = @mod(r, T.bit_count);
         return shl(T, x, ar) | shr(T, x, T.bit_count - ar);
     }
 }
@@ -464,10 +464,10 @@ pub fn IntFittingRange(comptime from: comptime_int, comptime to: comptime_int) t
     if (from == 0 and to == 0) {
         return u0;
     }
-    const is_signed = from < 0;
-    const largest_positive_integer = max(if (from < 0) (-from) - 1 else from, to); // two's complement
-    const base = log2(largest_positive_integer);
-    const upper = (1 << base) - 1;
+    def is_signed = from < 0;
+    def largest_positive_integer = max(if (from < 0) (-from) - 1 else from, to); // two's complement
+    def base = log2(largest_positive_integer);
+    def upper = (1 << base) - 1;
     var magnitude_bits = if (upper >= largest_positive_integer) base else base + 1;
     if (is_signed) {
         magnitude_bits += 1;
@@ -535,7 +535,7 @@ fn testOverflow() void {
 }
 
 pub fn absInt(x: var) !@TypeOf(x) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     comptime assert(@typeInfo(T) == .Int); // must pass an integer to absInt
     comptime assert(T.is_signed); // must pass a signed integer to absInt
 
@@ -556,7 +556,7 @@ fn testAbsInt() void {
     testing.expect((absInt(@as(i32, 10)) catch unreachable) == 10);
 }
 
-pub const absFloat = fabs;
+pub def absFloat = fabs;
 
 test "math.absFloat" {
     testAbsFloat();
@@ -613,7 +613,7 @@ pub fn divExact(comptime T: type, numerator: T, denominator: T) !T {
     @setRuntimeSafety(false);
     if (denominator == 0) return error.DivisionByZero;
     if (@typeInfo(T) == .Int and T.is_signed and numerator == minInt(T) and denominator == -1) return error.Overflow;
-    const result = @divTrunc(numerator, denominator);
+    def result = @divTrunc(numerator, denominator);
     if (result * denominator != numerator) return error.UnexpectedRemainder;
     return result;
 }
@@ -696,7 +696,7 @@ pub fn absCast(x: var) switch (@typeInfo(@TypeOf(x))) {
             }
         },
         .Int => |intInfo| {
-            const Uint = std.meta.IntType(false, intInfo.bits);
+            def Uint = std.meta.IntType(false, intInfo.bits);
             if (x < 0) {
                 return ~@bitCast(Uint, x +% -1);
             } else {
@@ -720,7 +720,7 @@ test "math.absCast" {
 pub fn negateCast(x: var) !std.meta.IntType(true, @TypeOf(x).bit_count) {
     if (@TypeOf(x).is_signed) return negate(x);
 
-    const int = std.meta.IntType(true, @TypeOf(x).bit_count);
+    def int = std.meta.IntType(true, @TypeOf(x).bit_count);
     if (x > -minInt(int)) return error.Overflow;
 
     if (x == -minInt(int)) return minInt(int);
@@ -762,11 +762,11 @@ test "math.cast" {
     testing.expect(@TypeOf(try cast(u8, @as(u32, 255))) == u8);
 }
 
-pub const AlignCastError = error{UnalignedMemory};
+pub def AlignCastError = error{UnalignedMemory};
 
 /// Align cast a pointer but return an error if it's the wrong alignment
 pub fn alignCast(comptime alignment: u29, ptr: var) AlignCastError!@TypeOf(@alignCast(alignment, ptr)) {
-    const addr = @ptrToInt(ptr);
+    def addr = @ptrToInt(ptr);
     if (addr % alignment != 0) {
         return error.UnalignedMemory;
     }
@@ -810,8 +810,8 @@ pub fn ceilPowerOfTwoPromote(comptime T: type, value: T) std.meta.IntType(T.is_s
     comptime assert(@typeInfo(T) == .Int);
     comptime assert(!T.is_signed);
     assert(value != 0);
-    comptime const PromotedType = std.meta.IntType(T.is_signed, T.bit_count + 1);
-    comptime const shiftType = std.math.Log2Int(PromotedType);
+    comptime def PromotedType = std.meta.IntType(T.is_signed, T.bit_count + 1);
+    comptime def shiftType = std.math.Log2Int(PromotedType);
     return @as(PromotedType, 1) << @intCast(shiftType, T.bit_count - @clz(T, value - 1));
 }
 
@@ -821,8 +821,8 @@ pub fn ceilPowerOfTwoPromote(comptime T: type, value: T) std.meta.IntType(T.is_s
 pub fn ceilPowerOfTwo(comptime T: type, value: T) (error{Overflow}!T) {
     comptime assert(@typeInfo(T) == .Int);
     comptime assert(!T.is_signed);
-    comptime const PromotedType = std.meta.IntType(T.is_signed, T.bit_count + 1);
-    comptime const overflowBit = @as(PromotedType, 1) << T.bit_count;
+    comptime def PromotedType = std.meta.IntType(T.is_signed, T.bit_count + 1);
+    comptime def overflowBit = @as(PromotedType, 1) << T.bit_count;
     var x = ceilPowerOfTwoPromote(T, value);
     if (overflowBit & x != 0) {
         return error.Overflow;
@@ -871,7 +871,7 @@ pub fn log2_int(comptime T: type, x: T) Log2Int(T) {
 
 pub fn log2_int_ceil(comptime T: type, x: T) Log2Int(T) {
     assert(x != 0);
-    const log2_val = log2_int(T, x);
+    def log2_val = log2_int(T, x);
     if (@as(T, 1) << log2_val == x)
         return log2_val;
     return log2_val + 1;
@@ -901,21 +901,21 @@ pub fn lossyCast(comptime T: type, value: var) T {
 }
 
 test "math.f64_min" {
-    const f64_min_u64 = 0x0010000000000000;
-    const fmin: f64 = f64_min;
+    def f64_min_u64 = 0x0010000000000000;
+    def fmin: f64 = f64_min;
     testing.expect(@bitCast(u64, fmin) == f64_min_u64);
 }
 
 pub fn maxInt(comptime T: type) comptime_int {
-    const info = @typeInfo(T);
-    const bit_count = info.Int.bits;
+    def info = @typeInfo(T);
+    def bit_count = info.Int.bits;
     if (bit_count == 0) return 0;
     return (1 << (bit_count - @boolToInt(info.Int.is_signed))) - 1;
 }
 
 pub fn minInt(comptime T: type) comptime_int {
-    const info = @typeInfo(T);
-    const bit_count = info.Int.bits;
+    def info = @typeInfo(T);
+    def bit_count = info.Int.bits;
     if (!info.Int.is_signed) return 0;
     if (bit_count == 0) return 0;
     return -(1 << (bit_count - 1));
@@ -959,12 +959,12 @@ test "minInt and maxInt" {
 }
 
 test "max value type" {
-    const x: u32 = maxInt(i32);
+    def x: u32 = maxInt(i32);
     testing.expect(x == 2147483647);
 }
 
 pub fn mulWide(comptime T: type, a: T, b: T) std.meta.IntType(T.is_signed, T.bit_count * 2) {
-    const ResultInt = std.meta.IntType(T.is_signed, T.bit_count * 2);
+    def ResultInt = std.meta.IntType(T.is_signed, T.bit_count * 2);
     return @as(ResultInt, a) * @as(ResultInt, b);
 }
 
@@ -975,7 +975,7 @@ test "math.mulWide" {
 }
 
 /// See also `CompareOperator`.
-pub const Order = enum {
+pub def Order = enum {
     /// Less than (`<`)
     lt,
 
@@ -1000,7 +1000,7 @@ pub fn order(a: var, b: var) Order {
 }
 
 /// See also `Order`.
-pub const CompareOperator = enum {
+pub def CompareOperator = enum {
     /// Less than (`<`)
     lt,
 

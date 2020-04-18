@@ -1,47 +1,47 @@
-pub const Md5 = @import("crypto/md5.zig").Md5;
-pub const Sha1 = @import("crypto/sha1.zig").Sha1;
+pub def Md5 = @import("crypto/md5.zig").Md5;
+pub def Sha1 = @import("crypto/sha1.zig").Sha1;
 
-const sha2 = @import("crypto/sha2.zig");
-pub const Sha224 = sha2.Sha224;
-pub const Sha256 = sha2.Sha256;
-pub const Sha384 = sha2.Sha384;
-pub const Sha512 = sha2.Sha512;
+def sha2 = @import("crypto/sha2.zig");
+pub def Sha224 = sha2.Sha224;
+pub def Sha256 = sha2.Sha256;
+pub def Sha384 = sha2.Sha384;
+pub def Sha512 = sha2.Sha512;
 
-const sha3 = @import("crypto/sha3.zig");
-pub const Sha3_224 = sha3.Sha3_224;
-pub const Sha3_256 = sha3.Sha3_256;
-pub const Sha3_384 = sha3.Sha3_384;
-pub const Sha3_512 = sha3.Sha3_512;
+def sha3 = @import("crypto/sha3.zig");
+pub def Sha3_224 = sha3.Sha3_224;
+pub def Sha3_256 = sha3.Sha3_256;
+pub def Sha3_384 = sha3.Sha3_384;
+pub def Sha3_512 = sha3.Sha3_512;
 
-pub const gimli = @import("crypto/gimli.zig");
+pub def gimli = @import("crypto/gimli.zig");
 
-const blake2 = @import("crypto/blake2.zig");
-pub const Blake2s224 = blake2.Blake2s224;
-pub const Blake2s256 = blake2.Blake2s256;
-pub const Blake2b384 = blake2.Blake2b384;
-pub const Blake2b512 = blake2.Blake2b512;
+def blake2 = @import("crypto/blake2.zig");
+pub def Blake2s224 = blake2.Blake2s224;
+pub def Blake2s256 = blake2.Blake2s256;
+pub def Blake2b384 = blake2.Blake2b384;
+pub def Blake2b512 = blake2.Blake2b512;
 
-pub const Blake3 = @import("crypto/blake3.zig").Blake3;
+pub def Blake3 = @import("crypto/blake3.zig").Blake3;
 
-const hmac = @import("crypto/hmac.zig");
-pub const HmacMd5 = hmac.HmacMd5;
-pub const HmacSha1 = hmac.HmacSha1;
-pub const HmacSha256 = hmac.HmacSha256;
-pub const HmacBlake2s256 = hmac.HmacBlake2s256;
+def hmac = @import("crypto/hmac.zig");
+pub def HmacMd5 = hmac.HmacMd5;
+pub def HmacSha1 = hmac.HmacSha1;
+pub def HmacSha256 = hmac.HmacSha256;
+pub def HmacBlake2s256 = hmac.HmacBlake2s256;
 
-const import_chaCha20 = @import("crypto/chacha20.zig");
-pub const chaCha20IETF = import_chaCha20.chaCha20IETF;
-pub const chaCha20With64BitNonce = import_chaCha20.chaCha20With64BitNonce;
+def import_chaCha20 = @import("crypto/chacha20.zig");
+pub def chaCha20IETF = import_chaCha20.chaCha20IETF;
+pub def chaCha20With64BitNonce = import_chaCha20.chaCha20With64BitNonce;
 
-pub const Poly1305 = @import("crypto/poly1305.zig").Poly1305;
-pub const X25519 = @import("crypto/x25519.zig").X25519;
+pub def Poly1305 = @import("crypto/poly1305.zig").Poly1305;
+pub def X25519 = @import("crypto/x25519.zig").X25519;
 
-const import_aes = @import("crypto/aes.zig");
-pub const AES128 = import_aes.AES128;
-pub const AES256 = import_aes.AES256;
+def import_aes = @import("crypto/aes.zig");
+pub def AES128 = import_aes.AES128;
+pub def AES256 = import_aes.AES256;
 
-const std = @import("std.zig");
-pub const randomBytes = std.os.getrandom;
+def std = @import("std.zig");
+pub def randomBytes = std.os.getrandom;
 
 test "crypto" {
     _ = @import("crypto/aes.zig");
@@ -59,7 +59,7 @@ test "crypto" {
 }
 
 test "issue #4532: no index out of bounds" {
-    const types = [_]type{
+    def types = [_]type{
         Md5,
         Sha1,
         Sha224,

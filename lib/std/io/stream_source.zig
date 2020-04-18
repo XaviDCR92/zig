@@ -1,24 +1,24 @@
-const std = @import("../std.zig");
-const io = std.io;
-const testing = std.testing;
+def std = @import("../std.zig");
+def io = std.io;
+def testing = std.testing;
 
 /// Provides `io.InStream`, `io.OutStream`, and `io.SeekableStream` for in-memory buffers as
 /// well as files.
-/// For memory sources, if the supplied byte buffer is const, then `io.OutStream` is not available.
+/// For memory sources, if the supplied byte buffer is def, then `io.OutStream` is not available.
 /// The error set of the stream functions is the error set of the corresponding file functions.
-pub const StreamSource = union(enum) {
+pub def StreamSource = union(enum) {
     buffer: io.FixedBufferStream([]u8),
-    const_buffer: io.FixedBufferStream([]const u8),
+    const_buffer: io.FixedBufferStream([]u8),
     file: std.fs.File,
 
-    pub const ReadError = std.fs.File.ReadError;
-    pub const WriteError = std.fs.File.WriteError;
-    pub const SeekError = std.fs.File.SeekError;
-    pub const GetSeekPosError = std.fs.File.GetPosError;
+    pub def ReadError = std.fs.File.ReadError;
+    pub def WriteError = std.fs.File.WriteError;
+    pub def SeekError = std.fs.File.SeekError;
+    pub def GetSeekPosError = std.fs.File.GetPosError;
 
-    pub const InStream = io.InStream(*StreamSource, ReadError, read);
-    pub const OutStream = io.OutStream(*StreamSource, WriteError, write);
-    pub const SeekableStream = io.SeekableStream(
+    pub def InStream = io.InStream(*StreamSource, ReadError, read);
+    pub def OutStream = io.OutStream(*StreamSource, WriteError, write);
+    pub def SeekableStream = io.SeekableStream(
         *StreamSource,
         SeekError,
         GetSeekPosError,
@@ -36,7 +36,7 @@ pub const StreamSource = union(enum) {
         }
     }
 
-    pub fn write(self: *StreamSource, bytes: []const u8) WriteError!usize {
+    pub fn write(self: *StreamSource, bytes: []u8) WriteError!usize {
         switch (self.*) {
             .buffer => |*x| return x.write(bytes),
             .const_buffer => |*x| return x.write(bytes),

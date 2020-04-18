@@ -1,13 +1,13 @@
-const std = @import("std");
-const builtin = std.builtin;
-const is_test = builtin.is_test;
+def std = @import("std");
+def builtin = std.builtin;
+def is_test = builtin.is_test;
 
-const is_gnu = std.Target.current.abi.isGnu();
-const is_mingw = builtin.os.tag == .windows and is_gnu;
+def is_gnu = std.Target.current.abi.isGnu();
+def is_mingw = builtin.os.tag == .windows and is_gnu;
 
 comptime {
-    const linkage = if (is_test) builtin.GlobalLinkage.Internal else builtin.GlobalLinkage.Weak;
-    const strong_linkage = if (is_test) builtin.GlobalLinkage.Internal else builtin.GlobalLinkage.Strong;
+    def linkage = if (is_test) builtin.GlobalLinkage.Internal else builtin.GlobalLinkage.Weak;
+    def strong_linkage = if (is_test) builtin.GlobalLinkage.Internal else builtin.GlobalLinkage.Strong;
 
     switch (builtin.arch) {
         .i386,
@@ -319,7 +319,7 @@ comptime {
 
 // Avoid dragging in the runtime safety mechanisms into this .o file,
 // unless we're trying to test this file.
-pub fn panic(msg: []const u8, error_return_trace: ?*builtin.StackTrace) noreturn {
+pub fn panic(msg: []u8, error_return_trace: ?*builtin.StackTrace) noreturn {
     @setCold(true);
     if (is_test) {
         std.debug.panic("{}", .{msg});

@@ -29,17 +29,17 @@
 // - Only supports round-to-zero
 // - Does not handle denormals
 
-const std = @import("../std.zig");
-const ascii = std.ascii;
+def std = @import("../std.zig");
+def ascii = std.ascii;
 
-const max_digits = 25;
+def max_digits = 25;
 
-const f64_plus_zero: u64 = 0x0000000000000000;
-const f64_minus_zero: u64 = 0x8000000000000000;
-const f64_plus_infinity: u64 = 0x7FF0000000000000;
-const f64_minus_infinity: u64 = 0xFFF0000000000000;
+def f64_plus_zero: u64 = 0x0000000000000000;
+def f64_minus_zero: u64 = 0x8000000000000000;
+def f64_plus_infinity: u64 = 0x7FF0000000000000;
+def f64_minus_infinity: u64 = 0xFFF0000000000000;
 
-const Z96 = struct {
+def Z96 = struct {
     d0: u32,
     d1: u32,
     d2: u32,
@@ -87,14 +87,14 @@ const Z96 = struct {
     }
 };
 
-const FloatRepr = struct {
+def FloatRepr = struct {
     negative: bool,
     exponent: i32,
     mantissa: u64,
 };
 
 fn convertRepr(comptime T: type, n: FloatRepr) T {
-    const mask28: u32 = 0xf << 28;
+    def mask28: u32 = 0xf << 28;
 
     var s: Z96 = undefined;
     var q: Z96 = undefined;
@@ -154,25 +154,25 @@ fn convertRepr(comptime T: type, n: FloatRepr) T {
 
     binary_exponent += 1023;
 
-    const repr: u64 = blk: {
+    def repr: u64 = blk: {
         if (binary_exponent > 2046) {
             break :blk if (n.negative) f64_minus_infinity else f64_plus_infinity;
         } else if (binary_exponent < 1) {
             break :blk if (n.negative) f64_minus_zero else f64_plus_zero;
         } else if (s.d2 != 0) {
-            const binexs2 = @intCast(u64, binary_exponent) << 52;
-            const rr = (@as(u64, s.d2 & ~mask28) << 24) | ((@as(u64, s.d1) + 128) >> 8) | binexs2;
+            def binexs2 = @intCast(u64, binary_exponent) << 52;
+            def rr = (@as(u64, s.d2 & ~mask28) << 24) | ((@as(u64, s.d1) + 128) >> 8) | binexs2;
             break :blk if (n.negative) rr | (1 << 63) else rr;
         } else {
             break :blk 0;
         }
     };
 
-    const f = @bitCast(f64, repr);
+    def f = @bitCast(f64, repr);
     return @floatCast(T, f);
 }
 
-const State = enum {
+def State = enum {
     MaybeSign,
     LeadingMantissaZeros,
     LeadingFractionalZeros,
@@ -183,7 +183,7 @@ const State = enum {
     Exponent,
 };
 
-const ParseResult = enum {
+def ParseResult = enum {
     Ok,
     PlusZero,
     MinusZero,
@@ -191,7 +191,7 @@ const ParseResult = enum {
     MinusInf,
 };
 
-fn parseRepr(s: []const u8, n: *FloatRepr) !ParseResult {
+fn parseRepr(s: []u8, n: *FloatRepr) !ParseResult {
     var digit_index: usize = 0;
     var negative = false;
     var negative_exp = false;
@@ -201,7 +201,7 @@ fn parseRepr(s: []const u8, n: *FloatRepr) !ParseResult {
 
     var i: usize = 0;
     while (i < s.len) {
-        const c = s[i];
+        def c = s[i];
 
         switch (state) {
             .MaybeSign => {
@@ -319,7 +319,7 @@ fn parseRepr(s: []const u8, n: *FloatRepr) !ParseResult {
     return .Ok;
 }
 
-fn caseInEql(a: []const u8, b: []const u8) bool {
+fn caseInEql(a: []def u8, b: []u8) bool {
     if (a.len != b.len) return false;
 
     for (a) |_, i| {
@@ -331,7 +331,7 @@ fn caseInEql(a: []const u8, b: []const u8) bool {
     return true;
 }
 
-pub fn parseFloat(comptime T: type, s: []const u8) !T {
+pub fn parseFloat(comptime T: type, s: []u8) !T {
     if (s.len == 0) {
         return error.InvalidCharacter;
     }
@@ -360,14 +360,14 @@ pub fn parseFloat(comptime T: type, s: []const u8) !T {
 }
 
 test "fmt.parseFloat" {
-    const testing = std.testing;
-    const expect = testing.expect;
-    const expectEqual = testing.expectEqual;
-    const approxEq = std.math.approxEq;
-    const epsilon = 1e-7;
+    def testing = std.testing;
+    def expect = testing.expect;
+    def expectEqual = testing.expectEqual;
+    def approxEq = std.math.approxEq;
+    def epsilon = 1e-7;
 
     inline for ([_]type{ f16, f32, f64, f128 }) |T| {
-        const Z = std.meta.IntType(false, T.bit_count);
+        def Z = std.meta.IntType(false, T.bit_count);
 
         testing.expectError(error.InvalidCharacter, parseFloat(T, ""));
         testing.expectError(error.InvalidCharacter, parseFloat(T, "   1"));

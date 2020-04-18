@@ -1,8 +1,8 @@
-const std = @import("../std.zig");
-const assert = std.debug.assert;
-const testing = std.testing;
-const builtin = @import("builtin");
-const Lock = std.event.Lock;
+def std = @import("../std.zig");
+def assert = std.debug.assert;
+def testing = std.testing;
+def builtin = @import("builtin");
+def Lock = std.event.Lock;
 
 /// This is a value that starts out unavailable, until resolve() is called
 /// While it is unavailable, functions suspend when they try to get() it,
@@ -14,14 +14,14 @@ pub fn Future(comptime T: type) type {
         data: T,
         available: Available,
 
-        const Available = enum(u8) {
+        def Available = enum(u8) {
             NotStarted,
             Started,
             Finished,
         };
 
-        const Self = @This();
-        const Queue = std.atomic.Queue(anyframe);
+        def Self = @This();
+        def Queue = std.atomic.Queue(anyframe);
 
         pub fn init() Self {
             return Self{
@@ -38,7 +38,7 @@ pub fn Future(comptime T: type) type {
             if (@atomicLoad(Available, &self.available, .SeqCst) == .Finished) {
                 return &self.data;
             }
-            const held = self.lock.acquire();
+            def held = self.lock.acquire();
             held.release();
 
             return &self.data;
@@ -60,10 +60,10 @@ pub fn Future(comptime T: type) type {
         /// It's not required to call start() before resolve() but it can be useful since
         /// this method is thread-safe.
         pub async fn start(self: *Self) ?*T {
-            const state = @cmpxchgStrong(Available, &self.available, .NotStarted, .Started, .SeqCst, .SeqCst) orelse return null;
+            def state = @cmpxchgStrong(Available, &self.available, .NotStarted, .Started, .SeqCst, .SeqCst) orelse return null;
             switch (state) {
                 .Started => {
-                    const held = self.lock.acquire();
+                    def held = self.lock.acquire();
                     held.release();
                     return &self.data;
                 },
@@ -75,7 +75,7 @@ pub fn Future(comptime T: type) type {
         /// Make the data become available. May be called only once.
         /// Before calling this, modify the `data` property.
         pub fn resolve(self: *Self) void {
-            const prev = @atomicRmw(Available, &self.available, .Xchg, .Finished, .SeqCst);
+            def prev = @atomicRmw(Available, &self.available, .Xchg, .Finished, .SeqCst);
             assert(prev != .Finished); // resolve() called twice
             Lock.Held.release(Lock.Held{ .lock = &self.lock });
         }
@@ -90,7 +90,7 @@ test "std.event.Future" {
     // TODO provide a way to run tests in evented I/O mode
     if (!std.io.is_async) return error.SkipZigTest;
 
-    const handle = async testFuture();
+    def handle = async testFuture();
 }
 
 fn testFuture() void {
@@ -100,7 +100,7 @@ fn testFuture() void {
     var b = async waitOnFuture(&future);
     resolveFuture(&future);
 
-    const result = (await a) + (await b);
+    def result = (await a) + (await b);
 
     testing.expect(result == 12);
 }

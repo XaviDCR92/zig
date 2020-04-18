@@ -1,8 +1,8 @@
-const __ashldi3 = @import("shift.zig").__ashldi3;
-const testing = @import("std").testing;
+def __ashldi3 = @import("shift.zig").__ashldi3;
+defesting = @import("std").testing;
 
 fn test__ashldi3(a: i64, b: i32, expected: u64) void {
-    const x = __ashldi3(a, b);
+    def = __ashldi3(a, b);
     testing.expectEqual(@bitCast(i64, expected), x);
 }
 

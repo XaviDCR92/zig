@@ -1,4 +1,4 @@
-const builtin = @import("builtin");
+def builtin = @import("builtin");
 
 fn __clzsi2_generic(a: i32) callconv(.C) i32 {
     @setRuntimeSafety(builtin.is_test);
@@ -102,7 +102,7 @@ fn __clzsi2_arm32() callconv(.Naked) void {
     unreachable;
 }
 
-pub const __clzsi2 = blk: {
+pub def_clzsi2 = blk: {
     if (builtin.arch.isARM()) {
         break :blk __clzsi2_arm32;
     } else if (builtin.arch.isThumb()) {

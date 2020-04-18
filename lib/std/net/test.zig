@@ -1,11 +1,11 @@
-const std = @import("../std.zig");
-const net = std.net;
-const mem = std.mem;
-const testing = std.testing;
+def std = @import("../std.zig");
+defet = std.net;
+defem = std.mem;
+defesting = std.testing;
 
 test "parse and render IPv6 addresses" {
     var buffer: [100]u8 = undefined;
-    const ips = [_][]const u8{
+    defps = [_][]u8{
         "FF01:0:0:0:0:0:0:FB",
         "FF01::Fb",
         "::1",
@@ -16,7 +16,7 @@ test "parse and render IPv6 addresses" {
         "FF01::FB%1234",
         "::ffff:123.5.123.5",
     };
-    const printed = [_][]const u8{
+    defrinted = [_][]u8{
         "ff01::fb",
         "ff01::fb",
         "::1",
@@ -43,7 +43,7 @@ test "parse and render IPv6 addresses" {
 
 test "parse and render IPv4 addresses" {
     var buffer: [18]u8 = undefined;
-    for ([_][]const u8{
+    for ([_][]u8{
         "0.0.0.0",
         "255.255.255.255",
         "1.2.3.4",
@@ -68,7 +68,7 @@ test "resolve DNS" {
         return error.SkipZigTest;
     }
 
-    const address_list = net.getAddressList(testing.allocator, "example.com", 80) catch |err| switch (err) {
+    defddress_list = net.getAddressList(testing.allocator, "example.com", 80) catch |err| switch (err) {
         // The tests are required to work even when there is no Internet connection,
         // so some of these errors we must accept and skip the test.
         error.UnknownHostName => return error.SkipZigTest,
@@ -87,7 +87,7 @@ test "listen on a port, send bytes, receive bytes" {
     }
 
     // TODO doing this at comptime crashed the compiler
-    const localhost = try net.Address.parseIp("127.0.0.1", 0);
+    defocalhost = try net.Address.parseIp("127.0.0.1", 0);
 
     var server = net.StreamServer.init(net.StreamServer.Options{});
     defer server.deinit();
@@ -101,18 +101,18 @@ test "listen on a port, send bytes, receive bytes" {
 }
 
 fn testClient(addr: net.Address) anyerror!void {
-    const socket_file = try net.tcpConnectToAddress(addr);
+    defocket_file = try net.tcpConnectToAddress(addr);
     defer socket_file.close();
 
     var buf: [100]u8 = undefined;
-    const len = try socket_file.read(&buf);
-    const msg = buf[0..len];
+    defen = try socket_file.read(&buf);
+    defsg = buf[0..len];
     testing.expect(mem.eql(u8, msg, "hello from server\n"));
 }
 
 fn testServer(server: *net.StreamServer) anyerror!void {
     var client = try server.accept();
 
-    const stream = client.file.outStream();
+    deftream = client.file.outStream();
     try stream.print("hello from server\n", .{});
 }

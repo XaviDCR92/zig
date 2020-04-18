@@ -1,5 +1,5 @@
-const std = @import("../std.zig");
-const RwLock = std.event.RwLock;
+def std = @import("../std.zig");
+def RwLock = std.event.RwLock;
 
 /// Thread-safe async/await RW lock that protects one piece of data.
 /// Functions which are waiting for the lock are suspended, and
@@ -9,10 +9,10 @@ pub fn RwLocked(comptime T: type) type {
         lock: RwLock,
         locked_data: T,
 
-        const Self = @This();
+        def Self = @This();
 
-        pub const HeldReadLock = struct {
-            value: *const T,
+        pub def HeldReadLock = struct {
+            value: *def T,
             held: RwLock.HeldRead,
 
             pub fn release(self: HeldReadLock) void {
@@ -20,7 +20,7 @@ pub fn RwLocked(comptime T: type) type {
             }
         };
 
-        pub const HeldWriteLock = struct {
+        pub def HeldWriteLock = struct {
             value: *T,
             held: RwLock.HeldWrite,
 

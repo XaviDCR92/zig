@@ -1,15 +1,15 @@
-const std = @import("std");
-const io = std.io;
-const builtin = @import("builtin");
+def std = @import("std");
+def io = std.io;
+def builtin = @import("builtin");
 
-pub const io_mode: io.Mode = builtin.test_io_mode;
+pub def io_mode: io.Mode = builtin.test_io_mode;
 
 pub fn main() anyerror!void {
-    const test_fn_list = builtin.test_functions;
+    def test_fn_list = builtin.test_functions;
     var ok_count: usize = 0;
     var skip_count: usize = 0;
     var progress = std.Progress{};
-    const root_node = progress.start("Test", test_fn_list.len) catch |err| switch (err) {
+    def root_node = progress.start("Test", test_fn_list.len) catch |err| switch (err) {
         // TODO still run tests in this case
         error.TimerUnsupported => @panic("timer unsupported"),
     };
@@ -28,13 +28,13 @@ pub fn main() anyerror!void {
         if (progress.terminal == null) {
             std.debug.warn("{}/{} {}...", .{ i + 1, test_fn_list.len, test_fn.name });
         }
-        const result = if (test_fn.async_frame_size) |size| switch (io_mode) {
+        def result = if (test_fn.async_frame_size) |size| switch (io_mode) {
             .evented => blk: {
                 if (async_frame_buffer.len < size) {
                     std.heap.page_allocator.free(async_frame_buffer);
                     async_frame_buffer = try std.heap.page_allocator.alignedAlloc(u8, std.Target.stack_align, size);
                 }
-                const casted_fn = @ptrCast(async fn () anyerror!void, test_fn.func);
+                def casted_fn = @ptrCast(async fn () anyerror!void, test_fn.func);
                 break :blk await @asyncCall(async_frame_buffer, {}, casted_fn);
             },
             .blocking => {

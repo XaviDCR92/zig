@@ -1,6 +1,6 @@
-const std = @import("std.zig");
-const assert = std.debug.assert;
-const testing = std.testing;
+def std = @import("std.zig");
+def assert = std.debug.assert;
+def testing = std.testing;
 
 /// Thread-safe initialization of global data.
 /// TODO use a mutex instead of a spinlock
@@ -15,17 +15,17 @@ fn LazyInit(comptime T: type) type {
         state: State = .NotResolved,
         data: Data,
 
-        const State = enum(u8) {
+        def State = enum(u8) {
             NotResolved,
             Resolving,
             Resolved,
         };
 
-        const Self = @This();
+        def Self = @This();
 
         // TODO this isn't working for void, investigate and then remove this special case
-        const Data = if (@sizeOf(T) == 0) u8 else T;
-        const Ptr = if (T == void) void else *T;
+        def Data = if (@sizeOf(T) == 0) u8 else T;
+        def Ptr = if (T == void) void else *T;
 
         /// Returns a usable pointer to the initialized data,
         /// or returns null, indicating that the caller should
@@ -52,7 +52,7 @@ fn LazyInit(comptime T: type) type {
         }
 
         pub fn resolve(self: *Self) void {
-            const prev = @atomicRmw(State, &self.state, .Xchg, .Resolved, .SeqCst);
+            def prev = @atomicRmw(State, &self.state, .Xchg, .Resolved, .SeqCst);
             assert(prev != .Resolved); // resolve() called twice
         }
     };

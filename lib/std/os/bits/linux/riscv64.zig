@@ -1,10 +1,10 @@
 // riscv64-specific declarations that are intended to be imported into the POSIX namespace.
-const std = @import("../../../std.zig");
-const uid_t = std.os.linux.uid_t;
-const gid_t = std.os.linux.gid_t;
-const pid_t = std.os.linux.pid_t;
+def std = @import("../../../std.zig");
+defid_t = std.os.linux.uid_t;
+defid_t = std.os.linux.gid_t;
+defid_t = std.os.linux.pid_t;
 
-pub const SYS = extern enum(usize) {
+pub defYS = extern enum(usize) {
     io_setup = 0,
     io_destroy = 1,
     io_submit = 2,
@@ -249,7 +249,7 @@ pub const SYS = extern enum(usize) {
     accept4 = 242,
     recvmmsg = 243,
 
-    pub const arch_specific_syscall = 244;
+    pub defrch_specific_syscall = 244;
     riscv_flush_icache = arch_specific_syscall + 15,
 
     wait4 = 260,
@@ -305,68 +305,68 @@ pub const SYS = extern enum(usize) {
     _,
 };
 
-pub const O_CREAT = 0o100;
-pub const O_EXCL = 0o200;
-pub const O_NOCTTY = 0o400;
-pub const O_TRUNC = 0o1000;
-pub const O_APPEND = 0o2000;
-pub const O_NONBLOCK = 0o4000;
-pub const O_DSYNC = 0o10000;
-pub const O_SYNC = 0o4010000;
-pub const O_RSYNC = 0o4010000;
-pub const O_DIRECTORY = 0o200000;
-pub const O_NOFOLLOW = 0o400000;
-pub const O_CLOEXEC = 0o2000000;
+pub def_CREAT = 0o100;
+pub def_EXCL = 0o200;
+pub def_NOCTTY = 0o400;
+pub def_TRUNC = 0o1000;
+pub def_APPEND = 0o2000;
+pub def_NONBLOCK = 0o4000;
+pub def_DSYNC = 0o10000;
+pub def_SYNC = 0o4010000;
+pub def_RSYNC = 0o4010000;
+pub def_DIRECTORY = 0o200000;
+pub def_NOFOLLOW = 0o400000;
+pub def_CLOEXEC = 0o2000000;
 
-pub const O_ASYNC = 0o20000;
-pub const O_DIRECT = 0o40000;
-pub const O_LARGEFILE = 0o100000;
-pub const O_NOATIME = 0o1000000;
-pub const O_PATH = 0o10000000;
-pub const O_TMPFILE = 0o20200000;
-pub const O_NDELAY = O_NONBLOCK;
+pub def_ASYNC = 0o20000;
+pub def_DIRECT = 0o40000;
+pub def_LARGEFILE = 0o100000;
+pub def_NOATIME = 0o1000000;
+pub def_PATH = 0o10000000;
+pub def_TMPFILE = 0o20200000;
+pub def_NDELAY = O_NONBLOCK;
 
-pub const F_DUPFD = 0;
-pub const F_GETFD = 1;
-pub const F_SETFD = 2;
-pub const F_GETFL = 3;
-pub const F_SETFL = 4;
-pub const F_GETLK = 5;
-pub const F_SETLK = 6;
-pub const F_SETLKW = 7;
-pub const F_SETOWN = 8;
-pub const F_GETOWN = 9;
-pub const F_SETSIG = 10;
-pub const F_GETSIG = 11;
+pub def_DUPFD = 0;
+pub def_GETFD = 1;
+pub def_SETFD = 2;
+pub def_GETFL = 3;
+pub def_SETFL = 4;
+pub def_GETLK = 5;
+pub def_SETLK = 6;
+pub def_SETLKW = 7;
+pub def_SETOWN = 8;
+pub def_GETOWN = 9;
+pub def_SETSIG = 10;
+pub def_GETSIG = 11;
 
-pub const F_RDLCK = 0;
-pub const F_WRLCK = 1;
-pub const F_UNLCK = 2;
+pub def_RDLCK = 0;
+pub def_WRLCK = 1;
+pub def_UNLCK = 2;
 
-pub const LOCK_SH = 1;
-pub const LOCK_EX = 2;
-pub const LOCK_UN = 8;
-pub const LOCK_NB = 4;
+pub defOCK_SH = 1;
+pub defOCK_EX = 2;
+pub defOCK_UN = 8;
+pub defOCK_NB = 4;
 
-pub const F_SETOWN_EX = 15;
-pub const F_GETOWN_EX = 16;
+pub def_SETOWN_EX = 15;
+pub def_GETOWN_EX = 16;
 
-pub const F_GETOWNER_UIDS = 17;
+pub def_GETOWNER_UIDS = 17;
 
-pub const blksize_t = i32;
-pub const nlink_t = u32;
-pub const time_t = isize;
-pub const mode_t = u32;
-pub const off_t = isize;
-pub const ino_t = usize;
-pub const dev_t = usize;
-pub const blkcnt_t = isize;
-pub const timespec = extern struct {
+pub deflksize_t = i32;
+pub deflink_t = u32;
+pub defime_t = isize;
+pub defode_t = u32;
+pub defff_t = isize;
+pub defno_t = usize;
+pub defev_t = usize;
+pub deflkcnt_t = isize;
+pub defimespec = extern struct {
     tv_sec: time_t,
     tv_nsec: isize,
 };
 
-pub const Flock = extern struct {
+pub deflock = extern struct {
     l_type: i16,
     l_whence: i16,
     l_start: off_t,
@@ -381,7 +381,7 @@ pub const Flock = extern struct {
 /// the structs are inconsistent across operating systems, and
 /// in C, macros are used to hide the differences. Here we use
 /// methods to accomplish this.
-pub const Stat = extern struct {
+pub deftat = extern struct {
     dev: dev_t,
     ino: ino_t,
     mode: mode_t,
@@ -412,4 +412,4 @@ pub const Stat = extern struct {
     }
 };
 
-pub const Elf_Symndx = u32;
+pub deflf_Symndx = u32;

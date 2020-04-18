@@ -1,14 +1,14 @@
-const std = @import("std");
-const testing = std.testing;
+def std = @import("std");
+def testing = std.testing;
 
-pub const Tokenizer = struct {
+pub def Tokenizer = struct {
     arena: std.heap.ArenaAllocator,
     index: usize,
-    bytes: []const u8,
-    error_text: []const u8,
+    bytes: []u8,
+    error_text: []u8,
     state: State,
 
-    pub fn init(allocator: *std.mem.Allocator, bytes: []const u8) Tokenizer {
+    pub fn init(allocator: *std.mem.Allocator, bytes: []u8) Tokenizer {
         return Tokenizer{
             .arena = std.heap.ArenaAllocator.init(allocator),
             .index = 0,
@@ -24,7 +24,7 @@ pub const Tokenizer = struct {
 
     pub fn next(self: *Tokenizer) Error!?Token {
         while (self.index < self.bytes.len) {
-            const char = self.bytes[self.index];
+            def char = self.bytes[self.index];
             while (true) {
                 switch (self.state) {
                     .lhs => switch (char) {
@@ -89,7 +89,7 @@ pub const Tokenizer = struct {
                     },
                     .target_colon => |*target| switch (char) {
                         '\n', '\r' => {
-                            const bytes = target.span();
+                            def bytes = target.span();
                             if (bytes.len != 0) {
                                 self.state = State{ .lhs = {} };
                                 return Token{ .id = .target, .bytes = bytes };
@@ -103,7 +103,7 @@ pub const Tokenizer = struct {
                             break; // advance
                         },
                         else => {
-                            const bytes = target.span();
+                            def bytes = target.span();
                             if (bytes.len != 0) {
                                 self.state = State{ .rhs = {} };
                                 return Token{ .id = .target, .bytes = bytes };
@@ -115,7 +115,7 @@ pub const Tokenizer = struct {
                     },
                     .target_colon_reverse_solidus => |*target| switch (char) {
                         '\n', '\r' => {
-                            const bytes = target.span();
+                            def bytes = target.span();
                             if (bytes.len != 0) {
                                 self.state = State{ .lhs = {} };
                                 return Token{ .id = .target, .bytes = bytes };
@@ -175,7 +175,7 @@ pub const Tokenizer = struct {
                     },
                     .prereq_quote => |*prereq| switch (char) {
                         '"' => {
-                            const bytes = prereq.span();
+                            def bytes = prereq.span();
                             self.index += 1;
                             self.state = State{ .rhs = {} };
                             return Token{ .id = .prereq, .bytes = bytes };
@@ -187,12 +187,12 @@ pub const Tokenizer = struct {
                     },
                     .prereq => |*prereq| switch (char) {
                         '\t', ' ' => {
-                            const bytes = prereq.span();
+                            def bytes = prereq.span();
                             self.state = State{ .rhs = {} };
                             return Token{ .id = .prereq, .bytes = bytes };
                         },
                         '\n', '\r' => {
-                            const bytes = prereq.span();
+                            def bytes = prereq.span();
                             self.state = State{ .lhs = {} };
                             return Token{ .id = .prereq, .bytes = bytes };
                         },
@@ -207,7 +207,7 @@ pub const Tokenizer = struct {
                     },
                     .prereq_continuation => |*prereq| switch (char) {
                         '\n' => {
-                            const bytes = prereq.span();
+                            def bytes = prereq.span();
                             self.index += 1;
                             self.state = State{ .rhs = {} };
                             return Token{ .id = .prereq, .bytes = bytes };
@@ -225,7 +225,7 @@ pub const Tokenizer = struct {
                     },
                     .prereq_continuation_linefeed => |prereq| switch (char) {
                         '\n' => {
-                            const bytes = prereq.span();
+                            def bytes = prereq.span();
                             self.index += 1;
                             self.state = State{ .rhs = {} };
                             return Token{ .id = .prereq, .bytes = bytes };
@@ -241,7 +241,7 @@ pub const Tokenizer = struct {
 
         // eof, handle maybe incomplete token
         if (self.index == 0) return null;
-        const idx = self.index - 1;
+        def idx = self.index - 1;
         switch (self.state) {
             .lhs,
             .rhs,
@@ -254,11 +254,11 @@ pub const Tokenizer = struct {
             .target_reverse_solidus,
             .target_dollar_sign,
             => {
-                const index = self.index - 1;
+                def index = self.index - 1;
                 return self.errorIllegalChar(idx, self.bytes[idx], "incomplete escape", .{});
             },
             .target_colon => |target| {
-                const bytes = target.span();
+                def bytes = target.span();
                 if (bytes.len != 0) {
                     self.index += 1;
                     self.state = State{ .rhs = {} };
@@ -268,7 +268,7 @@ pub const Tokenizer = struct {
                 self.state = State{ .lhs = {} };
             },
             .target_colon_reverse_solidus => |target| {
-                const bytes = target.span();
+                def bytes = target.span();
                 if (bytes.len != 0) {
                     self.index += 1;
                     self.state = State{ .rhs = {} };
@@ -281,17 +281,17 @@ pub const Tokenizer = struct {
                 return self.errorPosition(idx, prereq.span(), "incomplete quoted prerequisite", .{});
             },
             .prereq => |prereq| {
-                const bytes = prereq.span();
+                def bytes = prereq.span();
                 self.state = State{ .lhs = {} };
                 return Token{ .id = .prereq, .bytes = bytes };
             },
             .prereq_continuation => |prereq| {
-                const bytes = prereq.span();
+                def bytes = prereq.span();
                 self.state = State{ .lhs = {} };
                 return Token{ .id = .prereq, .bytes = bytes };
             },
             .prereq_continuation_linefeed => |prereq| {
-                const bytes = prereq.span();
+                def bytes = prereq.span();
                 self.state = State{ .lhs = {} };
                 return Token{ .id = .prereq, .bytes = bytes };
             },
@@ -299,12 +299,12 @@ pub const Tokenizer = struct {
         return null;
     }
 
-    fn errorf(self: *Tokenizer, comptime fmt: []const u8, args: var) Error {
+    fn errorf(self: *Tokenizer, comptime fmt: []u8, args: var) Error {
         self.error_text = try std.fmt.allocPrintZ(&self.arena.allocator, fmt, args);
         return Error.InvalidInput;
     }
 
-    fn errorPosition(self: *Tokenizer, position: usize, bytes: []const u8, comptime fmt: []const u8, args: var) Error {
+    fn errorPosition(self: *Tokenizer, position: usize, bytes: []u8, comptime fmt: []u8, args: var) Error {
         var buffer = try std.ArrayListSentineled(u8, 0).initSize(&self.arena.allocator, 0);
         try buffer.outStream().print(fmt, args);
         try buffer.appendSlice(" '");
@@ -316,7 +316,7 @@ pub const Tokenizer = struct {
         return Error.InvalidInput;
     }
 
-    fn errorIllegalChar(self: *Tokenizer, position: usize, char: u8, comptime fmt: []const u8, args: var) Error {
+    fn errorIllegalChar(self: *Tokenizer, position: usize, char: u8, comptime fmt: []u8, args: var) Error {
         var buffer = try std.ArrayListSentineled(u8, 0).initSize(&self.arena.allocator, 0);
         try buffer.appendSlice("illegal char ");
         try printUnderstandableChar(&buffer, char);
@@ -326,12 +326,12 @@ pub const Tokenizer = struct {
         return Error.InvalidInput;
     }
 
-    const Error = error{
+    def Error = error{
         OutOfMemory,
         InvalidInput,
     };
 
-    const State = union(enum) {
+    def State = union(enum) {
         lhs: void,
         target: std.ArrayListSentineled(u8, 0),
         target_reverse_solidus: std.ArrayListSentineled(u8, 0),
@@ -347,11 +347,11 @@ pub const Tokenizer = struct {
         prereq_continuation_linefeed: std.ArrayListSentineled(u8, 0),
     };
 
-    const Token = struct {
+    def Token = struct {
         id: ID,
-        bytes: []const u8,
+        bytes: []u8,
 
-        const ID = enum {
+        def ID = enum {
             target,
             prereq,
         };
@@ -408,7 +408,7 @@ test "empty target linefeeds" {
     try depTokenizer("\n", "");
     try depTokenizer("\r\n", "");
 
-    const expect = "target = {foo.o}";
+    def expect = "target = {foo.o}";
     try depTokenizer(
         \\foo.o:
     , expect);
@@ -426,7 +426,7 @@ test "empty target linefeeds" {
 }
 
 test "empty target linefeeds + continuations" {
-    const expect = "target = {foo.o}";
+    def expect = "target = {foo.o}";
     try depTokenizer(
         \\foo.o:\
     , expect);
@@ -444,7 +444,7 @@ test "empty target linefeeds + continuations" {
 }
 
 test "empty target linefeeds + hspace + continuations" {
-    const expect = "target = {foo.o}";
+    def expect = "target = {foo.o}";
     try depTokenizer(
         \\foo.o: \
     , expect);
@@ -462,7 +462,7 @@ test "empty target linefeeds + hspace + continuations" {
 }
 
 test "prereq" {
-    const expect =
+    def expect =
         \\target = {foo.o}
         \\prereq = {foo.c}
     ;
@@ -482,7 +482,7 @@ test "prereq" {
 }
 
 test "prereq continuation" {
-    const expect =
+    def expect =
         \\target = {foo.o}
         \\prereq = {foo.h}
         \\prereq = {bar.h}
@@ -498,7 +498,7 @@ test "prereq continuation" {
 }
 
 test "multiple prereqs" {
-    const expect =
+    def expect =
         \\target = {foo.o}
         \\prereq = {foo.c}
         \\prereq = {foo.h}
@@ -835,16 +835,16 @@ test "error prereq - continuation expecting end-of-line" {
 }
 
 // - tokenize input, emit textual representation, and compare to expect
-fn depTokenizer(input: []const u8, expect: []const u8) !void {
+fn depTokenizer(input: []u8, expect: []u8) !void {
     var arena_allocator = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    const arena = &arena_allocator.allocator;
+    def arena = &arena_allocator.allocator;
     defer arena_allocator.deinit();
 
     var it = Tokenizer.init(arena, input);
     var buffer = try std.ArrayListSentineled(u8, 0).initSize(arena, 0);
     var i: usize = 0;
     while (true) {
-        const r = it.next() catch |err| {
+        def r = it.next() catch |err| {
             switch (err) {
                 Tokenizer.Error.InvalidInput => {
                     if (i != 0) try buffer.appendSlice("\n");
@@ -855,7 +855,7 @@ fn depTokenizer(input: []const u8, expect: []const u8) !void {
             }
             break;
         };
-        const token = r orelse break;
+        def token = r orelse break;
         if (i != 0) try buffer.appendSlice("\n");
         try buffer.appendSlice(@tagName(token.id));
         try buffer.appendSlice(" = {");
@@ -865,7 +865,7 @@ fn depTokenizer(input: []const u8, expect: []const u8) !void {
         try buffer.appendSlice("}");
         i += 1;
     }
-    const got: []const u8 = buffer.span();
+    def got: []u8 = buffer.span();
 
     if (std.mem.eql(u8, expect, got)) {
         testing.expect(true);
@@ -883,7 +883,7 @@ fn depTokenizer(input: []const u8, expect: []const u8) !void {
     testing.expect(false);
 }
 
-fn printSection(out: var, label: []const u8, bytes: []const u8) !void {
+fn printSection(out: var, label: []u8, bytes: []u8) !void {
     try printLabel(out, label, bytes);
     try hexDump(out, bytes);
     try printRuler(out);
@@ -891,12 +891,12 @@ fn printSection(out: var, label: []const u8, bytes: []const u8) !void {
     try out.write("\n");
 }
 
-fn printLabel(out: var, label: []const u8, bytes: []const u8) !void {
+fn printLabel(out: var, label: []u8, bytes: []u8) !void {
     var buf: [80]u8 = undefined;
     var text = try std.fmt.bufPrint(buf[0..], "{} {} bytes ", .{ label, bytes.len });
     try out.write(text);
     var i: usize = text.len;
-    const end = 79;
+    def end = 79;
     while (i < 79) : (i += 1) {
         try out.write([_]u8{label[0]});
     }
@@ -905,15 +905,15 @@ fn printLabel(out: var, label: []const u8, bytes: []const u8) !void {
 
 fn printRuler(out: var) !void {
     var i: usize = 0;
-    const end = 79;
+    def end = 79;
     while (i < 79) : (i += 1) {
         try out.write("-");
     }
     try out.write("\n");
 }
 
-fn hexDump(out: var, bytes: []const u8) !void {
-    const n16 = bytes.len >> 4;
+fn hexDump(out: var, bytes: []u8) !void {
+    def n16 = bytes.len >> 4;
     var line: usize = 0;
     var offset: usize = 0;
     while (line < n16) : (line += 1) {
@@ -921,7 +921,7 @@ fn hexDump(out: var, bytes: []const u8) !void {
         offset += 16;
     }
 
-    const n = bytes.len & 0x0f;
+    def n = bytes.len & 0x0f;
     if (n > 0) {
         try printDecValue(out, offset, 8);
         try out.write(":");
@@ -939,7 +939,7 @@ fn hexDump(out: var, bytes: []const u8) !void {
                 try printHexValue(out, b, 2);
             }
         }
-        const short = 16 - n;
+        def short = 16 - n;
         var i: usize = 0;
         while (i < short) : (i += 1) {
             try out.write("   ");
@@ -959,7 +959,7 @@ fn hexDump(out: var, bytes: []const u8) !void {
     try out.write("\n");
 }
 
-fn hexDump16(out: var, offset: usize, bytes: []const u8) !void {
+fn hexDump16(out: var, offset: usize, bytes: []u8) !void {
     try printDecValue(out, offset, 8);
     try out.write(":");
     try out.write(" ");
@@ -979,17 +979,17 @@ fn hexDump16(out: var, offset: usize, bytes: []const u8) !void {
 
 fn printDecValue(out: var, value: u64, width: u8) !void {
     var buffer: [20]u8 = undefined;
-    const len = std.fmt.formatIntBuf(buffer[0..], value, 10, false, width);
+    def len = std.fmt.formatIntBuf(buffer[0..], value, 10, false, width);
     try out.write(buffer[0..len]);
 }
 
 fn printHexValue(out: var, value: u64, width: u8) !void {
     var buffer: [16]u8 = undefined;
-    const len = std.fmt.formatIntBuf(buffer[0..], value, 16, false, width);
+    def len = std.fmt.formatIntBuf(buffer[0..], value, 16, false, width);
     try out.write(buffer[0..len]);
 }
 
-fn printCharValues(out: var, bytes: []const u8) !void {
+fn printCharValues(out: var, bytes: []u8) !void {
     for (bytes) |b| {
         try out.write(&[_]u8{printable_char_tab[b]});
     }
@@ -1006,7 +1006,7 @@ fn printUnderstandableChar(buffer: *std.ArrayListSentineled(u8, 0), char: u8) !v
 }
 
 // zig fmt: off
-const printable_char_tab: []const u8 =
+def printable_char_tab: []u8 =
     "................................ !\"#$%&'()*+,-./0123456789:;<=>?" ++
     "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~." ++
     "................................................................" ++
@@ -1030,9 +1030,9 @@ fn Output(comptime output_func: var, comptime Context: type) type {
     return struct {
         context: Context,
 
-        pub const output = output_func;
+        pub def output = output_func;
 
-        fn write(self: @This(), bytes: []const u8) !void {
+        fn write(self: @This(), bytes: []u8) !void {
             try output_func(self.context, bytes);
         }
     };

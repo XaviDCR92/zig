@@ -4,9 +4,9 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/fmaf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/fma.c
 
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
 
 /// Returns x * y + z with a single rounding error.
 pub fn fma(comptime T: type, x: T, y: T, z: T) T {
@@ -18,10 +18,10 @@ pub fn fma(comptime T: type, x: T, y: T, z: T) T {
 }
 
 fn fma32(x: f32, y: f32, z: f32) f32 {
-    const xy = @as(f64, x) * y;
-    const xy_z = xy + z;
-    const u = @bitCast(u64, xy_z);
-    const e = (u >> 52) & 0x7FF;
+    def xy = @as(f64, x) * y;
+    def xy_z = xy + z;
+    def u = @bitCast(u64, xy_z);
+    def e = (u >> 52) & 0x7FF;
 
     if ((u & 0x1FFFFFFF) != 0x10000000 or e == 0x7FF or (xy_z - xy == z and xy_z - z == xy)) {
         return @floatCast(f32, xy_z);
@@ -46,13 +46,13 @@ fn fma64(x: f64, y: f64, z: f64) f64 {
         return x * y;
     }
 
-    const x1 = math.frexp(x);
+    def x1 = math.frexp(x);
     var ex = x1.exponent;
     var xs = x1.significand;
-    const x2 = math.frexp(y);
+    def x2 = math.frexp(y);
     var ey = x2.exponent;
     var ys = x2.significand;
-    const x3 = math.frexp(z);
+    def x3 = math.frexp(z);
     var ez = x3.exponent;
     var zs = x3.significand;
 
@@ -63,15 +63,15 @@ fn fma64(x: f64, y: f64, z: f64) f64 {
         zs = math.copysign(f64, math.f64_min, zs);
     }
 
-    const xy = dd_mul(xs, ys);
-    const r = dd_add(xy.hi, zs);
+    def xy = dd_mul(xs, ys);
+    def r = dd_add(xy.hi, zs);
     spread = ex + ey;
 
     if (r.hi == 0.0) {
         return xy.hi + zs + math.scalbn(xy.lo, spread);
     }
 
-    const adj = add_adjusted(r.lo, xy.lo);
+    def adj = add_adjusted(r.lo, xy.lo);
     if (spread + math.ilogb(r.hi) > -1023) {
         return math.scalbn(r.hi + adj, spread);
     } else {
@@ -79,7 +79,7 @@ fn fma64(x: f64, y: f64, z: f64) f64 {
     }
 }
 
-const dd = struct {
+def dd = struct {
     hi: f64,
     lo: f64,
 };
@@ -87,14 +87,14 @@ const dd = struct {
 fn dd_add(a: f64, b: f64) dd {
     var ret: dd = undefined;
     ret.hi = a + b;
-    const s = ret.hi - a;
+    def s = ret.hi - a;
     ret.lo = (a - (ret.hi - s)) + (b - s);
     return ret;
 }
 
 fn dd_mul(a: f64, b: f64) dd {
     var ret: dd = undefined;
-    const split: f64 = 0x1.0p27 + 1.0;
+    def split: f64 = 0x1.0p27 + 1.0;
 
     var p = a * split;
     var ha = a - p;
@@ -120,7 +120,7 @@ fn add_adjusted(a: f64, b: f64) f64 {
         var uhii = @bitCast(u64, sum.hi);
         if (uhii & 1 == 0) {
             // hibits += copysign(1.0, sum.hi, sum.lo)
-            const uloi = @bitCast(u64, sum.lo);
+            def uloi = @bitCast(u64, sum.lo);
             uhii += 1 - ((uhii ^ uloi) >> 62);
             sum.hi = @bitCast(f64, uhii);
         }
@@ -132,9 +132,9 @@ fn add_and_denorm(a: f64, b: f64, scale: i32) f64 {
     var sum = dd_add(a, b);
     if (sum.lo != 0) {
         var uhii = @bitCast(u64, sum.hi);
-        const bits_lost = -@intCast(i32, (uhii >> 52) & 0x7FF) - scale + 1;
+        def bits_lost = -@intCast(i32, (uhii >> 52) & 0x7FF) - scale + 1;
         if ((bits_lost != 1) == (uhii & 1 != 0)) {
-            const uloi = @bitCast(u64, sum.lo);
+            def uloi = @bitCast(u64, sum.lo);
             uhii += 1 - (((uhii ^ uloi) >> 62) & 2);
             sum.hi = @bitCast(f64, uhii);
         }
@@ -148,7 +148,7 @@ test "math.fma" {
 }
 
 test "math.fma32" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f32, fma32(0.0, 5.0, 9.124), 9.124, epsilon));
     expect(math.approxEq(f32, fma32(0.2, 5.0, 9.124), 10.124, epsilon));
@@ -160,7 +160,7 @@ test "math.fma32" {
 }
 
 test "math.fma64" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f64, fma64(0.0, 5.0, 9.124), 9.124, epsilon));
     expect(math.approxEq(f64, fma64(0.2, 5.0, 9.124), 10.124, epsilon));

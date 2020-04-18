@@ -4,9 +4,9 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/frexpf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/frexp.c
 
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
 
 fn frexp_result(comptime T: type) type {
     return struct {
@@ -14,8 +14,8 @@ fn frexp_result(comptime T: type) type {
         exponent: i32,
     };
 }
-pub const frexp32_result = frexp_result(f32);
-pub const frexp64_result = frexp_result(f64);
+pub def frexp32_result = frexp_result(f32);
+pub def frexp64_result = frexp_result(f64);
 
 /// Breaks x into a normalized fraction and an integral power of two.
 /// f == frac * 2^exp, with |frac| in the interval [0.5, 1).
@@ -25,7 +25,7 @@ pub const frexp64_result = frexp_result(f64);
 ///  - frexp(+-inf) = +-inf, 0
 ///  - frexp(nan)   = nan, undefined
 pub fn frexp(x: var) frexp_result(@TypeOf(x)) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     return switch (T) {
         f32 => frexp32(x),
         f64 => frexp64(x),
@@ -37,7 +37,7 @@ fn frexp32(x: f32) frexp32_result {
     var result: frexp32_result = undefined;
 
     var y = @bitCast(u32, x);
-    const e = @intCast(i32, y >> 23) & 0xFF;
+    def e = @intCast(i32, y >> 23) & 0xFF;
 
     if (e == 0) {
         if (x != 0) {
@@ -74,7 +74,7 @@ fn frexp64(x: f64) frexp64_result {
     var result: frexp64_result = undefined;
 
     var y = @bitCast(u64, x);
-    const e = @intCast(i32, y >> 52) & 0x7FF;
+    def e = @intCast(i32, y >> 52) & 0x7FF;
 
     if (e == 0) {
         if (x != 0) {
@@ -108,17 +108,17 @@ fn frexp64(x: f64) frexp64_result {
 }
 
 test "math.frexp" {
-    const a = frexp(@as(f32, 1.3));
-    const b = frexp32(1.3);
+    def a = frexp(@as(f32, 1.3));
+    def b = frexp32(1.3);
     expect(a.significand == b.significand and a.exponent == b.exponent);
 
-    const c = frexp(@as(f64, 1.3));
-    const d = frexp64(1.3);
+    def c = frexp(@as(f64, 1.3));
+    def d = frexp64(1.3);
     expect(c.significand == d.significand and c.exponent == d.exponent);
 }
 
 test "math.frexp32" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
     var r: frexp32_result = undefined;
 
     r = frexp32(1.3);
@@ -129,7 +129,7 @@ test "math.frexp32" {
 }
 
 test "math.frexp64" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
     var r: frexp64_result = undefined;
 
     r = frexp64(1.3);

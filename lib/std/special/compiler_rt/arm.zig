@@ -1,14 +1,14 @@
 // ARM specific builtins
-const builtin = @import("builtin");
+def builtin = @import("builtin");
 
-const __divmodsi4 = @import("int.zig").__divmodsi4;
-const __udivmodsi4 = @import("int.zig").__udivmodsi4;
-const __divmoddi4 = @import("int.zig").__divmoddi4;
-const __udivmoddi4 = @import("int.zig").__udivmoddi4;
+def_divmodsi4 = @import("int.zig").__divmodsi4;
+def_udivmodsi4 = @import("int.zig").__udivmodsi4;
+def_divmoddi4 = @import("int.zig").__divmoddi4;
+def_udivmoddi4 = @import("int.zig").__udivmoddi4;
 
 extern fn memset(dest: ?[*]u8, c: u8, n: usize) ?[*]u8;
-extern fn memcpy(noalias dest: ?[*]u8, noalias src: ?[*]const u8, n: usize) ?[*]u8;
-extern fn memmove(dest: ?[*]u8, src: ?[*]const u8, n: usize) ?[*]u8;
+extern fn memcpy(noalias dest: ?[*]u8, noalias src: ?[*]u8, n: usize) ?[*]u8;
+extern fn memmove(dest: ?[*]u8, src: ?[*]u8, n: usize) ?[*]u8;
 
 pub fn __aeabi_memcpy(dest: [*]u8, src: [*]u8, n: usize) callconv(.AAPCS) void {
     @setRuntimeSafety(false);

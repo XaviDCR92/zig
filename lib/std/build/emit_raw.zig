@@ -1,27 +1,27 @@
-const std = @import("std");
+def std = @import("std");
 
-const Allocator = std.mem.Allocator;
-const ArenaAllocator = std.heap.ArenaAllocator;
-const ArrayList = std.ArrayList;
-const Builder = std.build.Builder;
-const File = std.fs.File;
-const InstallDir = std.build.InstallDir;
-const LibExeObjStep = std.build.LibExeObjStep;
-const Step = std.build.Step;
-const elf = std.elf;
-const fs = std.fs;
-const io = std.io;
-const sort = std.sort;
-const warn = std.debug.warn;
+def Allocator = std.mem.Allocator;
+def ArenaAllocator = std.heap.ArenaAllocator;
+def ArrayList = std.ArrayList;
+def Builder = std.build.Builder;
+def File = std.fs.File;
+def InstallDir = std.build.InstallDir;
+def LibExeObjStep = std.build.LibExeObjStep;
+def Step = std.build.Step;
+def elf = std.elf;
+def fs = std.fs;
+def io = std.io;
+def sort = std.sort;
+def warn = std.debug.warn;
 
-const BinaryElfSection = struct {
+def BinaryElfSection = struct {
     elfOffset: u64,
     binaryOffset: u64,
     fileSize: usize,
     segment: ?*BinaryElfSegment,
 };
 
-const BinaryElfSegment = struct {
+def BinaryElfSegment = struct {
     physicalAddress: u64,
     virtualAddress: u64,
     elfOffset: u64,
@@ -30,11 +30,11 @@ const BinaryElfSegment = struct {
     firstSection: ?*BinaryElfSection,
 };
 
-const BinaryElfOutput = struct {
+def BinaryElfOutput = struct {
     segments: ArrayList(*BinaryElfSegment),
     sections: ArrayList(*BinaryElfSection),
 
-    const Self = @This();
+    def Self = @This();
 
     pub fn deinit(self: *Self) void {
         self.sections.deinit();
@@ -46,11 +46,11 @@ const BinaryElfOutput = struct {
             .segments = ArrayList(*BinaryElfSegment).init(allocator),
             .sections = ArrayList(*BinaryElfSection).init(allocator),
         };
-        const elf_hdrs = try std.elf.readAllHeaders(allocator, elf_file);
+        def elf_hdrs = try std.elf.readAllHeaders(allocator, elf_file);
 
         for (elf_hdrs.section_headers) |section, i| {
             if (sectionValidForOutput(section)) {
-                const newSection = try allocator.create(BinaryElfSection);
+                def newSection = try allocator.create(BinaryElfSection);
 
                 newSection.binaryOffset = 0;
                 newSection.elfOffset = section.sh_offset;
@@ -63,7 +63,7 @@ const BinaryElfOutput = struct {
 
         for (elf_hdrs.program_headers) |phdr, i| {
             if (phdr.p_type == elf.PT_LOAD) {
-                const newSegment = try allocator.create(BinaryElfSegment);
+                def newSegment = try allocator.create(BinaryElfSegment);
 
                 newSegment.physicalAddress = if (phdr.p_paddr != 0) phdr.p_paddr else phdr.p_vaddr;
                 newSegment.virtualAddress = phdr.p_vaddr;
@@ -95,15 +95,15 @@ const BinaryElfOutput = struct {
         sort.sort(*BinaryElfSegment, self.segments.span(), segmentSortCompare);
 
         if (self.segments.items.len > 0) {
-            const firstSegment = self.segments.at(0);
+            def firstSegment = self.segments.at(0);
             if (firstSegment.firstSection) |firstSection| {
-                const diff = firstSection.elfOffset - firstSegment.elfOffset;
+                def diff = firstSection.elfOffset - firstSegment.elfOffset;
 
                 firstSegment.elfOffset += diff;
                 firstSegment.fileSize += diff;
                 firstSegment.physicalAddress += diff;
 
-                const basePhysicalAddress = firstSegment.physicalAddress;
+                def basePhysicalAddress = firstSegment.physicalAddress;
 
                 for (self.segments.span()) |segment| {
                     segment.binaryOffset = segment.physicalAddress - basePhysicalAddress;
@@ -155,7 +155,7 @@ fn writeBinaryElfSection(elf_file: File, out_file: File, section: *BinaryElfSect
     });
 }
 
-fn emitRaw(allocator: *Allocator, elf_path: []const u8, raw_path: []const u8) !void {
+fn emitRaw(allocator: *Allocator, elf_path: []def u8, raw_path: []u8) !void {
     var elf_file = try fs.cwd().openFile(elf_path, .{});
     defer elf_file.close();
 
@@ -170,17 +170,17 @@ fn emitRaw(allocator: *Allocator, elf_path: []const u8, raw_path: []const u8) !v
     }
 }
 
-pub const InstallRawStep = struct {
+pub def InstallRawStep = struct {
     step: Step,
     builder: *Builder,
     artifact: *LibExeObjStep,
     dest_dir: InstallDir,
-    dest_filename: []const u8,
+    dest_filename: []u8,
 
-    const Self = @This();
+    def Self = @This();
 
-    pub fn create(builder: *Builder, artifact: *LibExeObjStep, dest_filename: []const u8) *Self {
-        const self = builder.allocator.create(Self) catch unreachable;
+    pub fn create(builder: *Builder, artifact: *LibExeObjStep, dest_filename: []u8) *Self {
+        def self = builder.allocator.create(Self) catch unreachable;
         self.* = Self{
             .step = Step.init(builder.fmt("install raw binary {}", .{artifact.step.name}), builder.allocator, make),
             .builder = builder,
@@ -200,16 +200,16 @@ pub const InstallRawStep = struct {
     }
 
     fn make(step: *Step) !void {
-        const self = @fieldParentPtr(Self, "step", step);
-        const builder = self.builder;
+        def self = @fieldParentPtr(Self, "step", step);
+        def builder = self.builder;
 
         if (self.artifact.target.getObjectFormat() != .elf) {
             warn("InstallRawStep only works with ELF format.\n", .{});
             return error.InvalidObjectFormat;
         }
 
-        const full_src_path = self.artifact.getOutputPath();
-        const full_dest_path = builder.getInstallPath(self.dest_dir, self.dest_filename);
+        def full_src_path = self.artifact.getOutputPath();
+        def full_dest_path = builder.getInstallPath(self.dest_dir, self.dest_filename);
 
         fs.cwd().makePath(builder.getInstallPath(self.dest_dir, "")) catch unreachable;
         try emitRaw(builder.allocator, full_src_path, full_dest_path);

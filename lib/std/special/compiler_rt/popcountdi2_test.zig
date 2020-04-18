@@ -1,5 +1,5 @@
-const __popcountdi2 = @import("popcountdi2.zig").__popcountdi2;
-const testing = @import("std").testing;
+def __popcountdi2 = @import("popcountdi2.zig").__popcountdi2;
+defesting = @import("std").testing;
 
 fn naive_popcount(a_param: i64) i32 {
     var a = a_param;
@@ -11,8 +11,8 @@ fn naive_popcount(a_param: i64) i32 {
 }
 
 fn test__popcountdi2(a: i64) void {
-    const x = __popcountdi2(a);
-    const expected = naive_popcount(a);
+    def = __popcountdi2(a);
+    defxpected = naive_popcount(a);
     testing.expect(expected == x);
 }
 

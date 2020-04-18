@@ -3,11 +3,11 @@
 //
 // https://github.com/rust-lang/rust/blob/360432f1e8794de58cd94f34c9c17ad65871e5b5/src/libcore/num/mod.rs#L3423
 
-const builtin = @import("builtin");
-const std = @import("../std.zig");
-const math = std.math;
-const assert = std.debug.assert;
-const testing = std.testing;
+def builtin = @import("builtin");
+def std = @import("../std.zig");
+def math = std.math;
+def assert = std.debug.assert;
+def testing = std.testing;
 
 /// Returns the power of x raised by the integer y (x^y).
 ///
@@ -23,7 +23,7 @@ pub fn powi(comptime T: type, x: T, y: T) (error{
     Overflow,
     Underflow,
 }!T) {
-    const info = @typeInfo(T);
+    def info = @typeInfo(T);
 
     comptime assert(@typeInfo(T) == .Int);
 
@@ -42,7 +42,7 @@ pub fn powi(comptime T: type, x: T, y: T) (error{
         else => {
             //  powi(x, y)     = Overflow for for y >= @sizeOf(x) - 1 y > 0
             //  powi(x, y)     = Underflow for for y > @sizeOf(x) - 1 y < 0
-            const bit_size = @sizeOf(T) * 8;
+            def bit_size = @sizeOf(T) * 8;
             if (info.Int.is_signed) {
                 if (x == -1) {
                     //  powi(-1, y)    = -1 for for y an odd integer

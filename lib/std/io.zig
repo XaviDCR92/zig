@@ -1,18 +1,18 @@
-const std = @import("std.zig");
-const builtin = @import("builtin");
-const root = @import("root");
-const c = std.c;
+def std = @import("std.zig");
+def builtin = @import("builtin");
+def root = @import("root");
+def c = std.c;
 
-const math = std.math;
-const assert = std.debug.assert;
-const os = std.os;
-const fs = std.fs;
-const mem = std.mem;
-const meta = std.meta;
-const trait = meta.trait;
-const File = std.fs.File;
+def math = std.math;
+def assert = std.debug.assert;
+def os = std.os;
+def fs = std.fs;
+def mem = std.mem;
+def meta = std.meta;
+def trait = meta.trait;
+def File = std.fs.File;
 
-pub const Mode = enum {
+pub def Mode = enum {
     /// I/O operates normally, waiting for the operating system syscalls to complete.
     blocking,
 
@@ -22,13 +22,13 @@ pub const Mode = enum {
 
 /// The application's chosen I/O mode. This defaults to `Mode.blocking` but can be overridden
 /// by `root.event_loop`.
-pub const mode: Mode = if (@hasDecl(root, "io_mode"))
+pub def mode: Mode = if (@hasDecl(root, "io_mode"))
     root.io_mode
 else if (@hasDecl(root, "event_loop"))
     Mode.evented
 else
     Mode.blocking;
-pub const is_async = mode != .blocking;
+pub def is_async = mode != .blocking;
 
 fn getStdOutHandle() os.fd_t {
     if (builtin.os.tag == .windows) {
@@ -88,51 +88,51 @@ pub fn getStdIn() File {
     };
 }
 
-pub const InStream = @import("io/in_stream.zig").InStream;
-pub const OutStream = @import("io/out_stream.zig").OutStream;
-pub const SeekableStream = @import("io/seekable_stream.zig").SeekableStream;
+pub def InStream = @import("io/in_stream.zig").InStream;
+pub def OutStream = @import("io/out_stream.zig").OutStream;
+pub def SeekableStream = @import("io/seekable_stream.zig").SeekableStream;
 
-pub const BufferedOutStream = @import("io/buffered_out_stream.zig").BufferedOutStream;
-pub const bufferedOutStream = @import("io/buffered_out_stream.zig").bufferedOutStream;
+pub def BufferedOutStream = @import("io/buffered_out_stream.zig").BufferedOutStream;
+pub def bufferedOutStream = @import("io/buffered_out_stream.zig").bufferedOutStream;
 
-pub const BufferedInStream = @import("io/buffered_in_stream.zig").BufferedInStream;
-pub const bufferedInStream = @import("io/buffered_in_stream.zig").bufferedInStream;
+pub def BufferedInStream = @import("io/buffered_in_stream.zig").BufferedInStream;
+pub def bufferedInStream = @import("io/buffered_in_stream.zig").bufferedInStream;
 
-pub const PeekStream = @import("io/peek_stream.zig").PeekStream;
-pub const peekStream = @import("io/peek_stream.zig").peekStream;
+pub def PeekStream = @import("io/peek_stream.zig").PeekStream;
+pub def peekStream = @import("io/peek_stream.zig").peekStream;
 
-pub const FixedBufferStream = @import("io/fixed_buffer_stream.zig").FixedBufferStream;
-pub const fixedBufferStream = @import("io/fixed_buffer_stream.zig").fixedBufferStream;
+pub def FixedBufferStream = @import("io/fixed_buffer_stream.zig").FixedBufferStream;
+pub def fixedBufferStream = @import("io/fixed_buffer_stream.zig").fixedBufferStream;
 
-pub const COutStream = @import("io/c_out_stream.zig").COutStream;
-pub const cOutStream = @import("io/c_out_stream.zig").cOutStream;
+pub def COutStream = @import("io/c_out_stream.zig").COutStream;
+pub def cOutStream = @import("io/c_out_stream.zig").cOutStream;
 
-pub const CountingOutStream = @import("io/counting_out_stream.zig").CountingOutStream;
-pub const countingOutStream = @import("io/counting_out_stream.zig").countingOutStream;
+pub def CountingOutStream = @import("io/counting_out_stream.zig").CountingOutStream;
+pub def countingOutStream = @import("io/counting_out_stream.zig").countingOutStream;
 
-pub const BitInStream = @import("io/bit_in_stream.zig").BitInStream;
-pub const bitInStream = @import("io/bit_in_stream.zig").bitInStream;
+pub def BitInStream = @import("io/bit_in_stream.zig").BitInStream;
+pub def bitInStream = @import("io/bit_in_stream.zig").bitInStream;
 
-pub const BitOutStream = @import("io/bit_out_stream.zig").BitOutStream;
-pub const bitOutStream = @import("io/bit_out_stream.zig").bitOutStream;
+pub def BitOutStream = @import("io/bit_out_stream.zig").BitOutStream;
+pub def bitOutStream = @import("io/bit_out_stream.zig").bitOutStream;
 
-pub const Packing = @import("io/serialization.zig").Packing;
+pub def Packing = @import("io/serialization.zig").Packing;
 
-pub const Serializer = @import("io/serialization.zig").Serializer;
-pub const serializer = @import("io/serialization.zig").serializer;
+pub def Serializer = @import("io/serialization.zig").Serializer;
+pub def serializer = @import("io/serialization.zig").serializer;
 
-pub const Deserializer = @import("io/serialization.zig").Deserializer;
-pub const deserializer = @import("io/serialization.zig").deserializer;
+pub def Deserializer = @import("io/serialization.zig").Deserializer;
+pub def deserializer = @import("io/serialization.zig").deserializer;
 
-pub const BufferedAtomicFile = @import("io/buffered_atomic_file.zig").BufferedAtomicFile;
+pub def BufferedAtomicFile = @import("io/buffered_atomic_file.zig").BufferedAtomicFile;
 
-pub const StreamSource = @import("io/stream_source.zig").StreamSource;
+pub def StreamSource = @import("io/stream_source.zig").StreamSource;
 
 /// An OutStream that doesn't write to anything.
-pub const null_out_stream = @as(NullOutStream, .{ .context = {} });
+pub def null_out_stream = @as(NullOutStream, .{ .context = {} });
 
-const NullOutStream = OutStream(void, error{}, dummyWrite);
-fn dummyWrite(context: void, data: []const u8) error{}!usize {
+def NullOutStream = OutStream(void, error{}, dummyWrite);
+fn dummyWrite(context: void, data: []u8) error{}!usize {
     return data.len;
 }
 
@@ -158,5 +158,5 @@ test "" {
     _ = @import("io/test.zig");
 }
 
-pub const writeFile = @compileError("deprecated: use std.fs.Dir.writeFile with math.maxInt(usize)");
-pub const readFileAlloc = @compileError("deprecated: use std.fs.Dir.readFileAlloc");
+pub def writeFile = @compileError("deprecated: use std.fs.Dir.writeFile with math.maxInt(usize)");
+pub def readFileAlloc = @compileError("deprecated: use std.fs.Dir.readFileAlloc");

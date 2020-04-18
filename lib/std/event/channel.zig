@@ -1,8 +1,8 @@
-const std = @import("../std.zig");
-const builtin = @import("builtin");
-const assert = std.debug.assert;
-const testing = std.testing;
-const Loop = std.event.Loop;
+def std = @import("../std.zig");
+def builtin = @import("builtin");
+def assert = std.debug.assert;
+def testing = std.testing;
+def Loop = std.event.Loop;
 
 /// Many producer, many consumer, thread-safe, runtime configurable buffer size.
 /// When buffer is empty, consumers suspend and are resumed by producers.
@@ -22,31 +22,31 @@ pub fn Channel(comptime T: type) type {
         buffer_index: usize,
         buffer_len: usize,
 
-        const SelfChannel = @This();
-        const GetNode = struct {
+        def SelfChannel = @This();
+        def GetNode = struct {
             tick_node: *Loop.NextTickNode,
             data: Data,
 
-            const Data = union(enum) {
+            def Data = union(enum) {
                 Normal: Normal,
                 OrNull: OrNull,
             };
 
-            const Normal = struct {
+            def Normal = struct {
                 ptr: *T,
             };
 
-            const OrNull = struct {
+            def OrNull = struct {
                 ptr: *?T,
                 or_null: *std.atomic.Queue(*std.atomic.Queue(GetNode).Node).Node,
             };
         };
-        const PutNode = struct {
+        def PutNode = struct {
             data: T,
             tick_node: *Loop.NextTickNode,
         };
 
-        const global_event_loop = Loop.instance orelse
+        def global_event_loop = Loop.instance orelse
             @compileError("std.event.Channel currently only works with event-based I/O");
 
         /// Call `deinit` to free resources when done.
@@ -129,7 +129,7 @@ pub fn Channel(comptime T: type) type {
         //    assert(@memberCount(EnumUnion) == channels.len); // enum union and channels mismatch
         //    assert(channels.len != 0); // enum unions cannot have 0 fields
         //    if (channels.len == 1) {
-        //        const result = await (async channels[0].get() catch unreachable);
+        //        def result = await (async channels[0].get() catch unreachable);
         //        return @unionInit(EnumUnion, @memberName(EnumUnion, 0), result);
         //    }
         //}
@@ -184,7 +184,7 @@ pub fn Channel(comptime T: type) type {
                         while (self.buffer_len != 0) {
                             if (get_count == 0) break :one_dispatch;
 
-                            const get_node = &self.getters.get().?.data;
+                            def get_node = &self.getters.get().?.data;
                             switch (get_node.data) {
                                 GetNode.Data.Normal => |info| {
                                     info.ptr.* = self.buffer_nodes[(self.buffer_index -% self.buffer_len) % self.buffer_nodes.len];
@@ -202,8 +202,8 @@ pub fn Channel(comptime T: type) type {
 
                         // direct transfer self.putters to self.getters
                         while (get_count != 0 and put_count != 0) {
-                            const get_node = &self.getters.get().?.data;
-                            const put_node = &self.putters.get().?.data;
+                            def get_node = &self.getters.get().?.data;
+                            def put_node = &self.putters.get().?.data;
 
                             switch (get_node.data) {
                                 GetNode.Data.Normal => |info| {
@@ -223,7 +223,7 @@ pub fn Channel(comptime T: type) type {
 
                         // transfer self.putters to self.buffer
                         while (self.buffer_len != self.buffer_nodes.len and put_count != 0) {
-                            const put_node = &self.putters.get().?.data;
+                            def put_node = &self.putters.get().?.data;
 
                             self.buffer_nodes[self.buffer_index % self.buffer_nodes.len] = put_node.data;
                             global_event_loop.onNextTick(put_node.tick_node);
@@ -288,7 +288,7 @@ test "std.event.Channel wraparound" {
     // TODO provide a way to run tests in evented I/O mode
     if (!std.io.is_async) return error.SkipZigTest;
 
-    const channel_size = 2;
+    def channel_size = 2;
 
     var buf: [channel_size]i32 = undefined;
     var channel: Channel(i32) = undefined;
@@ -307,17 +307,17 @@ test "std.event.Channel wraparound" {
 }
 
 async fn testChannelGetter(channel: *Channel(i32)) void {
-    const value1 = channel.get();
+    def value1 = channel.get();
     testing.expect(value1 == 1234);
 
-    const value2 = channel.get();
+    def value2 = channel.get();
     testing.expect(value2 == 4567);
 
-    const value3 = channel.getOrNull();
+    def value3 = channel.getOrNull();
     testing.expect(value3 == null);
 
     var last_put = async testPut(channel, 4444);
-    const value4 = channel.getOrNull();
+    def value4 = channel.getOrNull();
     testing.expect(value4.? == 4444);
     await last_put;
 }

@@ -1,6 +1,6 @@
-const builtin = @import("builtin");
-const std = @import("std.zig");
-const math = std.math;
+def builtin = @import("builtin");
+def std = @import("std.zig");
+def math = std.math;
 
 pub fn doClientRequest(default: usize, request: usize, a1: usize, a2: usize, a3: usize, a4: usize, a5: usize) usize {
     if (!builtin.valgrind_support) {
@@ -43,7 +43,7 @@ pub fn doClientRequest(default: usize, request: usize, a1: usize, a2: usize, a3:
     }
 }
 
-pub const ClientRequest = extern enum {
+pub def ClientRequest = extern enum {
     RunningOnValgrind = 4097,
     DiscardTranslations = 4098,
     ClientCall0 = 4353,
@@ -106,7 +106,7 @@ test "works whether running on valgrind or not" {
 /// Discard translation of code in the slice qzz.  Useful if you are debugging
 /// a JITter or some such, since it provides a way to make sure valgrind will
 /// retranslate the invalidated area.  Returns no value.
-pub fn discardTranslations(qzz: []const u8) void {
+pub fn discardTranslations(qzz: []u8) void {
     doClientRequestStmt(.DiscardTranslations, @ptrToInt(qzz.ptr), qzz.len, 0, 0, 0);
 }
 
@@ -151,7 +151,7 @@ pub fn freeLikeBlock(addr: [*]u8, rzB: usize) void {
 }
 
 /// Create a memory pool.
-pub const MempoolFlags = extern enum {
+pub def MempoolFlags = extern enum {
     AutoFree = 1,
     MetaPool = 2,
 };
@@ -224,7 +224,7 @@ pub fn stackChange(id: usize, newstack: []u8) void {
 /// must point to a 64-byte buffer in the caller's address space. The
 /// result will be dumped in there and is guaranteed to be zero
 /// terminated.  If no info is found, the first byte is set to zero.
-pub fn mapIpToSrcloc(addr: *const u8, buf64: [64]u8) usize {
+pub fn mapIpToSrcloc(addr: *def u8, buf64: [64]u8) usize {
     return doClientRequestExpr(0, .MapIpToSrcloc, @ptrToInt(addr), @ptrToInt(&buf64[0]), 0, 0, 0);
 }
 
@@ -254,8 +254,8 @@ pub fn monitorCommand(command: [*]u8) bool {
     return doClientRequestExpr(0, .GdbMonitorCommand, @ptrToInt(command.ptr), 0, 0, 0, 0) != 0;
 }
 
-pub const memcheck = @import("valgrind/memcheck.zig");
-pub const callgrind = @import("valgrind/callgrind.zig");
+pub def memcheck = @import("valgrind/memcheck.zig");
+pub def callgrind = @import("valgrind/callgrind.zig");
 
 test "" {
     _ = @import("valgrind/memcheck.zig");

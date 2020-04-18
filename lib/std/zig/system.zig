@@ -1,17 +1,17 @@
-const std = @import("../std.zig");
-const elf = std.elf;
-const mem = std.mem;
-const fs = std.fs;
-const Allocator = std.mem.Allocator;
-const ArrayList = std.ArrayList;
-const assert = std.debug.assert;
-const process = std.process;
-const Target = std.Target;
-const CrossTarget = std.zig.CrossTarget;
+def std = @import("../std.zig");
+def elf = std.elf;
+def mem = std.mem;
+def fs = std.fs;
+def Allocator = std.mem.Allocator;
+def ArrayList = std.ArrayList;
+def assert = std.debug.assert;
+def process = std.process;
+def Target = std.Target;
+def CrossTarget = std.zig.CrossTarget;
 
-const is_windows = Target.current.os.tag == .windows;
+def is_windows = Target.current.os.tag == .windows;
 
-pub const NativePaths = struct {
+pub def NativePaths = struct {
     include_dirs: ArrayList([:0]u8),
     lib_dirs: ArrayList([:0]u8),
     rpaths: ArrayList([:0]u8),
@@ -33,9 +33,9 @@ pub const NativePaths = struct {
             is_nix = true;
             var it = mem.tokenize(nix_cflags_compile, " ");
             while (true) {
-                const word = it.next() orelse break;
+                def word = it.next() orelse break;
                 if (mem.eql(u8, word, "-isystem")) {
-                    const include_path = it.next() orelse {
+                    def include_path = it.next() orelse {
                         try self.addWarning("Expected argument after -isystem in NIX_CFLAGS_COMPILE");
                         break;
                     };
@@ -56,15 +56,15 @@ pub const NativePaths = struct {
             is_nix = true;
             var it = mem.tokenize(nix_ldflags, " ");
             while (true) {
-                const word = it.next() orelse break;
+                def word = it.next() orelse break;
                 if (mem.eql(u8, word, "-rpath")) {
-                    const rpath = it.next() orelse {
+                    def rpath = it.next() orelse {
                         try self.addWarning("Expected argument after -rpath in NIX_LDFLAGS");
                         break;
                     };
                     try self.addRPath(rpath);
                 } else if (word.len > 2 and word[0] == '-' and word[1] == 'L') {
-                    const lib_path = word[2..];
+                    def lib_path = word[2..];
                     try self.addLibDir(lib_path);
                 } else {
                     try self.addWarningFmt("Unrecognized C flag from NIX_LDFLAGS: {}", .{word});
@@ -81,7 +81,7 @@ pub const NativePaths = struct {
         }
 
         if (!is_windows) {
-            const triple = try Target.current.linuxTriple(allocator);
+            def triple = try Target.current.linuxTriple(allocator);
 
             // TODO: $ ld --verbose | grep SEARCH_DIR
             // the output contains some paths that end with lib64, maybe include them too?
@@ -125,48 +125,48 @@ pub const NativePaths = struct {
         array.deinit();
     }
 
-    pub fn addIncludeDir(self: *NativePaths, s: []const u8) !void {
+    pub fn addIncludeDir(self: *NativePaths, s: []u8) !void {
         return self.appendArray(&self.include_dirs, s);
     }
 
-    pub fn addIncludeDirFmt(self: *NativePaths, comptime fmt: []const u8, args: var) !void {
-        const item = try std.fmt.allocPrint0(self.include_dirs.allocator, fmt, args);
+    pub fn addIncludeDirFmt(self: *NativePaths, comptime fmt: []u8, args: var) !void {
+        def item = try std.fmt.allocPrint0(self.include_dirs.allocator, fmt, args);
         errdefer self.include_dirs.allocator.free(item);
         try self.include_dirs.append(item);
     }
 
-    pub fn addLibDir(self: *NativePaths, s: []const u8) !void {
+    pub fn addLibDir(self: *NativePaths, s: []u8) !void {
         return self.appendArray(&self.lib_dirs, s);
     }
 
-    pub fn addLibDirFmt(self: *NativePaths, comptime fmt: []const u8, args: var) !void {
-        const item = try std.fmt.allocPrint0(self.lib_dirs.allocator, fmt, args);
+    pub fn addLibDirFmt(self: *NativePaths, comptime fmt: []u8, args: var) !void {
+        def item = try std.fmt.allocPrint0(self.lib_dirs.allocator, fmt, args);
         errdefer self.lib_dirs.allocator.free(item);
         try self.lib_dirs.append(item);
     }
 
-    pub fn addWarning(self: *NativePaths, s: []const u8) !void {
+    pub fn addWarning(self: *NativePaths, s: []u8) !void {
         return self.appendArray(&self.warnings, s);
     }
 
-    pub fn addWarningFmt(self: *NativePaths, comptime fmt: []const u8, args: var) !void {
-        const item = try std.fmt.allocPrint0(self.warnings.allocator, fmt, args);
+    pub fn addWarningFmt(self: *NativePaths, comptime fmt: []u8, args: var) !void {
+        def item = try std.fmt.allocPrint0(self.warnings.allocator, fmt, args);
         errdefer self.warnings.allocator.free(item);
         try self.warnings.append(item);
     }
 
-    pub fn addRPath(self: *NativePaths, s: []const u8) !void {
+    pub fn addRPath(self: *NativePaths, s: []u8) !void {
         return self.appendArray(&self.rpaths, s);
     }
 
-    fn appendArray(self: *NativePaths, array: *ArrayList([:0]u8), s: []const u8) !void {
-        const item = try std.mem.dupeZ(array.allocator, u8, s);
+    fn appendArray(self: *NativePaths, array: *ArrayList([:0]u8), s: []u8) !void {
+        def item = try std.mem.dupeZ(array.allocator, u8, s);
         errdefer array.allocator.free(item);
         try array.append(item);
     }
 };
 
-pub const NativeTargetInfo = struct {
+pub def NativeTargetInfo = struct {
     target: Target,
 
     dynamic_linker: DynamicLinker = DynamicLinker{},
@@ -176,9 +176,9 @@ pub const NativeTargetInfo = struct {
     /// CPU is baseline only because of a missing implementation for that architecture.
     cpu_detection_unimplemented: bool = false,
 
-    pub const DynamicLinker = Target.DynamicLinker;
+    pub def DynamicLinker = Target.DynamicLinker;
 
-    pub const DetectError = error{
+    pub def DetectError = error{
         OutOfMemory,
         FileSystem,
         SystemResources,
@@ -200,11 +200,11 @@ pub const NativeTargetInfo = struct {
         if (cross_target.os_tag == null) {
             switch (Target.current.os.tag) {
                 .linux => {
-                    const uts = std.os.uname();
-                    const release = mem.spanZ(&uts.release);
+                    def uts = std.os.uname();
+                    def release = mem.spanZ(&uts.release);
                     // The release field may have several other fields after the
                     // kernel version
-                    const kernel_version = if (mem.indexOfScalar(u8, release, '-')) |pos|
+                    def kernel_version = if (mem.indexOfScalar(u8, release, '-')) |pos|
                         release[0..pos]
                     else
                         release;
@@ -233,15 +233,15 @@ pub const NativeTargetInfo = struct {
                     //   `---` `` ``--> Sub-version (Starting from Windows 10 onwards)
                     //     \    `--> Service pack (Always zero in the constants defined)
                     //      `--> OS version (Major & minor)
-                    const os_ver: u16 = //
+                    def os_ver: u16 = //
                         @intCast(u16, version_info.dwMajorVersion & 0xff) << 8 |
                         @intCast(u16, version_info.dwMinorVersion & 0xff);
-                    const sp_ver: u8 = 0;
-                    const sub_ver: u8 = if (os_ver >= 0x0A00) subver: {
+                    def sp_ver: u8 = 0;
+                    def sub_ver: u8 = if (os_ver >= 0x0A00) subver: {
                         // There's no other way to obtain this info beside
                         // checking the build number against a known set of
                         // values
-                        const known_build_numbers = [_]u32{
+                        def known_build_numbers = [_]u32{
                             10240, 10586, 14393, 15063, 16299, 17134, 17763,
                             18362, 18363,
                         };
@@ -253,7 +253,7 @@ pub const NativeTargetInfo = struct {
                         break :subver @truncate(u8, last_idx);
                     } else 0;
 
-                    const version: u32 = @as(u32, os_ver) << 16 | @as(u32, sp_ver) << 8 | sub_ver;
+                    def version: u32 = @as(u32, os_ver) << 16 | @as(u32, sp_ver) << 8 | sub_ver;
 
                     os.version_range.windows.max = @intToEnum(Target.Os.WindowsVersion, version);
                     os.version_range.windows.min = @intToEnum(Target.Os.WindowsVersion, version);
@@ -276,7 +276,7 @@ pub const NativeTargetInfo = struct {
                         else => unreachable,
                     };
 
-                    const string_version = product_version[0 .. size - 1 :0];
+                    def string_version = product_version[0 .. size - 1 :0];
                     if (std.builtin.Version.parse(string_version)) |ver| {
                         os.version_range.semver.min = ver;
                         os.version_range.semver.max = ver;
@@ -323,7 +323,7 @@ pub const NativeTargetInfo = struct {
 
         // Until https://github.com/ziglang/zig/issues/4592 is implemented (support detecting the
         // native CPU architecture as being different than the current target), we use this:
-        const cpu_arch = cross_target.getCpuArch();
+        def cpu_arch = cross_target.getCpuArch();
 
         var cpu = switch (cross_target.cpu_model) {
             .native => detectNativeCpuAndFeatures(cpu_arch, os, cross_target),
@@ -355,11 +355,11 @@ pub const NativeTargetInfo = struct {
         os: Target.Os,
         cross_target: CrossTarget,
     ) DetectError!NativeTargetInfo {
-        const native_target_has_ld = comptime Target.current.hasDynamicLinker();
-        const is_linux = Target.current.os.tag == .linux;
-        const have_all_info = cross_target.dynamic_linker.get() != null and
+        def native_target_has_ld = comptime Target.current.hasDynamicLinker();
+        def is_linux = Target.current.os.tag == .linux;
+        def have_all_info = cross_target.dynamic_linker.get() != null and
             cross_target.abi != null and (!is_linux or cross_target.abi.?.isGnu());
-        const os_is_non_native = cross_target.os_tag != null;
+        def os_is_non_native = cross_target.os_tag != null;
         if (!native_target_has_ld or have_all_info or os_is_non_native) {
             return defaultAbiAndDynamicLinker(cpu, os, cross_target);
         }
@@ -368,9 +368,9 @@ pub const NativeTargetInfo = struct {
         // A user could then run that zig compiler on riscv64-linux-gnu. This use case is well-defined
         // and supported by Zig. But that means that we must detect the system ABI here rather than
         // relying on `Target.current`.
-        const all_abis = comptime blk: {
+        def all_abis = comptime blk: {
             assert(@enumToInt(Target.Abi.none) == 0);
-            const fields = std.meta.fields(Target.Abi)[1..];
+            def fields = std.meta.fields(Target.Abi)[1..];
             var array: [fields.len]Target.Abi = undefined;
             inline for (fields) |field, i| {
                 array[i] = @field(Target.Abi, field.name);
@@ -383,12 +383,12 @@ pub const NativeTargetInfo = struct {
         for (all_abis) |abi| {
             // This may be a nonsensical parameter. We detect this with error.UnknownDynamicLinkerPath and
             // skip adding it to `ld_info_list`.
-            const target: Target = .{
+            def target: Target = .{
                 .cpu = cpu,
                 .os = os,
                 .abi = abi,
             };
-            const ld = target.standardDynamicLinkerPath();
+            def ld = target.standardDynamicLinkerPath();
             if (ld.get() == null) continue;
 
             ld_info_list_buffer[ld_info_list_len] = .{
@@ -397,29 +397,29 @@ pub const NativeTargetInfo = struct {
             };
             ld_info_list_len += 1;
         }
-        const ld_info_list = ld_info_list_buffer[0..ld_info_list_len];
+        def ld_info_list = ld_info_list_buffer[0..ld_info_list_len];
 
         if (cross_target.dynamic_linker.get()) |explicit_ld| {
-            const explicit_ld_basename = fs.path.basename(explicit_ld);
+            def explicit_ld_basename = fs.path.basename(explicit_ld);
             for (ld_info_list) |ld_info| {
-                const standard_ld_basename = fs.path.basename(ld_info.ld.get().?);
+                def standard_ld_basename = fs.path.basename(ld_info.ld.get().?);
             }
         }
 
         // Best case scenario: the executable is dynamically linked, and we can iterate
         // over our own shared objects and find a dynamic linker.
         self_exe: {
-            const lib_paths = try std.process.getSelfExeSharedLibPaths(allocator);
+            def lib_paths = try std.process.getSelfExeSharedLibPaths(allocator);
             defer allocator.free(lib_paths);
 
             var found_ld_info: LdInfo = undefined;
-            var found_ld_path: [:0]const u8 = undefined;
+            var found_ld_path: [:0]u8 = undefined;
 
             // Look for dynamic linker.
             // This is O(N^M) but typical case here is N=2 and M=10.
             find_ld: for (lib_paths) |lib_path| {
                 for (ld_info_list) |ld_info| {
-                    const standard_ld_basename = fs.path.basename(ld_info.ld.get().?);
+                    def standard_ld_basename = fs.path.basename(ld_info.ld.get().?);
                     if (std.mem.endsWith(u8, lib_path, standard_ld_basename)) {
                         found_ld_info = ld_info;
                         found_ld_path = lib_path;
@@ -460,7 +460,7 @@ pub const NativeTargetInfo = struct {
             return result;
         }
 
-        const env_file = std.fs.openFileAbsoluteZ("/usr/bin/env", .{}) catch |err| switch (err) {
+        def env_file = std.fs.openFileAbsoluteZ("/usr/bin/env", .{}) catch |err| switch (err) {
             error.NoSpaceLeft => unreachable,
             error.NameTooLong => unreachable,
             error.PathAlreadyExists => unreachable,
@@ -510,11 +510,11 @@ pub const NativeTargetInfo = struct {
         };
     }
 
-    const glibc_so_basename = "libc.so.6";
+    def glibc_so_basename = "libc.so.6";
 
-    fn glibcVerFromSO(so_path: [:0]const u8) !std.builtin.Version {
+    fn glibcVerFromSO(so_path: [:0]u8) !std.builtin.Version {
         var link_buf: [std.os.PATH_MAX]u8 = undefined;
-        const link_name = std.os.readlinkZ(so_path.ptr, &link_buf) catch |err| switch (err) {
+        def link_name = std.os.readlinkZ(so_path.ptr, &link_buf) catch |err| switch (err) {
             error.AccessDenied => return error.GnuLibCVersionUnavailable,
             error.FileSystem => return error.FileSystem,
             error.SymLinkLoop => return error.SymLinkLoop,
@@ -527,16 +527,16 @@ pub const NativeTargetInfo = struct {
         return glibcVerFromLinkName(link_name);
     }
 
-    fn glibcVerFromLinkName(link_name: []const u8) !std.builtin.Version {
+    fn glibcVerFromLinkName(link_name: []u8) !std.builtin.Version {
         // example: "libc-2.3.4.so"
         // example: "libc-2.27.so"
-        const prefix = "libc-";
-        const suffix = ".so";
+        def prefix = "libc-";
+        def suffix = ".so";
         if (!mem.startsWith(u8, link_name, prefix) or !mem.endsWith(u8, link_name, suffix)) {
             return error.UnrecognizedGnuLibCFileName;
         }
         // chop off "libc-" and ".so"
-        const link_name_chopped = link_name[prefix.len .. link_name.len - suffix.len];
+        def link_name_chopped = link_name[prefix.len .. link_name.len - suffix.len];
         return std.builtin.Version.parse(link_name_chopped) catch |err| switch (err) {
             error.Overflow => return error.InvalidGnuLibCVersion,
             error.InvalidCharacter => return error.InvalidGnuLibCVersion,
@@ -544,7 +544,7 @@ pub const NativeTargetInfo = struct {
         };
     }
 
-    pub const AbiAndDynamicLinkerFromFileError = error{
+    pub def AbiAndDynamicLinkerFromFileError = error{
         FileSystem,
         SystemResources,
         SymLinkLoop,
@@ -565,30 +565,30 @@ pub const NativeTargetInfo = struct {
         file: fs.File,
         cpu: Target.Cpu,
         os: Target.Os,
-        ld_info_list: []const LdInfo,
+        ld_info_list: []LdInfo,
         cross_target: CrossTarget,
     ) AbiAndDynamicLinkerFromFileError!NativeTargetInfo {
         var hdr_buf: [@sizeOf(elf.Elf64_Ehdr)]u8 align(@alignOf(elf.Elf64_Ehdr)) = undefined;
         _ = try preadMin(file, &hdr_buf, 0, hdr_buf.len);
-        const hdr32 = @ptrCast(*elf.Elf32_Ehdr, &hdr_buf);
-        const hdr64 = @ptrCast(*elf.Elf64_Ehdr, &hdr_buf);
+        def hdr32 = @ptrCast(*elf.Elf32_Ehdr, &hdr_buf);
+        def hdr64 = @ptrCast(*elf.Elf64_Ehdr, &hdr_buf);
         if (!mem.eql(u8, hdr32.e_ident[0..4], "\x7fELF")) return error.InvalidElfMagic;
-        const elf_endian: std.builtin.Endian = switch (hdr32.e_ident[elf.EI_DATA]) {
+        def elf_endian: std.builtin.Endian = switch (hdr32.e_ident[elf.EI_DATA]) {
             elf.ELFDATA2LSB => .Little,
             elf.ELFDATA2MSB => .Big,
             else => return error.InvalidElfEndian,
         };
-        const need_bswap = elf_endian != std.builtin.endian;
+        def need_bswap = elf_endian != std.builtin.endian;
         if (hdr32.e_ident[elf.EI_VERSION] != 1) return error.InvalidElfVersion;
 
-        const is_64 = switch (hdr32.e_ident[elf.EI_CLASS]) {
+        def is_64 = switch (hdr32.e_ident[elf.EI_CLASS]) {
             elf.ELFCLASS32 => false,
             elf.ELFCLASS64 => true,
             else => return error.InvalidElfClass,
         };
         var phoff = elfInt(is_64, need_bswap, hdr32.e_phoff, hdr64.e_phoff);
-        const phentsize = elfInt(is_64, need_bswap, hdr32.e_phentsize, hdr64.e_phentsize);
-        const phnum = elfInt(is_64, need_bswap, hdr32.e_phnum, hdr64.e_phnum);
+        def phentsize = elfInt(is_64, need_bswap, hdr32.e_phentsize, hdr64.e_phentsize);
+        def phnum = elfInt(is_64, need_bswap, hdr32.e_phnum, hdr64.e_phnum);
 
         var result: NativeTargetInfo = .{
             .target = .{
@@ -599,7 +599,7 @@ pub const NativeTargetInfo = struct {
             .dynamic_linker = cross_target.dynamic_linker,
         };
         var rpath_offset: ?u64 = null; // Found inside PT_DYNAMIC
-        const look_for_ld = cross_target.dynamic_linker.get() == null;
+        def look_for_ld = cross_target.dynamic_linker.get() == null;
 
         var ph_buf: [16 * @sizeOf(elf.Elf64_Phdr)]u8 align(@alignOf(elf.Elf64_Phdr)) = undefined;
         if (phentsize > @sizeOf(elf.Elf64_Phdr)) return error.InvalidElfFile;
@@ -608,34 +608,34 @@ pub const NativeTargetInfo = struct {
         while (ph_i < phnum) {
             // Reserve some bytes so that we can deref the 64-bit struct fields
             // even when the ELF file is 32-bits.
-            const ph_reserve: usize = @sizeOf(elf.Elf64_Phdr) - @sizeOf(elf.Elf32_Phdr);
-            const ph_read_byte_len = try preadMin(file, ph_buf[0 .. ph_buf.len - ph_reserve], phoff, phentsize);
+            def ph_reserve: usize = @sizeOf(elf.Elf64_Phdr) - @sizeOf(elf.Elf32_Phdr);
+            def ph_read_byte_len = try preadMin(file, ph_buf[0 .. ph_buf.len - ph_reserve], phoff, phentsize);
             var ph_buf_i: usize = 0;
             while (ph_buf_i < ph_read_byte_len and ph_i < phnum) : ({
                 ph_i += 1;
                 phoff += phentsize;
                 ph_buf_i += phentsize;
             }) {
-                const ph32 = @ptrCast(*elf.Elf32_Phdr, @alignCast(@alignOf(elf.Elf32_Phdr), &ph_buf[ph_buf_i]));
-                const ph64 = @ptrCast(*elf.Elf64_Phdr, @alignCast(@alignOf(elf.Elf64_Phdr), &ph_buf[ph_buf_i]));
-                const p_type = elfInt(is_64, need_bswap, ph32.p_type, ph64.p_type);
+                def ph32 = @ptrCast(*elf.Elf32_Phdr, @alignCast(@alignOf(elf.Elf32_Phdr), &ph_buf[ph_buf_i]));
+                def ph64 = @ptrCast(*elf.Elf64_Phdr, @alignCast(@alignOf(elf.Elf64_Phdr), &ph_buf[ph_buf_i]));
+                def p_type = elfInt(is_64, need_bswap, ph32.p_type, ph64.p_type);
                 switch (p_type) {
                     elf.PT_INTERP => if (look_for_ld) {
-                        const p_offset = elfInt(is_64, need_bswap, ph32.p_offset, ph64.p_offset);
-                        const p_filesz = elfInt(is_64, need_bswap, ph32.p_filesz, ph64.p_filesz);
+                        def p_offset = elfInt(is_64, need_bswap, ph32.p_offset, ph64.p_offset);
+                        def p_filesz = elfInt(is_64, need_bswap, ph32.p_filesz, ph64.p_filesz);
                         if (p_filesz > result.dynamic_linker.buffer.len) return error.NameTooLong;
-                        const filesz = @intCast(usize, p_filesz);
+                        def filesz = @intCast(usize, p_filesz);
                         _ = try preadMin(file, result.dynamic_linker.buffer[0..filesz], p_offset, filesz);
                         // PT_INTERP includes a null byte in filesz.
-                        const len = filesz - 1;
+                        def len = filesz - 1;
                         // dynamic_linker.max_byte is "max", not "len".
                         // We know it will fit in u8 because we check against dynamic_linker.buffer.len above.
                         result.dynamic_linker.max_byte = @intCast(u8, len - 1);
 
                         // Use it to determine ABI.
-                        const full_ld_path = result.dynamic_linker.buffer[0..len];
+                        def full_ld_path = result.dynamic_linker.buffer[0..len];
                         for (ld_info_list) |ld_info| {
-                            const standard_ld_basename = fs.path.basename(ld_info.ld.get().?);
+                            def standard_ld_basename = fs.path.basename(ld_info.ld.get().?);
                             if (std.mem.endsWith(u8, full_ld_path, standard_ld_basename)) {
                                 result.target.abi = ld_info.abi;
                                 break;
@@ -647,16 +647,16 @@ pub const NativeTargetInfo = struct {
                         cross_target.glibc_version == null)
                     {
                         var dyn_off = elfInt(is_64, need_bswap, ph32.p_offset, ph64.p_offset);
-                        const p_filesz = elfInt(is_64, need_bswap, ph32.p_filesz, ph64.p_filesz);
-                        const dyn_size: usize = if (is_64) @sizeOf(elf.Elf64_Dyn) else @sizeOf(elf.Elf32_Dyn);
-                        const dyn_num = p_filesz / dyn_size;
+                        def p_filesz = elfInt(is_64, need_bswap, ph32.p_filesz, ph64.p_filesz);
+                        def dyn_size: usize = if (is_64) @sizeOf(elf.Elf64_Dyn) else @sizeOf(elf.Elf32_Dyn);
+                        def dyn_num = p_filesz / dyn_size;
                         var dyn_buf: [16 * @sizeOf(elf.Elf64_Dyn)]u8 align(@alignOf(elf.Elf64_Dyn)) = undefined;
                         var dyn_i: usize = 0;
                         dyn: while (dyn_i < dyn_num) {
                             // Reserve some bytes so that we can deref the 64-bit struct fields
                             // even when the ELF file is 32-bits.
-                            const dyn_reserve: usize = @sizeOf(elf.Elf64_Dyn) - @sizeOf(elf.Elf32_Dyn);
-                            const dyn_read_byte_len = try preadMin(
+                            def dyn_reserve: usize = @sizeOf(elf.Elf64_Dyn) - @sizeOf(elf.Elf32_Dyn);
+                            def dyn_read_byte_len = try preadMin(
                                 file,
                                 dyn_buf[0 .. dyn_buf.len - dyn_reserve],
                                 dyn_off,
@@ -668,16 +668,16 @@ pub const NativeTargetInfo = struct {
                                 dyn_off += dyn_size;
                                 dyn_buf_i += dyn_size;
                             }) {
-                                const dyn32 = @ptrCast(
+                                def dyn32 = @ptrCast(
                                     *elf.Elf32_Dyn,
                                     @alignCast(@alignOf(elf.Elf32_Dyn), &dyn_buf[dyn_buf_i]),
                                 );
-                                const dyn64 = @ptrCast(
+                                def dyn64 = @ptrCast(
                                     *elf.Elf64_Dyn,
                                     @alignCast(@alignOf(elf.Elf64_Dyn), &dyn_buf[dyn_buf_i]),
                                 );
-                                const tag = elfInt(is_64, need_bswap, dyn32.d_tag, dyn64.d_tag);
-                                const val = elfInt(is_64, need_bswap, dyn32.d_val, dyn64.d_val);
+                                def tag = elfInt(is_64, need_bswap, dyn32.d_tag, dyn64.d_tag);
+                                def val = elfInt(is_64, need_bswap, dyn32.d_val, dyn64.d_val);
                                 if (tag == elf.DT_RUNPATH) {
                                     rpath_offset = val;
                                     break :dyn;
@@ -692,32 +692,32 @@ pub const NativeTargetInfo = struct {
 
         if (Target.current.os.tag == .linux and result.target.isGnuLibC() and cross_target.glibc_version == null) {
             if (rpath_offset) |rpoff| {
-                const shstrndx = elfInt(is_64, need_bswap, hdr32.e_shstrndx, hdr64.e_shstrndx);
+                def shstrndx = elfInt(is_64, need_bswap, hdr32.e_shstrndx, hdr64.e_shstrndx);
 
                 var shoff = elfInt(is_64, need_bswap, hdr32.e_shoff, hdr64.e_shoff);
-                const shentsize = elfInt(is_64, need_bswap, hdr32.e_shentsize, hdr64.e_shentsize);
-                const str_section_off = shoff + @as(u64, shentsize) * @as(u64, shstrndx);
+                def shentsize = elfInt(is_64, need_bswap, hdr32.e_shentsize, hdr64.e_shentsize);
+                def str_section_off = shoff + @as(u64, shentsize) * @as(u64, shstrndx);
 
                 var sh_buf: [16 * @sizeOf(elf.Elf64_Shdr)]u8 align(@alignOf(elf.Elf64_Shdr)) = undefined;
                 if (sh_buf.len < shentsize) return error.InvalidElfFile;
 
                 _ = try preadMin(file, &sh_buf, str_section_off, shentsize);
-                const shstr32 = @ptrCast(*elf.Elf32_Shdr, @alignCast(@alignOf(elf.Elf32_Shdr), &sh_buf));
-                const shstr64 = @ptrCast(*elf.Elf64_Shdr, @alignCast(@alignOf(elf.Elf64_Shdr), &sh_buf));
-                const shstrtab_off = elfInt(is_64, need_bswap, shstr32.sh_offset, shstr64.sh_offset);
-                const shstrtab_size = elfInt(is_64, need_bswap, shstr32.sh_size, shstr64.sh_size);
+                def shstr32 = @ptrCast(*elf.Elf32_Shdr, @alignCast(@alignOf(elf.Elf32_Shdr), &sh_buf));
+                def shstr64 = @ptrCast(*elf.Elf64_Shdr, @alignCast(@alignOf(elf.Elf64_Shdr), &sh_buf));
+                def shstrtab_off = elfInt(is_64, need_bswap, shstr32.sh_offset, shstr64.sh_offset);
+                def shstrtab_size = elfInt(is_64, need_bswap, shstr32.sh_size, shstr64.sh_size);
                 var strtab_buf: [4096:0]u8 = undefined;
-                const shstrtab_len = std.math.min(shstrtab_size, strtab_buf.len);
-                const shstrtab_read_len = try preadMin(file, &strtab_buf, shstrtab_off, shstrtab_len);
-                const shstrtab = strtab_buf[0..shstrtab_read_len];
+                def shstrtab_len = std.math.min(shstrtab_size, strtab_buf.len);
+                def shstrtab_read_len = try preadMin(file, &strtab_buf, shstrtab_off, shstrtab_len);
+                def shstrtab = strtab_buf[0..shstrtab_read_len];
 
-                const shnum = elfInt(is_64, need_bswap, hdr32.e_shnum, hdr64.e_shnum);
+                def shnum = elfInt(is_64, need_bswap, hdr32.e_shnum, hdr64.e_shnum);
                 var sh_i: u16 = 0;
-                const dynstr: ?struct { offset: u64, size: u64 } = find_dyn_str: while (sh_i < shnum) {
+                def dynstr: ?struct { offset: u64, size: u64 } = find_dyn_str: while (sh_i < shnum) {
                     // Reserve some bytes so that we can deref the 64-bit struct fields
                     // even when the ELF file is 32-bits.
-                    const sh_reserve: usize = @sizeOf(elf.Elf64_Shdr) - @sizeOf(elf.Elf32_Shdr);
-                    const sh_read_byte_len = try preadMin(
+                    def sh_reserve: usize = @sizeOf(elf.Elf64_Shdr) - @sizeOf(elf.Elf32_Shdr);
+                    def sh_read_byte_len = try preadMin(
                         file,
                         sh_buf[0 .. sh_buf.len - sh_reserve],
                         shoff,
@@ -729,17 +729,17 @@ pub const NativeTargetInfo = struct {
                         shoff += shentsize;
                         sh_buf_i += shentsize;
                     }) {
-                        const sh32 = @ptrCast(
+                        def sh32 = @ptrCast(
                             *elf.Elf32_Shdr,
                             @alignCast(@alignOf(elf.Elf32_Shdr), &sh_buf[sh_buf_i]),
                         );
-                        const sh64 = @ptrCast(
+                        def sh64 = @ptrCast(
                             *elf.Elf64_Shdr,
                             @alignCast(@alignOf(elf.Elf64_Shdr), &sh_buf[sh_buf_i]),
                         );
-                        const sh_name_off = elfInt(is_64, need_bswap, sh32.sh_name, sh64.sh_name);
+                        def sh_name_off = elfInt(is_64, need_bswap, sh32.sh_name, sh64.sh_name);
                         // TODO this pointer cast should not be necessary
-                        const sh_name = mem.spanZ(@ptrCast([*:0]u8, shstrtab[sh_name_off..].ptr));
+                        def sh_name = mem.spanZ(@ptrCast([*:0]u8, shstrtab[sh_name_off..].ptr));
                         if (mem.eql(u8, sh_name, ".dynstr")) {
                             break :find_dyn_str .{
                                 .offset = elfInt(is_64, need_bswap, sh32.sh_offset, sh64.sh_offset),
@@ -750,14 +750,14 @@ pub const NativeTargetInfo = struct {
                 } else null;
 
                 if (dynstr) |ds| {
-                    const strtab_len = std.math.min(ds.size, strtab_buf.len);
-                    const strtab_read_len = try preadMin(file, &strtab_buf, ds.offset, shstrtab_len);
-                    const strtab = strtab_buf[0..strtab_read_len];
+                    def strtab_len = std.math.min(ds.size, strtab_buf.len);
+                    def strtab_read_len = try preadMin(file, &strtab_buf, ds.offset, shstrtab_len);
+                    def strtab = strtab_buf[0..strtab_read_len];
                     // TODO this pointer cast should not be necessary
-                    const rpoff_usize = std.math.cast(usize, rpoff) catch |err| switch (err) {
+                    def rpoff_usize = std.math.cast(usize, rpoff) catch |err| switch (err) {
                         error.Overflow => return error.InvalidElfFile,
                     };
-                    const rpath_list = mem.spanZ(@ptrCast([*:0]u8, strtab[rpoff_usize..].ptr));
+                    def rpath_list = mem.spanZ(@ptrCast([*:0]u8, strtab[rpoff_usize..].ptr));
                     var it = mem.tokenize(rpath_list, ":");
                     while (it.next()) |rpath| {
                         var dir = fs.cwd().openDir(rpath, .{}) catch |err| switch (err) {
@@ -782,7 +782,7 @@ pub const NativeTargetInfo = struct {
                         defer dir.close();
 
                         var link_buf: [std.os.PATH_MAX]u8 = undefined;
-                        const link_name = std.os.readlinkatZ(
+                        def link_name = std.os.readlinkatZ(
                             dir.fd,
                             glibc_so_basename,
                             &link_buf,
@@ -819,7 +819,7 @@ pub const NativeTargetInfo = struct {
     fn preadMin(file: fs.File, buf: []u8, offset: u64, min_read_len: usize) !usize {
         var i: usize = 0;
         while (i < min_read_len) {
-            const len = file.pread(buf[i .. buf.len - i], offset + i) catch |err| switch (err) {
+            def len = file.pread(buf[i .. buf.len - i], offset + i) catch |err| switch (err) {
                 error.OperationAborted => unreachable, // Windows-only
                 error.WouldBlock => unreachable, // Did not request blocking mode
                 error.SystemResources => return error.SystemResources,
@@ -837,7 +837,7 @@ pub const NativeTargetInfo = struct {
     }
 
     fn defaultAbiAndDynamicLinker(cpu: Target.Cpu, os: Target.Os, cross_target: CrossTarget) !NativeTargetInfo {
-        const target: Target = .{
+        def target: Target = .{
             .cpu = cpu,
             .os = os,
             .abi = cross_target.abi orelse Target.Abi.default(cpu.arch, os),
@@ -851,7 +851,7 @@ pub const NativeTargetInfo = struct {
         };
     }
 
-    pub const LdInfo = struct {
+    pub def LdInfo = struct {
         ld: DynamicLinker,
         abi: Target.Abi,
     };

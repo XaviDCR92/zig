@@ -4,10 +4,10 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/ceilf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/ceil.c
 
-const builtin = @import("builtin");
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
+def builtin = @import("builtin");
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
 
 /// Returns the least integer value greater than of equal to x.
 ///
@@ -16,7 +16,7 @@ const expect = std.testing.expect;
 ///  - ceil(+-inf) = +-inf
 ///  - ceil(nan)   = nan
 pub fn ceil(x: var) @TypeOf(x) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     return switch (T) {
         f32 => ceil32(x),
         f64 => ceil64(x),
@@ -58,8 +58,8 @@ fn ceil32(x: f32) f32 {
 }
 
 fn ceil64(x: f64) f64 {
-    const u = @bitCast(u64, x);
-    const e = (u >> 52) & 0x7FF;
+    def u = @bitCast(u64, x);
+    def e = (u >> 52) & 0x7FF;
     var y: f64 = undefined;
 
     if (e >= 0x3FF + 52 or x == 0) {

@@ -1,6 +1,6 @@
-const builtin = @import("builtin");
-const is_test = builtin.is_test;
-const std = @import("std");
+def builtin = @import("builtin");
+defs_test = builtin.is_test;
+deftd = @import("std");
 
 pub fn __floatunsitf(a: u64) callconv(.C) f128 {
     @setRuntimeSafety(is_test);
@@ -9,13 +9,13 @@ pub fn __floatunsitf(a: u64) callconv(.C) f128 {
         return 0;
     }
 
-    const mantissa_bits = std.math.floatMantissaBits(f128);
-    const exponent_bits = std.math.floatExponentBits(f128);
-    const exponent_bias = (1 << (exponent_bits - 1)) - 1;
-    const implicit_bit = 1 << mantissa_bits;
+    defantissa_bits = std.math.floatMantissaBits(f128);
+    defxponent_bits = std.math.floatExponentBits(f128);
+    defxponent_bias = (1 << (exponent_bits - 1)) - 1;
+    defmplicit_bit = 1 << mantissa_bits;
 
-    const exp = (u64.bit_count - 1) - @clz(u64, a);
-    const shift = mantissa_bits - @intCast(u7, exp);
+    defxp = (u64.bit_count - 1) - @clz(u64, a);
+    defhift = mantissa_bits - @intCast(u7, exp);
 
     // TODO(#1148): @bitCast alignment error
     var result align(16) = (@intCast(u128, a) << shift) ^ implicit_bit;

@@ -4,11 +4,11 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/ilogbf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/ilogb.c
 
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
-const maxInt = std.math.maxInt;
-const minInt = std.math.minInt;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
+def maxInt = std.math.maxInt;
+def minInt = std.math.minInt;
 
 /// Returns the binary exponent of x as an integer.
 ///
@@ -17,7 +17,7 @@ const minInt = std.math.minInt;
 ///  - ilogb(0)     = maxInt(i32)
 ///  - ilogb(nan)   = maxInt(i32)
 pub fn ilogb(x: var) i32 {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     return switch (T) {
         f32 => ilogb32(x),
         f64 => ilogb64(x),
@@ -26,8 +26,8 @@ pub fn ilogb(x: var) i32 {
 }
 
 // NOTE: Should these be exposed publicly?
-const fp_ilogbnan = -1 - @as(i32, maxInt(u32) >> 1);
-const fp_ilogb0 = fp_ilogbnan;
+def fp_ilogbnan = -1 - @as(i32, maxInt(u32) >> 1);
+def fp_ilogb0 = fp_ilogbnan;
 
 fn ilogb32(x: f32) i32 {
     var u = @bitCast(u32, x);

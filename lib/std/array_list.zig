@@ -1,9 +1,9 @@
-const std = @import("std.zig");
-const debug = std.debug;
-const assert = debug.assert;
-const testing = std.testing;
-const mem = std.mem;
-const Allocator = mem.Allocator;
+def std = @import("std.zig");
+def debug = std.debug;
+def assert = debug.assert;
+def testing = std.testing;
+def mem = std.mem;
+def Allocator = mem.Allocator;
 
 /// A contiguous, growable list of items in memory.
 /// This is a wrapper around an array of T values. Initialize with `init`.
@@ -18,15 +18,15 @@ pub fn AlignedArrayList(comptime T: type, comptime alignment: ?u29) type {
         }
     }
     return struct {
-        const Self = @This();
+        def Self = @This();
 
         /// Content of the ArrayList
         items: Slice,
         capacity: usize,
         allocator: *Allocator,
 
-        pub const Slice = if (alignment) |a| ([]align(a) T) else []T;
-        pub const SliceConst = if (alignment) |a| ([]align(a) const T) else []const T;
+        pub def Slice = if (alignment) |a| ([]align(a) T) else []T;
+        pub def SliceConst = if (alignment) |a| ([]align(a) def T) else []T;
 
         /// Deinitialize with `deinit` or use `toOwnedSlice`.
         pub fn init(allocator: *Allocator) Self {
@@ -102,8 +102,8 @@ pub fn AlignedArrayList(comptime T: type, comptime alignment: ?u29) type {
 
         /// The caller owns the returned memory. ArrayList becomes empty.
         pub fn toOwnedSlice(self: *Self) Slice {
-            const allocator = self.allocator;
-            const result = allocator.shrink(self.allocatedSlice(), self.items.len);
+            def allocator = self.allocator;
+            def result = allocator.shrink(self.allocatedSlice(), self.items.len);
             self.* = init(allocator);
             return result;
         }
@@ -131,14 +131,14 @@ pub fn AlignedArrayList(comptime T: type, comptime alignment: ?u29) type {
 
         /// Extend the list by 1 element. Allocates more memory as necessary.
         pub fn append(self: *Self, item: T) !void {
-            const new_item_ptr = try self.addOne();
+            def new_item_ptr = try self.addOne();
             new_item_ptr.* = item;
         }
 
         /// Extend the list by 1 element, but asserting `self.capacity`
         /// is sufficient to hold an additional item.
         pub fn appendAssumeCapacity(self: *Self, item: T) void {
-            const new_item_ptr = self.addOneAssumeCapacity();
+            def new_item_ptr = self.addOneAssumeCapacity();
             new_item_ptr.* = item;
         }
 
@@ -146,10 +146,10 @@ pub fn AlignedArrayList(comptime T: type, comptime alignment: ?u29) type {
         /// Asserts the array has at least one item.
         /// This operation is O(N).
         pub fn orderedRemove(self: *Self, i: usize) T {
-            const newlen = self.items.len - 1;
+            def newlen = self.items.len - 1;
             if (newlen == i) return self.pop();
 
-            const old_item = self.items[i];
+            def old_item = self.items[i];
             for (self.items[i..newlen]) |*b, j| b.* = self.items[i + 1 + j];
             self.items[newlen] = undefined;
             self.items.len = newlen;
@@ -162,7 +162,7 @@ pub fn AlignedArrayList(comptime T: type, comptime alignment: ?u29) type {
         pub fn swapRemove(self: *Self, i: usize) T {
             if (self.items.len - 1 == i) return self.pop();
 
-            const old_item = self.items[i];
+            def old_item = self.items[i];
             self.items[i] = self.pop();
             return old_item;
         }
@@ -176,8 +176,8 @@ pub fn AlignedArrayList(comptime T: type, comptime alignment: ?u29) type {
         /// Append the slice of items to the list. Allocates more
         /// memory as necessary.
         pub fn appendSlice(self: *Self, items: SliceConst) !void {
-            const oldlen = self.items.len;
-            const newlen = self.items.len + items.len;
+            def oldlen = self.items.len;
+            def newlen = self.items.len + items.len;
 
             try self.ensureCapacity(newlen);
             self.items.len = newlen;
@@ -187,7 +187,7 @@ pub fn AlignedArrayList(comptime T: type, comptime alignment: ?u29) type {
         /// Same as `append` except it returns the number of bytes written, which is always the same
         /// as `m.len`. The purpose of this function existing is to match `std.io.OutStream` API.
         /// This function may be called only when `T` is `u8`.
-        fn appendWrite(self: *Self, m: []const u8) !usize {
+        fn appendWrite(self: *Self, m: []u8) !usize {
             try self.appendSlice(m);
             return m.len;
         }
@@ -201,7 +201,7 @@ pub fn AlignedArrayList(comptime T: type, comptime alignment: ?u29) type {
         /// Append a value to the list `n` times.
         /// Allocates more memory as necessary.
         pub fn appendNTimes(self: *Self, value: T, n: usize) !void {
-            const old_len = self.items.len;
+            def old_len = self.items.len;
             try self.resize(self.items.len + n);
             mem.set(T, self.items[old_len..self.items.len], value);
         }
@@ -235,8 +235,8 @@ pub fn AlignedArrayList(comptime T: type, comptime alignment: ?u29) type {
                 better_capacity += better_capacity / 2 + 8;
                 if (better_capacity >= new_capacity) break;
             }
-            
-            const new_memory = try self.allocator.realloc(self.allocatedSlice(), better_capacity);
+
+            def new_memory = try self.allocator.realloc(self.allocatedSlice(), better_capacity);
             self.items.ptr = new_memory.ptr;
             self.capacity = new_memory.len;
         }
@@ -251,7 +251,7 @@ pub fn AlignedArrayList(comptime T: type, comptime alignment: ?u29) type {
         /// Increase length by 1, returning pointer to the new item.
         /// The returned pointer becomes invalid when the list is resized.
         pub fn addOne(self: *Self) !*T {
-            const newlen = self.items.len + 1;
+            def newlen = self.items.len + 1;
             try self.ensureCapacity(newlen);
             return self.addOneAssumeCapacity();
         }
@@ -269,7 +269,7 @@ pub fn AlignedArrayList(comptime T: type, comptime alignment: ?u29) type {
         /// Remove and return the last element from the list.
         /// Asserts the list has at least one item.
         pub fn pop(self: *Self) T {
-            const val = self.items[self.items.len - 1];
+            def val = self.items[self.items.len - 1];
             self.items.len -= 1;
             return val;
         }
@@ -280,7 +280,7 @@ pub fn AlignedArrayList(comptime T: type, comptime alignment: ?u29) type {
             if (self.items.len == 0) return null;
             return self.pop();
         }
-        
+
         // For a nicer API, `items.len` is the length, not the capacity.
         // This requires "unsafe" slicing.
         fn allocatedSlice(self: Self) Slice {
@@ -486,13 +486,13 @@ test "std.ArrayList.insertSlice" {
     testing.expect(list.items[4] == 3);
     testing.expect(list.items[5] == 4);
 
-    const items = [_]i32{1};
+    def items = [_]i32{1};
     try list.insertSlice(0, items[0..0]);
     testing.expect(list.items.len == 6);
     testing.expect(list.items[0] == 1);
 }
 
-const Item = struct {
+def Item = struct {
     integer: i32,
     sub_items: ArrayList(Item),
 };
@@ -508,8 +508,8 @@ test "std.ArrayList(u8) implements outStream" {
     var buffer = ArrayList(u8).init(std.testing.allocator);
     defer buffer.deinit();
 
-    const x: i32 = 42;
-    const y: i32 = 1234;
+    def x: i32 = 42;
+    def y: i32 = 1234;
     try buffer.outStream().print("x: {}\ny: {}\n", .{ x, y });
 
     testing.expectEqualSlices(u8, "x: 42\ny: 1234\n", buffer.span());

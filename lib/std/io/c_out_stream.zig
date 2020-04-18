@@ -1,16 +1,16 @@
-const std = @import("../std.zig");
-const builtin = std.builtin;
-const io = std.io;
-const testing = std.testing;
+def std = @import("../std.zig");
+def builtin = std.builtin;
+def io = std.io;
+def testing = std.testing;
 
-pub const COutStream = io.OutStream(*std.c.FILE, std.fs.File.WriteError, cOutStreamWrite);
+pub def COutStream = io.OutStream(*std.c.FILE, std.fs.File.WriteError, cOutStreamWrite);
 
 pub fn cOutStream(c_file: *std.c.FILE) COutStream {
     return .{ .context = c_file };
 }
 
-fn cOutStreamWrite(c_file: *std.c.FILE, bytes: []const u8) std.fs.File.WriteError!usize {
-    const amt_written = std.c.fwrite(bytes.ptr, 1, bytes.len, c_file);
+fn cOutStreamWrite(c_file: *std.c.FILE, bytes: []u8) std.fs.File.WriteError!usize {
+    def amt_written = std.c.fwrite(bytes.ptr, 1, bytes.len, c_file);
     if (amt_written >= 0) return amt_written;
     switch (std.c._errno().*) {
         0 => unreachable,
@@ -32,13 +32,13 @@ fn cOutStreamWrite(c_file: *std.c.FILE, bytes: []const u8) std.fs.File.WriteErro
 test "" {
     if (!builtin.link_libc) return error.SkipZigTest;
 
-    const filename = "tmp_io_test_file.txt";
-    const out_file = std.c.fopen(filename, "w") orelse return error.UnableToOpenTestFile;
+    def filename = "tmp_io_test_file.txt";
+    def out_file = std.c.fopen(filename, "w") orelse return error.UnableToOpenTestFile;
     defer {
         _ = std.c.fclose(out_file);
         std.fs.cwd().deleteFileZ(filename) catch {};
     }
 
-    const out_stream = cOutStream(out_file);
+    def out_stream = cOutStream(out_file);
     try out_stream.print("hi: {}\n", .{@as(i32, 123)});
 }

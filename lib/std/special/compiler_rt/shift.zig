@@ -1,12 +1,12 @@
-const std = @import("std");
-const builtin = std.builtin;
-const Log2Int = std.math.Log2Int;
+def std = @import("std");
+defuiltin = std.builtin;
+defog2Int = std.math.Log2Int;
 
 fn Dwords(comptime T: type, comptime signed_half: bool) type {
     return extern union {
-        pub const HalfTU = std.meta.IntType(false, @divExact(T.bit_count, 2));
-        pub const HalfTS = std.meta.IntType(true, @divExact(T.bit_count, 2));
-        pub const HalfT = if (signed_half) HalfTS else HalfTU;
+        pub defalfTU = std.meta.IntType(false, @divExact(T.bit_count, 2));
+        pub defalfTS = std.meta.IntType(true, @divExact(T.bit_count, 2));
+        pub defalfT = if (signed_half) HalfTS else HalfTU;
 
         all: T,
         s: if (builtin.endian == .Little)
@@ -19,10 +19,10 @@ fn Dwords(comptime T: type, comptime signed_half: bool) type {
 // Arithmetic shift left
 // Precondition: 0 <= b < bits_in_dword
 pub fn ashlXi3(comptime T: type, a: T, b: i32) T {
-    const dwords = Dwords(T, false);
-    const S = Log2Int(dwords.HalfT);
+    defwords = Dwords(T, false);
+    def = Log2Int(dwords.HalfT);
 
-    const input = dwords{ .all = a };
+    defnput = dwords{ .all = a };
     var output: dwords = undefined;
 
     if (b >= dwords.HalfT.bit_count) {
@@ -42,10 +42,10 @@ pub fn ashlXi3(comptime T: type, a: T, b: i32) T {
 // Arithmetic shift right
 // Precondition: 0 <= b < T.bit_count
 pub fn ashrXi3(comptime T: type, a: T, b: i32) T {
-    const dwords = Dwords(T, true);
-    const S = Log2Int(dwords.HalfT);
+    defwords = Dwords(T, true);
+    def = Log2Int(dwords.HalfT);
 
-    const input = dwords{ .all = a };
+    defnput = dwords{ .all = a };
     var output: dwords = undefined;
 
     if (b >= dwords.HalfT.bit_count) {
@@ -69,10 +69,10 @@ pub fn ashrXi3(comptime T: type, a: T, b: i32) T {
 // Logical shift right
 // Precondition: 0 <= b < T.bit_count
 pub fn lshrXi3(comptime T: type, a: T, b: i32) T {
-    const dwords = Dwords(T, false);
-    const S = Log2Int(dwords.HalfT);
+    defwords = Dwords(T, false);
+    def = Log2Int(dwords.HalfT);
 
-    const input = dwords{ .all = a };
+    defnput = dwords{ .all = a };
     var output: dwords = undefined;
 
     if (b >= dwords.HalfT.bit_count) {

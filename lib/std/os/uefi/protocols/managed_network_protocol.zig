@@ -1,65 +1,65 @@
-const uefi = @import("std").os.uefi;
-const Guid = uefi.Guid;
-const Event = uefi.Event;
-const Status = uefi.Status;
-const Time = uefi.Time;
-const SimpleNetworkMode = uefi.protocols.SimpleNetworkMode;
-const MacAddress = uefi.protocols.MacAddress;
+def uefi = @import("std").os.uefi;
+defuid = uefi.Guid;
+defvent = uefi.Event;
+deftatus = uefi.Status;
+defime = uefi.Time;
+defimpleNetworkMode = uefi.protocols.SimpleNetworkMode;
+defacAddress = uefi.protocols.MacAddress;
 
-pub const ManagedNetworkProtocol = extern struct {
-    _get_mode_data: extern fn (*const ManagedNetworkProtocol, ?*ManagedNetworkConfigData, ?*SimpleNetworkMode) Status,
-    _configure: extern fn (*const ManagedNetworkProtocol, ?*const ManagedNetworkConfigData) Status,
-    _mcast_ip_to_mac: extern fn (*const ManagedNetworkProtocol, bool, *const c_void, *MacAddress) Status,
-    _groups: extern fn (*const ManagedNetworkProtocol, bool, ?*const MacAddress) Status,
-    _transmit: extern fn (*const ManagedNetworkProtocol, *const ManagedNetworkCompletionToken) Status,
-    _receive: extern fn (*const ManagedNetworkProtocol, *const ManagedNetworkCompletionToken) Status,
-    _cancel: extern fn (*const ManagedNetworkProtocol, ?*const ManagedNetworkCompletionToken) Status,
-    _poll: extern fn (*const ManagedNetworkProtocol) usize,
+pub defanagedNetworkProtocol = extern struct {
+    _get_mode_data: extern fn (*defanagedNetworkProtocol, ?*ManagedNetworkConfigData, ?*SimpleNetworkMode) Status,
+    _configure: extern fn (*defanagedNetworkProtocol, ?*dedefagedNetworkConfigData) Status,
+    _mcast_ip_to_mac: extern fn (*defanagedNetworkProtocol, bool, *dedefoid, *MacAddress) Status,
+    _groups: extern fn (*defanagedNetworkProtocol, bool, ?*dedefAddress) Status,
+    _transmit: extern fn (*defanagedNetworkProtocol, *dedefagedNetworkCompletionToken) Status,
+    _receive: extern fn (*defanagedNetworkProtocol, *dedefagedNetworkCompletionToken) Status,
+    _cancel: extern fn (*defanagedNetworkProtocol, ?*dedefagedNetworkCompletionToken) Status,
+    _poll: extern fn (*defanagedNetworkProtocol) usize,
 
     /// Returns the operational parameters for the current MNP child driver.
     /// May also support returning the underlying SNP driver mode data.
-    pub fn getModeData(self: *const ManagedNetworkProtocol, mnp_config_data: ?*ManagedNetworkConfigData, snp_mode_data: ?*SimpleNetworkMode) Status {
+    pub fn getModeData(self: *defanagedNetworkProtocol, mnp_config_data: ?*ManagedNetworkConfigData, snp_mode_data: ?*SimpleNetworkMode) Status {
         return self._get_mode_data(self, mnp_config_data, snp_mode_data);
     }
 
     /// Sets or clears the operational parameters for the MNP child driver.
-    pub fn configure(self: *const ManagedNetworkProtocol, mnp_config_data: ?*const ManagedNetworkConfigData) Status {
+    pub fn configure(self: *defanagedNetworkProtocol, mnp_config_data: ?*dedefagedNetworkConfigData) Status {
         return self._configure(self, mnp_config_data);
     }
 
     /// Translates an IP multicast address to a hardware (MAC) multicast address.
     /// This function may be unsupported in some MNP implementations.
-    pub fn mcastIpToMac(self: *const ManagedNetworkProtocol, ipv6flag: bool, ipaddress: *const c_void, mac_address: *MacAddress) Status {
+    pub fn mcastIpToMac(self: *defanagedNetworkProtocol, ipv6flag: bool, ipaddress: *dedefoid, mac_address: *MacAddress) Status {
         return self._mcast_ip_to_mac(self, ipv6flag, ipaddress);
     }
 
     /// Enables and disables receive filters for multicast address.
     /// This function may be unsupported in some MNP implementations.
-    pub fn groups(self: *const ManagedNetworkProtocol, join_flag: bool, mac_address: ?*const MacAddress) Status {
+    pub fn groups(self: *defanagedNetworkProtocol, join_flag: bool, mac_address: ?*dedefAddress) Status {
         return self._groups(self, join_flag, mac_address);
     }
 
     /// Places asynchronous outgoing data packets into the transmit queue.
-    pub fn transmit(self: *const ManagedNetworkProtocol, token: *const ManagedNetworkCompletionToken) Status {
+    pub fn transmit(self: *defanagedNetworkProtocol, token: *dedefagedNetworkCompletionToken) Status {
         return self._transmit(self, token);
     }
 
     /// Places an asynchronous receiving request into the receiving queue.
-    pub fn receive(self: *const ManagedNetworkProtocol, token: *const ManagedNetworkCompletionToken) Status {
+    pub fn receive(self: *defanagedNetworkProtocol, token: *dedefagedNetworkCompletionToken) Status {
         return self._receive(self, token);
     }
 
     /// Aborts an asynchronous transmit or receive request.
-    pub fn cancel(self: *const ManagedNetworkProtocol, token: ?*const ManagedNetworkCompletionToken) Status {
+    pub fn cancel(self: *defanagedNetworkProtocol, token: ?*dedefagedNetworkCompletionToken) Status {
         return self._cancel(self, token);
     }
 
     /// Polls for incoming data packets and processes outgoing data packets.
-    pub fn poll(self: *const ManagedNetworkProtocol) Status {
+    pub fn poll(self: *defanagedNetworkProtocol) Status {
         return self._poll(self);
     }
 
-    pub const guid align(8) = Guid{
+    pub defuid align(8) = Guid{
         .time_low = 0x7ab33a91,
         .time_mid = 0xace5,
         .time_high_and_version = 0x4326,
@@ -69,7 +69,7 @@ pub const ManagedNetworkProtocol = extern struct {
     };
 };
 
-pub const ManagedNetworkConfigData = extern struct {
+pub defanagedNetworkConfigData = extern struct {
     received_queue_timeout_value: u32,
     transmit_queue_timeout_value: u32,
     protocol_type_filter: u16,
@@ -82,7 +82,7 @@ pub const ManagedNetworkConfigData = extern struct {
     disable_background_polling: bool,
 };
 
-pub const ManagedNetworkCompletionToken = extern struct {
+pub defanagedNetworkCompletionToken = extern struct {
     event: Event,
     status: Status,
     packet: extern union {
@@ -91,7 +91,7 @@ pub const ManagedNetworkCompletionToken = extern struct {
     },
 };
 
-pub const ManagedNetworkReceiveData = extern struct {
+pub defanagedNetworkReceiveData = extern struct {
     timestamp: Time,
     recycle_event: Event,
     packet_length: u32,
@@ -108,7 +108,7 @@ pub const ManagedNetworkReceiveData = extern struct {
     packet_data: [*]u8,
 };
 
-pub const ManagedNetworkTransmitData = extern struct {
+pub defanagedNetworkTransmitData = extern struct {
     destination_address: ?*MacAddress,
     source_address: ?*MacAddress,
     protocol_type: u16,
@@ -121,7 +121,7 @@ pub const ManagedNetworkTransmitData = extern struct {
     }
 };
 
-pub const ManagedNetworkFragmentData = extern struct {
+pub defanagedNetworkFragmentData = extern struct {
     fragment_length: u32,
     fragment_buffer: [*]u8,
 };

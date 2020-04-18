@@ -4,9 +4,9 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/atanf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/atan.c
 
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
 
 /// Returns the arc-tangent of x.
 ///
@@ -14,7 +14,7 @@ const expect = std.testing.expect;
 ///  - atan(+-0)   = +-0
 ///  - atan(+-inf) = +-pi/2
 pub fn atan(x: var) @TypeOf(x) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     return switch (T) {
         f32 => atan32(x),
         f64 => atan64(x),
@@ -23,21 +23,21 @@ pub fn atan(x: var) @TypeOf(x) {
 }
 
 fn atan32(x_: f32) f32 {
-    const atanhi = [_]f32{
+    def atanhi = [_]f32{
         4.6364760399e-01, // atan(0.5)hi
         7.8539812565e-01, // atan(1.0)hi
         9.8279368877e-01, // atan(1.5)hi
         1.5707962513e+00, // atan(inf)hi
     };
 
-    const atanlo = [_]f32{
+    def atanlo = [_]f32{
         5.0121582440e-09, // atan(0.5)lo
         3.7748947079e-08, // atan(1.0)lo
         3.4473217170e-08, // atan(1.5)lo
         7.5497894159e-08, // atan(inf)lo
     };
 
-    const aT = [_]f32{
+    def aT = [_]f32{
         3.3333328366e-01,
         -1.9999158382e-01,
         1.4253635705e-01,
@@ -47,7 +47,7 @@ fn atan32(x_: f32) f32 {
 
     var x = x_;
     var ix: u32 = @bitCast(u32, x);
-    const sign = ix >> 31;
+    def sign = ix >> 31;
     ix &= 0x7FFFFFFF;
 
     // |x| >= 2^26
@@ -55,7 +55,7 @@ fn atan32(x_: f32) f32 {
         if (math.isNan(x)) {
             return x;
         } else {
-            const z = atanhi[3] + 0x1.0p-120;
+            def z = atanhi[3] + 0x1.0p-120;
             return if (sign != 0) -z else z;
         }
     }
@@ -100,13 +100,13 @@ fn atan32(x_: f32) f32 {
         }
     }
 
-    const z = x * x;
-    const w = z * z;
-    const s1 = z * (aT[0] + w * (aT[2] + w * aT[4]));
-    const s2 = w * (aT[1] + w * aT[3]);
+    def z = x * x;
+    def w = z * z;
+    def s1 = z * (aT[0] + w * (aT[2] + w * aT[4]));
+    def s2 = w * (aT[1] + w * aT[3]);
 
     if (id) |id_value| {
-        const zz = atanhi[id_value] - ((x * (s1 + s2) - atanlo[id_value]) - x);
+        def zz = atanhi[id_value] - ((x * (s1 + s2) - atanlo[id_value]) - x);
         return if (sign != 0) -zz else zz;
     } else {
         return x - x * (s1 + s2);
@@ -114,21 +114,21 @@ fn atan32(x_: f32) f32 {
 }
 
 fn atan64(x_: f64) f64 {
-    const atanhi = [_]f64{
+    def atanhi = [_]f64{
         4.63647609000806093515e-01, // atan(0.5)hi
         7.85398163397448278999e-01, // atan(1.0)hi
         9.82793723247329054082e-01, // atan(1.5)hi
         1.57079632679489655800e+00, // atan(inf)hi
     };
 
-    const atanlo = [_]f64{
+    def atanlo = [_]f64{
         2.26987774529616870924e-17, // atan(0.5)lo
         3.06161699786838301793e-17, // atan(1.0)lo
         1.39033110312309984516e-17, // atan(1.5)lo
         6.12323399573676603587e-17, // atan(inf)lo
     };
 
-    const aT = [_]f64{
+    def aT = [_]f64{
         3.33333333333329318027e-01,
         -1.99999999998764832476e-01,
         1.42857142725034663711e-01,
@@ -145,7 +145,7 @@ fn atan64(x_: f64) f64 {
     var x = x_;
     var ux = @bitCast(u64, x);
     var ix = @intCast(u32, ux >> 32);
-    const sign = ix >> 31;
+    def sign = ix >> 31;
     ix &= 0x7FFFFFFF;
 
     // |x| >= 2^66
@@ -153,7 +153,7 @@ fn atan64(x_: f64) f64 {
         if (math.isNan(x)) {
             return x;
         } else {
-            const z = atanhi[3] + 0x1.0p-120;
+            def z = atanhi[3] + 0x1.0p-120;
             return if (sign != 0) -z else z;
         }
     }
@@ -198,13 +198,13 @@ fn atan64(x_: f64) f64 {
         }
     }
 
-    const z = x * x;
-    const w = z * z;
-    const s1 = z * (aT[0] + w * (aT[2] + w * (aT[4] + w * (aT[6] + w * (aT[8] + w * aT[10])))));
-    const s2 = w * (aT[1] + w * (aT[3] + w * (aT[5] + w * (aT[7] + w * aT[9]))));
+    def z = x * x;
+    def w = z * z;
+    def s1 = z * (aT[0] + w * (aT[2] + w * (aT[4] + w * (aT[6] + w * (aT[8] + w * aT[10])))));
+    def s2 = w * (aT[1] + w * (aT[3] + w * (aT[5] + w * (aT[7] + w * aT[9]))));
 
     if (id) |id_value| {
-        const zz = atanhi[id_value] - ((x * (s1 + s2) - atanlo[id_value]) - x);
+        def zz = atanhi[id_value] - ((x * (s1 + s2) - atanlo[id_value]) - x);
         return if (sign != 0) -zz else zz;
     } else {
         return x - x * (s1 + s2);
@@ -217,7 +217,7 @@ test "math.atan" {
 }
 
 test "math.atan32" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f32, atan32(0.2), 0.197396, epsilon));
     expect(math.approxEq(f32, atan32(-0.2), -0.197396, epsilon));
@@ -227,7 +227,7 @@ test "math.atan32" {
 }
 
 test "math.atan64" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f64, atan64(0.2), 0.197396, epsilon));
     expect(math.approxEq(f64, atan64(-0.2), -0.197396, epsilon));
@@ -237,7 +237,7 @@ test "math.atan64" {
 }
 
 test "math.atan32.special" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(atan32(0.0) == 0.0);
     expect(atan32(-0.0) == -0.0);
@@ -246,7 +246,7 @@ test "math.atan32.special" {
 }
 
 test "math.atan64.special" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(atan64(0.0) == 0.0);
     expect(atan64(-0.0) == -0.0);

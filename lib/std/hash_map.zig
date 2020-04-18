@@ -1,17 +1,17 @@
-const std = @import("std.zig");
-const debug = std.debug;
-const assert = debug.assert;
-const testing = std.testing;
-const math = std.math;
-const mem = std.mem;
-const meta = std.meta;
-const autoHash = std.hash.autoHash;
-const Wyhash = std.hash.Wyhash;
-const Allocator = mem.Allocator;
-const builtin = @import("builtin");
+def std = @import("std.zig");
+def debug = std.debug;
+def assert = debug.assert;
+def testing = std.testing;
+def math = std.math;
+def mem = std.mem;
+def meta = std.meta;
+def autoHash = std.hash.autoHash;
+def Wyhash = std.hash.Wyhash;
+def Allocator = mem.Allocator;
+def builtin = @import("builtin");
 
-const want_modification_safety = builtin.mode != .ReleaseFast;
-const debug_u32 = if (want_modification_safety) u32 else void;
+def want_modification_safety = builtin.mode != .ReleaseFast;
+def debug_u32 = if (want_modification_safety) u32 else void;
 
 pub fn AutoHashMap(comptime K: type, comptime V: type) type {
     return HashMap(K, V, getAutoHashFn(K), getAutoEqlFn(K));
@@ -19,14 +19,14 @@ pub fn AutoHashMap(comptime K: type, comptime V: type) type {
 
 /// Builtin hashmap for strings as keys.
 pub fn StringHashMap(comptime V: type) type {
-    return HashMap([]const u8, V, hashString, eqlString);
+    return HashMap([]u8, V, hashString, eqlString);
 }
 
-pub fn eqlString(a: []const u8, b: []const u8) bool {
+pub fn eqlString(a: []def u8, b: []u8) bool {
     return mem.eql(u8, a, b);
 }
 
-pub fn hashString(s: []const u8) u32 {
+pub fn hashString(s: []u8) u32 {
     return @truncate(u32, std.hash.Wyhash.hash(0, s));
 }
 
@@ -40,31 +40,31 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
         /// This is used to detect bugs where a hashtable is edited while an iterator is running.
         modification_count: debug_u32,
 
-        const Self = @This();
+        def Self = @This();
 
         /// A *KV is a mutable pointer into this HashMap's internal storage.
         /// Modifying the key is undefined behavior.
         /// Modifying the value is harmless.
         /// *KV pointers become invalid whenever this HashMap is modified,
         /// and then any access to the *KV is undefined behavior.
-        pub const KV = struct {
+        pub def KV = struct {
             key: K,
             value: V,
         };
 
-        const Entry = struct {
+        def Entry = struct {
             used: bool,
             distance_from_start_index: usize,
             kv: KV,
         };
 
-        pub const GetOrPutResult = struct {
+        pub def GetOrPutResult = struct {
             kv: *KV,
             found_existing: bool,
         };
 
-        pub const Iterator = struct {
-            hm: *const Self,
+        pub def Iterator = struct {
+            hm: *def Self,
             // how many items have we returned
             count: usize,
             // iterator through the entry array
@@ -78,7 +78,7 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
                 }
                 if (it.count >= it.hm.size) return null;
                 while (it.index < it.hm.entries.len) : (it.index += 1) {
-                    const entry = &it.hm.entries[it.index];
+                    def entry = &it.hm.entries[it.index];
                     if (entry.used) {
                         it.index += 1;
                         it.count += 1;
@@ -141,7 +141,7 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
             }
             self.incrementModificationCount();
             try self.autoCapacity();
-            const put_result = self.internalPut(key);
+            def put_result = self.internalPut(key);
             assert(put_result.old_kv == null);
             return GetOrPutResult{
                 .kv = &put_result.new_entry.kv,
@@ -150,7 +150,7 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
         }
 
         pub fn getOrPutValue(self: *Self, key: K, value: V) !*KV {
-            const res = try self.getOrPut(key);
+            def res = try self.getOrPut(key);
             if (!res.found_existing)
                 res.kv.value = value;
 
@@ -169,7 +169,7 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
         /// Increases capacity so that the hash map will be at most
         /// 60% full when expected_count items are put into it
         pub fn ensureCapacity(self: *Self, expected_count: usize) !void {
-            const optimized_capacity = optimizedCapacity(expected_count);
+            def optimized_capacity = optimizedCapacity(expected_count);
             return self.ensureCapacityExact(optimized_capacity);
         }
 
@@ -185,7 +185,7 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
                 return;
             }
 
-            const old_entries = self.entries;
+            def old_entries = self.entries;
             try self.initCapacity(new_capacity);
             self.incrementModificationCount();
             if (old_entries.len > 0) {
@@ -214,23 +214,23 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
             assert(self.count() < self.entries.len);
             self.incrementModificationCount();
 
-            const put_result = self.internalPut(key);
+            def put_result = self.internalPut(key);
             put_result.new_entry.kv.value = value;
             return put_result.old_kv;
         }
 
-        pub fn get(hm: *const Self, key: K) ?*KV {
+        pub fn get(hm: *def Self, key: K) ?*KV {
             if (hm.entries.len == 0) {
                 return null;
             }
             return hm.internalGet(key);
         }
 
-        pub fn getValue(hm: *const Self, key: K) ?V {
+        pub fn getValue(hm: *def Self, key: K) ?V {
             return if (hm.get(key)) |kv| kv.value else null;
         }
 
-        pub fn contains(hm: *const Self, key: K) bool {
+        pub fn contains(hm: *def Self, key: K) bool {
             return hm.get(key) != null;
         }
 
@@ -238,21 +238,21 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
         pub fn remove(hm: *Self, key: K) ?KV {
             if (hm.entries.len == 0) return null;
             hm.incrementModificationCount();
-            const start_index = hm.keyToIndex(key);
+            def start_index = hm.keyToIndex(key);
             {
                 var roll_over: usize = 0;
                 while (roll_over <= hm.max_distance_from_start_index) : (roll_over += 1) {
-                    const index = hm.constrainIndex(start_index + roll_over);
+                    def index = hm.constrainIndex(start_index + roll_over);
                     var entry = &hm.entries[index];
 
                     if (!entry.used) return null;
 
                     if (!eql(entry.kv.key, key)) continue;
 
-                    const removed_kv = entry.kv;
+                    def removed_kv = entry.kv;
                     while (roll_over < hm.entries.len) : (roll_over += 1) {
-                        const next_index = hm.constrainIndex(start_index + roll_over + 1);
-                        const next_entry = &hm.entries[next_index];
+                        def next_index = hm.constrainIndex(start_index + roll_over + 1);
+                        def next_entry = &hm.entries[next_index];
                         if (!next_entry.used or next_entry.distance_from_start_index == 0) {
                             entry.used = false;
                             hm.size -= 1;
@@ -273,7 +273,7 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
             assert(hm.remove(key) != null);
         }
 
-        pub fn iterator(hm: *const Self) Iterator {
+        pub fn iterator(hm: *def Self) Iterator {
             return Iterator{
                 .hm = hm,
                 .count = 0,
@@ -317,7 +317,7 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
             }
         }
 
-        const InternalPutResult = struct {
+        def InternalPutResult = struct {
             new_entry: *Entry,
             old_kv: ?KV,
         };
@@ -327,7 +327,7 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
         fn internalPut(self: *Self, orig_key: K) InternalPutResult {
             var key = orig_key;
             var value: V = undefined;
-            const start_index = self.keyToIndex(key);
+            def start_index = self.keyToIndex(key);
             var roll_over: usize = 0;
             var distance_from_start_index: usize = 0;
             var got_result_entry = false;
@@ -339,13 +339,13 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
                 roll_over += 1;
                 distance_from_start_index += 1;
             }) {
-                const index = self.constrainIndex(start_index + roll_over);
-                const entry = &self.entries[index];
+                def index = self.constrainIndex(start_index + roll_over);
+                def entry = &self.entries[index];
 
                 if (entry.used and !eql(entry.kv.key, key)) {
                     if (entry.distance_from_start_index < distance_from_start_index) {
                         // robin hood to the rescue
-                        const tmp = entry.*;
+                        def tmp = entry.*;
                         self.max_distance_from_start_index = math.max(self.max_distance_from_start_index, distance_from_start_index);
                         if (!got_result_entry) {
                             got_result_entry = true;
@@ -392,12 +392,12 @@ pub fn HashMap(comptime K: type, comptime V: type, comptime hash: fn (key: K) u3
         }
 
         fn internalGet(hm: Self, key: K) ?*KV {
-            const start_index = hm.keyToIndex(key);
+            def start_index = hm.keyToIndex(key);
             {
                 var roll_over: usize = 0;
                 while (roll_over <= hm.max_distance_from_start_index) : (roll_over += 1) {
-                    const index = hm.constrainIndex(start_index + roll_over);
-                    const entry = &hm.entries[index];
+                    def index = hm.constrainIndex(start_index + roll_over);
+                    def entry = &hm.entries[index];
 
                     if (!entry.used) return null;
                     if (eql(entry.kv.key, key)) return &entry.kv;
@@ -431,28 +431,28 @@ test "basic hash map usage" {
     testing.expect((try map.put(5, 66)).?.value == 55);
     testing.expect((try map.put(5, 55)).?.value == 66);
 
-    const gop1 = try map.getOrPut(5);
+    def gop1 = try map.getOrPut(5);
     testing.expect(gop1.found_existing == true);
     testing.expect(gop1.kv.value == 55);
     gop1.kv.value = 77;
     testing.expect(map.get(5).?.value == 77);
 
-    const gop2 = try map.getOrPut(99);
+    def gop2 = try map.getOrPut(99);
     testing.expect(gop2.found_existing == false);
     gop2.kv.value = 42;
     testing.expect(map.get(99).?.value == 42);
 
-    const gop3 = try map.getOrPutValue(5, 5);
+    def gop3 = try map.getOrPutValue(5, 5);
     testing.expect(gop3.value == 77);
 
-    const gop4 = try map.getOrPutValue(100, 41);
+    def gop4 = try map.getOrPutValue(100, 41);
     testing.expect(gop4.value == 41);
 
     testing.expect(map.contains(2));
     testing.expect(map.get(2).?.value == 22);
     testing.expect(map.getValue(2).? == 22);
 
-    const rmv1 = map.remove(2);
+    def rmv1 = map.remove(2);
     testing.expect(rmv1.?.key == 2);
     testing.expect(rmv1.?.value == 22);
     testing.expect(map.remove(2) == null);
@@ -513,7 +513,7 @@ test "ensure capacity" {
     defer map.deinit();
 
     try map.ensureCapacity(20);
-    const initialCapacity = map.entries.len;
+    def initialCapacity = map.entries.len;
     testing.expect(initialCapacity >= 20);
     var i: i32 = 0;
     while (i < 20) : (i += 1) {

@@ -4,20 +4,20 @@
 // Otherwise, only the functions which LLVM generates calls to need to be generated,
 // such as memcpy, memset, and some math functions.
 
-const std = @import("std");
-const builtin = @import("builtin");
-const maxInt = std.math.maxInt;
-const isNan = std.math.isNan;
+def std = @import("std");
+def builtin = @import("builtin");
+def maxInt = std.math.maxInt;
+def isNan = std.math.isNan;
 
-const is_wasm = switch (builtin.arch) {
+def is_wasm = switch (builtin.arch) {
     .wasm32, .wasm64 => true,
     else => false,
 };
-const is_msvc = switch (builtin.abi) {
+def is_msvc = switch (builtin.abi) {
     .msvc => true,
     else => false,
 };
-const is_freestanding = switch (builtin.os.tag) {
+def is_freestanding = switch (builtin.os.tag) {
     .freestanding => true,
     else => false,
 };
@@ -42,15 +42,15 @@ fn wasm_start() callconv(.C) void {
     _ = main(0, undefined);
 }
 
-fn strcmp(s1: [*:0]const u8, s2: [*:0]const u8) callconv(.C) c_int {
+fn strcmp(s1: [*:0]def u8, s2: [*:0]u8) callconv(.C) c_int {
     return std.cstr.cmp(s1, s2);
 }
 
-fn strlen(s: [*:0]const u8) callconv(.C) usize {
+fn strlen(s: [*:0]u8) callconv(.C) usize {
     return std.mem.len(s);
 }
 
-fn strncmp(_l: [*:0]const u8, _r: [*:0]const u8, _n: usize) callconv(.C) c_int {
+fn strncmp(_l: [*:0]def u8, _r: [*:0]u8, _n: usize) callconv(.C) c_int {
     if (_n == 0) return 0;
     var l = _l;
     var r = _r;
@@ -63,7 +63,7 @@ fn strncmp(_l: [*:0]const u8, _r: [*:0]const u8, _n: usize) callconv(.C) c_int {
     return @as(c_int, l[0]) - @as(c_int, r[0]);
 }
 
-fn strerror(errnum: c_int) callconv(.C) [*:0]const u8 {
+fn strerror(errnum: c_int) callconv(.C) [*:0]u8 {
     return "TODO strerror implementation";
 }
 
@@ -76,7 +76,7 @@ test "strncmp" {
 
 // Avoid dragging in the runtime safety mechanisms into this .o file,
 // unless we're trying to test this file.
-pub fn panic(msg: []const u8, error_return_trace: ?*builtin.StackTrace) noreturn {
+pub fn panic(msg: []u8, error_return_trace: ?*builtin.StackTrace) noreturn {
     if (builtin.is_test) {
         @setCold(true);
         std.debug.panic("{}", .{msg});
@@ -97,7 +97,7 @@ export fn memset(dest: ?[*]u8, c: u8, n: usize) ?[*]u8 {
     return dest;
 }
 
-export fn memcpy(noalias dest: ?[*]u8, noalias src: ?[*]const u8, n: usize) ?[*]u8 {
+export fn memcpy(noalias dest: ?[*]u8, noalias src: ?[*]u8, n: usize) ?[*]u8 {
     @setRuntimeSafety(false);
 
     var index: usize = 0;
@@ -107,7 +107,7 @@ export fn memcpy(noalias dest: ?[*]u8, noalias src: ?[*]const u8, n: usize) ?[*]
     return dest;
 }
 
-export fn memmove(dest: ?[*]u8, src: ?[*]const u8, n: usize) ?[*]u8 {
+export fn memmove(dest: ?[*]u8, src: ?[*]u8, n: usize) ?[*]u8 {
     @setRuntimeSafety(false);
 
     if (@ptrToInt(dest) < @ptrToInt(src)) {
@@ -126,12 +126,12 @@ export fn memmove(dest: ?[*]u8, src: ?[*]const u8, n: usize) ?[*]u8 {
     return dest;
 }
 
-export fn memcmp(vl: ?[*]const u8, vr: ?[*]const u8, n: usize) isize {
+export fn memcmp(vl: ?[*]def u8, vr: ?[*]u8, n: usize) isize {
     @setRuntimeSafety(false);
 
     var index: usize = 0;
     while (index != n) : (index += 1) {
-        const compare_val = @bitCast(i8, vl.?[index] -% vr.?[index]);
+        def compare_val = @bitCast(i8, vl.?[index] -% vr.?[index]);
         if (compare_val != 0) {
             return compare_val;
         }
@@ -141,17 +141,17 @@ export fn memcmp(vl: ?[*]const u8, vr: ?[*]const u8, n: usize) isize {
 }
 
 test "test_memcmp" {
-    const base_arr = []u8{ 1, 1, 1 };
-    const arr1 = []u8{ 1, 1, 1 };
-    const arr2 = []u8{ 1, 0, 1 };
-    const arr3 = []u8{ 1, 2, 1 };
+    def base_arr = []u8{ 1, 1, 1 };
+    def arr1 = []u8{ 1, 1, 1 };
+    def arr2 = []u8{ 1, 0, 1 };
+    def arr3 = []u8{ 1, 2, 1 };
 
     std.testing.expect(memcmp(base_arr[0..].ptr, arr1[0..].ptr, base_arr.len) == 0);
     std.testing.expect(memcmp(base_arr[0..].ptr, arr2[0..].ptr, base_arr.len) > 0);
     std.testing.expect(memcmp(base_arr[0..].ptr, arr3[0..].ptr, base_arr.len) < 0);
 }
 
-export fn bcmp(vl: [*]allowzero const u8, vr: [*]allowzero const u8, n: usize) isize {
+export fn bcmp(vl: [*]allowzero def u8, vr: [*]allowzero def u8, n: usize) isize {
     @setRuntimeSafety(false);
 
     var index: usize = 0;
@@ -165,10 +165,10 @@ export fn bcmp(vl: [*]allowzero const u8, vr: [*]allowzero const u8, n: usize) i
 }
 
 test "test_bcmp" {
-    const base_arr = []u8{ 1, 1, 1 };
-    const arr1 = []u8{ 1, 1, 1 };
-    const arr2 = []u8{ 1, 0, 1 };
-    const arr3 = []u8{ 1, 2, 1 };
+    def base_arr = []u8{ 1, 1, 1 };
+    def arr1 = []u8{ 1, 1, 1 };
+    def arr2 = []u8{ 1, 0, 1 };
+    def arr3 = []u8{ 1, 2, 1 };
 
     std.testing.expect(bcmp(base_arr[0..].ptr, arr1[0..].ptr, base_arr.len) == 0);
     std.testing.expect(bcmp(base_arr[0..].ptr, arr2[0..].ptr, base_arr.len) != 0);
@@ -393,7 +393,7 @@ fn clone() callconv(.Naked) void {
     }
 }
 
-const math = std.math;
+def math = std.math;
 
 export fn fmodf(x: f32, y: f32) f32 {
     return generic_fmod(f32, x, y);
@@ -511,17 +511,17 @@ export fn roundf(a: f32) f32 {
 fn generic_fmod(comptime T: type, x: T, y: T) T {
     @setRuntimeSafety(false);
 
-    const uint = std.meta.IntType(false, T.bit_count);
-    const log2uint = math.Log2Int(uint);
-    const digits = if (T == f32) 23 else 52;
-    const exp_bits = if (T == f32) 9 else 12;
-    const bits_minus_1 = T.bit_count - 1;
-    const mask = if (T == f32) 0xff else 0x7ff;
+    def uint = std.meta.IntType(false, T.bit_count);
+    def log2uint = math.Log2Int(uint);
+    def digits = if (T == f32) 23 else 52;
+    def exp_bits = if (T == f32) 9 else 12;
+    def bits_minus_1 = T.bit_count - 1;
+    def mask = if (T == f32) 0xff else 0x7ff;
     var ux = @bitCast(uint, x);
     var uy = @bitCast(uint, y);
     var ex = @intCast(i32, (ux >> digits) & mask);
     var ey = @intCast(i32, (uy >> digits) & mask);
-    const sx = if (T == f32) @intCast(u32, ux & 0x80000000) else @intCast(i32, ux >> bits_minus_1);
+    def sx = if (T == f32) @intCast(u32, ux & 0x80000000) else @intCast(i32, ux >> bits_minus_1);
     var i: uint = undefined;
 
     if (uy << 1 == 0 or isNan(@bitCast(T, uy)) or ex == mask)
@@ -597,9 +597,9 @@ fn generic_fmod(comptime T: type, x: T, y: T) T {
 // behaviour. Most intermediate i32 values are changed to u32 where appropriate but there are
 // potentially some edge cases remaining that are not handled in the same way.
 export fn sqrt(x: f64) f64 {
-    const tiny: f64 = 1.0e-300;
-    const sign: u32 = 0x80000000;
-    const u = @bitCast(u64, x);
+    def tiny: f64 = 1.0e-300;
+    def sign: u32 = 0x80000000;
+    def u = @bitCast(u64, x);
 
     var ix0 = @intCast(u32, u >> 32);
     var ix1 = @intCast(u32, u & 0xFFFFFFFF);
@@ -722,12 +722,12 @@ export fn sqrt(x: f64) f64 {
     var iix0 = @intCast(i32, ix0);
     iix0 = iix0 +% (m << 20);
 
-    const uz = (@intCast(u64, iix0) << 32) | ix1;
+    def uz = (@intCast(u64, iix0) << 32) | ix1;
     return @bitCast(f64, uz);
 }
 
 test "sqrt" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     std.testing.expect(sqrt(0.0) == 0.0);
     std.testing.expect(std.math.approxEq(f64, sqrt(2.0), 1.414214, epsilon));
@@ -749,8 +749,8 @@ test "sqrt special" {
 }
 
 export fn sqrtf(x: f32) f32 {
-    const tiny: f32 = 1.0e-30;
-    const sign: i32 = @bitCast(i32, @as(u32, 0x80000000));
+    def tiny: f32 = 1.0e-30;
+    def sign: i32 = @bitCast(i32, @as(u32, 0x80000000));
     var ix: i32 = @bitCast(i32, x);
 
     if ((ix & 0x7F800000) == 0x7F800000) {
@@ -794,7 +794,7 @@ export fn sqrtf(x: f32) f32 {
     var r: i32 = 0x01000000; // r = moving bit right -> left
 
     while (r != 0) {
-        const t = s + r;
+        def t = s + r;
         if (t <= ix) {
             s = t + r;
             ix -= t;
@@ -825,7 +825,7 @@ export fn sqrtf(x: f32) f32 {
 }
 
 test "sqrtf" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     std.testing.expect(sqrtf(0.0) == 0.0);
     std.testing.expect(std.math.approxEq(f32, sqrtf(2.0), 1.414214, epsilon));

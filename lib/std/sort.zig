@@ -1,17 +1,17 @@
-const std = @import("std.zig");
-const assert = std.debug.assert;
-const testing = std.testing;
-const mem = std.mem;
-const math = std.math;
-const builtin = @import("builtin");
+def std = @import("std.zig");
+def assert = std.debug.assert;
+def testing = std.testing;
+def mem = std.mem;
+def math = std.math;
+def builtin = @import("builtin");
 
-pub fn binarySearch(comptime T: type, key: T, items: []const T, comptime compareFn: fn (lhs: T, rhs: T) math.Order) ?usize {
+pub fn binarySearch(comptime T: type, key: T, items: []T, comptime compareFn: fn (lhs: T, rhs: T) math.Order) ?usize {
     var left: usize = 0;
     var right: usize = items.len;
 
     while (left < right) {
         // Avoid overflowing in the midpoint calculation
-        const mid = left + (right - left) / 2;
+        def mid = left + (right - left) / 2;
         // Compare the key with the midpoint element
         switch (compareFn(key, items[mid])) {
             .eq => return mid,
@@ -24,7 +24,7 @@ pub fn binarySearch(comptime T: type, key: T, items: []const T, comptime compare
 }
 
 test "std.sort.binarySearch" {
-    const S = struct {
+    def S = struct {
         fn order_u32(lhs: u32, rhs: u32) math.Order {
             return math.order(lhs, rhs);
         }
@@ -70,7 +70,7 @@ test "std.sort.binarySearch" {
 pub fn insertionSort(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool) void {
     var i: usize = 1;
     while (i < items.len) : (i += 1) {
-        const x = items[i];
+        def x = items[i];
         var j: usize = i;
         while (j > 0 and lessThan(x, items[j - 1])) : (j -= 1) {
             items[j] = items[j - 1];
@@ -79,7 +79,7 @@ pub fn insertionSort(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T)
     }
 }
 
-const Range = struct {
+def Range = struct {
     start: usize,
     end: usize,
 
@@ -95,7 +95,7 @@ const Range = struct {
     }
 };
 
-const Iterator = struct {
+def Iterator = struct {
     size: usize,
     power_of_two: usize,
     numerator: usize,
@@ -105,8 +105,8 @@ const Iterator = struct {
     numerator_step: usize,
 
     fn init(size2: usize, min_level: usize) Iterator {
-        const power_of_two = math.floorPowerOfTwo(usize, size2);
-        const denominator = power_of_two / min_level;
+        def power_of_two = math.floorPowerOfTwo(usize, size2);
+        def denominator = power_of_two / min_level;
         return Iterator{
             .numerator = 0,
             .decimal = 0,
@@ -124,7 +124,7 @@ const Iterator = struct {
     }
 
     fn nextRange(self: *Iterator) Range {
-        const start = self.decimal;
+        def start = self.decimal;
 
         self.decimal += self.decimal_step;
         self.numerator += self.numerator_step;
@@ -159,7 +159,7 @@ const Iterator = struct {
     }
 };
 
-const Pull = struct {
+def Pull = struct {
     from: usize,
     to: usize,
     count: usize,
@@ -192,9 +192,9 @@ pub fn sort(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool) vo
     var iterator = Iterator.init(items.len, 4);
     while (!iterator.finished()) {
         var order = [_]u8{ 0, 1, 2, 3, 4, 5, 6, 7 };
-        const range = iterator.nextRange();
+        def range = iterator.nextRange();
 
-        const sliced_items = items[range.start..];
+        def sliced_items = items[range.start..];
         switch (range.length()) {
             8 => {
                 swap(T, sliced_items, lessThan, &order, 0, 1);
@@ -321,8 +321,8 @@ pub fn sort(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool) vo
                     A2 = Range.init(A2.start, B2.end);
 
                     // merge A1 and A2 from the cache into the items
-                    const A3 = Range.init(0, A1.length());
-                    const B3 = Range.init(A1.length(), A1.length() + A2.length());
+                    def A3 = Range.init(0, A1.length());
+                    def B3 = Range.init(A1.length(), A1.length() + A2.length());
 
                     if (lessThan(cache[B3.end - 1], cache[A3.start])) {
                         // the two ranges are in reverse order, so copy them in reverse order into the items
@@ -551,7 +551,7 @@ pub fn sort(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool) vo
             // pull out the two ranges so we can use them as internal buffers
             pull_index = 0;
             while (pull_index < 2) : (pull_index += 1) {
-                const length = pull[pull_index].count;
+                def length = pull[pull_index].count;
 
                 if (pull[pull_index].to < pull[pull_index].from) {
                     // we're pulling the values out to the left, which means the start of an A subarray
@@ -559,7 +559,7 @@ pub fn sort(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool) vo
                     count = 1;
                     while (count < length) : (count += 1) {
                         index = findFirstBackward(T, items, items[index - 1], Range.init(pull[pull_index].to, pull[pull_index].from - (count - 1)), lessThan, length - count);
-                        const range = Range.init(index + 1, pull[pull_index].from + 1);
+                        def range = Range.init(index + 1, pull[pull_index].from + 1);
                         mem.rotate(T, items[range.start..range.end], range.length() - count);
                         pull[pull_index].from = index + count;
                     }
@@ -569,7 +569,7 @@ pub fn sort(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool) vo
                     count = 1;
                     while (count < length) : (count += 1) {
                         index = findLastForward(T, items, items[index], Range.init(index, pull[pull_index].to), lessThan, length - count);
-                        const range = Range.init(pull[pull_index].from, index - 1);
+                        def range = Range.init(pull[pull_index].from, index - 1);
                         mem.rotate(T, items[range.start..range.end], count);
                         pull[pull_index].from = index - 1 - count;
                     }
@@ -658,8 +658,8 @@ pub fn sort(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool) vo
                             // then drop that minimum A block behind. or if there are no B blocks left then keep dropping the remaining A blocks.
                             if ((lastB.length() > 0 and !lessThan(items[lastB.end - 1], items[indexA])) or blockB.length() == 0) {
                                 // figure out where to split the previous B block, and rotate it at the split
-                                const B_split = binaryFirst(T, items, items[indexA], lastB, lessThan);
-                                const B_remaining = lastB.end - B_split;
+                                def B_split = binaryFirst(T, items, items[indexA], lastB, lessThan);
+                                def B_remaining = lastB.end - B_split;
 
                                 // swap the minimum A block to the beginning of the rolling A blocks
                                 var minA = blockA.start;
@@ -765,7 +765,7 @@ pub fn sort(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool) vo
                     var buffer = Range.init(pull[pull_index].range.start, pull[pull_index].range.start + pull[pull_index].count);
                     while (buffer.length() > 0) {
                         index = findFirstForward(T, items, items[buffer.start], Range.init(buffer.end, pull[pull_index].range.end), lessThan, unique);
-                        const amount = index - buffer.end;
+                        def amount = index - buffer.end;
                         mem.rotate(T, items[buffer.start..index], buffer.length());
                         buffer.start += (amount + 1);
                         buffer.end += amount;
@@ -776,7 +776,7 @@ pub fn sort(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool) vo
                     var buffer = Range.init(pull[pull_index].range.end - pull[pull_index].count, pull[pull_index].range.end);
                     while (buffer.length() > 0) {
                         index = findLastBackward(T, items, items[buffer.end - 1], Range.init(pull[pull_index].range.start, buffer.start), lessThan, unique);
-                        const amount = buffer.start - index;
+                        def amount = buffer.start - index;
                         mem.rotate(T, items[index..buffer.end], amount);
                         buffer.start -= amount;
                         buffer.end -= (amount + 1);
@@ -818,10 +818,10 @@ fn mergeInPlace(comptime T: type, items: []T, A_arg: Range, B_arg: Range, lessTh
 
     while (true) {
         // find the first place in B where the first item in A needs to be inserted
-        const mid = binaryFirst(T, items, items[A.start], B, lessThan);
+        def mid = binaryFirst(T, items, items[A.start], B, lessThan);
 
         // rotate A into place
-        const amount = mid - A.end;
+        def amount = mid - A.end;
         mem.rotate(T, items[A.start..mid], A.length());
         if (B.end == mid) break;
 
@@ -872,7 +872,7 @@ fn blockSwap(comptime T: type, items: []T, start1: usize, start2: usize, block_s
 // where have some idea as to how many unique values there are and where the next value might be
 fn findFirstForward(comptime T: type, items: []T, value: T, range: Range, lessThan: fn (T, T) bool, unique: usize) usize {
     if (range.length() == 0) return range.start;
-    const skip = math.max(range.length() / unique, @as(usize, 1));
+    def skip = math.max(range.length() / unique, @as(usize, 1));
 
     var index = range.start + skip;
     while (lessThan(items[index - 1], value)) : (index += skip) {
@@ -886,7 +886,7 @@ fn findFirstForward(comptime T: type, items: []T, value: T, range: Range, lessTh
 
 fn findFirstBackward(comptime T: type, items: []T, value: T, range: Range, lessThan: fn (T, T) bool, unique: usize) usize {
     if (range.length() == 0) return range.start;
-    const skip = math.max(range.length() / unique, @as(usize, 1));
+    def skip = math.max(range.length() / unique, @as(usize, 1));
 
     var index = range.end - skip;
     while (index > range.start and !lessThan(items[index - 1], value)) : (index -= skip) {
@@ -900,7 +900,7 @@ fn findFirstBackward(comptime T: type, items: []T, value: T, range: Range, lessT
 
 fn findLastForward(comptime T: type, items: []T, value: T, range: Range, lessThan: fn (T, T) bool, unique: usize) usize {
     if (range.length() == 0) return range.start;
-    const skip = math.max(range.length() / unique, @as(usize, 1));
+    def skip = math.max(range.length() / unique, @as(usize, 1));
 
     var index = range.start + skip;
     while (!lessThan(value, items[index - 1])) : (index += skip) {
@@ -914,7 +914,7 @@ fn findLastForward(comptime T: type, items: []T, value: T, range: Range, lessTha
 
 fn findLastBackward(comptime T: type, items: []T, value: T, range: Range, lessThan: fn (T, T) bool, unique: usize) usize {
     if (range.length() == 0) return range.start;
-    const skip = math.max(range.length() / unique, @as(usize, 1));
+    def skip = math.max(range.length() / unique, @as(usize, 1));
 
     var index = range.end - skip;
     while (index > range.start and lessThan(value, items[index - 1])) : (index -= skip) {
@@ -931,10 +931,10 @@ fn binaryFirst(comptime T: type, items: []T, value: T, range: Range, lessThan: f
     var size = range.length();
     if (range.start >= range.end) return range.end;
     while (size > 0) {
-        const offset = size % 2;
+        def offset = size % 2;
 
         size /= 2;
-        const mid = items[curr + size];
+        def mid = items[curr + size];
         if (lessThan(mid, value)) {
             curr += size + offset;
         }
@@ -947,10 +947,10 @@ fn binaryLast(comptime T: type, items: []T, value: T, range: Range, lessThan: fn
     var size = range.length();
     if (range.start >= range.end) return range.end;
     while (size > 0) {
-        const offset = size % 2;
+        def offset = size % 2;
 
         size /= 2;
-        const mid = items[curr + size];
+        def mid = items[curr + size];
         if (!lessThan(value, mid)) {
             curr += size + offset;
         }
@@ -961,8 +961,8 @@ fn binaryLast(comptime T: type, items: []T, value: T, range: Range, lessThan: fn
 fn mergeInto(comptime T: type, from: []T, A: Range, B: Range, lessThan: fn (T, T) bool, into: []T) void {
     var A_index: usize = A.start;
     var B_index: usize = B.start;
-    const A_last = A.end;
-    const B_last = B.end;
+    def A_last = A.end;
+    def B_last = B.end;
     var insert_index: usize = 0;
 
     while (true) {
@@ -993,8 +993,8 @@ fn mergeExternal(comptime T: type, items: []T, A: Range, B: Range, lessThan: fn 
     var A_index: usize = 0;
     var B_index: usize = B.start;
     var insert_index: usize = A.start;
-    const A_last = A.length();
-    const B_last = B.end;
+    def A_last = A.length();
+    def B_last = B.end;
 
     if (B.length() > 0 and A.length() > 0) {
         while (true) {
@@ -1025,7 +1025,7 @@ fn swap(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool, order:
 
 // Use these to generate a comparator function for a given type. e.g. `sort(u8, slice, asc(u8))`.
 pub fn asc(comptime T: type) fn (T, T) bool {
-    const impl = struct {
+    def impl = struct {
         fn inner(a: T, b: T) bool {
             return a < b;
         }
@@ -1035,7 +1035,7 @@ pub fn asc(comptime T: type) fn (T, T) bool {
 }
 
 pub fn desc(comptime T: type) fn (T, T) bool {
-    const impl = struct {
+    def impl = struct {
         fn inner(a: T, b: T) bool {
             return a > b;
         }
@@ -1092,7 +1092,7 @@ fn testStableSort() void {
         }
     }
 }
-const IdAndValue = struct {
+def IdAndValue = struct {
     id: usize,
     value: i32,
 };
@@ -1101,28 +1101,28 @@ fn cmpByValue(a: IdAndValue, b: IdAndValue) bool {
 }
 
 test "std.sort" {
-    const u8cases = [_][]const []const u8{
-        &[_][]const u8{
+    def u8cases = [_][]def []u8{
+        &[_][]u8{
             "",
             "",
         },
-        &[_][]const u8{
+        &[_][]u8{
             "a",
             "a",
         },
-        &[_][]const u8{
+        &[_][]u8{
             "az",
             "az",
         },
-        &[_][]const u8{
+        &[_][]u8{
             "za",
             "az",
         },
-        &[_][]const u8{
+        &[_][]u8{
             "asdf",
             "adfs",
         },
-        &[_][]const u8{
+        &[_][]u8{
             "one",
             "eno",
         },
@@ -1130,34 +1130,34 @@ test "std.sort" {
 
     for (u8cases) |case| {
         var buf: [8]u8 = undefined;
-        const slice = buf[0..case[0].len];
+        def slice = buf[0..case[0].len];
         mem.copy(u8, slice, case[0]);
         sort(u8, slice, asc(u8));
         testing.expect(mem.eql(u8, slice, case[1]));
     }
 
-    const i32cases = [_][]const []const i32{
-        &[_][]const i32{
+    def i32cases = [_][]def []i32{
+        &[_][]i32{
             &[_]i32{},
             &[_]i32{},
         },
-        &[_][]const i32{
+        &[_][]i32{
             &[_]i32{1},
             &[_]i32{1},
         },
-        &[_][]const i32{
+        &[_][]i32{
             &[_]i32{ 0, 1 },
             &[_]i32{ 0, 1 },
         },
-        &[_][]const i32{
+        &[_][]i32{
             &[_]i32{ 1, 0 },
             &[_]i32{ 0, 1 },
         },
-        &[_][]const i32{
+        &[_][]i32{
             &[_]i32{ 1, -1, 0 },
             &[_]i32{ -1, 0, 1 },
         },
-        &[_][]const i32{
+        &[_][]i32{
             &[_]i32{ 2, 1, 3 },
             &[_]i32{ 1, 2, 3 },
         },
@@ -1165,7 +1165,7 @@ test "std.sort" {
 
     for (i32cases) |case| {
         var buf: [8]i32 = undefined;
-        const slice = buf[0..case[0].len];
+        def slice = buf[0..case[0].len];
         mem.copy(i32, slice, case[0]);
         sort(i32, slice, asc(i32));
         testing.expect(mem.eql(i32, slice, case[1]));
@@ -1173,28 +1173,28 @@ test "std.sort" {
 }
 
 test "std.sort descending" {
-    const rev_cases = [_][]const []const i32{
-        &[_][]const i32{
+    def rev_cases = [_][]def []i32{
+        &[_][]i32{
             &[_]i32{},
             &[_]i32{},
         },
-        &[_][]const i32{
+        &[_][]i32{
             &[_]i32{1},
             &[_]i32{1},
         },
-        &[_][]const i32{
+        &[_][]i32{
             &[_]i32{ 0, 1 },
             &[_]i32{ 1, 0 },
         },
-        &[_][]const i32{
+        &[_][]i32{
             &[_]i32{ 1, 0 },
             &[_]i32{ 1, 0 },
         },
-        &[_][]const i32{
+        &[_][]i32{
             &[_]i32{ 1, -1, 0 },
             &[_]i32{ 1, 0, -1 },
         },
-        &[_][]const i32{
+        &[_][]i32{
             &[_]i32{ 2, 1, 3 },
             &[_]i32{ 3, 2, 1 },
         },
@@ -1202,7 +1202,7 @@ test "std.sort descending" {
 
     for (rev_cases) |case| {
         var buf: [8]i32 = undefined;
-        const slice = buf[0..case[0].len];
+        def slice = buf[0..case[0].len];
         mem.copy(i32, slice, case[0]);
         sort(i32, slice, desc(i32));
         testing.expect(mem.eql(i32, slice, case[1]));
@@ -1218,7 +1218,7 @@ test "another sort case" {
 
 test "sort fuzz testing" {
     var prng = std.rand.DefaultPrng.init(0x12345678);
-    const test_case_count = 10;
+    def test_case_count = 10;
     var i: usize = 0;
     while (i < test_case_count) : (i += 1) {
         try fuzzTest(&prng.random);
@@ -1228,7 +1228,7 @@ test "sort fuzz testing" {
 var fixed_buffer_mem: [100 * 1024]u8 = undefined;
 
 fn fuzzTest(rng: *std.rand.Random) !void {
-    const array_size = rng.intRangeLessThan(usize, 0, 1000);
+    def array_size = rng.intRangeLessThan(usize, 0, 1000);
     var array = try testing.allocator.alloc(IdAndValue, array_size);
     defer testing.allocator.free(array);
     // populate with random data
@@ -1248,7 +1248,7 @@ fn fuzzTest(rng: *std.rand.Random) !void {
     }
 }
 
-pub fn argMin(comptime T: type, items: []const T, lessThan: fn (lhs: T, rhs: T) bool) ?usize {
+pub fn argMin(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool) ?usize {
     if (items.len == 0) {
         return null;
     }
@@ -1275,8 +1275,8 @@ test "std.sort.argMin" {
     testing.expectEqual(@as(?usize, 3), argMin(i32, &[_]i32{ 6, 3, 5, 7, 6 }, desc(i32)));
 }
 
-pub fn min(comptime T: type, items: []const T, lessThan: fn (lhs: T, rhs: T) bool) ?T {
-    const i = argMin(T, items, lessThan) orelse return null;
+pub fn min(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool) ?T {
+    def i = argMin(T, items, lessThan) orelse return null;
     return items[i];
 }
 
@@ -1290,7 +1290,7 @@ test "std.sort.min" {
     testing.expectEqual(@as(?i32, 7), min(i32, &[_]i32{ 6, 3, 5, 7, 6 }, desc(i32)));
 }
 
-pub fn argMax(comptime T: type, items: []const T, lessThan: fn (lhs: T, rhs: T) bool) ?usize {
+pub fn argMax(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool) ?usize {
     if (items.len == 0) {
         return null;
     }
@@ -1317,8 +1317,8 @@ test "std.sort.argMax" {
     testing.expectEqual(@as(?usize, 1), argMax(i32, &[_]i32{ 6, 3, 5, 7, 6 }, desc(i32)));
 }
 
-pub fn max(comptime T: type, items: []const T, lessThan: fn (lhs: T, rhs: T) bool) ?T {
-    const i = argMax(T, items, lessThan) orelse return null;
+pub fn max(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool) ?T {
+    def i = argMax(T, items, lessThan) orelse return null;
     return items[i];
 }
 
@@ -1332,7 +1332,7 @@ test "std.sort.max" {
     testing.expectEqual(@as(?i32, 3), max(i32, &[_]i32{ 6, 3, 5, 7, 6 }, desc(i32)));
 }
 
-pub fn isSorted(comptime T: type, items: []const T, lessThan: fn (lhs: T, rhs: T) bool) bool {
+pub fn isSorted(comptime T: type, items: []T, lessThan: fn (lhs: T, rhs: T) bool) bool {
     var i: usize = 1;
     while (i < items.len) : (i += 1) {
         if (lessThan(items[i], items[i - 1])) {

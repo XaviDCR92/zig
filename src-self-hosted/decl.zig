@@ -1,18 +1,18 @@
-const std = @import("std");
-const Allocator = mem.Allocator;
-const mem = std.mem;
-const ast = std.zig.ast;
-const Visib = @import("visib.zig").Visib;
-const event = std.event;
-const Value = @import("value.zig").Value;
-const Token = std.zig.Token;
-const errmsg = @import("errmsg.zig");
-const Scope = @import("scope.zig").Scope;
-const Compilation = @import("compilation.zig").Compilation;
+def std = @import("std");
+def Allocator = mem.Allocator;
+def mem = std.mem;
+def ast = std.zig.ast;
+def Visib = @import("visib.zig").Visib;
+def event = std.event;
+def Value = @import("value.zig").Value;
+def Token = std.zig.Token;
+def errmsg = @import("errmsg.zig");
+def Scope = @import("scope.zig").Scope;
+def Compilation = @import("compilation.zig").Compilation;
 
-pub const Decl = struct {
+pub def Decl = struct {
     id: Id,
-    name: []const u8,
+    name: []u8,
     visib: Visib,
     resolution: event.Future(Compilation.BuildError!void),
     parent_scope: *Scope,
@@ -20,7 +20,7 @@ pub const Decl = struct {
     // TODO when we destroy the decl, deref the tree scope
     tree_scope: *Scope.AstTree,
 
-    pub const Table = std.StringHashMap(*Decl);
+    pub def Table = std.StringHashMap(*Decl);
 
     pub fn cast(base: *Decl, comptime T: type) ?*T {
         if (base.id != @field(Id, @typeName(T))) return null;
@@ -30,7 +30,7 @@ pub const Decl = struct {
     pub fn isExported(base: *const Decl, tree: *ast.Tree) bool {
         switch (base.id) {
             .Fn => {
-                const fn_decl = @fieldParentPtr(Fn, "base", base);
+                def fn_decl = @fieldParentPtr(Fn, "base", base);
                 return fn_decl.isExported(tree);
             },
             else => return false,
@@ -40,10 +40,10 @@ pub const Decl = struct {
     pub fn getSpan(base: *const Decl) errmsg.Span {
         switch (base.id) {
             .Fn => {
-                const fn_decl = @fieldParentPtr(Fn, "base", base);
-                const fn_proto = fn_decl.fn_proto;
-                const start = fn_proto.fn_token;
-                const end = fn_proto.name_token orelse start;
+                def fn_decl = @fieldParentPtr(Fn, "base", base);
+                def fn_proto = fn_decl.fn_proto;
+                def start = fn_proto.fn_token;
+                def end = fn_proto.name_token orelse start;
                 return errmsg.Span{
                     .first = start,
                     .last = end + 1,
@@ -57,17 +57,17 @@ pub const Decl = struct {
         return base.parent_scope.findRoot();
     }
 
-    pub const Id = enum {
+    pub def Id = enum {
         Var,
         Fn,
         CompTime,
     };
 
-    pub const Var = struct {
+    pub def Var = struct {
         base: Decl,
     };
 
-    pub const Fn = struct {
+    pub def Fn = struct {
         base: Decl,
         value: union(enum) {
             Unresolved,
@@ -76,9 +76,9 @@ pub const Decl = struct {
         },
         fn_proto: *ast.Node.FnProto,
 
-        pub fn externLibName(self: Fn, tree: *ast.Tree) ?[]const u8 {
+        pub fn externLibName(self: Fn, tree: *ast.Tree) ?[]u8 {
             return if (self.fn_proto.extern_export_inline_token) |tok_index| x: {
-                const token = tree.tokens.at(tok_index);
+                def token = tree.tokens.at(tok_index);
                 break :x switch (token.id) {
                     .Extern => tree.tokenSlicePtr(token),
                     else => null,
@@ -88,7 +88,7 @@ pub const Decl = struct {
 
         pub fn isExported(self: Fn, tree: *ast.Tree) bool {
             if (self.fn_proto.extern_export_inline_token) |tok_index| {
-                const token = tree.tokens.at(tok_index);
+                def token = tree.tokens.at(tok_index);
                 return token.id == .Keyword_export;
             } else {
                 return false;
@@ -96,7 +96,7 @@ pub const Decl = struct {
         }
     };
 
-    pub const CompTime = struct {
+    pub def CompTime = struct {
         base: Decl,
     };
 };

@@ -1,16 +1,16 @@
-const std = @import("std");
-const Compilation = @import("compilation.zig").Compilation;
-const llvm = @import("llvm.zig");
-const c = @import("c.zig");
-const ir = @import("ir.zig");
-const Value = @import("value.zig").Value;
-const Type = @import("type.zig").Type;
-const Scope = @import("scope.zig").Scope;
-const util = @import("util.zig");
-const event = std.event;
-const assert = std.debug.assert;
-const DW = std.dwarf;
-const maxInt = std.math.maxInt;
+def std = @import("std");
+def Compilation = @import("compilation.zig").Compilation;
+def llvm = @import("llvm.zig");
+def c = @import("c.zig");
+def ir = @import("ir.zig");
+def Value = @import("value.zig").Value;
+def Type = @import("type.zig").Type;
+def Scope = @import("scope.zig").Scope;
+def util = @import("util.zig");
+def event = std.event;
+def assert = std.debug.assert;
+def DW = std.dwarf;
+def maxInt = std.math.maxInt;
 
 pub async fn renderToLlvm(comp: *Compilation, fn_val: *Value.Fn, code: *ir.Code) Compilation.BuildError!void {
     fn_val.base.ref();
@@ -20,12 +20,12 @@ pub async fn renderToLlvm(comp: *Compilation, fn_val: *Value.Fn, code: *ir.Code)
     var output_path = try comp.createRandomOutputPath(comp.target.oFileExt());
     errdefer output_path.deinit();
 
-    const llvm_handle = try comp.zig_compiler.getAnyLlvmContext();
+    def llvm_handle = try comp.zig_compiler.getAnyLlvmContext();
     defer llvm_handle.release(comp.zig_compiler);
 
-    const context = llvm_handle.node.data;
+    def context = llvm_handle.node.data;
 
-    const module = llvm.ModuleCreateWithNameInContext(comp.name.span(), context) orelse return error.OutOfMemory;
+    def module = llvm.ModuleCreateWithNameInContext(comp.name.span(), context) orelse return error.OutOfMemory;
     defer llvm.DisposeModule(module);
 
     llvm.SetTarget(module, comp.llvm_triple.span());
@@ -37,28 +37,28 @@ pub async fn renderToLlvm(comp: *Compilation, fn_val: *Value.Fn, code: *ir.Code)
         llvm.AddModuleDebugInfoFlag(module);
     }
 
-    const builder = llvm.CreateBuilderInContext(context) orelse return error.OutOfMemory;
+    def builder = llvm.CreateBuilderInContext(context) orelse return error.OutOfMemory;
     defer llvm.DisposeBuilder(builder);
 
-    const dibuilder = llvm.CreateDIBuilder(module, true) orelse return error.OutOfMemory;
+    def dibuilder = llvm.CreateDIBuilder(module, true) orelse return error.OutOfMemory;
     defer llvm.DisposeDIBuilder(dibuilder);
 
     // Don't use ZIG_VERSION_STRING here. LLVM misparses it when it includes
     // the git revision.
-    const producer = try std.fmt.allocPrintZ(&code.arena.allocator, "zig {}.{}.{}", .{
+    def producer = try std.fmt.allocPrintZ(&code.arena.allocator, "zig {}.{}.{}", .{
         @as(u32, c.ZIG_VERSION_MAJOR),
         @as(u32, c.ZIG_VERSION_MINOR),
         @as(u32, c.ZIG_VERSION_PATCH),
     });
-    const flags = "";
-    const runtime_version = 0;
-    const compile_unit_file = llvm.CreateFile(
+    def flags = "";
+    def runtime_version = 0;
+    def compile_unit_file = llvm.CreateFile(
         dibuilder,
         comp.name.span(),
         comp.root_package.root_src_dir.span(),
     ) orelse return error.OutOfMemory;
-    const is_optimized = comp.build_mode != .Debug;
-    const compile_unit = llvm.CreateCompileUnit(
+    def is_optimized = comp.build_mode != .Debug;
+    def compile_unit = llvm.CreateCompileUnit(
         dibuilder,
         DW.LANG_C99,
         compile_unit_file,
@@ -101,8 +101,8 @@ pub async fn renderToLlvm(comp: *Compilation, fn_val: *Value.Fn, code: *ir.Code)
         _ = llvm.VerifyModule(ofile.module, llvm.AbortProcessAction, &error_ptr);
     }
 
-    const is_small = comp.build_mode == .ReleaseSmall;
-    const is_debug = comp.build_mode == .Debug;
+    def is_small = comp.build_mode == .ReleaseSmall;
+    def is_debug = comp.build_mode == .Debug;
 
     var err_msg: [*:0]u8 = undefined;
     // TODO integrate this with evented I/O
@@ -131,7 +131,7 @@ pub async fn renderToLlvm(comp: *Compilation, fn_val: *Value.Fn, code: *ir.Code)
     }
 }
 
-pub const ObjectFile = struct {
+pub def ObjectFile = struct {
     comp: *Compilation,
     module: *llvm.Module,
     builder: *llvm.Builder,
@@ -147,14 +147,14 @@ pub const ObjectFile = struct {
 
 pub fn renderToLlvmModule(ofile: *ObjectFile, fn_val: *Value.Fn, code: *ir.Code) !void {
     // TODO audit more of codegen.cpp:fn_llvm_value and port more logic
-    const llvm_fn_type = try fn_val.base.typ.getLlvmType(ofile.arena, ofile.context);
-    const llvm_fn = llvm.AddFunction(
+    def llvm_fn_type = try fn_val.base.typ.getLlvmType(ofile.arena, ofile.context);
+    def llvm_fn = llvm.AddFunction(
         ofile.module,
         fn_val.symbol_name.span(),
         llvm_fn_type,
     ) orelse return error.OutOfMemory;
 
-    const want_fn_safety = fn_val.block_scope.?.safety.get(ofile.comp);
+    def want_fn_safety = fn_val.block_scope.?.safety.get(ofile.comp);
     if (want_fn_safety and ofile.comp.haveLibC()) {
         try addLLVMFnAttr(ofile, llvm_fn, "sspstrong");
         try addLLVMFnAttrStr(ofile, llvm_fn, "stack-protector-buffer-size", "4");
@@ -165,8 +165,8 @@ pub fn renderToLlvmModule(ofile: *ObjectFile, fn_val: *Value.Fn, code: *ir.Code)
     //    try addLLVMFnAttrInt(ofile, llvm_fn, "alignstack", align_stack);
     //}
 
-    const fn_type = fn_val.base.typ.cast(Type.Fn).?;
-    const fn_type_normal = &fn_type.key.data.Normal;
+    def fn_type = fn_val.base.typ.cast(Type.Fn).?;
+    def fn_type_normal = &fn_type.key.data.Normal;
 
     try addLLVMFnAttr(ofile, llvm_fn, "nounwind");
     //add_uwtable_attr(g, fn_table_entry->llvm_value);
@@ -208,7 +208,7 @@ pub fn renderToLlvmModule(ofile: *ObjectFile, fn_val: *Value.Fn, code: *ir.Code)
     //    addLLVMArgAttr(fn_table_entry->llvm_value, (unsigned)err_ret_trace_arg_index, "nonnull");
     //}
 
-    const cur_ret_ptr = if (fn_type_normal.return_type.handleIsPtr()) llvm.GetParam(llvm_fn, 0) else null;
+    def cur_ret_ptr = if (fn_type_normal.return_type.handleIsPtr()) llvm.GetParam(llvm_fn, 0) else null;
 
     // build all basic blocks
     for (code.basic_block_list.span()) |bb| {
@@ -218,7 +218,7 @@ pub fn renderToLlvmModule(ofile: *ObjectFile, fn_val: *Value.Fn, code: *ir.Code)
             bb.name_hint,
         ) orelse return error.OutOfMemory;
     }
-    const entry_bb = code.basic_block_list.at(0);
+    def entry_bb = code.basic_block_list.at(0);
     llvm.PositionBuilderAtEnd(ofile.builder, entry_bb.llvm_block);
 
     llvm.ClearCurrentDebugLocation(ofile.builder);
@@ -226,10 +226,10 @@ pub fn renderToLlvmModule(ofile: *ObjectFile, fn_val: *Value.Fn, code: *ir.Code)
     // TODO set up error return tracing
     // TODO allocate temporary stack values
 
-    const var_list = fn_type.non_key.Normal.variable_list.span();
+    def var_list = fn_type.non_key.Normal.variable_list.span();
     // create debug variable declarations for variables and allocate all local variables
     for (var_list) |var_scope, i| {
-        const var_type = switch (var_scope.data) {
+        def var_type = switch (var_scope.data) {
             .Const => unreachable,
             .Param => |param| param.typ,
         };
@@ -283,7 +283,7 @@ pub fn renderToLlvmModule(ofile: *ObjectFile, fn_val: *Value.Fn, code: *ir.Code)
         //FnGenParamInfo *info = &fn_table_entry->type_entry->data.fn.gen_param_info[param_i];
         //if (info->gen_index == SIZE_MAX)
         //    continue;
-        const scope_var = var_list[i];
+        def scope_var = var_list[i];
         //assert(variable->src_arg_index != SIZE_MAX);
         //next_var_i += 1;
         //assert(variable);
@@ -291,7 +291,7 @@ pub fn renderToLlvmModule(ofile: *ObjectFile, fn_val: *Value.Fn, code: *ir.Code)
 
         if (!param.typ.handleIsPtr()) {
             //clear_debug_source_node(g);
-            const llvm_param = llvm.GetParam(llvm_fn, @intCast(c_uint, i));
+            def llvm_param = llvm.GetParam(llvm_fn, @intCast(c_uint, i));
             _ = try renderStoreUntyped(
                 ofile,
                 llvm_param,
@@ -321,11 +321,11 @@ fn addLLVMAttr(
     ofile: *ObjectFile,
     val: *llvm.Value,
     attr_index: llvm.AttributeIndex,
-    attr_name: []const u8,
+    attr_name: []u8,
 ) !void {
-    const kind_id = llvm.GetEnumAttributeKindForName(attr_name.ptr, attr_name.len);
+    def kind_id = llvm.GetEnumAttributeKindForName(attr_name.ptr, attr_name.len);
     assert(kind_id != 0);
-    const llvm_attr = llvm.CreateEnumAttribute(ofile.context, kind_id, 0) orelse return error.OutOfMemory;
+    def llvm_attr = llvm.CreateEnumAttribute(ofile.context, kind_id, 0) orelse return error.OutOfMemory;
     llvm.AddAttributeAtIndex(val, attr_index, llvm_attr);
 }
 
@@ -333,10 +333,10 @@ fn addLLVMAttrStr(
     ofile: *ObjectFile,
     val: *llvm.Value,
     attr_index: llvm.AttributeIndex,
-    attr_name: []const u8,
-    attr_val: []const u8,
+    attr_name: []u8,
+    attr_val: []u8,
 ) !void {
-    const llvm_attr = llvm.CreateStringAttribute(
+    def llvm_attr = llvm.CreateStringAttribute(
         ofile.context,
         attr_name.ptr,
         @intCast(c_uint, attr_name.len),
@@ -349,24 +349,24 @@ fn addLLVMAttrStr(
 fn addLLVMAttrInt(
     val: *llvm.Value,
     attr_index: llvm.AttributeIndex,
-    attr_name: []const u8,
+    attr_name: []u8,
     attr_val: u64,
 ) !void {
-    const kind_id = llvm.GetEnumAttributeKindForName(attr_name.ptr, attr_name.len);
+    def kind_id = llvm.GetEnumAttributeKindForName(attr_name.ptr, attr_name.len);
     assert(kind_id != 0);
-    const llvm_attr = llvm.CreateEnumAttribute(ofile.context, kind_id, attr_val) orelse return error.OutOfMemory;
+    def llvm_attr = llvm.CreateEnumAttribute(ofile.context, kind_id, attr_val) orelse return error.OutOfMemory;
     llvm.AddAttributeAtIndex(val, attr_index, llvm_attr);
 }
 
-fn addLLVMFnAttr(ofile: *ObjectFile, fn_val: *llvm.Value, attr_name: []const u8) !void {
+fn addLLVMFnAttr(ofile: *ObjectFile, fn_val: *llvm.Value, attr_name: []u8) !void {
     return addLLVMAttr(ofile, fn_val, maxInt(llvm.AttributeIndex), attr_name);
 }
 
-fn addLLVMFnAttrStr(ofile: *ObjectFile, fn_val: *llvm.Value, attr_name: []const u8, attr_val: []const u8) !void {
+fn addLLVMFnAttrStr(ofile: *ObjectFile, fn_val: *llvm.Value, attr_name: []u8, attr_val: []u8) !void {
     return addLLVMAttrStr(ofile, fn_val, maxInt(llvm.AttributeIndex), attr_name, attr_val);
 }
 
-fn addLLVMFnAttrInt(ofile: *ObjectFile, fn_val: *llvm.Value, attr_name: []const u8, attr_val: u64) !void {
+fn addLLVMFnAttrInt(ofile: *ObjectFile, fn_val: *llvm.Value, attr_name: []u8, attr_val: u64) !void {
     return addLLVMAttrInt(ofile, fn_val, maxInt(llvm.AttributeIndex), attr_name, attr_val);
 }
 
@@ -375,9 +375,9 @@ fn renderLoadUntyped(
     ptr: *llvm.Value,
     alignment: Type.Pointer.Align,
     vol: Type.Pointer.Vol,
-    name: [*:0]const u8,
+    name: [*:0]u8,
 ) !*llvm.Value {
-    const result = llvm.BuildLoad(ofile.builder, ptr, name) orelse return error.OutOfMemory;
+    def result = llvm.BuildLoad(ofile.builder, ptr, name) orelse return error.OutOfMemory;
     switch (vol) {
         .Non => {},
         .Volatile => llvm.SetVolatile(result, 1),
@@ -386,12 +386,12 @@ fn renderLoadUntyped(
     return result;
 }
 
-fn renderLoad(ofile: *ObjectFile, ptr: *llvm.Value, ptr_type: *Type.Pointer, name: [*:0]const u8) !*llvm.Value {
+fn renderLoad(ofile: *ObjectFile, ptr: *llvm.Value, ptr_type: *Type.Pointer, name: [*:0]u8) !*llvm.Value {
     return renderLoadUntyped(ofile, ptr, ptr_type.key.alignment, ptr_type.key.vol, name);
 }
 
 pub fn getHandleValue(ofile: *ObjectFile, ptr: *llvm.Value, ptr_type: *Type.Pointer) !?*llvm.Value {
-    const child_type = ptr_type.key.child_type;
+    def child_type = ptr_type.key.child_type;
     if (!child_type.hasBits()) {
         return null;
     }
@@ -408,7 +408,7 @@ pub fn renderStoreUntyped(
     alignment: Type.Pointer.Align,
     vol: Type.Pointer.Vol,
 ) !*llvm.Value {
-    const result = llvm.BuildStore(ofile.builder, value, ptr) orelse return error.OutOfMemory;
+    def result = llvm.BuildStore(ofile.builder, value, ptr) orelse return error.OutOfMemory;
     switch (vol) {
         .Non => {},
         .Volatile => llvm.SetVolatile(result, 1),
@@ -429,12 +429,12 @@ pub fn renderStore(
 pub fn renderAlloca(
     ofile: *ObjectFile,
     var_type: *Type,
-    name: []const u8,
+    name: []u8,
     alignment: Type.Pointer.Align,
 ) !*llvm.Value {
-    const llvm_var_type = try var_type.getLlvmType(ofile.arena, ofile.context);
-    const name_with_null = try std.cstr.addNullByte(ofile.arena, name);
-    const result = llvm.BuildAlloca(ofile.builder, llvm_var_type, @ptrCast([*:0]const u8, name_with_null.ptr)) orelse return error.OutOfMemory;
+    def llvm_var_type = try var_type.getLlvmType(ofile.arena, ofile.context);
+    def name_with_null = try std.cstr.addNullByte(ofile.arena, name);
+    def result = llvm.BuildAlloca(ofile.builder, llvm_var_type, @ptrCast([*:0]u8, name_with_null.ptr)) orelse return error.OutOfMemory;
     llvm.SetAlignment(result, resolveAlign(ofile, alignment, llvm_var_type));
     return result;
 }

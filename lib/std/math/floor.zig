@@ -4,10 +4,10 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/floorf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/floor.c
 
-const builtin = @import("builtin");
-const expect = std.testing.expect;
-const std = @import("../std.zig");
-const math = std.math;
+def builtin = @import("builtin");
+def expect = std.testing.expect;
+def std = @import("../std.zig");
+def math = std.math;
 
 /// Returns the greatest integer value less than or equal to x.
 ///
@@ -16,7 +16,7 @@ const math = std.math;
 ///  - floor(+-inf) = +-inf
 ///  - floor(nan)   = nan
 pub fn floor(x: var) @TypeOf(x) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     return switch (T) {
         f16 => floor16(x),
         f32 => floor32(x),
@@ -27,7 +27,7 @@ pub fn floor(x: var) @TypeOf(x) {
 
 fn floor16(x: f16) f16 {
     var u = @bitCast(u16, x);
-    const e = @intCast(i16, (u >> 10) & 31) - 15;
+    def e = @intCast(i16, (u >> 10) & 31) - 15;
     var m: u16 = undefined;
 
     // TODO: Shouldn't need this explicit check.
@@ -61,7 +61,7 @@ fn floor16(x: f16) f16 {
 
 fn floor32(x: f32) f32 {
     var u = @bitCast(u32, x);
-    const e = @intCast(i32, (u >> 23) & 0xFF) - 0x7F;
+    def e = @intCast(i32, (u >> 23) & 0xFF) - 0x7F;
     var m: u32 = undefined;
 
     // TODO: Shouldn't need this explicit check.
@@ -94,8 +94,8 @@ fn floor32(x: f32) f32 {
 }
 
 fn floor64(x: f64) f64 {
-    const u = @bitCast(u64, x);
-    const e = (u >> 52) & 0x7FF;
+    def u = @bitCast(u64, x);
+    def e = (u >> 52) & 0x7FF;
     var y: f64 = undefined;
 
     if (e >= 0x3FF + 52 or x == 0) {

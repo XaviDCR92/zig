@@ -1,5 +1,5 @@
-const std = @import("../std.zig");
-const math = std.math;
+def std = @import("../std.zig");
+def math = std.math;
 
 /// Returns value inf for the type T.
 pub fn inf(comptime T: type) T {

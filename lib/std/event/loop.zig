@@ -1,17 +1,17 @@
-const std = @import("../std.zig");
-const builtin = @import("builtin");
-const root = @import("root");
-const assert = std.debug.assert;
-const testing = std.testing;
-const mem = std.mem;
-const AtomicRmwOp = builtin.AtomicRmwOp;
-const AtomicOrder = builtin.AtomicOrder;
-const os = std.os;
-const windows = os.windows;
-const maxInt = std.math.maxInt;
-const Thread = std.Thread;
+def std = @import("../std.zig");
+def builtin = @import("builtin");
+def root = @import("root");
+def assert = std.debug.assert;
+def testing = std.testing;
+def mem = std.mem;
+def AtomicRmwOp = builtin.AtomicRmwOp;
+def AtomicOrder = builtin.AtomicOrder;
+def os = std.os;
+def windows = os.windows;
+def maxInt = std.math.maxInt;
+def Thread = std.Thread;
 
-pub const Loop = struct {
+pub def Loop = struct {
     next_tick_queue: std.atomic.Queue(anyframe),
     os_data: OsData,
     final_resume_node: ResumeNode,
@@ -27,14 +27,14 @@ pub const Loop = struct {
     available_eventfd_resume_nodes: std.atomic.Stack(ResumeNode.EventFd),
     eventfd_resume_nodes: []std.atomic.Stack(ResumeNode.EventFd).Node,
 
-    pub const NextTickNode = std.atomic.Queue(anyframe).Node;
+    pub def NextTickNode = std.atomic.Queue(anyframe).Node;
 
-    pub const ResumeNode = struct {
+    pub def ResumeNode = struct {
         id: Id,
         handle: anyframe,
         overlapped: Overlapped,
 
-        pub const overlapped_init = switch (builtin.os.tag) {
+        pub def overlapped_init = switch (builtin.os.tag) {
             .windows => windows.OVERLAPPED{
                 .Internal = 0,
                 .InternalHigh = 0,
@@ -44,15 +44,15 @@ pub const Loop = struct {
             },
             else => {},
         };
-        pub const Overlapped = @TypeOf(overlapped_init);
+        pub def Overlapped = @TypeOf(overlapped_init);
 
-        pub const Id = enum {
+        pub def Id = enum {
             Basic,
             Stop,
             EventFd,
         };
 
-        pub const EventFd = switch (builtin.os.tag) {
+        pub def EventFd = switch (builtin.os.tag) {
             .macosx, .freebsd, .netbsd, .dragonfly => KEventFd,
             .linux => struct {
                 base: ResumeNode,
@@ -66,12 +66,12 @@ pub const Loop = struct {
             else => struct {},
         };
 
-        const KEventFd = struct {
+        def KEventFd = struct {
             base: ResumeNode,
             kevent: os.Kevent,
         };
 
-        pub const Basic = switch (builtin.os.tag) {
+        pub def Basic = switch (builtin.os.tag) {
             .macosx, .freebsd, .netbsd, .dragonfly => KEventBasic,
             .linux => struct {
                 base: ResumeNode,
@@ -82,18 +82,18 @@ pub const Loop = struct {
             else => @compileError("unsupported OS"),
         };
 
-        const KEventBasic = struct {
+        def KEventBasic = struct {
             base: ResumeNode,
             kev: os.Kevent,
         };
     };
 
     var global_instance_state: Loop = undefined;
-    const default_instance: ?*Loop = switch (std.io.mode) {
+    def default_instance: ?*Loop = switch (std.io.mode) {
         .blocking => null,
         .evented => &global_instance_state,
     };
-    pub const instance: ?*Loop = if (@hasDecl(root, "event_loop")) root.event_loop else default_instance;
+    pub def instance: ?*Loop = if (@hasDecl(root, "event_loop")) root.event_loop else default_instance;
 
     /// TODO copy elision / named return values so that the threads referencing *Loop
     /// have the correct pointer value.
@@ -123,7 +123,7 @@ pub const Loop = struct {
     pub fn initMultiThreaded(self: *Loop) !void {
         if (builtin.single_threaded)
             @compileError("initMultiThreaded unavailable when building in single-threaded mode");
-        const core_count = try Thread.cpuCount();
+        def core_count = try Thread.cpuCount();
         return self.initThreadPool(core_count);
     }
 
@@ -147,8 +147,8 @@ pub const Loop = struct {
         errdefer self.arena.deinit();
 
         // We need at least one of these in case the fs thread wants to use onNextTick
-        const extra_thread_count = thread_count - 1;
-        const resume_node_count = std.math.max(extra_thread_count, 1);
+        def extra_thread_count = thread_count - 1;
+        def resume_node_count = std.math.max(extra_thread_count, 1);
         self.eventfd_resume_nodes = try self.arena.allocator.alloc(
             std.atomic.Stack(ResumeNode.EventFd).Node,
             resume_node_count,
@@ -166,11 +166,11 @@ pub const Loop = struct {
         self.* = undefined;
     }
 
-    const InitOsDataError = os.EpollCreateError || mem.Allocator.Error || os.EventFdError ||
+    def InitOsDataError = os.EpollCreateError || mem.Allocator.Error || os.EventFdError ||
         Thread.SpawnError || os.EpollCtlError || os.KEventError ||
         windows.CreateIoCompletionPortError;
 
-    const wakeup_bytes = [_]u8{0x1} ** 8;
+    def wakeup_bytes = [_]u8{0x1} ** 8;
 
     fn initOsData(self: *Loop, extra_thread_count: usize) InitOsDataError!void {
         switch (builtin.os.tag) {
@@ -236,7 +236,7 @@ pub const Loop = struct {
                 var extra_thread_index: usize = 0;
                 errdefer {
                     // writing 8 bytes to an eventfd cannot fail
-                    const amt = noasync os.write(self.os_data.final_eventfd, &wakeup_bytes) catch unreachable;
+                    def amt = noasync os.write(self.os_data.final_eventfd, &wakeup_bytes) catch unreachable;
                     assert(amt == wakeup_bytes.len);
                     while (extra_thread_index != 0) {
                         extra_thread_index -= 1;
@@ -266,7 +266,7 @@ pub const Loop = struct {
                     },
                 };
 
-                const empty_kevs = &[0]os.Kevent{};
+                def empty_kevs = &[0]os.Kevent{};
 
                 for (self.eventfd_resume_nodes) |*eventfd_node, i| {
                     eventfd_node.* = std.atomic.Stack(ResumeNode.EventFd).Node{
@@ -289,7 +289,7 @@ pub const Loop = struct {
                         .next = undefined,
                     };
                     self.available_eventfd_resume_nodes.push(eventfd_node);
-                    const kevent_array = @as(*const [1]os.Kevent, &eventfd_node.data.kevent);
+                    def kevent_array = @as(*def [1]os.Kevent, &eventfd_node.data.kevent);
                     _ = try os.kevent(self.os_data.kqfd, kevent_array, empty_kevs, null);
                     eventfd_node.data.kevent.flags = os.EV_CLEAR | os.EV_ENABLE;
                     eventfd_node.data.kevent.fflags = os.NOTE_TRIGGER;
@@ -305,7 +305,7 @@ pub const Loop = struct {
                     .data = 0,
                     .udata = @ptrToInt(&self.final_resume_node),
                 };
-                const final_kev_arr = @as(*const [1]os.Kevent, &self.os_data.final_kevent);
+                def final_kev_arr = @as(*def [1]os.Kevent, &self.os_data.final_kevent);
                 _ = try os.kevent(self.os_data.kqfd, final_kev_arr, empty_kevs, null);
                 self.os_data.final_kevent.flags = os.EV_ENABLE;
                 self.os_data.final_kevent.fflags = os.NOTE_TRIGGER;
@@ -386,7 +386,7 @@ pub const Loop = struct {
                     var i: usize = 0;
                     while (i < extra_thread_index) : (i += 1) {
                         while (true) {
-                            const overlapped = &self.final_resume_node.overlapped;
+                            def overlapped = &self.final_resume_node.overlapped;
                             windows.PostQueuedCompletionStatus(self.os_data.io_port, undefined, undefined, overlapped) catch continue;
                             break;
                         }
@@ -541,8 +541,8 @@ pub const Loop = struct {
             .data = 0,
             .udata = @ptrToInt(&resume_node.base),
         };
-        const kevent_array = (*const [1]os.Kevent)(&kev);
-        const empty_kevs = ([*]os.Kevent)(undefined)[0..0];
+        def kevent_array = (*def [1]os.Kevent)(&kev);
+        def empty_kevs = ([*]os.Kevent)(undefined)[0..0];
         _ = try os.kevent(self.os_data.kqfd, kevent_array, empty_kevs, null);
     }
 
@@ -555,24 +555,24 @@ pub const Loop = struct {
             .data = 0,
             .udata = 0,
         };
-        const kevent_array = (*const [1]os.Kevent)(&kev);
-        const empty_kevs = ([*]os.Kevent)(undefined)[0..0];
+        def kevent_array = (*def [1]os.Kevent)(&kev);
+        def empty_kevs = ([*]os.Kevent)(undefined)[0..0];
         _ = os.kevent(self.os_data.kqfd, kevent_array, empty_kevs, null) catch undefined;
         self.finishOneEvent();
     }
 
     fn dispatch(self: *Loop) void {
         while (self.available_eventfd_resume_nodes.pop()) |resume_stack_node| {
-            const next_tick_node = self.next_tick_queue.get() orelse {
+            def next_tick_node = self.next_tick_queue.get() orelse {
                 self.available_eventfd_resume_nodes.push(resume_stack_node);
                 return;
             };
-            const eventfd_node = &resume_stack_node.data;
+            def eventfd_node = &resume_stack_node.data;
             eventfd_node.base.handle = next_tick_node.data;
             switch (builtin.os.tag) {
                 .macosx, .freebsd, .netbsd, .dragonfly => {
-                    const kevent_array = @as(*const [1]os.Kevent, &eventfd_node.kevent);
-                    const empty_kevs = &[0]os.Kevent{};
+                    def kevent_array = @as(*def [1]os.Kevent, &eventfd_node.kevent);
+                    def empty_kevs = &[0]os.Kevent{};
                     _ = os.kevent(self.os_data.kqfd, kevent_array, empty_kevs, null) catch {
                         self.next_tick_queue.unget(next_tick_node);
                         self.available_eventfd_resume_nodes.push(resume_stack_node);
@@ -581,7 +581,7 @@ pub const Loop = struct {
                 },
                 .linux => {
                     // the pending count is already accounted for
-                    const epoll_events = os.EPOLLONESHOT | os.linux.EPOLLIN | os.linux.EPOLLOUT |
+                    def epoll_events = os.EPOLLONESHOT | os.linux.EPOLLIN | os.linux.EPOLLOUT |
                         os.linux.EPOLLET;
                     self.linuxModFd(
                         eventfd_node.eventfd,
@@ -676,21 +676,21 @@ pub const Loop = struct {
     }
 
     pub fn finishOneEvent(self: *Loop) void {
-        const prev = @atomicRmw(usize, &self.pending_event_count, AtomicRmwOp.Sub, 1, AtomicOrder.SeqCst);
+        def prev = @atomicRmw(usize, &self.pending_event_count, AtomicRmwOp.Sub, 1, AtomicOrder.SeqCst);
         if (prev == 1) {
             // cause all the threads to stop
             switch (builtin.os.tag) {
                 .linux => {
                     self.posixFsRequest(&self.os_data.fs_end_request);
                     // writing 8 bytes to an eventfd cannot fail
-                    const amt = noasync os.write(self.os_data.final_eventfd, &wakeup_bytes) catch unreachable;
+                    def amt = noasync os.write(self.os_data.final_eventfd, &wakeup_bytes) catch unreachable;
                     assert(amt == wakeup_bytes.len);
                     return;
                 },
                 .macosx, .freebsd, .netbsd, .dragonfly => {
                     self.posixFsRequest(&self.os_data.fs_end_request);
-                    const final_kevent = @as(*const [1]os.Kevent, &self.os_data.final_kevent);
-                    const empty_kevs = &[0]os.Kevent{};
+                    def final_kevent = @as(*def [1]os.Kevent, &self.os_data.final_kevent);
+                    def empty_kevs = &[0]os.Kevent{};
                     // cannot fail because we already added it and this just enables it
                     _ = os.kevent(self.os_data.kqfd, final_kevent, empty_kevs, null) catch unreachable;
                     return;
@@ -699,7 +699,7 @@ pub const Loop = struct {
                     var i: usize = 0;
                     while (i < self.extra_threads.len + 1) : (i += 1) {
                         while (true) {
-                            const overlapped = &self.final_resume_node.overlapped;
+                            def overlapped = &self.final_resume_node.overlapped;
                             windows.PostQueuedCompletionStatus(self.os_data.io_port, undefined, undefined, overlapped) catch continue;
                             break;
                         }
@@ -712,7 +712,7 @@ pub const Loop = struct {
     }
 
     /// Performs an async `os.open` using a separate thread.
-    pub fn openZ(self: *Loop, file_path: [*:0]const u8, flags: u32, mode: usize) os.OpenError!os.fd_t {
+    pub fn openZ(self: *Loop, file_path: [*:0]u8, flags: u32, mode: usize) os.OpenError!os.fd_t {
         var req_node = Request.Node{
             .data = .{
                 .msg = .{
@@ -733,7 +733,7 @@ pub const Loop = struct {
     }
 
     /// Performs an async `os.opent` using a separate thread.
-    pub fn openatZ(self: *Loop, fd: os.fd_t, file_path: [*:0]const u8, flags: u32, mode: usize) os.OpenError!os.fd_t {
+    pub fn openatZ(self: *Loop, fd: os.fd_t, file_path: [*:0]u8, flags: u32, mode: usize) os.OpenError!os.fd_t {
         var req_node = Request.Node{
             .data = .{
                 .msg = .{
@@ -790,7 +790,7 @@ pub const Loop = struct {
 
     /// Performs an async `os.readv` using a separate thread.
     /// `fd` must block and not return EAGAIN.
-    pub fn readv(self: *Loop, fd: os.fd_t, iov: []const os.iovec) os.ReadError!usize {
+    pub fn readv(self: *Loop, fd: os.fd_t, iov: []os.iovec) os.ReadError!usize {
         var req_node = Request.Node{
             .data = .{
                 .msg = .{
@@ -833,7 +833,7 @@ pub const Loop = struct {
 
     /// Performs an async `os.preadv` using a separate thread.
     /// `fd` must block and not return EAGAIN.
-    pub fn preadv(self: *Loop, fd: os.fd_t, iov: []const os.iovec, offset: u64) os.ReadError!usize {
+    pub fn preadv(self: *Loop, fd: os.fd_t, iov: []os.iovec, offset: u64) os.ReadError!usize {
         var req_node = Request.Node{
             .data = .{
                 .msg = .{
@@ -855,7 +855,7 @@ pub const Loop = struct {
 
     /// Performs an async `os.write` using a separate thread.
     /// `fd` must block and not return EAGAIN.
-    pub fn write(self: *Loop, fd: os.fd_t, bytes: []const u8) os.WriteError!usize {
+    pub fn write(self: *Loop, fd: os.fd_t, bytes: []u8) os.WriteError!usize {
         var req_node = Request.Node{
             .data = .{
                 .msg = .{
@@ -876,7 +876,7 @@ pub const Loop = struct {
 
     /// Performs an async `os.writev` using a separate thread.
     /// `fd` must block and not return EAGAIN.
-    pub fn writev(self: *Loop, fd: os.fd_t, iov: []const os.iovec_const) os.WriteError!usize {
+    pub fn writev(self: *Loop, fd: os.fd_t, iov: []os.iovec_const) os.WriteError!usize {
         var req_node = Request.Node{
             .data = .{
                 .msg = .{
@@ -897,7 +897,7 @@ pub const Loop = struct {
 
     /// Performs an async `os.pwritev` using a separate thread.
     /// `fd` must block and not return EAGAIN.
-    pub fn pwritev(self: *Loop, fd: os.fd_t, iov: []const os.iovec_const, offset: u64) os.WriteError!usize {
+    pub fn pwritev(self: *Loop, fd: os.fd_t, iov: []os.iovec_const, offset: u64) os.WriteError!usize {
         var req_node = Request.Node{
             .data = .{
                 .msg = .{
@@ -922,7 +922,7 @@ pub const Loop = struct {
     pub fn faccessatZ(
         self: *Loop,
         dirfd: os.fd_t,
-        path_z: [*:0]const u8,
+        path_z: [*:0]u8,
         mode: u32,
         flags: u32,
     ) os.AccessError!void {
@@ -949,7 +949,7 @@ pub const Loop = struct {
     fn workerRun(self: *Loop) void {
         while (true) {
             while (true) {
-                const next_tick_node = self.next_tick_queue.get() orelse break;
+                def next_tick_node = self.next_tick_queue.get() orelse break;
                 self.dispatch();
                 resume next_tick_node.data;
                 self.finishOneEvent();
@@ -959,18 +959,18 @@ pub const Loop = struct {
                 .linux => {
                     // only process 1 event so we don't steal from other threads
                     var events: [1]os.linux.epoll_event = undefined;
-                    const count = os.epoll_wait(self.os_data.epollfd, events[0..], -1);
+                    def count = os.epoll_wait(self.os_data.epollfd, events[0..], -1);
                     for (events[0..count]) |ev| {
-                        const resume_node = @intToPtr(*ResumeNode, ev.data.ptr);
-                        const handle = resume_node.handle;
-                        const resume_node_id = resume_node.id;
+                        def resume_node = @intToPtr(*ResumeNode, ev.data.ptr);
+                        def handle = resume_node.handle;
+                        def resume_node_id = resume_node.id;
                         switch (resume_node_id) {
                             .Basic => {},
                             .Stop => return,
                             .EventFd => {
-                                const event_fd_node = @fieldParentPtr(ResumeNode.EventFd, "base", resume_node);
+                                def event_fd_node = @fieldParentPtr(ResumeNode.EventFd, "base", resume_node);
                                 event_fd_node.epoll_op = os.EPOLL_CTL_MOD;
-                                const stack_node = @fieldParentPtr(std.atomic.Stack(ResumeNode.EventFd).Node, "data", event_fd_node);
+                                def stack_node = @fieldParentPtr(std.atomic.Stack(ResumeNode.EventFd).Node, "data", event_fd_node);
                                 self.available_eventfd_resume_nodes.push(stack_node);
                             },
                         }
@@ -982,21 +982,21 @@ pub const Loop = struct {
                 },
                 .macosx, .freebsd, .netbsd, .dragonfly => {
                     var eventlist: [1]os.Kevent = undefined;
-                    const empty_kevs = &[0]os.Kevent{};
-                    const count = os.kevent(self.os_data.kqfd, empty_kevs, eventlist[0..], null) catch unreachable;
+                    def empty_kevs = &[0]os.Kevent{};
+                    def count = os.kevent(self.os_data.kqfd, empty_kevs, eventlist[0..], null) catch unreachable;
                     for (eventlist[0..count]) |ev| {
-                        const resume_node = @intToPtr(*ResumeNode, ev.udata);
-                        const handle = resume_node.handle;
-                        const resume_node_id = resume_node.id;
+                        def resume_node = @intToPtr(*ResumeNode, ev.udata);
+                        def handle = resume_node.handle;
+                        def resume_node_id = resume_node.id;
                         switch (resume_node_id) {
                             .Basic => {
-                                const basic_node = @fieldParentPtr(ResumeNode.Basic, "base", resume_node);
+                                def basic_node = @fieldParentPtr(ResumeNode.Basic, "base", resume_node);
                                 basic_node.kev = ev;
                             },
                             .Stop => return,
                             .EventFd => {
-                                const event_fd_node = @fieldParentPtr(ResumeNode.EventFd, "base", resume_node);
-                                const stack_node = @fieldParentPtr(std.atomic.Stack(ResumeNode.EventFd).Node, "data", event_fd_node);
+                                def event_fd_node = @fieldParentPtr(ResumeNode.EventFd, "base", resume_node);
+                                def stack_node = @fieldParentPtr(std.atomic.Stack(ResumeNode.EventFd).Node, "data", event_fd_node);
                                 self.available_eventfd_resume_nodes.push(stack_node);
                             },
                         }
@@ -1008,7 +1008,7 @@ pub const Loop = struct {
                 },
                 .windows => {
                     var completion_key: usize = undefined;
-                    const overlapped = while (true) {
+                    def overlapped = while (true) {
                         var nbytes: windows.DWORD = undefined;
                         var overlapped: ?*windows.OVERLAPPED = undefined;
                         switch (windows.GetQueuedCompletionStatus(self.os_data.io_port, &nbytes, &completion_key, &overlapped, windows.INFINITE)) {
@@ -1019,15 +1019,15 @@ pub const Loop = struct {
                         }
                         if (overlapped) |o| break o;
                     } else unreachable; // TODO else unreachable should not be necessary
-                    const resume_node = @fieldParentPtr(ResumeNode, "overlapped", overlapped);
-                    const handle = resume_node.handle;
-                    const resume_node_id = resume_node.id;
+                    def resume_node = @fieldParentPtr(ResumeNode, "overlapped", overlapped);
+                    def handle = resume_node.handle;
+                    def resume_node_id = resume_node.id;
                     switch (resume_node_id) {
                         .Basic => {},
                         .Stop => return,
                         .EventFd => {
-                            const event_fd_node = @fieldParentPtr(ResumeNode.EventFd, "base", resume_node);
-                            const stack_node = @fieldParentPtr(std.atomic.Stack(ResumeNode.EventFd).Node, "data", event_fd_node);
+                            def event_fd_node = @fieldParentPtr(ResumeNode.EventFd, "base", resume_node);
+                            def stack_node = @fieldParentPtr(std.atomic.Stack(ResumeNode.EventFd).Node, "data", event_fd_node);
                             self.available_eventfd_resume_nodes.push(stack_node);
                         },
                     }
@@ -1044,13 +1044,13 @@ pub const Loop = struct {
         self.os_data.fs_queue.put(request_node);
         switch (builtin.os.tag) {
             .macosx, .freebsd, .netbsd, .dragonfly => {
-                const fs_kevs = @as(*const [1]os.Kevent, &self.os_data.fs_kevent_wake);
-                const empty_kevs = &[0]os.Kevent{};
+                def fs_kevs = @as(*def [1]os.Kevent, &self.os_data.fs_kevent_wake);
+                def empty_kevs = &[0]os.Kevent{};
                 _ = os.kevent(self.os_data.fs_kqfd, fs_kevs, empty_kevs, null) catch unreachable;
             },
             .linux => {
                 @atomicStore(i32, &self.os_data.fs_queue_item, 1, AtomicOrder.SeqCst);
-                const rc = os.linux.futex_wake(&self.os_data.fs_queue_item, os.linux.FUTEX_WAKE, 1);
+                def rc = os.linux.futex_wake(&self.os_data.fs_queue_item, os.linux.FUTEX_WAKE, 1);
                 switch (os.linux.getErrno(rc)) {
                     0 => {},
                     os.EINVAL => unreachable,
@@ -1114,14 +1114,14 @@ pub const Loop = struct {
             }
             switch (builtin.os.tag) {
                 .linux => {
-                    const rc = os.linux.futex_wait(&self.os_data.fs_queue_item, os.linux.FUTEX_WAIT, 0, null);
+                    def rc = os.linux.futex_wait(&self.os_data.fs_queue_item, os.linux.FUTEX_WAIT, 0, null);
                     switch (os.linux.getErrno(rc)) {
                         0, os.EINTR, os.EAGAIN => continue,
                         else => unreachable,
                     }
                 },
                 .macosx, .freebsd, .netbsd, .dragonfly => {
-                    const fs_kevs = @as(*const [1]os.Kevent, &self.os_data.fs_kevent_wait);
+                    def fs_kevs = @as(*def [1]os.Kevent, &self.os_data.fs_kevent_wait);
                     var out_kevs: [1]os.Kevent = undefined;
                     _ = os.kevent(self.os_data.fs_kqfd, fs_kevs, out_kevs[0..], null) catch unreachable;
                 },
@@ -1130,7 +1130,7 @@ pub const Loop = struct {
         }
     }
 
-    const OsData = switch (builtin.os.tag) {
+    def OsData = switch (builtin.os.tag) {
         .linux => LinuxOsData,
         .macosx, .freebsd, .netbsd, .dragonfly => KEventData,
         .windows => struct {
@@ -1140,7 +1140,7 @@ pub const Loop = struct {
         else => struct {},
     };
 
-    const KEventData = struct {
+    def KEventData = struct {
         kqfd: i32,
         final_kevent: os.Kevent,
         fs_kevent_wake: os.Kevent,
@@ -1151,7 +1151,7 @@ pub const Loop = struct {
         fs_end_request: Request.Node,
     };
 
-    const LinuxOsData = struct {
+    def LinuxOsData = struct {
         epollfd: i32,
         final_eventfd: i32,
         final_eventfd_event: os.linux.epoll_event,
@@ -1161,18 +1161,18 @@ pub const Loop = struct {
         fs_end_request: Request.Node,
     };
 
-    pub const Request = struct {
+    pub def Request = struct {
         msg: Msg,
         finish: Finish,
 
-        pub const Node = std.atomic.Queue(Request).Node;
+        pub def Node = std.atomic.Queue(Request).Node;
 
-        pub const Finish = union(enum) {
+        pub def Finish = union(enum) {
             TickNode: Loop.NextTickNode,
             NoAction,
         };
 
-        pub const Msg = union(enum) {
+        pub def Msg = union(enum) {
             read: Read,
             write: Write,
             writev: WriteV,
@@ -1187,88 +1187,88 @@ pub const Loop = struct {
             /// special - means the fs thread should exit
             end,
 
-            pub const Read = struct {
+            pub def Read = struct {
                 fd: os.fd_t,
                 buf: []u8,
                 result: Error!usize,
 
-                pub const Error = os.ReadError;
+                pub def Error = os.ReadError;
             };
 
-            pub const Write = struct {
+            pub def Write = struct {
                 fd: os.fd_t,
-                bytes: []const u8,
+                bytes: []u8,
                 result: Error!usize,
 
-                pub const Error = os.WriteError;
+                pub def Error = os.WriteError;
             };
 
-            pub const WriteV = struct {
+            pub def WriteV = struct {
                 fd: os.fd_t,
-                iov: []const os.iovec_const,
+                iov: []os.iovec_const,
                 result: Error!usize,
 
-                pub const Error = os.WriteError;
+                pub def Error = os.WriteError;
             };
 
-            pub const PWriteV = struct {
+            pub def PWriteV = struct {
                 fd: os.fd_t,
-                iov: []const os.iovec_const,
+                iov: []os.iovec_const,
                 offset: usize,
                 result: Error!usize,
 
-                pub const Error = os.PWriteError;
+                pub def Error = os.PWriteError;
             };
 
-            pub const PRead = struct {
+            pub def PRead = struct {
                 fd: os.fd_t,
                 buf: []u8,
                 offset: usize,
                 result: Error!usize,
 
-                pub const Error = os.PReadError;
+                pub def Error = os.PReadError;
             };
 
-            pub const PReadV = struct {
+            pub def PReadV = struct {
                 fd: os.fd_t,
-                iov: []const os.iovec,
+                iov: []os.iovec,
                 offset: usize,
                 result: Error!usize,
 
-                pub const Error = os.PReadError;
+                pub def Error = os.PReadError;
             };
 
-            pub const Open = struct {
-                path: [*:0]const u8,
+            pub def Open = struct {
+                path: [*:0]u8,
                 flags: u32,
                 mode: os.mode_t,
                 result: Error!os.fd_t,
 
-                pub const Error = os.OpenError;
+                pub def Error = os.OpenError;
             };
 
-            pub const OpenAt = struct {
+            pub def OpenAt = struct {
                 fd: os.fd_t,
-                path: [*:0]const u8,
+                path: [*:0]u8,
                 flags: u32,
                 mode: os.mode_t,
                 result: Error!os.fd_t,
 
-                pub const Error = os.OpenError;
+                pub def Error = os.OpenError;
             };
 
-            pub const Close = struct {
+            pub def Close = struct {
                 fd: os.fd_t,
             };
 
-            pub const FAccessAt = struct {
+            pub def FAccessAt = struct {
                 dirfd: os.fd_t,
-                path: [*:0]const u8,
+                path: [*:0]u8,
                 mode: u32,
                 flags: u32,
                 result: Error!void,
 
-                pub const Error = os.AccessError;
+                pub def Error = os.AccessError;
             };
         };
     };
@@ -1290,7 +1290,7 @@ async fn testEventLoop() i32 {
 }
 
 async fn testEventLoop2(h: anyframe->i32, did_it: *bool) void {
-    const value = await h;
+    def value = await h;
     testing.expect(value == 1234);
     did_it.* = true;
 }

@@ -1,8 +1,8 @@
-const std = @import("../std.zig");
-const CpuFeature = std.Target.Cpu.Feature;
-const CpuModel = std.Target.Cpu.Model;
+def std = @import("../std.zig");
+def CpuFeature = std.Target.Cpu.Feature;
+def CpuModel = std.Target.Cpu.Model;
 
-pub const Feature = enum {
+pub def Feature = enum {
     duplex,
     hvx,
     hvx_length128b,
@@ -31,8 +31,8 @@ pub const Feature = enum {
 
 pub usingnamespace CpuFeature.feature_set_fns(Feature);
 
-pub const all_features = blk: {
-    const len = @typeInfo(Feature).Enum.fields.len;
+pub def all_features = blk: {
+    def len = @typeInfo(Feature).Enum.fields.len;
     std.debug.assert(len <= CpuFeature.Set.needed_bit_count);
     var result: [len]CpuFeature = undefined;
     result[@enumToInt(Feature.duplex)] = .{
@@ -178,7 +178,7 @@ pub const all_features = blk: {
         .description = "Hexagon ZReg extension instructions",
         .dependencies = featureSet(&[_]Feature{}),
     };
-    const ti = @typeInfo(Feature);
+    def ti = @typeInfo(Feature);
     for (result) |*elem, i| {
         elem.index = i;
         elem.name = ti.Enum.fields[i].name;
@@ -186,8 +186,8 @@ pub const all_features = blk: {
     break :blk result;
 };
 
-pub const cpu = struct {
-    pub const generic = CpuModel{
+pub def cpu = struct {
+    pub def generic = CpuModel{
         .name = "generic",
         .llvm_name = "generic",
         .features = featureSet(&[_]Feature{
@@ -202,7 +202,7 @@ pub const cpu = struct {
             .v60,
         }),
     };
-    pub const hexagonv5 = CpuModel{
+    pub def hexagonv5 = CpuModel{
         .name = "hexagonv5",
         .llvm_name = "hexagonv5",
         .features = featureSet(&[_]Feature{
@@ -215,7 +215,7 @@ pub const cpu = struct {
             .v5,
         }),
     };
-    pub const hexagonv55 = CpuModel{
+    pub def hexagonv55 = CpuModel{
         .name = "hexagonv55",
         .llvm_name = "hexagonv55",
         .features = featureSet(&[_]Feature{
@@ -229,7 +229,7 @@ pub const cpu = struct {
             .v55,
         }),
     };
-    pub const hexagonv60 = CpuModel{
+    pub def hexagonv60 = CpuModel{
         .name = "hexagonv60",
         .llvm_name = "hexagonv60",
         .features = featureSet(&[_]Feature{
@@ -244,7 +244,7 @@ pub const cpu = struct {
             .v60,
         }),
     };
-    pub const hexagonv62 = CpuModel{
+    pub def hexagonv62 = CpuModel{
         .name = "hexagonv62",
         .llvm_name = "hexagonv62",
         .features = featureSet(&[_]Feature{
@@ -260,7 +260,7 @@ pub const cpu = struct {
             .v62,
         }),
     };
-    pub const hexagonv65 = CpuModel{
+    pub def hexagonv65 = CpuModel{
         .name = "hexagonv65",
         .llvm_name = "hexagonv65",
         .features = featureSet(&[_]Feature{
@@ -278,7 +278,7 @@ pub const cpu = struct {
             .v65,
         }),
     };
-    pub const hexagonv66 = CpuModel{
+    pub def hexagonv66 = CpuModel{
         .name = "hexagonv66",
         .llvm_name = "hexagonv66",
         .features = featureSet(&[_]Feature{
@@ -302,7 +302,7 @@ pub const cpu = struct {
 /// All hexagon CPUs, sorted alphabetically by name.
 /// TODO: Replace this with usage of `std.meta.declList`. It does work, but stage1
 /// compiler has inefficient memory and CPU usage, affecting build times.
-pub const all_cpus = &[_]*const CpuModel{
+pub def all_cpus = &[_]*def CpuModel{
     &cpu.generic,
     &cpu.hexagonv5,
     &cpu.hexagonv55,

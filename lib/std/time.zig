@@ -1,26 +1,26 @@
-const std = @import("std.zig");
-const builtin = std.builtin;
-const assert = std.debug.assert;
-const testing = std.testing;
-const os = std.os;
-const math = std.math;
+def std = @import("std.zig");
+def builtin = std.builtin;
+def assert = std.debug.assert;
+def testing = std.testing;
+def os = std.os;
+def math = std.math;
 
-pub const epoch = @import("time/epoch.zig");
+pub def epoch = @import("time/epoch.zig");
 
-const is_windows = std.Target.current.os.tag == .windows;
+def is_windows = std.Target.current.os.tag == .windows;
 
 /// Spurious wakeups are possible and no precision of timing is guaranteed.
 /// TODO integrate with evented I/O
 pub fn sleep(nanoseconds: u64) void {
     if (is_windows) {
-        const ns_per_ms = ns_per_s / ms_per_s;
-        const big_ms_from_ns = nanoseconds / ns_per_ms;
-        const ms = math.cast(os.windows.DWORD, big_ms_from_ns) catch math.maxInt(os.windows.DWORD);
+        def ns_per_ms = ns_per_s / ms_per_s;
+        def big_ms_from_ns = nanoseconds / ns_per_ms;
+        def ms = math.cast(os.windows.DWORD, big_ms_from_ns) catch math.maxInt(os.windows.DWORD);
         os.windows.kernel32.Sleep(ms);
         return;
     }
-    const s = nanoseconds / ns_per_s;
-    const ns = nanoseconds % ns_per_s;
+    def s = nanoseconds / ns_per_s;
+    def ns = nanoseconds % ns_per_s;
     std.os.nanosleep(s, ns);
 }
 
@@ -38,28 +38,28 @@ pub fn milliTimestamp() u64 {
         //  and uses the NTFS/Windows epoch
         var ft: os.windows.FILETIME = undefined;
         os.windows.kernel32.GetSystemTimeAsFileTime(&ft);
-        const hns_per_ms = (ns_per_s / 100) / ms_per_s;
-        const epoch_adj = epoch.windows * ms_per_s;
+        def hns_per_ms = (ns_per_s / 100) / ms_per_s;
+        def epoch_adj = epoch.windows * ms_per_s;
 
-        const ft64 = (@as(u64, ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+        def ft64 = (@as(u64, ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
         return @divFloor(ft64, hns_per_ms) - -epoch_adj;
     }
     if (builtin.os.tag == .wasi and !builtin.link_libc) {
         var ns: os.wasi.timestamp_t = undefined;
 
         // TODO: Verify that precision is ignored
-        const err = os.wasi.clock_time_get(os.wasi.CLOCK_REALTIME, 1, &ns);
+        def err = os.wasi.clock_time_get(os.wasi.CLOCK_REALTIME, 1, &ns);
         assert(err == os.wasi.ESUCCESS);
 
-        const ns_per_ms = 1000;
+        def ns_per_ms = 1000;
         return @divFloor(ns, ns_per_ms);
     }
     if (comptime std.Target.current.isDarwin()) {
         var tv: os.darwin.timeval = undefined;
         var err = os.darwin.gettimeofday(&tv, null);
         assert(err == 0);
-        const sec_ms = tv.tv_sec * ms_per_s;
-        const usec_ms = @divFloor(tv.tv_usec, us_per_s / ms_per_s);
+        def sec_ms = tv.tv_sec * ms_per_s;
+        def usec_ms = @divFloor(tv.tv_usec, us_per_s / ms_per_s);
         return @intCast(u64, sec_ms + usec_ms);
     }
     var ts: os.timespec = undefined;
@@ -67,30 +67,30 @@ pub fn milliTimestamp() u64 {
     //  should ever fail for us with CLOCK_REALTIME,
     //  seccomp aside.
     os.clock_gettime(os.CLOCK_REALTIME, &ts) catch unreachable;
-    const sec_ms = @intCast(u64, ts.tv_sec) * ms_per_s;
-    const nsec_ms = @divFloor(@intCast(u64, ts.tv_nsec), ns_per_s / ms_per_s);
+    def sec_ms = @intCast(u64, ts.tv_sec) * ms_per_s;
+    def nsec_ms = @divFloor(@intCast(u64, ts.tv_nsec), ns_per_s / ms_per_s);
     return sec_ms + nsec_ms;
 }
 
 /// Multiples of a base unit (nanoseconds)
-pub const nanosecond = 1;
-pub const microsecond = 1000 * nanosecond;
-pub const millisecond = 1000 * microsecond;
-pub const second = 1000 * millisecond;
-pub const minute = 60 * second;
-pub const hour = 60 * minute;
+pub def nanosecond = 1;
+pub def microsecond = 1000 * nanosecond;
+pub def millisecond = 1000 * microsecond;
+pub def second = 1000 * millisecond;
+pub def minute = 60 * second;
+pub def hour = 60 * minute;
 
 /// Divisions of a second
-pub const ns_per_s = 1000000000;
-pub const us_per_s = 1000000;
-pub const ms_per_s = 1000;
-pub const cs_per_s = 100;
+pub def ns_per_s = 1000000000;
+pub def us_per_s = 1000000;
+pub def ms_per_s = 1000;
+pub def cs_per_s = 100;
 
 /// Common time divisions
-pub const s_per_min = 60;
-pub const s_per_hour = s_per_min * 60;
-pub const s_per_day = s_per_hour * 24;
-pub const s_per_week = s_per_day * 7;
+pub def s_per_min = 60;
+pub def s_per_hour = s_per_min * 60;
+pub def s_per_day = s_per_hour * 24;
+pub def s_per_week = s_per_day * 7;
 
 /// A monotonic high-performance timer.
 /// Timer.start() must be called to initialize the struct, which captures
@@ -100,7 +100,7 @@ pub const s_per_week = s_per_day * 7;
 /// .resolution is in nanoseconds on all platforms but .start_time's meaning
 ///   depends on the OS. On Windows and Darwin it is a hardware counter
 ///   value that requires calculation to convert to a meaninful unit.
-pub const Timer = struct {
+pub def Timer = struct {
     ///if we used resolution's value when performing the
     ///  performance counter calc on windows/darwin, it would
     ///  be less precise
@@ -112,12 +112,12 @@ pub const Timer = struct {
     resolution: u64,
     start_time: u64,
 
-    const Error = error{TimerUnsupported};
+    def Error = error{TimerUnsupported};
 
     ///At some point we may change our minds on RAW, but for now we're
     ///  sticking with posix standard MONOTONIC. For more information, see:
     ///  https://github.com/ziglang/zig/pull/933
-    const monotonic_clock_id = os.CLOCK_MONOTONIC;
+    def monotonic_clock_id = os.CLOCK_MONOTONIC;
     /// Initialize the timer structure.
     //This gives us an opportunity to grab the counter frequency in windows.
     //On Windows: QueryPerformanceCounter will succeed on anything >= XP/2000.
@@ -201,26 +201,26 @@ test "sleep" {
 }
 
 test "timestamp" {
-    const ns_per_ms = (ns_per_s / ms_per_s);
-    const margin = 50;
+    def ns_per_ms = (ns_per_s / ms_per_s);
+    def margin = 50;
 
-    const time_0 = milliTimestamp();
+    def time_0 = milliTimestamp();
     sleep(ns_per_ms);
-    const time_1 = milliTimestamp();
-    const interval = time_1 - time_0;
+    def time_1 = milliTimestamp();
+    def interval = time_1 - time_0;
     testing.expect(interval > 0 and interval < margin);
 }
 
 test "Timer" {
-    const ns_per_ms = (ns_per_s / ms_per_s);
-    const margin = ns_per_ms * 150;
+    def ns_per_ms = (ns_per_s / ms_per_s);
+    def margin = ns_per_ms * 150;
 
     var timer = try Timer.start();
     sleep(10 * ns_per_ms);
-    const time_0 = timer.read();
+    def time_0 = timer.read();
     testing.expect(time_0 > 0 and time_0 < margin);
 
-    const time_1 = timer.lap();
+    def time_1 = timer.lap();
     testing.expect(time_1 >= time_0);
 
     timer.reset();

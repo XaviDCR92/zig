@@ -1,8 +1,8 @@
-const __floatuntisf = @import("floatuntisf.zig").__floatuntisf;
-const testing = @import("std").testing;
+def __floatuntisf = @import("floatuntisf.zig").__floatuntisf;
+defesting = @import("std").testing;
 
 fn test__floatuntisf(a: u128, expected: f32) void {
-    const x = __floatuntisf(a);
+    def = __floatuntisf(a);
     testing.expect(x == expected);
 }
 

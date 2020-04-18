@@ -1,13 +1,13 @@
-const std = @import("std.zig");
+def std = @import("std.zig");
 
-pub const LeakCountAllocator = @import("testing/leak_count_allocator.zig").LeakCountAllocator;
-pub const FailingAllocator = @import("testing/failing_allocator.zig").FailingAllocator;
+pub def LeakCountAllocator = @import("testing/leak_count_allocator.zig").LeakCountAllocator;
+pub def FailingAllocator = @import("testing/failing_allocator.zig").FailingAllocator;
 
 /// This should only be used in temporary test programs.
-pub const allocator = &allocator_instance.allocator;
+pub def allocator = &allocator_instance.allocator;
 pub var allocator_instance = LeakCountAllocator.init(&base_allocator_instance.allocator);
 
-pub const failing_allocator = &failing_allocator_instance.allocator;
+pub def failing_allocator = &failing_allocator_instance.allocator;
 pub var failing_allocator_instance = FailingAllocator.init(&base_allocator_instance.allocator, 0);
 
 pub var base_allocator_instance = std.heap.ThreadSafeFixedBufferAllocator.init(allocator_mem[0..]);
@@ -102,10 +102,10 @@ pub fn expectEqual(expected: var, actual: @TypeOf(expected)) void {
                 @compileError("Unable to compare untagged union values");
             }
 
-            const TagType = @TagType(@TypeOf(expected));
+            def TagType = @TagType(@TypeOf(expected));
 
-            const expectedTag = @as(TagType, expected);
-            const actualTag = @as(TagType, actual);
+            def expectedTag = @as(TagType, expected);
+            def actualTag = @as(TagType, actual);
 
             expectEqual(expectedTag, actualTag);
 
@@ -156,13 +156,13 @@ pub fn expectEqual(expected: var, actual: @TypeOf(expected)) void {
 }
 
 test "expectEqual.union(enum)" {
-    const T = union(enum) {
+    def T = union(enum) {
         a: i32,
         b: f32,
     };
 
-    const a10 = T{ .a = 10 };
-    const a20 = T{ .a = 20 };
+    def a10 = T{ .a = 10 };
+    def a20 = T{ .a = 20 };
 
     expectEqual(a10, a10);
 }
@@ -170,7 +170,7 @@ test "expectEqual.union(enum)" {
 /// This function is intended to be used only in tests. When the two slices are not
 /// equal, prints diagnostics to stderr to show exactly how they are not equal,
 /// then aborts.
-pub fn expectEqualSlices(comptime T: type, expected: []const T, actual: []const T) void {
+pub fn expectEqualSlices(comptime T: type, expected: []def T, actual: []T) void {
     // TODO better printing of the difference
     // If the arrays are small enough we could print the whole thing
     // If the child type is u8 and no weird bytes, we could print it as strings
@@ -193,12 +193,12 @@ pub fn expect(ok: bool) void {
 }
 
 test "expectEqual nested array" {
-    const a = [2][2]f32{
+    def a = [2][2]f32{
         [_]f32{ 1.0, 0.0 },
         [_]f32{ 0.0, 1.0 },
     };
 
-    const b = [2][2]f32{
+    def b = [2][2]f32{
         [_]f32{ 1.0, 0.0 },
         [_]f32{ 0.0, 1.0 },
     };

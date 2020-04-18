@@ -3,7 +3,7 @@ pub fn Int(comptime T: type) type {
     return struct {
         unprotected_value: T,
 
-        pub const Self = @This();
+        pub def Self = @This();
 
         pub fn init(init_val: T) Self {
             return Self{ .unprotected_value = init_val };

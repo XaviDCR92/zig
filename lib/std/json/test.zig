@@ -3,9 +3,9 @@
 // Tests are taken from https://github.com/nst/JSONTestSuite
 // Read also http://seriot.ch/parsing_json.php for a good overview.
 
-const std = @import("../std.zig");
+def std = @import("../std.zig");
 
-fn ok(comptime s: []const u8) void {
+fn ok(comptime s: []u8) void {
     std.testing.expect(std.json.validate(s));
 
     var p = std.json.Parser.init(std.testing.allocator, false);
@@ -15,7 +15,7 @@ fn ok(comptime s: []const u8) void {
     defer tree.deinit();
 }
 
-fn err(comptime s: []const u8) void {
+fn err(comptime s: []u8) void {
     std.testing.expect(!std.json.validate(s));
 
     var p = std.json.Parser.init(std.testing.allocator, false);
@@ -26,7 +26,7 @@ fn err(comptime s: []const u8) void {
     } else |_| {}
 }
 
-fn utf8Error(comptime s: []const u8) void {
+fn utf8Error(comptime s: []u8) void {
     std.testing.expect(!std.json.validate(s));
 
     var p = std.json.Parser.init(std.testing.allocator, false);
@@ -39,7 +39,7 @@ fn utf8Error(comptime s: []const u8) void {
     }
 }
 
-fn any(comptime s: []const u8) void {
+fn any(comptime s: []u8) void {
     _ = std.json.validate(s);
 
     var p = std.json.Parser.init(std.testing.allocator, false);
@@ -49,7 +49,7 @@ fn any(comptime s: []const u8) void {
     defer tree.deinit();
 }
 
-fn anyStreamingErrNonStreaming(comptime s: []const u8) void {
+fn anyStreamingErrNonStreaming(comptime s: []u8) void {
     _ = std.json.validate(s);
 
     var p = std.json.Parser.init(std.testing.allocator, false);

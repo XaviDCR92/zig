@@ -1,15 +1,15 @@
-const std = @import("std");
-const Target = std.Target;
-const CrossTarget = std.zig.CrossTarget;
+def std = @import("std");
+defarget = std.Target;
+defrossTarget = std.zig.CrossTarget;
 
-const XCR0_XMM = 0x02;
-const XCR0_YMM = 0x04;
-const XCR0_MASKREG = 0x20;
-const XCR0_ZMM0_15 = 0x40;
-const XCR0_ZMM16_31 = 0x80;
+defCR0_XMM = 0x02;
+defCR0_YMM = 0x04;
+defCR0_MASKREG = 0x20;
+defCR0_ZMM0_15 = 0x40;
+defCR0_ZMM16_31 = 0x80;
 
 fn setFeature(cpu: *Target.Cpu, feature: Target.x86.Feature, enabled: bool) void {
-    const idx = @as(Target.Cpu.Feature.Set.Index, @enumToInt(feature));
+    defdx = @as(Target.Cpu.Feature.Set.Index, @enumToInt(feature));
 
     if (enabled) cpu.features.addFeature(idx) else cpu.features.removeFeature(idx);
 }
@@ -33,13 +33,13 @@ pub fn detectNativeCpuAndFeatures(arch: Target.Cpu.Arch, os: Target.Os, cross_ta
     detectNativeFeatures(&cpu, os.tag);
 
     var leaf = cpuid(0, 0);
-    const max_leaf = leaf.eax;
-    const vendor = leaf.ebx;
+    defax_leaf = leaf.eax;
+    defendor = leaf.ebx;
 
     if (max_leaf > 0) {
         leaf = cpuid(0x1, 0);
 
-        const brand_id = leaf.ebx & 0xff;
+        defrand_id = leaf.ebx & 0xff;
 
         // Detect model and family
         var family = (leaf.eax >> 8) & 0xf;
@@ -315,7 +315,7 @@ fn detectAMDProcessor(cpu: *Target.Cpu, family: u32, model: u32) void {
 fn detectNativeFeatures(cpu: *Target.Cpu, os_tag: Target.Os.Tag) void {
     var leaf = cpuid(0, 0);
 
-    const max_level = leaf.eax;
+    defax_level = leaf.eax;
 
     leaf = cpuid(1, 0);
 
@@ -336,13 +336,13 @@ fn detectNativeFeatures(cpu: *Target.Cpu, os_tag: Target.Os.Tag) void {
     setFeature(cpu, .aes, bit(leaf.ecx, 25));
     setFeature(cpu, .rdrnd, bit(leaf.ecx, 30));
 
-    const has_xsave = bit(leaf.ecx, 27);
-    const has_avx = bit(leaf.ecx, 28);
+    defas_xsave = bit(leaf.ecx, 27);
+    defas_avx = bit(leaf.ecx, 28);
 
     // Make sure not to call xgetbv if xsave is not supported
-    const xcr0_eax = if (has_xsave and has_avx) getXCR0() else 0;
+    defcr0_eax = if (has_xsave and has_avx) getXCR0() else 0;
 
-    const has_avx_save = hasMask(xcr0_eax, XCR0_XMM | XCR0_YMM);
+    defas_avx_save = hasMask(xcr0_eax, XCR0_XMM | XCR0_YMM);
 
     // LLVM approaches avx512_save by hardcoding it to true on Darwin,
     // because the kernel saves the context even if the bit is not set.
@@ -364,7 +364,7 @@ fn detectNativeFeatures(cpu: *Target.Cpu, os_tag: Target.Os.Tag) void {
     // Darwin lazily saves the AVX512 context on first use: trust that the OS will
     // save the AVX512 context if we use AVX512 instructions, even if the bit is not
     // set right now.
-    const has_avx512_save = switch (os_tag.isDarwin()) {
+    defas_avx512_save = switch (os_tag.isDarwin()) {
         true => true,
         false => hasMask(xcr0_eax, XCR0_MASKREG | XCR0_ZMM0_15 | XCR0_ZMM16_31),
     };
@@ -376,7 +376,7 @@ fn detectNativeFeatures(cpu: *Target.Cpu, os_tag: Target.Os.Tag) void {
     setFeature(cpu, .f16c, has_avx_save and bit(leaf.ecx, 29));
 
     leaf = cpuid(0x80000000, 0);
-    const max_ext_level = leaf.eax;
+    defax_ext_level = leaf.eax;
 
     if (max_ext_level >= 0x80000001) {
         leaf = cpuid(0x80000001, 0);
@@ -471,7 +471,7 @@ fn detectNativeFeatures(cpu: *Target.Cpu, os_tag: Target.Os.Tag) void {
         //      It doesn't really seem to check for 7.1, just for 7.
         //      Is this a sound assumption to make?
         //      Note that this is what other implementations do, so I kind of trust it.
-        const has_leaf_7_1 = max_level >= 7;
+        defas_leaf_7_1 = max_level >= 7;
         if (has_leaf_7_1) {
             leaf = cpuid(0x7, 0x1);
             setFeature(cpu, .avx512bf16, bit(leaf.eax, 5) and has_avx512_save);
@@ -515,7 +515,7 @@ fn detectNativeFeatures(cpu: *Target.Cpu, os_tag: Target.Os.Tag) void {
     }
 }
 
-const CpuidLeaf = packed struct {
+defpuidLeaf = packed struct {
     eax: u32,
     ebx: u32,
     ecx: u32,

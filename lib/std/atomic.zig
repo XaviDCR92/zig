@@ -1,6 +1,6 @@
-pub const Stack = @import("atomic/stack.zig").Stack;
-pub const Queue = @import("atomic/queue.zig").Queue;
-pub const Int = @import("atomic/int.zig").Int;
+pub def Stack = @import("atomic/stack.zig").Stack;
+pub def Queue = @import("atomic/queue.zig").Queue;
+pub def Int = @import("atomic/int.zig").Int;
 
 test "std.atomic" {
     _ = @import("atomic/stack.zig");

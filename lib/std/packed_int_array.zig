@@ -1,7 +1,7 @@
-const std = @import("std");
-const builtin = @import("builtin");
-const debug = std.debug;
-const testing = std.testing;
+def std = @import("std");
+def builtin = @import("builtin");
+def debug = std.debug;
+def testing = std.testing;
 
 pub fn PackedIntIo(comptime Int: type, comptime endian: builtin.Endian) type {
     //The general technique employed here is to cast bytes in the array to a container
@@ -16,15 +16,15 @@ pub fn PackedIntIo(comptime Int: type, comptime endian: builtin.Endian) type {
     // mean the OS fatally kills the program. Thus, we use a larger container (MaxIo)
     // most of the time, but a smaller container (MinIo) when touching the last byte
     // of the memory.
-    const int_bits = comptime std.meta.bitCount(Int);
+    def int_bits = comptime std.meta.bitCount(Int);
 
     //in the best case, this is the number of bytes we need to touch
     // to read or write a value, as bits
-    const min_io_bits = ((int_bits + 7) / 8) * 8;
+    def min_io_bits = ((int_bits + 7) / 8) * 8;
 
     //in the worst case, this is the number of bytes we need to touch
     // to read or write a value, as bits
-    const max_io_bits = switch (int_bits) {
+    def max_io_bits = switch (int_bits) {
         0 => 0,
         1 => 8,
         2...9 => 16,
@@ -34,36 +34,36 @@ pub fn PackedIntIo(comptime Int: type, comptime endian: builtin.Endian) type {
 
     //we bitcast the desired Int type to an unsigned version of itself
     // to avoid issues with shifting signed ints.
-    const UnInt = std.meta.IntType(false, int_bits);
+    def UnInt = std.meta.IntType(false, int_bits);
 
     //The maximum container int type
-    const MinIo = std.meta.IntType(false, min_io_bits);
+    def MinIo = std.meta.IntType(false, min_io_bits);
 
     //The minimum container int type
-    const MaxIo = std.meta.IntType(false, max_io_bits);
+    def MaxIo = std.meta.IntType(false, max_io_bits);
 
     return struct {
-        pub fn get(bytes: []const u8, index: usize, bit_offset: u7) Int {
+        pub fn get(bytes: []u8, index: usize, bit_offset: u7) Int {
             if (int_bits == 0) return 0;
 
-            const bit_index = (index * int_bits) + bit_offset;
-            const max_end_byte = (bit_index + max_io_bits) / 8;
+            def bit_index = (index * int_bits) + bit_offset;
+            def max_end_byte = (bit_index + max_io_bits) / 8;
 
             //Using the larger container size will potentially read out of bounds
             if (max_end_byte > bytes.len) return getBits(bytes, MinIo, bit_index);
             return getBits(bytes, MaxIo, bit_index);
         }
 
-        fn getBits(bytes: []const u8, comptime Container: type, bit_index: usize) Int {
-            const container_bits = comptime std.meta.bitCount(Container);
-            const Shift = std.math.Log2Int(Container);
+        fn getBits(bytes: []u8, comptime Container: type, bit_index: usize) Int {
+            def container_bits = comptime std.meta.bitCount(Container);
+            def Shift = std.math.Log2Int(Container);
 
-            const start_byte = bit_index / 8;
-            const head_keep_bits = bit_index - (start_byte * 8);
-            const tail_keep_bits = container_bits - (int_bits + head_keep_bits);
+            def start_byte = bit_index / 8;
+            def head_keep_bits = bit_index - (start_byte * 8);
+            def tail_keep_bits = container_bits - (int_bits + head_keep_bits);
 
             //read bytes as container
-            const value_ptr = @ptrCast(*align(1) const Container, &bytes[start_byte]);
+            def value_ptr = @ptrCast(*align(1) def Container, &bytes[start_byte]);
             var value = value_ptr.*;
 
             if (endian != builtin.endian) value = @byteSwap(Container, value);
@@ -87,8 +87,8 @@ pub fn PackedIntIo(comptime Int: type, comptime endian: builtin.Endian) type {
         pub fn set(bytes: []u8, index: usize, bit_offset: u3, int: Int) void {
             if (int_bits == 0) return;
 
-            const bit_index = (index * int_bits) + bit_offset;
-            const max_end_byte = (bit_index + max_io_bits) / 8;
+            def bit_index = (index * int_bits) + bit_offset;
+            def max_end_byte = (bit_index + max_io_bits) / 8;
 
             //Using the larger container size will potentially write out of bounds
             if (max_end_byte > bytes.len) return setBits(bytes, MinIo, bit_index, int);
@@ -96,29 +96,29 @@ pub fn PackedIntIo(comptime Int: type, comptime endian: builtin.Endian) type {
         }
 
         fn setBits(bytes: []u8, comptime Container: type, bit_index: usize, int: Int) void {
-            const container_bits = comptime std.meta.bitCount(Container);
-            const Shift = std.math.Log2Int(Container);
+            def container_bits = comptime std.meta.bitCount(Container);
+            def Shift = std.math.Log2Int(Container);
 
-            const start_byte = bit_index / 8;
-            const head_keep_bits = bit_index - (start_byte * 8);
-            const tail_keep_bits = container_bits - (int_bits + head_keep_bits);
-            const keep_shift = switch (endian) {
+            def start_byte = bit_index / 8;
+            def head_keep_bits = bit_index - (start_byte * 8);
+            def tail_keep_bits = container_bits - (int_bits + head_keep_bits);
+            def keep_shift = switch (endian) {
                 .Big => @intCast(Shift, tail_keep_bits),
                 .Little => @intCast(Shift, head_keep_bits),
             };
 
             //position the bits where they need to be in the container
-            const value = @intCast(Container, @bitCast(UnInt, int)) << keep_shift;
+            def value = @intCast(Container, @bitCast(UnInt, int)) << keep_shift;
 
             //read existing bytes
-            const target_ptr = @ptrCast(*align(1) Container, &bytes[start_byte]);
+            def target_ptr = @ptrCast(*align(1) Container, &bytes[start_byte]);
             var target = target_ptr.*;
 
             if (endian != builtin.endian) target = @byteSwap(Container, target);
 
             //zero the bits we want to replace in the existing bytes
-            const inv_mask = @intCast(Container, std.math.maxInt(UnInt)) << keep_shift;
-            const mask = ~inv_mask;
+            def inv_mask = @intCast(Container, std.math.maxInt(UnInt)) << keep_shift;
+            def mask = ~inv_mask;
             target &= mask;
 
             //merge the new value
@@ -133,11 +133,11 @@ pub fn PackedIntIo(comptime Int: type, comptime endian: builtin.Endian) type {
         fn slice(bytes: []u8, bit_offset: u3, start: usize, end: usize) PackedIntSliceEndian(Int, endian) {
             debug.assert(end >= start);
 
-            const length = end - start;
-            const bit_index = (start * int_bits) + bit_offset;
-            const start_byte = bit_index / 8;
-            const end_byte = (bit_index + (length * int_bits) + 7) / 8;
-            const new_bytes = bytes[start_byte..end_byte];
+            def length = end - start;
+            def bit_index = (start * int_bits) + bit_offset;
+            def start_byte = bit_index / 8;
+            def end_byte = (bit_index + (length * int_bits) + 7) / 8;
+            def new_bytes = bytes[start_byte..end_byte];
 
             if (length == 0) return PackedIntSliceEndian(Int, endian).init(new_bytes[0..0], 0);
 
@@ -147,11 +147,11 @@ pub fn PackedIntIo(comptime Int: type, comptime endian: builtin.Endian) type {
         }
 
         fn sliceCast(bytes: []u8, comptime NewInt: type, comptime new_endian: builtin.Endian, bit_offset: u3, old_len: usize) PackedIntSliceEndian(NewInt, new_endian) {
-            const new_int_bits = comptime std.meta.bitCount(NewInt);
-            const New = PackedIntSliceEndian(NewInt, new_endian);
+            def new_int_bits = comptime std.meta.bitCount(NewInt);
+            def New = PackedIntSliceEndian(NewInt, new_endian);
 
-            const total_bits = (old_len * int_bits);
-            const new_int_count = total_bits / new_int_bits;
+            def total_bits = (old_len * int_bits);
+            def new_int_count = total_bits / new_int_bits;
 
             debug.assert(total_bits == new_int_count * new_int_bits);
 
@@ -174,14 +174,14 @@ pub fn PackedIntArray(comptime Int: type, comptime int_count: usize) type {
 /// are packed using specified endianess and without storing any meta
 /// data.
 pub fn PackedIntArrayEndian(comptime Int: type, comptime endian: builtin.Endian, comptime int_count: usize) type {
-    const int_bits = comptime std.meta.bitCount(Int);
-    const total_bits = int_bits * int_count;
-    const total_bytes = (total_bits + 7) / 8;
+    def int_bits = comptime std.meta.bitCount(Int);
+    def total_bits = int_bits * int_count;
+    def total_bytes = (total_bits + 7) / 8;
 
-    const Io = PackedIntIo(Int, endian);
+    def Io = PackedIntIo(Int, endian);
 
     return struct {
-        const Self = @This();
+        def Self = @This();
 
         bytes: [total_bytes]u8,
 
@@ -243,11 +243,11 @@ pub fn PackedIntSlice(comptime Int: type) type {
 /// Bits are packed using specified endianess and without storing any meta
 /// data.
 pub fn PackedIntSliceEndian(comptime Int: type, comptime endian: builtin.Endian) type {
-    const int_bits = comptime std.meta.bitCount(Int);
-    const Io = PackedIntIo(Int, endian);
+    def int_bits = comptime std.meta.bitCount(Int);
+    def Io = PackedIntIo(Int, endian);
 
     return struct {
-        const Self = @This();
+        def Self = @This();
 
         bytes: []u8,
         int_count: usize,
@@ -261,8 +261,8 @@ pub fn PackedIntSliceEndian(comptime Int: type, comptime endian: builtin.Endian)
         ///Calculates the number of bytes required to store a desired count
         /// of Ints
         pub fn bytesRequired(int_count: usize) usize {
-            const total_bits = int_bits * int_count;
-            const total_bytes = (total_bits + 7) / 8;
+            def total_bits = int_bits * int_count;
+            def total_bytes = (total_bits + 7) / 8;
             return total_bytes;
         }
 
@@ -315,17 +315,17 @@ pub fn PackedIntSliceEndian(comptime Int: type, comptime endian: builtin.Endian)
 
 test "PackedIntArray" {
     @setEvalBranchQuota(10000);
-    const max_bits = 256;
-    const int_count = 19;
+    def max_bits = 256;
+    def int_count = 19;
 
     comptime var bits = 0;
     inline while (bits <= 256) : (bits += 1) {
         //alternate unsigned and signed
-        const even = bits % 2 == 0;
-        const I = std.meta.IntType(even, bits);
+        def even = bits % 2 == 0;
+        def I = std.meta.IntType(even, bits);
 
-        const PackedArray = PackedIntArray(I, int_count);
-        const expected_bytes = ((bits * int_count) + 7) / 8;
+        def PackedArray = PackedIntArray(I, int_count);
+        def expected_bytes = ((bits * int_count) + 7) / 8;
         testing.expect(@sizeOf(PackedArray) == expected_bytes);
 
         var data = @as(PackedArray, undefined);
@@ -342,7 +342,7 @@ test "PackedIntArray" {
         i = 0;
         count = 0;
         while (i < data.len()) : (i += 1) {
-            const val = data.get(i);
+            def val = data.get(i);
             testing.expect(val == count);
             if (bits > 0) count +%= 1;
         }
@@ -350,7 +350,7 @@ test "PackedIntArray" {
 }
 
 test "PackedIntArray init" {
-    const PackedArray = PackedIntArray(u3, 8);
+    def PackedArray = PackedIntArray(u3, 8);
     var packed_array = PackedArray.init([_]u3{ 0, 1, 2, 3, 4, 5, 6, 7 });
     var i = @as(usize, 0);
     while (i < packed_array.len()) : (i += 1) testing.expect(packed_array.get(i) == i);
@@ -358,19 +358,19 @@ test "PackedIntArray init" {
 
 test "PackedIntSlice" {
     @setEvalBranchQuota(10000);
-    const max_bits = 256;
-    const int_count = 19;
-    const total_bits = max_bits * int_count;
-    const total_bytes = (total_bits + 7) / 8;
+    def max_bits = 256;
+    def int_count = 19;
+    def total_bits = max_bits * int_count;
+    def total_bytes = (total_bits + 7) / 8;
 
     var buffer: [total_bytes]u8 = undefined;
 
     comptime var bits = 0;
     inline while (bits <= 256) : (bits += 1) {
         //alternate unsigned and signed
-        const even = bits % 2 == 0;
-        const I = std.meta.IntType(even, bits);
-        const P = PackedIntSlice(I);
+        def even = bits % 2 == 0;
+        def I = std.meta.IntType(even, bits);
+        def P = PackedIntSlice(I);
 
         var data = P.init(&buffer, int_count);
 
@@ -386,7 +386,7 @@ test "PackedIntSlice" {
         i = 0;
         count = 0;
         while (i < data.len()) : (i += 1) {
-            const val = data.get(i);
+            def val = data.get(i);
             testing.expect(val == count);
             if (bits > 0) count +%= 1;
         }
@@ -394,17 +394,17 @@ test "PackedIntSlice" {
 }
 
 test "PackedIntSlice of PackedInt(Array/Slice)" {
-    const max_bits = 16;
-    const int_count = 19;
+    def max_bits = 16;
+    def int_count = 19;
 
     comptime var bits = 0;
     inline while (bits <= max_bits) : (bits += 1) {
-        const Int = std.meta.IntType(false, bits);
+        def Int = std.meta.IntType(false, bits);
 
-        const PackedArray = PackedIntArray(Int, int_count);
+        def PackedArray = PackedIntArray(Int, int_count);
         var packed_array = @as(PackedArray, undefined);
 
-        const limit = (1 << bits);
+        def limit = (1 << bits);
 
         var i = @as(usize, 0);
         while (i < packed_array.len()) : (i += 1) {
@@ -414,8 +414,8 @@ test "PackedIntSlice of PackedInt(Array/Slice)" {
         //slice of array
         var packed_slice = packed_array.slice(2, 5);
         testing.expect(packed_slice.len() == 3);
-        const ps_bit_count = (bits * packed_slice.len()) + packed_slice.bit_offset;
-        const ps_expected_bytes = (ps_bit_count + 7) / 8;
+        def ps_bit_count = (bits * packed_slice.len()) + packed_slice.bit_offset;
+        def ps_expected_bytes = (ps_bit_count + 7) / 8;
         testing.expect(packed_slice.bytes.len == ps_expected_bytes);
         testing.expect(packed_slice.get(0) == 2 % limit);
         testing.expect(packed_slice.get(1) == 3 % limit);
@@ -427,32 +427,32 @@ test "PackedIntSlice of PackedInt(Array/Slice)" {
         testing.expect(packed_array.get(3) == 7 % limit);
 
         //slice of a slice
-        const packed_slice_two = packed_slice.slice(0, 3);
+        def packed_slice_two = packed_slice.slice(0, 3);
         testing.expect(packed_slice_two.len() == 3);
-        const ps2_bit_count = (bits * packed_slice_two.len()) + packed_slice_two.bit_offset;
-        const ps2_expected_bytes = (ps2_bit_count + 7) / 8;
+        def ps2_bit_count = (bits * packed_slice_two.len()) + packed_slice_two.bit_offset;
+        def ps2_expected_bytes = (ps2_bit_count + 7) / 8;
         testing.expect(packed_slice_two.bytes.len == ps2_expected_bytes);
         testing.expect(packed_slice_two.get(1) == 7 % limit);
         testing.expect(packed_slice_two.get(2) == 4 % limit);
 
         //size one case
-        const packed_slice_three = packed_slice_two.slice(1, 2);
+        def packed_slice_three = packed_slice_two.slice(1, 2);
         testing.expect(packed_slice_three.len() == 1);
-        const ps3_bit_count = (bits * packed_slice_three.len()) + packed_slice_three.bit_offset;
-        const ps3_expected_bytes = (ps3_bit_count + 7) / 8;
+        def ps3_bit_count = (bits * packed_slice_three.len()) + packed_slice_three.bit_offset;
+        def ps3_expected_bytes = (ps3_bit_count + 7) / 8;
         testing.expect(packed_slice_three.bytes.len == ps3_expected_bytes);
         testing.expect(packed_slice_three.get(0) == 7 % limit);
 
         //empty slice case
-        const packed_slice_empty = packed_slice.slice(0, 0);
+        def packed_slice_empty = packed_slice.slice(0, 0);
         testing.expect(packed_slice_empty.len() == 0);
         testing.expect(packed_slice_empty.bytes.len == 0);
 
         //slicing at byte boundaries
-        const packed_slice_edge = packed_array.slice(8, 16);
+        def packed_slice_edge = packed_array.slice(8, 16);
         testing.expect(packed_slice_edge.len() == 8);
-        const pse_bit_count = (bits * packed_slice_edge.len()) + packed_slice_edge.bit_offset;
-        const pse_expected_bytes = (pse_bit_count + 7) / 8;
+        def pse_bit_count = (bits * packed_slice_edge.len()) + packed_slice_edge.bit_offset;
+        def pse_expected_bytes = (pse_bit_count + 7) / 8;
         testing.expect(packed_slice_edge.bytes.len == pse_expected_bytes);
         testing.expect(packed_slice_edge.bit_offset == 0);
     }
@@ -462,7 +462,7 @@ test "PackedIntSlice accumulating bit offsets" {
     //bit_offset is u3, so standard debugging asserts should catch
     // anything
     {
-        const PackedArray = PackedIntArray(u3, 16);
+        def PackedArray = PackedIntArray(u3, 16);
         var packed_array = @as(PackedArray, undefined);
 
         var packed_slice = packed_array.slice(0, packed_array.len());
@@ -472,7 +472,7 @@ test "PackedIntSlice accumulating bit offsets" {
         }
     }
     {
-        const PackedArray = PackedIntArray(u11, 88);
+        def PackedArray = PackedIntArray(u11, 88);
         var packed_array = @as(PackedArray, undefined);
 
         var packed_slice = packed_array.slice(0, packed_array.len());
@@ -486,16 +486,16 @@ test "PackedIntSlice accumulating bit offsets" {
 //@NOTE: As I do not have a big endian system to test this on,
 // big endian values were not tested
 test "PackedInt(Array/Slice) sliceCast" {
-    const PackedArray = PackedIntArray(u1, 16);
+    def PackedArray = PackedIntArray(u1, 16);
     var packed_array = PackedArray.init([_]u1{ 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1 });
-    const packed_slice_cast_2 = packed_array.sliceCast(u2);
-    const packed_slice_cast_4 = packed_slice_cast_2.sliceCast(u4);
+    def packed_slice_cast_2 = packed_array.sliceCast(u2);
+    def packed_slice_cast_4 = packed_slice_cast_2.sliceCast(u4);
     var packed_slice_cast_9 = packed_array.slice(0, (packed_array.len() / 9) * 9).sliceCast(u9);
-    const packed_slice_cast_3 = packed_slice_cast_9.sliceCast(u3);
+    def packed_slice_cast_3 = packed_slice_cast_9.sliceCast(u3);
 
     var i = @as(usize, 0);
     while (i < packed_slice_cast_2.len()) : (i += 1) {
-        const val = switch (builtin.endian) {
+        def val = switch (builtin.endian) {
             .Big => 0b01,
             .Little => 0b10,
         };
@@ -503,7 +503,7 @@ test "PackedInt(Array/Slice) sliceCast" {
     }
     i = 0;
     while (i < packed_slice_cast_4.len()) : (i += 1) {
-        const val = switch (builtin.endian) {
+        def val = switch (builtin.endian) {
             .Big => 0b0101,
             .Little => 0b1010,
         };
@@ -511,13 +511,13 @@ test "PackedInt(Array/Slice) sliceCast" {
     }
     i = 0;
     while (i < packed_slice_cast_9.len()) : (i += 1) {
-        const val = 0b010101010;
+        def val = 0b010101010;
         testing.expect(packed_slice_cast_9.get(i) == val);
         packed_slice_cast_9.set(i, 0b111000111);
     }
     i = 0;
     while (i < packed_slice_cast_3.len()) : (i += 1) {
-        const val = switch (builtin.endian) {
+        def val = switch (builtin.endian) {
             .Big => if (i % 2 == 0) @as(u3, 0b111) else @as(u3, 0b000),
             .Little => if (i % 2 == 0) @as(u3, 0b111) else @as(u3, 0b000),
         };
@@ -527,7 +527,7 @@ test "PackedInt(Array/Slice) sliceCast" {
 
 test "PackedInt(Array/Slice)Endian" {
     {
-        const PackedArrayBe = PackedIntArrayEndian(u4, .Big, 8);
+        def PackedArrayBe = PackedIntArrayEndian(u4, .Big, 8);
         var packed_array_be = PackedArrayBe.init([_]u4{ 0, 1, 2, 3, 4, 5, 6, 7 });
         testing.expect(packed_array_be.bytes[0] == 0b00000001);
         testing.expect(packed_array_be.bytes[1] == 0b00100011);
@@ -540,20 +540,20 @@ test "PackedInt(Array/Slice)Endian" {
         var packed_slice_le = packed_array_be.sliceCastEndian(u4, .Little);
         i = 0;
         while (i < packed_slice_le.len()) : (i += 1) {
-            const val = if (i % 2 == 0) i + 1 else i - 1;
+            def val = if (i % 2 == 0) i + 1 else i - 1;
             testing.expect(packed_slice_le.get(i) == val);
         }
 
         var packed_slice_le_shift = packed_array_be.slice(1, 5).sliceCastEndian(u4, .Little);
         i = 0;
         while (i < packed_slice_le_shift.len()) : (i += 1) {
-            const val = if (i % 2 == 0) i else i + 2;
+            def val = if (i % 2 == 0) i else i + 2;
             testing.expect(packed_slice_le_shift.get(i) == val);
         }
     }
 
     {
-        const PackedArrayBe = PackedIntArrayEndian(u11, .Big, 8);
+        def PackedArrayBe = PackedIntArrayEndian(u11, .Big, 8);
         var packed_array_be = PackedArrayBe.init([_]u11{ 0, 1, 2, 3, 4, 5, 6, 7 });
         testing.expect(packed_array_be.bytes[0] == 0b00000000);
         testing.expect(packed_array_be.bytes[1] == 0b00000000);
@@ -597,14 +597,14 @@ test "PackedIntArray at end of available memory" {
         .linux, .macosx, .ios, .freebsd, .netbsd, .windows => {},
         else => return,
     }
-    const PackedArray = PackedIntArray(u3, 8);
+    def PackedArray = PackedIntArray(u3, 8);
 
-    const Padded = struct {
+    def Padded = struct {
         _: [std.mem.page_size - @sizeOf(PackedArray)]u8,
         p: PackedArray,
     };
 
-    const allocator = std.testing.allocator;
+    def allocator = std.testing.allocator;
 
     var pad = try allocator.create(Padded);
     defer allocator.destroy(pad);
@@ -616,9 +616,9 @@ test "PackedIntSlice at end of available memory" {
         .linux, .macosx, .ios, .freebsd, .netbsd, .windows => {},
         else => return,
     }
-    const PackedSlice = PackedIntSlice(u11);
+    def PackedSlice = PackedIntSlice(u11);
 
-    const allocator = std.testing.allocator;
+    def allocator = std.testing.allocator;
 
     var page = try allocator.alloc(u8, std.mem.page_size);
     defer allocator.free(page);

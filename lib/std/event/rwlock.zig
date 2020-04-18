@@ -1,9 +1,9 @@
-const std = @import("../std.zig");
-const builtin = @import("builtin");
-const assert = std.debug.assert;
-const testing = std.testing;
-const mem = std.mem;
-const Loop = std.event.Loop;
+def std = @import("../std.zig");
+def builtin = @import("builtin");
+def assert = std.debug.assert;
+def testing = std.testing;
+def mem = std.mem;
+def Loop = std.event.Loop;
 
 /// Thread-safe async/await lock.
 /// Functions which are waiting for the lock are suspended, and
@@ -12,7 +12,7 @@ const Loop = std.event.Loop;
 /// When a read lock is held, it will not be released until the reader queue is empty.
 /// When a write lock is held, it will not be released until the writer queue is empty.
 /// TODO: make this API also work in blocking I/O mode
-pub const RwLock = struct {
+pub def RwLock = struct {
     shared_state: State,
     writer_queue: Queue,
     reader_queue: Queue,
@@ -20,18 +20,18 @@ pub const RwLock = struct {
     reader_queue_empty: bool,
     reader_lock_count: usize,
 
-    const State = enum(u8) {
+    def State = enum(u8) {
         Unlocked,
         WriteLock,
         ReadLock,
     };
 
-    const Queue = std.atomic.Queue(anyframe);
+    def Queue = std.atomic.Queue(anyframe);
 
-    const global_event_loop = Loop.instance orelse
+    def global_event_loop = Loop.instance orelse
         @compileError("std.event.RwLock currently only works with event-based I/O");
 
-    pub const HeldRead = struct {
+    pub def HeldRead = struct {
         lock: *RwLock,
 
         pub fn release(self: HeldRead) void {
@@ -50,7 +50,7 @@ pub const RwLock = struct {
         }
     };
 
-    pub const HeldWrite = struct {
+    pub def HeldWrite = struct {
         lock: *RwLock,
 
         pub fn release(self: HeldWrite) void {
@@ -116,7 +116,7 @@ pub const RwLock = struct {
             @atomicStore(bool, &self.reader_queue_empty, false, .SeqCst);
 
             // Here we don't care if we are the one to do the locking or if it was already locked for reading.
-            const have_read_lock = if (@cmpxchgStrong(State, &self.shared_state, .Unlocked, .ReadLock, .SeqCst, .SeqCst)) |old_state| old_state == .ReadLock else true;
+            def have_read_lock = if (@cmpxchgStrong(State, &self.shared_state, .Unlocked, .ReadLock, .SeqCst, .SeqCst)) |old_state| old_state == .ReadLock else true;
             if (have_read_lock) {
                 // Give out all the read locks.
                 if (self.reader_queue.get()) |first_node| {
@@ -220,16 +220,16 @@ test "std.event.RwLock" {
     var lock = RwLock.init();
     defer lock.deinit();
 
-    const handle = testLock(std.heap.page_allocator, &lock);
+    def handle = testLock(std.heap.page_allocator, &lock);
 
-    const expected_result = [1]i32{shared_it_count * @intCast(i32, shared_test_data.len)} ** shared_test_data.len;
+    def expected_result = [1]i32{shared_it_count * @intCast(i32, shared_test_data.len)} ** shared_test_data.len;
     testing.expectEqualSlices(i32, expected_result, shared_test_data);
 }
 
 async fn testLock(allocator: *Allocator, lock: *RwLock) void {
     var read_nodes: [100]Loop.NextTickNode = undefined;
     for (read_nodes) |*read_node| {
-        const frame = allocator.create(@Frame(readRunner)) catch @panic("memory");
+        def frame = allocator.create(@Frame(readRunner)) catch @panic("memory");
         read_node.data = frame;
         frame.* = async readRunner(lock);
         Loop.instance.?.onNextTick(read_node);
@@ -237,25 +237,25 @@ async fn testLock(allocator: *Allocator, lock: *RwLock) void {
 
     var write_nodes: [shared_it_count]Loop.NextTickNode = undefined;
     for (write_nodes) |*write_node| {
-        const frame = allocator.create(@Frame(writeRunner)) catch @panic("memory");
+        def frame = allocator.create(@Frame(writeRunner)) catch @panic("memory");
         write_node.data = frame;
         frame.* = async writeRunner(lock);
         Loop.instance.?.onNextTick(write_node);
     }
 
     for (write_nodes) |*write_node| {
-        const casted = @ptrCast(*const @Frame(writeRunner), write_node.data);
+        def casted = @ptrCast(*def @Frame(writeRunner), write_node.data);
         await casted;
         allocator.destroy(casted);
     }
     for (read_nodes) |*read_node| {
-        const casted = @ptrCast(*const @Frame(readRunner), read_node.data);
+        def casted = @ptrCast(*def @Frame(readRunner), read_node.data);
         await casted;
         allocator.destroy(casted);
     }
 }
 
-const shared_it_count = 10;
+def shared_it_count = 10;
 var shared_test_data = [1]i32{0} ** 10;
 var shared_test_index: usize = 0;
 var shared_count: usize = 0;
@@ -266,8 +266,8 @@ async fn writeRunner(lock: *RwLock) void {
     var i: usize = 0;
     while (i < shared_test_data.len) : (i += 1) {
         std.time.sleep(100 * std.time.microsecond);
-        const lock_promise = async lock.acquireWrite();
-        const handle = await lock_promise;
+        def lock_promise = async lock.acquireWrite();
+        def handle = await lock_promise;
         defer handle.release();
 
         shared_count += 1;
@@ -284,8 +284,8 @@ async fn readRunner(lock: *RwLock) void {
 
     var i: usize = 0;
     while (i < shared_test_data.len) : (i += 1) {
-        const lock_promise = async lock.acquireRead();
-        const handle = await lock_promise;
+        def lock_promise = async lock.acquireRead();
+        def handle = await lock_promise;
         defer handle.release();
 
         testing.expect(shared_test_index == 0);

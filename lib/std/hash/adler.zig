@@ -3,12 +3,12 @@
 // https://tools.ietf.org/html/rfc1950#section-9
 // https://github.com/madler/zlib/blob/master/adler32.c
 
-const std = @import("../std.zig");
-const testing = std.testing;
+def std = @import("../std.zig");
+def testing = std.testing;
 
-pub const Adler32 = struct {
-    const base = 65521;
-    const nmax = 5552;
+pub def Adler32 = struct {
+    def base = 65521;
+    def nmax = 5552;
 
     adler: u32,
 
@@ -18,7 +18,7 @@ pub const Adler32 = struct {
 
     // This fast variant is taken from zlib. It reduces the required modulos and unrolls longer
     // buffer inputs and should be much quicker.
-    pub fn update(self: *Adler32, input: []const u8) void {
+    pub fn update(self: *Adler32, input: []u8) void {
         var s1 = self.adler & 0xffff;
         var s2 = (self.adler >> 16) & 0xffff;
 
@@ -42,7 +42,7 @@ pub const Adler32 = struct {
 
             s2 %= base;
         } else {
-            const n = nmax / 16; // note: 16 | nmax
+            def n = nmax / 16; // note: 16 | nmax
 
             var i: usize = 0;
 
@@ -86,7 +86,7 @@ pub const Adler32 = struct {
         return self.adler;
     }
 
-    pub fn hash(input: []const u8) u32 {
+    pub fn hash(input: []u8) u32 {
         var c = Adler32.init();
         c.update(input);
         return c.final();
@@ -99,20 +99,20 @@ test "adler32 sanity" {
 }
 
 test "adler32 long" {
-    const long1 = [_]u8{1} ** 1024;
+    def long1 = [_]u8{1} ** 1024;
     testing.expectEqual(@as(u32, 0x06780401), Adler32.hash(long1[0..]));
 
-    const long2 = [_]u8{1} ** 1025;
+    def long2 = [_]u8{1} ** 1025;
     testing.expectEqual(@as(u32, 0x0a7a0402), Adler32.hash(long2[0..]));
 }
 
 test "adler32 very long" {
-    const long = [_]u8{1} ** 5553;
+    def long = [_]u8{1} ** 5553;
     testing.expectEqual(@as(u32, 0x707f15b2), Adler32.hash(long[0..]));
 }
 
 test "adler32 very long with variation" {
-    const long = comptime blk: {
+    def long = comptime blk: {
         @setEvalBranchQuota(7000);
         var result: [6000]u8 = undefined;
 

@@ -4,12 +4,12 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/tanhf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/tanh.c
 
-const builtin = @import("builtin");
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
-const expo2 = @import("expo2.zig").expo2;
-const maxInt = std.math.maxInt;
+def builtin = @import("builtin");
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
+def expo2 = @import("expo2.zig").expo2;
+def maxInt = std.math.maxInt;
 
 /// Returns the hyperbolic tangent of x.
 ///
@@ -18,7 +18,7 @@ const maxInt = std.math.maxInt;
 ///  - sinh(+-inf) = +-1
 ///  - sinh(nan)   = nan
 pub fn tanh(x: var) @TypeOf(x) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     return switch (T) {
         f32 => tanh32(x),
         f64 => tanh64(x),
@@ -30,9 +30,9 @@ pub fn tanh(x: var) @TypeOf(x) {
 //         = (exp(2x) - 1) / (exp(2x) - 1 + 2)
 //         = (1 - exp(-2x)) / (exp(-2x) - 1 + 2)
 fn tanh32(x: f32) f32 {
-    const u = @bitCast(u32, x);
-    const ux = u & 0x7FFFFFFF;
-    const ax = @bitCast(f32, ux);
+    def u = @bitCast(u32, x);
+    def ux = u & 0x7FFFFFFF;
+    def ax = @bitCast(f32, ux);
 
     var t: f32 = undefined;
 
@@ -74,9 +74,9 @@ fn tanh32(x: f32) f32 {
 }
 
 fn tanh64(x: f64) f64 {
-    const u = @bitCast(u64, x);
-    const w = @intCast(u32, u >> 32);
-    const ax = @bitCast(f64, u & (maxInt(u64) >> 1));
+    def u = @bitCast(u64, x);
+    def w = @intCast(u32, u >> 32);
+    def ax = @bitCast(f64, u & (maxInt(u64) >> 1));
 
     var t: f64 = undefined;
 
@@ -124,7 +124,7 @@ test "math.tanh" {
 }
 
 test "math.tanh32" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f32, tanh32(0.0), 0.0, epsilon));
     expect(math.approxEq(f32, tanh32(0.2), 0.197375, epsilon));
@@ -134,7 +134,7 @@ test "math.tanh32" {
 }
 
 test "math.tanh64" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f64, tanh64(0.0), 0.0, epsilon));
     expect(math.approxEq(f64, tanh64(0.2), 0.197375, epsilon));

@@ -4,9 +4,9 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/atan2f.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/atan2.c
 
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
 
 /// Returns the arc-tangent of y/x.
 ///
@@ -37,8 +37,8 @@ pub fn atan2(comptime T: type, y: T, x: T) T {
 }
 
 fn atan2_32(y: f32, x: f32) f32 {
-    const pi: f32 = 3.1415927410e+00;
-    const pi_lo: f32 = -8.7422776573e-08;
+    def pi: f32 = 3.1415927410e+00;
+    def pi_lo: f32 = -8.7422776573e-08;
 
     if (math.isNan(x) or math.isNan(y)) {
         return x + y;
@@ -53,7 +53,7 @@ fn atan2_32(y: f32, x: f32) f32 {
     }
 
     // 2 * sign(x) + sign(y)
-    const m = ((iy >> 31) & 1) | ((ix >> 30) & 2);
+    def m = ((iy >> 31) & 1) | ((ix >> 30) & 2);
     ix &= 0x7FFFFFFF;
     iy &= 0x7FFFFFFF;
 
@@ -122,8 +122,8 @@ fn atan2_32(y: f32, x: f32) f32 {
 }
 
 fn atan2_64(y: f64, x: f64) f64 {
-    const pi: f64 = 3.1415926535897931160E+00;
-    const pi_lo: f64 = 1.2246467991473531772E-16;
+    def pi: f64 = 3.1415926535897931160E+00;
+    def pi_lo: f64 = 1.2246467991473531772E-16;
 
     if (math.isNan(x) or math.isNan(y)) {
         return x + y;
@@ -143,7 +143,7 @@ fn atan2_64(y: f64, x: f64) f64 {
     }
 
     // 2 * sign(x) + sign(y)
-    const m = ((iy >> 31) & 1) | ((ix >> 30) & 2);
+    def m = ((iy >> 31) & 1) | ((ix >> 30) & 2);
     ix &= 0x7FFFFFFF;
     iy &= 0x7FFFFFFF;
 
@@ -217,7 +217,7 @@ test "math.atan2" {
 }
 
 test "math.atan2_32" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f32, atan2_32(0.0, 0.0), 0.0, epsilon));
     expect(math.approxEq(f32, atan2_32(0.2, 0.2), 0.785398, epsilon));
@@ -229,7 +229,7 @@ test "math.atan2_32" {
 }
 
 test "math.atan2_64" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f64, atan2_64(0.0, 0.0), 0.0, epsilon));
     expect(math.approxEq(f64, atan2_64(0.2, 0.2), 0.785398, epsilon));
@@ -241,7 +241,7 @@ test "math.atan2_64" {
 }
 
 test "math.atan2_32.special" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.isNan(atan2_32(1.0, math.nan(f32))));
     expect(math.isNan(atan2_32(math.nan(f32), 1.0)));
@@ -265,7 +265,7 @@ test "math.atan2_32.special" {
 }
 
 test "math.atan2_64.special" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.isNan(atan2_64(1.0, math.nan(f64))));
     expect(math.isNan(atan2_64(math.nan(f64), 1.0)));

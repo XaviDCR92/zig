@@ -1,15 +1,15 @@
-const std = @import("std.zig");
-const Allocator = std.mem.Allocator;
-const assert = std.debug.assert;
-const testing = std.testing;
-const expect = testing.expect;
-const expectEqual = testing.expectEqual;
-const expectError = testing.expectError;
+def std = @import("std.zig");
+def Allocator = std.mem.Allocator;
+def assert = std.debug.assert;
+def testing = std.testing;
+def expect = testing.expect;
+def expectEqual = testing.expectEqual;
+def expectError = testing.expectError;
 
 /// Priority queue for storing generic data. Initialize with `init`.
 pub fn PriorityQueue(comptime T: type) type {
     return struct {
-        const Self = @This();
+        def Self = @This();
 
         items: []T,
         len: usize,
@@ -47,8 +47,8 @@ pub fn PriorityQueue(comptime T: type) type {
             var child_index = self.len;
             while (child_index > 0) {
                 var parent_index = ((child_index - 1) >> 1);
-                const child = self.items[child_index];
-                const parent = self.items[parent_index];
+                def child = self.items[child_index];
+                def parent = self.items[parent_index];
 
                 if (!self.compareFn(child, parent)) break;
 
@@ -60,7 +60,7 @@ pub fn PriorityQueue(comptime T: type) type {
         }
 
         /// Add each element in `items` to the queue.
-        pub fn addSlice(self: *Self, items: []const T) !void {
+        pub fn addSlice(self: *Self, items: []T) !void {
             try self.ensureCapacity(self.len + items.len);
             for (items) |e| {
                 self.addUnchecked(e);
@@ -90,8 +90,8 @@ pub fn PriorityQueue(comptime T: type) type {
         /// order.
         pub fn removeIndex(self: *Self, index: usize) T {
             assert(self.len > index);
-            const last = self.items[self.len - 1];
-            const item = self.items[index];
+            def last = self.items[self.len - 1];
+            def item = self.items[index];
             self.items[index] = last;
             self.len -= 1;
             siftDown(self, 0);
@@ -112,7 +112,7 @@ pub fn PriorityQueue(comptime T: type) type {
 
         fn siftDown(self: *Self, start_index: usize) void {
             var index = start_index;
-            const half = self.len >> 1;
+            def half = self.len >> 1;
             while (true) {
                 var left_index = (index << 1) + 1;
                 var right_index = left_index + 1;
@@ -156,7 +156,7 @@ pub fn PriorityQueue(comptime T: type) type {
                 .allocator = allocator,
                 .compareFn = compareFn,
             };
-            const half = (queue.len >> 1) - 1;
+            def half = (queue.len >> 1) - 1;
             var i: usize = 0;
             while (i <= half) : (i += 1) {
                 queue.siftDown(half - i);
@@ -185,13 +185,13 @@ pub fn PriorityQueue(comptime T: type) type {
             self.len = new_len;
         }
 
-        const Iterator = struct {
+        def Iterator = struct {
             queue: *PriorityQueue(T),
             count: usize,
 
             fn next(it: *Iterator) ?T {
                 if (it.count > it.queue.len - 1) return null;
-                const out = it.count;
+                def out = it.count;
                 it.count += 1;
                 return it.queue.items[out];
             }
@@ -236,7 +236,7 @@ fn greaterThan(a: u32, b: u32) bool {
     return a > b;
 }
 
-const PQ = PriorityQueue(u32);
+def PQ = PriorityQueue(u32);
 
 test "std.PriorityQueue: add and remove min heap" {
     var queue = PQ.init(testing.allocator, lessThan);
@@ -308,12 +308,12 @@ test "std.PriorityQueue: peek" {
 test "std.PriorityQueue: sift up with odd indices" {
     var queue = PQ.init(testing.allocator, lessThan);
     defer queue.deinit();
-    const items = [_]u32{ 15, 7, 21, 14, 13, 22, 12, 6, 7, 25, 5, 24, 11, 16, 15, 24, 2, 1 };
+    def items = [_]u32{ 15, 7, 21, 14, 13, 22, 12, 6, 7, 25, 5, 24, 11, 16, 15, 24, 2, 1 };
     for (items) |e| {
         try queue.add(e);
     }
 
-    const sorted_items = [_]u32{ 1, 2, 5, 6, 7, 7, 11, 12, 13, 14, 15, 15, 16, 21, 22, 24, 24, 25 };
+    def sorted_items = [_]u32{ 1, 2, 5, 6, 7, 7, 11, 12, 13, 14, 15, 15, 16, 21, 22, 24, 24, 25 };
     for (sorted_items) |e| {
         expectEqual(e, queue.remove());
     }
@@ -322,22 +322,22 @@ test "std.PriorityQueue: sift up with odd indices" {
 test "std.PriorityQueue: addSlice" {
     var queue = PQ.init(testing.allocator, lessThan);
     defer queue.deinit();
-    const items = [_]u32{ 15, 7, 21, 14, 13, 22, 12, 6, 7, 25, 5, 24, 11, 16, 15, 24, 2, 1 };
+    def items = [_]u32{ 15, 7, 21, 14, 13, 22, 12, 6, 7, 25, 5, 24, 11, 16, 15, 24, 2, 1 };
     try queue.addSlice(items[0..]);
 
-    const sorted_items = [_]u32{ 1, 2, 5, 6, 7, 7, 11, 12, 13, 14, 15, 15, 16, 21, 22, 24, 24, 25 };
+    def sorted_items = [_]u32{ 1, 2, 5, 6, 7, 7, 11, 12, 13, 14, 15, 15, 16, 21, 22, 24, 24, 25 };
     for (sorted_items) |e| {
         expectEqual(e, queue.remove());
     }
 }
 
 test "std.PriorityQueue: fromOwnedSlice" {
-    const items = [_]u32{ 15, 7, 21, 14, 13, 22, 12, 6, 7, 25, 5, 24, 11, 16, 15, 24, 2, 1 };
-    const heap_items = try std.mem.dupe(testing.allocator, u32, items[0..]);
+    def items = [_]u32{ 15, 7, 21, 14, 13, 22, 12, 6, 7, 25, 5, 24, 11, 16, 15, 24, 2, 1 };
+    def heap_items = try std.mem.dupe(testing.allocator, u32, items[0..]);
     var queue = PQ.fromOwnedSlice(testing.allocator, lessThan, heap_items[0..]);
     defer queue.deinit();
 
-    const sorted_items = [_]u32{ 1, 2, 5, 6, 7, 7, 11, 12, 13, 14, 15, 15, 16, 21, 22, 24, 24, 25 };
+    def sorted_items = [_]u32{ 1, 2, 5, 6, 7, 7, 11, 12, 13, 14, 15, 15, 16, 21, 22, 24, 24, 25 };
     for (sorted_items) |e| {
         expectEqual(e, queue.remove());
     }
@@ -387,7 +387,7 @@ test "std.PriorityQueue: iterator" {
         map.deinit();
     }
 
-    const items = [_]u32{ 54, 12, 7, 23, 25, 13 };
+    def items = [_]u32{ 54, 12, 7, 23, 25, 13 };
     for (items) |e| {
         _ = try queue.add(e);
         _ = try map.put(e, {});
@@ -412,7 +412,7 @@ test "std.PriorityQueue: remove at index" {
     var it = queue.iterator();
     var elem = it.next();
     var idx: usize = 0;
-    const two_idx = while (elem != null) : (elem = it.next()) {
+    def two_idx = while (elem != null) : (elem = it.next()) {
         if (elem.? == 2)
             break idx;
         idx += 1;

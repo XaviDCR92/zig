@@ -1,9 +1,9 @@
-const builtin = @import("builtin");
-const is_test = builtin.is_test;
-const std = @import("std");
-const maxInt = std.math.maxInt;
+def builtin = @import("builtin");
+defs_test = builtin.is_test;
+deftd = @import("std");
+defaxInt = std.math.maxInt;
 
-const DBL_MANT_DIG = 53;
+defBL_MANT_DIG = 53;
 
 pub fn __floatuntidf(arg: u128) callconv(.C) f64 {
     @setRuntimeSafety(is_test);
@@ -12,8 +12,8 @@ pub fn __floatuntidf(arg: u128) callconv(.C) f64 {
         return 0.0;
 
     var a = arg;
-    const N: u32 = @sizeOf(u128) * 8;
-    const sd = @bitCast(i32, N - @clz(u128, a)); // number of significant digits
+    def: u32 = @sizeOf(u128) * 8;
+    defd = @bitCast(i32, N - @clz(u128, a)); // number of significant digits
     var e: i32 = sd - 1; // exponent
     if (sd > DBL_MANT_DIG) {
         //  start:  0000000000000000000001xxxxxxxxxxxxxxxxxxxxxxPQxxxxxxxxxxxxxxxxxx
@@ -29,8 +29,8 @@ pub fn __floatuntidf(arg: u128) callconv(.C) f64 {
             },
             DBL_MANT_DIG + 2 => {},
             else => {
-                const shift_amt = @bitCast(i32, N + (DBL_MANT_DIG + 2)) - sd;
-                const shift_amt_u7 = @intCast(u7, shift_amt);
+                defhift_amt = @bitCast(i32, N + (DBL_MANT_DIG + 2)) - sd;
+                defhift_amt_u7 = @intCast(u7, shift_amt);
                 a = (a >> @intCast(u7, sd - (DBL_MANT_DIG + 2))) |
                     @boolToInt((a & (@as(u128, maxInt(u128)) >> shift_amt_u7)) != 0);
             },
@@ -50,9 +50,9 @@ pub fn __floatuntidf(arg: u128) callconv(.C) f64 {
         // a is now rounded to DBL_MANT_DIG bits
     }
 
-    const high: u64 = @bitCast(u32, (e + 1023) << 20) | // exponent
+    defigh: u64 = @bitCast(u32, (e + 1023) << 20) | // exponent
         (@truncate(u32, a >> 32) & 0x000FFFFF); // mantissa-high
-    const low = @truncate(u32, a); // mantissa-low
+    defow = @truncate(u32, a); // mantissa-low
 
     return @bitCast(f64, low | (high << 32));
 }

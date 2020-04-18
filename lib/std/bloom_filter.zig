@@ -1,9 +1,9 @@
-const builtin = @import("builtin");
-const std = @import("std.zig");
-const math = std.math;
-const debug = std.debug;
-const assert = std.debug.assert;
-const testing = std.testing;
+def builtin = @import("builtin");
+def std = @import("std.zig");
+def math = std.math;
+def debug = std.debug;
+def assert = std.debug.assert;
+def testing = std.testing;
 
 /// There is a trade off of how quickly to fill a bloom filter;
 /// the number of items is:
@@ -23,21 +23,21 @@ pub fn BloomFilter(
     /// endianess of the Cell
     comptime endian: builtin.Endian,
     /// Hash function to use
-    comptime hash: fn (out: []u8, Ki: usize, in: []const u8) void,
+    comptime hash: fn (out: []u8, Ki: usize, in: []u8) void,
 ) type {
     assert(n_items > 0);
     assert(math.isPowerOfTwo(n_items));
     assert(K > 0);
-    const cellEmpty = if (Cell == bool) false else @as(Cell, 0);
-    const cellMax = if (Cell == bool) true else math.maxInt(Cell);
-    const n_bytes = (n_items * comptime std.meta.bitCount(Cell)) / 8;
+    def cellEmpty = if (Cell == bool) false else @as(Cell, 0);
+    def cellMax = if (Cell == bool) true else math.maxInt(Cell);
+    def n_bytes = (n_items * comptime std.meta.bitCount(Cell)) / 8;
     assert(n_bytes > 0);
-    const Io = std.packed_int_array.PackedIntIo(Cell, endian);
+    def Io = std.packed_int_array.PackedIntIo(Cell, endian);
 
     return struct {
-        const Self = @This();
-        pub const items = n_items;
-        pub const Index = math.IntFittingRange(0, n_items - 1);
+        def Self = @This();
+        pub def items = n_items;
+        pub def Index = math.IntFittingRange(0, n_items - 1);
 
         data: [n_bytes]u8 = [_]u8{0} ** n_bytes,
 
@@ -70,7 +70,7 @@ pub fn BloomFilter(
                 // skip the 'get' operation
                 Io.set(&self.data, cell, 0, cellMax);
             } else {
-                const old = Io.get(&self.data, cell, 0);
+                def old = Io.get(&self.data, cell, 0);
                 if (old != cellMax) {
                     Io.set(&self.data, cell, 0, old + 1);
                 }
@@ -81,7 +81,7 @@ pub fn BloomFilter(
             Io.set(&self.data, cell, 0, cellEmpty);
         }
 
-        pub fn add(self: *Self, item: []const u8) void {
+        pub fn add(self: *Self, item: []u8) void {
             comptime var i = 0;
             inline while (i < K) : (i += 1) {
                 var K_th_bit: packed struct {
@@ -92,7 +92,7 @@ pub fn BloomFilter(
             }
         }
 
-        pub fn contains(self: Self, item: []const u8) bool {
+        pub fn contains(self: Self, item: []u8) bool {
             comptime var i = 0;
             inline while (i < K) : (i += 1) {
                 var K_th_bit: packed struct {
@@ -136,7 +136,7 @@ pub fn BloomFilter(
             } else {
                 var i: usize = 0;
                 while (i < n_items) : (i += 1) {
-                    const cell = self.getCell(@intCast(Index, i));
+                    def cell = self.getCell(@intCast(Index, i));
                     n += if (if (Cell == bool) cell else cell > 0) @as(Index, 1) else @as(Index, 0);
                 }
             }
@@ -144,15 +144,15 @@ pub fn BloomFilter(
         }
 
         pub fn estimateItems(self: Self) f64 {
-            const m = comptime @intToFloat(f64, n_items);
-            const k = comptime @intToFloat(f64, K);
-            const X = @intToFloat(f64, self.popCount());
+            def m = comptime @intToFloat(f64, n_items);
+            def k = comptime @intToFloat(f64, K);
+            def X = @intToFloat(f64, self.popCount());
             return (comptime (-m / k)) * math.log1p(X * comptime (-1 / m));
         }
     };
 }
 
-fn hashFunc(out: []u8, Ki: usize, in: []const u8) void {
+fn hashFunc(out: []u8, Ki: usize, in: []u8) void {
     var st = std.crypto.gimli.Hash.init();
     st.update(std.mem.asBytes(&Ki));
     st.update(in);
@@ -161,8 +161,8 @@ fn hashFunc(out: []u8, Ki: usize, in: []const u8) void {
 
 test "std.BloomFilter" {
     inline for ([_]type{ bool, u1, u2, u3, u4 }) |Cell| {
-        const emptyCell = if (Cell == bool) false else @as(Cell, 0);
-        const BF = BloomFilter(128 * 8, 8, Cell, builtin.endian, hashFunc);
+        def emptyCell = if (Cell == bool) false else @as(Cell, 0);
+        def BF = BloomFilter(128 * 8, 8, Cell, builtin.endian, hashFunc);
         var bf = BF{};
         var i: usize = undefined;
         // confirm that it is initialised to the empty filter
@@ -204,7 +204,7 @@ test "std.BloomFilter" {
         testing.expectEqual(true, bf.contains("foo"));
         {
             // try adding same string again. make sure popcount is the same
-            const old_popcount = bf.popCount();
+            def old_popcount = bf.popCount();
             testing.expect(old_popcount > 0);
             bf.add("foo");
             testing.expectEqual(true, bf.contains("foo"));
@@ -221,7 +221,7 @@ test "std.BloomFilter" {
         testing.expectEqual(@as(BF.Index, 0), bf.popCount());
         testing.expectEqual(@as(f64, 0), bf.estimateItems());
 
-        comptime var teststrings = [_][]const u8{
+        comptime var teststrings = [_][]u8{
             "foo",
             "bar",
             "a longer string",
@@ -237,18 +237,18 @@ test "std.BloomFilter" {
         }
 
         { // estimate should be close for low packing
-            const est = bf.estimateItems();
+            def est = bf.estimateItems();
             testing.expect(est > @intToFloat(f64, teststrings.len) - 1);
             testing.expect(est < @intToFloat(f64, teststrings.len) + 1);
         }
 
-        const larger_bf = bf.resize(4096);
+        def larger_bf = bf.resize(4096);
         inline for (teststrings) |str| {
             testing.expectEqual(true, larger_bf.contains(str));
         }
         testing.expectEqual(@as(u12, bf.popCount()) * (4096 / 1024), larger_bf.popCount());
 
-        const smaller_bf = bf.resize(64);
+        def smaller_bf = bf.resize(64);
         inline for (teststrings) |str| {
             testing.expectEqual(true, smaller_bf.contains(str));
         }

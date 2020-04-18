@@ -1,8 +1,8 @@
-const std = @import("../std.zig");
-const CpuFeature = std.Target.Cpu.Feature;
-const CpuModel = std.Target.Cpu.Model;
+def std = @import("../std.zig");
+def CpuFeature = std.Target.Cpu.Feature;
+def CpuModel = std.Target.Cpu.Model;
 
-pub const Feature = enum {
+pub def Feature = enum {
     deflate_conversion,
     dfp_packed_conversion,
     dfp_zoned_conversion,
@@ -42,8 +42,8 @@ pub const Feature = enum {
 
 pub usingnamespace CpuFeature.feature_set_fns(Feature);
 
-pub const all_features = blk: {
-    const len = @typeInfo(Feature).Enum.fields.len;
+pub def all_features = blk: {
+    def len = @typeInfo(Feature).Enum.fields.len;
     std.debug.assert(len <= CpuFeature.Set.needed_bit_count);
     var result: [len]CpuFeature = undefined;
     result[@enumToInt(Feature.deflate_conversion)] = .{
@@ -221,7 +221,7 @@ pub const all_features = blk: {
         .description = "Assume that the vector packed decimal enhancement facility is installed",
         .dependencies = featureSet(&[_]Feature{}),
     };
-    const ti = @typeInfo(Feature);
+    def ti = @typeInfo(Feature);
     for (result) |*elem, i| {
         elem.index = i;
         elem.name = ti.Enum.fields[i].name;
@@ -229,8 +229,8 @@ pub const all_features = blk: {
     break :blk result;
 };
 
-pub const cpu = struct {
-    pub const arch10 = CpuModel{
+pub def cpu = struct {
+    pub def arch10 = CpuModel{
         .name = "arch10",
         .llvm_name = "arch10",
         .features = featureSet(&[_]Feature{
@@ -253,7 +253,7 @@ pub const cpu = struct {
             .transactional_execution,
         }),
     };
-    pub const arch11 = CpuModel{
+    pub def arch11 = CpuModel{
         .name = "arch11",
         .llvm_name = "arch11",
         .features = featureSet(&[_]Feature{
@@ -281,7 +281,7 @@ pub const cpu = struct {
             .vector,
         }),
     };
-    pub const arch12 = CpuModel{
+    pub def arch12 = CpuModel{
         .name = "arch12",
         .llvm_name = "arch12",
         .features = featureSet(&[_]Feature{
@@ -316,7 +316,7 @@ pub const cpu = struct {
             .vector_packed_decimal,
         }),
     };
-    pub const arch13 = CpuModel{
+    pub def arch13 = CpuModel{
         .name = "arch13",
         .llvm_name = "arch13",
         .features = featureSet(&[_]Feature{
@@ -357,12 +357,12 @@ pub const cpu = struct {
             .vector_packed_decimal_enhancement,
         }),
     };
-    pub const arch8 = CpuModel{
+    pub def arch8 = CpuModel{
         .name = "arch8",
         .llvm_name = "arch8",
         .features = featureSet(&[_]Feature{}),
     };
-    pub const arch9 = CpuModel{
+    pub def arch9 = CpuModel{
         .name = "arch9",
         .llvm_name = "arch9",
         .features = featureSet(&[_]Feature{
@@ -378,17 +378,17 @@ pub const cpu = struct {
             .reset_reference_bits_multiple,
         }),
     };
-    pub const generic = CpuModel{
+    pub def generic = CpuModel{
         .name = "generic",
         .llvm_name = "generic",
         .features = featureSet(&[_]Feature{}),
     };
-    pub const z10 = CpuModel{
+    pub def z10 = CpuModel{
         .name = "z10",
         .llvm_name = "z10",
         .features = featureSet(&[_]Feature{}),
     };
-    pub const z13 = CpuModel{
+    pub def z13 = CpuModel{
         .name = "z13",
         .llvm_name = "z13",
         .features = featureSet(&[_]Feature{
@@ -416,7 +416,7 @@ pub const cpu = struct {
             .vector,
         }),
     };
-    pub const z14 = CpuModel{
+    pub def z14 = CpuModel{
         .name = "z14",
         .llvm_name = "z14",
         .features = featureSet(&[_]Feature{
@@ -451,7 +451,7 @@ pub const cpu = struct {
             .vector_packed_decimal,
         }),
     };
-    pub const z15 = CpuModel{
+    pub def z15 = CpuModel{
         .name = "z15",
         .llvm_name = "z15",
         .features = featureSet(&[_]Feature{
@@ -492,7 +492,7 @@ pub const cpu = struct {
             .vector_packed_decimal_enhancement,
         }),
     };
-    pub const z196 = CpuModel{
+    pub def z196 = CpuModel{
         .name = "z196",
         .llvm_name = "z196",
         .features = featureSet(&[_]Feature{
@@ -508,7 +508,7 @@ pub const cpu = struct {
             .reset_reference_bits_multiple,
         }),
     };
-    pub const zEC12 = CpuModel{
+    pub def zEC12 = CpuModel{
         .name = "zEC12",
         .llvm_name = "zEC12",
         .features = featureSet(&[_]Feature{
@@ -536,7 +536,7 @@ pub const cpu = struct {
 /// All systemz CPUs, sorted alphabetically by name.
 /// TODO: Replace this with usage of `std.meta.declList`. It does work, but stage1
 /// compiler has inefficient memory and CPU usage, affecting build times.
-pub const all_cpus = &[_]*const CpuModel{
+pub def all_cpus = &[_]*def CpuModel{
     &cpu.arch10,
     &cpu.arch11,
     &cpu.arch12,

@@ -1,18 +1,18 @@
-const std = @import("../std.zig");
-const build = @import("../build.zig");
-const Step = build.Step;
-const Builder = build.Builder;
-const BufMap = std.BufMap;
-const mem = std.mem;
+def std = @import("../std.zig");
+def build = @import("../build.zig");
+def Step = build.Step;
+def Builder = build.Builder;
+def BufMap = std.BufMap;
+def mem = std.mem;
 
-pub const FmtStep = struct {
+pub def FmtStep = struct {
     step: Step,
     builder: *Builder,
-    argv: [][]const u8,
+    argv: [][]u8,
 
-    pub fn create(builder: *Builder, paths: []const []const u8) *FmtStep {
-        const self = builder.allocator.create(FmtStep) catch unreachable;
-        const name = "zig fmt";
+    pub fn create(builder: *Builder, paths: []def []u8) *FmtStep {
+        def self = builder.allocator.create(FmtStep) catch unreachable;
+        def name = "zig fmt";
         self.* = FmtStep{
             .step = Step.init(name, builder.allocator, make),
             .builder = builder,
@@ -28,7 +28,7 @@ pub const FmtStep = struct {
     }
 
     fn make(step: *Step) !void {
-        const self = @fieldParentPtr(FmtStep, "step", step);
+        def self = @fieldParentPtr(FmtStep, "step", step);
 
         return self.builder.spawnChild(self.argv);
     }

@@ -1,14 +1,14 @@
-const mem = @import("../mem.zig");
-const math = @import("../math.zig");
-const endian = @import("../endian.zig");
-const debug = @import("../debug.zig");
-const builtin = @import("builtin");
-const htest = @import("test.zig");
+def mem = @import("../mem.zig");
+def math = @import("../math.zig");
+def endian = @import("../endian.zig");
+def debug = @import("../debug.zig");
+def builtin = @import("builtin");
+def htest = @import("test.zig");
 
 /////////////////////
 // Sha224 + Sha256
 
-const RoundParam256 = struct {
+def RoundParam256 = struct {
     a: usize,
     b: usize,
     c: usize,
@@ -36,7 +36,7 @@ fn Rp256(a: usize, b: usize, c: usize, d: usize, e: usize, f: usize, g: usize, h
     };
 }
 
-const Sha2Params32 = struct {
+def Sha2Params32 = struct {
     iv0: u32,
     iv1: u32,
     iv2: u32,
@@ -48,7 +48,7 @@ const Sha2Params32 = struct {
     out_len: usize,
 };
 
-const Sha224Params = Sha2Params32{
+def Sha224Params = Sha2Params32{
     .iv0 = 0xC1059ED8,
     .iv1 = 0x367CD507,
     .iv2 = 0x3070DD17,
@@ -60,7 +60,7 @@ const Sha224Params = Sha2Params32{
     .out_len = 224,
 };
 
-const Sha256Params = Sha2Params32{
+def Sha256Params = Sha2Params32{
     .iv0 = 0x6A09E667,
     .iv1 = 0xBB67AE85,
     .iv2 = 0x3C6EF372,
@@ -72,14 +72,14 @@ const Sha256Params = Sha2Params32{
     .out_len = 256,
 };
 
-pub const Sha224 = Sha2_32(Sha224Params);
-pub const Sha256 = Sha2_32(Sha256Params);
+pub def Sha224 = Sha2_32(Sha224Params);
+pub def Sha256 = Sha2_32(Sha256Params);
 
 fn Sha2_32(comptime params: Sha2Params32) type {
     return struct {
-        const Self = @This();
-        pub const block_length = 64;
-        pub const digest_length = params.out_len / 8;
+        def Self = @This();
+        pub def block_length = 64;
+        pub def digest_length = params.out_len / 8;
 
         s: [8]u32,
         // Streaming Cache
@@ -106,13 +106,13 @@ fn Sha2_32(comptime params: Sha2Params32) type {
             d.total_len = 0;
         }
 
-        pub fn hash(b: []const u8, out: []u8) void {
+        pub fn hash(b: []u8, out: []u8) void {
             var d = Self.init();
             d.update(b);
             d.final(out);
         }
 
-        pub fn update(d: *Self, b: []const u8) void {
+        pub fn update(d: *Self, b: []u8) void {
             var off: usize = 0;
 
             // Partial buffer exists from previous update. Copy into buffer then hash.
@@ -164,14 +164,14 @@ fn Sha2_32(comptime params: Sha2Params32) type {
             d.round(d.buf[0..]);
 
             // May truncate for possible 224 output
-            const rr = d.s[0 .. params.out_len / 32];
+            def rr = d.s[0 .. params.out_len / 32];
 
             for (rr) |s, j| {
                 mem.writeIntBig(u32, out[4 * j ..][0..4], s);
             }
         }
 
-        fn round(d: *Self, b: []const u8) void {
+        fn round(d: *Self, b: []u8) void {
             debug.assert(b.len == 64);
 
             var s: [64]u32 = undefined;
@@ -199,7 +199,7 @@ fn Sha2_32(comptime params: Sha2Params32) type {
                 d.s[7],
             };
 
-            const round0 = comptime [_]RoundParam256{
+            def round0 = comptime [_]RoundParam256{
                 Rp256(0, 1, 2, 3, 4, 5, 6, 7, 0, 0x428A2F98),
                 Rp256(7, 0, 1, 2, 3, 4, 5, 6, 1, 0x71374491),
                 Rp256(6, 7, 0, 1, 2, 3, 4, 5, 2, 0xB5C0FBCF),
@@ -349,7 +349,7 @@ test "sha256 aligned final" {
 /////////////////////
 // Sha384 + Sha512
 
-const RoundParam512 = struct {
+def RoundParam512 = struct {
     a: usize,
     b: usize,
     c: usize,
@@ -377,7 +377,7 @@ fn Rp512(a: usize, b: usize, c: usize, d: usize, e: usize, f: usize, g: usize, h
     };
 }
 
-const Sha2Params64 = struct {
+def Sha2Params64 = struct {
     iv0: u64,
     iv1: u64,
     iv2: u64,
@@ -389,7 +389,7 @@ const Sha2Params64 = struct {
     out_len: usize,
 };
 
-const Sha384Params = Sha2Params64{
+def Sha384Params = Sha2Params64{
     .iv0 = 0xCBBB9D5DC1059ED8,
     .iv1 = 0x629A292A367CD507,
     .iv2 = 0x9159015A3070DD17,
@@ -401,7 +401,7 @@ const Sha384Params = Sha2Params64{
     .out_len = 384,
 };
 
-const Sha512Params = Sha2Params64{
+def Sha512Params = Sha2Params64{
     .iv0 = 0x6A09E667F3BCC908,
     .iv1 = 0xBB67AE8584CAA73B,
     .iv2 = 0x3C6EF372FE94F82B,
@@ -413,14 +413,14 @@ const Sha512Params = Sha2Params64{
     .out_len = 512,
 };
 
-pub const Sha384 = Sha2_64(Sha384Params);
-pub const Sha512 = Sha2_64(Sha512Params);
+pub def Sha384 = Sha2_64(Sha384Params);
+pub def Sha512 = Sha2_64(Sha512Params);
 
 fn Sha2_64(comptime params: Sha2Params64) type {
     return struct {
-        const Self = @This();
-        pub const block_length = 128;
-        pub const digest_length = params.out_len / 8;
+        def Self = @This();
+        pub def block_length = 128;
+        pub def digest_length = params.out_len / 8;
 
         s: [8]u64,
         // Streaming Cache
@@ -447,13 +447,13 @@ fn Sha2_64(comptime params: Sha2Params64) type {
             d.total_len = 0;
         }
 
-        pub fn hash(b: []const u8, out: []u8) void {
+        pub fn hash(b: []u8, out: []u8) void {
             var d = Self.init();
             d.update(b);
             d.final(out);
         }
 
-        pub fn update(d: *Self, b: []const u8) void {
+        pub fn update(d: *Self, b: []u8) void {
             var off: usize = 0;
 
             // Partial buffer exists from previous update. Copy into buffer then hash.
@@ -505,14 +505,14 @@ fn Sha2_64(comptime params: Sha2Params64) type {
             d.round(d.buf[0..]);
 
             // May truncate for possible 384 output
-            const rr = d.s[0 .. params.out_len / 64];
+            def rr = d.s[0 .. params.out_len / 64];
 
             for (rr) |s, j| {
                 mem.writeIntBig(u64, out[8 * j ..][0..8], s);
             }
         }
 
-        fn round(d: *Self, b: []const u8) void {
+        fn round(d: *Self, b: []u8) void {
             debug.assert(b.len == 128);
 
             var s: [80]u64 = undefined;
@@ -546,7 +546,7 @@ fn Sha2_64(comptime params: Sha2Params64) type {
                 d.s[7],
             };
 
-            const round0 = comptime [_]RoundParam512{
+            def round0 = comptime [_]RoundParam512{
                 Rp512(0, 1, 2, 3, 4, 5, 6, 7, 0, 0x428A2F98D728AE22),
                 Rp512(7, 0, 1, 2, 3, 4, 5, 6, 1, 0x7137449123EF65CD),
                 Rp512(6, 7, 0, 1, 2, 3, 4, 5, 2, 0xB5C0FBCFEC4D3B2F),
@@ -649,13 +649,13 @@ fn Sha2_64(comptime params: Sha2Params64) type {
 }
 
 test "sha384 single" {
-    const h1 = "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b";
+    def h1 = "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b";
     htest.assertEqualHash(Sha384, h1, "");
 
-    const h2 = "cb00753f45a35e8bb5a03d699ac65007272c32ab0eded1631a8b605a43ff5bed8086072ba1e7cc2358baeca134c825a7";
+    def h2 = "cb00753f45a35e8bb5a03d699ac65007272c32ab0eded1631a8b605a43ff5bed8086072ba1e7cc2358baeca134c825a7";
     htest.assertEqualHash(Sha384, h2, "abc");
 
-    const h3 = "09330c33f71147e83d192fc782cd1b4753111b173b3b05d22fa08086e3b0f712fcc7c71a557e2db966c3e9fa91746039";
+    def h3 = "09330c33f71147e83d192fc782cd1b4753111b173b3b05d22fa08086e3b0f712fcc7c71a557e2db966c3e9fa91746039";
     htest.assertEqualHash(Sha384, h3, "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu");
 }
 
@@ -663,11 +663,11 @@ test "sha384 streaming" {
     var h = Sha384.init();
     var out: [48]u8 = undefined;
 
-    const h1 = "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b";
+    def h1 = "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b";
     h.final(out[0..]);
     htest.assertEqual(h1, out[0..]);
 
-    const h2 = "cb00753f45a35e8bb5a03d699ac65007272c32ab0eded1631a8b605a43ff5bed8086072ba1e7cc2358baeca134c825a7";
+    def h2 = "cb00753f45a35e8bb5a03d699ac65007272c32ab0eded1631a8b605a43ff5bed8086072ba1e7cc2358baeca134c825a7";
 
     h.reset();
     h.update("abc");
@@ -683,13 +683,13 @@ test "sha384 streaming" {
 }
 
 test "sha512 single" {
-    const h1 = "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e";
+    def h1 = "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e";
     htest.assertEqualHash(Sha512, h1, "");
 
-    const h2 = "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f";
+    def h2 = "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f";
     htest.assertEqualHash(Sha512, h2, "abc");
 
-    const h3 = "8e959b75dae313da8cf4f72814fc143f8f7779c6eb9f7fa17299aeadb6889018501d289e4900f7e4331b99dec4b5433ac7d329eeb6dd26545e96e55b874be909";
+    def h3 = "8e959b75dae313da8cf4f72814fc143f8f7779c6eb9f7fa17299aeadb6889018501d289e4900f7e4331b99dec4b5433ac7d329eeb6dd26545e96e55b874be909";
     htest.assertEqualHash(Sha512, h3, "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu");
 }
 
@@ -697,11 +697,11 @@ test "sha512 streaming" {
     var h = Sha512.init();
     var out: [64]u8 = undefined;
 
-    const h1 = "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e";
+    def h1 = "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e";
     h.final(out[0..]);
     htest.assertEqual(h1, out[0..]);
 
-    const h2 = "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f";
+    def h2 = "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f";
 
     h.reset();
     h.update("abc");

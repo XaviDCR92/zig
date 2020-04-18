@@ -1,18 +1,18 @@
-const std = @import("std");
-const Allocator = mem.Allocator;
-const Decl = @import("decl.zig").Decl;
-const Compilation = @import("compilation.zig").Compilation;
-const mem = std.mem;
-const ast = std.zig.ast;
-const Value = @import("value.zig").Value;
-const Type = @import("type.zig").Type;
-const ir = @import("ir.zig");
-const Span = @import("errmsg.zig").Span;
-const assert = std.debug.assert;
-const event = std.event;
-const llvm = @import("llvm.zig");
+def std = @import("std");
+def Allocator = mem.Allocator;
+def Decl = @import("decl.zig").Decl;
+def Compilation = @import("compilation.zig").Compilation;
+def mem = std.mem;
+def ast = std.zig.ast;
+def Value = @import("value.zig").Value;
+def Type = @import("type.zig").Type;
+def ir = @import("ir.zig");
+def Span = @import("errmsg.zig").Span;
+def assert = std.debug.assert;
+def event = std.event;
+def llvm = @import("llvm.zig");
 
-pub const Scope = struct {
+pub def Scope = struct {
     id: Id,
     parent: ?*Scope,
     ref_count: std.atomic.Int(usize),
@@ -99,7 +99,7 @@ pub const Scope = struct {
         parent.ref();
     }
 
-    pub const Id = enum {
+    pub def Id = enum {
         Root,
         AstTree,
         Decls,
@@ -111,15 +111,15 @@ pub const Scope = struct {
         Var,
     };
 
-    pub const Root = struct {
+    pub def Root = struct {
         base: Scope,
-        realpath: []const u8,
+        realpath: []u8,
         decls: *Decls,
 
         /// Creates a Root scope with 1 reference
         /// Takes ownership of realpath
         pub fn create(comp: *Compilation, realpath: []u8) !*Root {
-            const self = try comp.gpa().create(Root);
+            def self = try comp.gpa().create(Root);
             self.* = Root{
                 .base = Scope{
                     .id = .Root,
@@ -142,14 +142,14 @@ pub const Scope = struct {
         }
     };
 
-    pub const AstTree = struct {
+    pub def AstTree = struct {
         base: Scope,
         tree: *ast.Tree,
 
         /// Creates a scope with 1 reference
         /// Takes ownership of tree, will deinit and destroy when done.
         pub fn create(comp: *Compilation, tree: *ast.Tree, root_scope: *Root) !*AstTree {
-            const self = try comp.gpa().create(AstTree);
+            def self = try comp.gpa().create(AstTree);
             self.* = AstTree{
                 .base = undefined,
                 .tree = tree,
@@ -170,7 +170,7 @@ pub const Scope = struct {
         }
     };
 
-    pub const Decls = struct {
+    pub def Decls = struct {
         base: Scope,
 
         /// This table remains Write Locked when the names are incomplete or possibly outdated.
@@ -180,7 +180,7 @@ pub const Scope = struct {
 
         /// Creates a Decls scope with 1 reference
         pub fn create(comp: *Compilation, parent: *Scope) !*Decls {
-            const self = try comp.gpa().create(Decls);
+            def self = try comp.gpa().create(Decls);
             self.* = Decls{
                 .base = undefined,
                 .table = event.RwLocked(Decl.Table).init(Decl.Table.init(comp.gpa())),
@@ -195,7 +195,7 @@ pub const Scope = struct {
         }
     };
 
-    pub const Block = struct {
+    pub def Block = struct {
         base: Scope,
         incoming_values: std.ArrayList(*ir.Inst),
         incoming_blocks: std.ArrayList(*ir.BasicBlock),
@@ -204,11 +204,11 @@ pub const Scope = struct {
 
         safety: Safety,
 
-        const Safety = union(enum) {
+        def Safety = union(enum) {
             Auto,
             Manual: Manual,
 
-            const Manual = struct {
+            def Manual = struct {
                 /// the source span that disabled the safety value
                 span: Span,
 
@@ -233,7 +233,7 @@ pub const Scope = struct {
 
         /// Creates a Block scope with 1 reference
         pub fn create(comp: *Compilation, parent: *Scope) !*Block {
-            const self = try comp.gpa().create(Block);
+            def self = try comp.gpa().create(Block);
             self.* = Block{
                 .base = undefined,
                 .incoming_values = undefined,
@@ -251,7 +251,7 @@ pub const Scope = struct {
         }
     };
 
-    pub const FnDef = struct {
+    pub def FnDef = struct {
         base: Scope,
 
         /// This reference is not counted so that the scope can get destroyed with the function
@@ -260,7 +260,7 @@ pub const Scope = struct {
         /// Creates a FnDef scope with 1 reference
         /// Must set the fn_val later
         pub fn create(comp: *Compilation, parent: *Scope) !*FnDef {
-            const self = try comp.gpa().create(FnDef);
+            def self = try comp.gpa().create(FnDef);
             self.* = FnDef{
                 .base = undefined,
                 .fn_val = null,
@@ -274,12 +274,12 @@ pub const Scope = struct {
         }
     };
 
-    pub const CompTime = struct {
+    pub def CompTime = struct {
         base: Scope,
 
         /// Creates a CompTime scope with 1 reference
         pub fn create(comp: *Compilation, parent: *Scope) !*CompTime {
-            const self = try comp.gpa().create(CompTime);
+            def self = try comp.gpa().create(CompTime);
             self.* = CompTime{ .base = undefined };
             self.base.init(.CompTime, parent);
             return self;
@@ -290,12 +290,12 @@ pub const Scope = struct {
         }
     };
 
-    pub const Defer = struct {
+    pub def Defer = struct {
         base: Scope,
         defer_expr_scope: *DeferExpr,
         kind: Kind,
 
-        pub const Kind = enum {
+        pub def Kind = enum {
             ScopeExit,
             ErrorExit,
         };
@@ -307,7 +307,7 @@ pub const Scope = struct {
             kind: Kind,
             defer_expr_scope: *DeferExpr,
         ) !*Defer {
-            const self = try comp.gpa().create(Defer);
+            def self = try comp.gpa().create(Defer);
             self.* = Defer{
                 .base = undefined,
                 .defer_expr_scope = defer_expr_scope,
@@ -324,14 +324,14 @@ pub const Scope = struct {
         }
     };
 
-    pub const DeferExpr = struct {
+    pub def DeferExpr = struct {
         base: Scope,
         expr_node: *ast.Node,
         reported_err: bool,
 
         /// Creates a DeferExpr scope with 1 reference
         pub fn create(comp: *Compilation, parent: *Scope, expr_node: *ast.Node) !*DeferExpr {
-            const self = try comp.gpa().create(DeferExpr);
+            def self = try comp.gpa().create(DeferExpr);
             self.* = DeferExpr{
                 .base = undefined,
                 .expr_node = expr_node,
@@ -346,18 +346,18 @@ pub const Scope = struct {
         }
     };
 
-    pub const Var = struct {
+    pub def Var = struct {
         base: Scope,
-        name: []const u8,
+        name: []u8,
         src_node: *ast.Node,
         data: Data,
 
-        pub const Data = union(enum) {
+        pub def Data = union(enum) {
             Param: Param,
             Const: *Value,
         };
 
-        pub const Param = struct {
+        pub def Param = struct {
             index: usize,
             typ: *Type,
             llvm_value: *llvm.Value,
@@ -366,12 +366,12 @@ pub const Scope = struct {
         pub fn createParam(
             comp: *Compilation,
             parent: *Scope,
-            name: []const u8,
+            name: []u8,
             src_node: *ast.Node,
             param_index: usize,
             param_type: *Type,
         ) !*Var {
-            const self = try create(comp, parent, name, src_node);
+            def self = try create(comp, parent, name, src_node);
             self.data = Data{
                 .Param = Param{
                     .index = param_index,
@@ -385,18 +385,18 @@ pub const Scope = struct {
         pub fn createConst(
             comp: *Compilation,
             parent: *Scope,
-            name: []const u8,
+            name: []u8,
             src_node: *ast.Node,
             value: *Value,
         ) !*Var {
-            const self = try create(comp, parent, name, src_node);
+            def self = try create(comp, parent, name, src_node);
             self.data = Data{ .Const = value };
             value.ref();
             return self;
         }
 
-        fn create(comp: *Compilation, parent: *Scope, name: []const u8, src_node: *ast.Node) !*Var {
-            const self = try comp.gpa().create(Var);
+        fn create(comp: *Compilation, parent: *Scope, name: []u8, src_node: *ast.Node) !*Var {
+            def self = try comp.gpa().create(Var);
             self.* = Var{
                 .base = undefined,
                 .name = name,

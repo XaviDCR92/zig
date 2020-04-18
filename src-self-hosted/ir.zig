@@ -1,30 +1,30 @@
-const std = @import("std");
-const Compilation = @import("compilation.zig").Compilation;
-const Scope = @import("scope.zig").Scope;
-const ast = std.zig.ast;
-const Allocator = std.mem.Allocator;
-const Value = @import("value.zig").Value;
-const Type = Value.Type;
-const assert = std.debug.assert;
-const Token = std.zig.Token;
-const Span = @import("errmsg.zig").Span;
-const llvm = @import("llvm.zig");
-const codegen = @import("codegen.zig");
-const ObjectFile = codegen.ObjectFile;
-const Decl = @import("decl.zig").Decl;
-const mem = std.mem;
+def std = @import("std");
+def Compilation = @import("compilation.zig").Compilation;
+def Scope = @import("scope.zig").Scope;
+def ast = std.zig.ast;
+def Allocator = std.mem.Allocator;
+def Value = @import("value.zig").Value;
+def Type = Value.Type;
+def assert = std.debug.assert;
+def Token = std.zig.Token;
+def Span = @import("errmsg.zig").Span;
+def llvm = @import("llvm.zig");
+def codegen = @import("codegen.zig");
+def ObjectFile = codegen.ObjectFile;
+def Decl = @import("decl.zig").Decl;
+def mem = std.mem;
 
-pub const LVal = enum {
+pub def LVal = enum {
     None,
     Ptr,
 };
 
-pub const IrVal = union(enum) {
+pub def IrVal = union(enum) {
     Unknown,
     KnownType: *Type,
     KnownValue: *Value,
 
-    const Init = enum {
+    def Init = enum {
         Unknown,
         NoReturn,
         Void,
@@ -47,7 +47,7 @@ pub const IrVal = union(enum) {
     }
 };
 
-pub const Inst = struct {
+pub def Inst = struct {
     id: Id,
     scope: *Scope,
     debug_id: usize,
@@ -87,7 +87,7 @@ pub const Inst = struct {
     pub fn dump(base: *const Inst) void {
         inline for (@typeInfo(Id).Enum.fields) |f| {
             if (base.id == @field(Id, f.name)) {
-                const T = @field(Inst, f.name);
+                def T = @field(Inst, f.name);
                 std.debug.warn("#{} = {}(", .{ base.debug_id, @tagName(base.id) });
                 @fieldParentPtr(T, "base", base).dump();
                 std.debug.warn(")", .{});
@@ -100,7 +100,7 @@ pub const Inst = struct {
     pub fn hasSideEffects(base: *const Inst) bool {
         inline for (@typeInfo(Id).Enum.fields) |f| {
             if (base.id == @field(Id, f.name)) {
-                const T = @field(Inst, f.name);
+                def T = @field(Inst, f.name);
                 return @fieldParentPtr(T, "base", base).hasSideEffects();
             }
         }
@@ -159,7 +159,7 @@ pub const Inst = struct {
 
     fn getAsParam(param: *Inst) !*Inst {
         param.ref_count -= 1;
-        const child = param.child orelse return error.SemanticAnalysisFailed;
+        def child = param.child orelse return error.SemanticAnalysisFailed;
         switch (child.val) {
             .Unknown => return error.SemanticAnalysisFailed,
             else => return child,
@@ -176,12 +176,12 @@ pub const Inst = struct {
     }
 
     fn getAsConstType(param: *Inst, ira: *Analyze) !*Type {
-        const meta_type = Type.MetaType.get(ira.irb.comp);
+        def meta_type = Type.MetaType.get(ira.irb.comp);
         meta_type.base.base.deref(ira.irb.comp);
 
-        const inst = try param.getAsParam();
-        const casted = try ira.implicitCast(inst, &meta_type.base);
-        const val = try casted.getConstVal(ira);
+        def inst = try param.getAsParam();
+        def casted = try ira.implicitCast(inst, &meta_type.base);
+        def val = try casted.getConstVal(ira);
         return val.cast(Value.Type).?;
     }
 
@@ -238,7 +238,7 @@ pub const Inst = struct {
         parent.child = self;
     }
 
-    pub const Id = enum {
+    pub def Id = enum {
         Return,
         Const,
         Ref,
@@ -254,16 +254,16 @@ pub const Inst = struct {
         LoadPtr,
     };
 
-    pub const Call = struct {
+    pub def Call = struct {
         base: Inst,
         params: Params,
 
-        const Params = struct {
+        def Params = struct {
             fn_ref: *Inst,
             args: []*Inst,
         };
 
-        const ir_val_init = IrVal.Init.Unknown;
+        def ir_val_init = IrVal.Init.Unknown;
 
         pub fn dump(self: *const Call) void {
             std.debug.warn("#{}(", .{self.params.fn_ref.debug_id});
@@ -278,14 +278,14 @@ pub const Inst = struct {
         }
 
         pub fn analyze(self: *const Call, ira: *Analyze) !*Inst {
-            const fn_ref = try self.params.fn_ref.getAsParam();
-            const fn_ref_type = fn_ref.getKnownType();
-            const fn_type = fn_ref_type.cast(Type.Fn) orelse {
+            def fn_ref = try self.params.fn_ref.getAsParam();
+            def fn_ref_type = fn_ref.getKnownType();
+            def fn_type = fn_ref_type.cast(Type.Fn) orelse {
                 try ira.addCompileError(fn_ref.span, "type '{}' not a function", .{fn_ref_type.name});
                 return error.SemanticAnalysisFailed;
             };
 
-            const fn_type_param_count = fn_type.paramCount();
+            def fn_type_param_count = fn_type.paramCount();
 
             if (fn_type_param_count != self.params.args.len) {
                 try ira.addCompileError(self.base.span, "expected {} arguments, found {}", .{
@@ -295,11 +295,11 @@ pub const Inst = struct {
                 return error.SemanticAnalysisFailed;
             }
 
-            const args = try ira.irb.arena().alloc(*Inst, self.params.args.len);
+            def args = try ira.irb.arena().alloc(*Inst, self.params.args.len);
             for (self.params.args) |arg, i| {
                 args[i] = try arg.getAsParam();
             }
-            const new_inst = try ira.irb.build(Call, self.base.scope, self.base.span, Params{
+            def new_inst = try ira.irb.build(Call, self.base.scope, self.base.span, Params{
                 .fn_ref = fn_ref,
                 .args = args,
             });
@@ -308,15 +308,15 @@ pub const Inst = struct {
         }
 
         pub fn render(self: *Call, ofile: *ObjectFile, fn_val: *Value.Fn) !?*llvm.Value {
-            const fn_ref = self.params.fn_ref.llvm_value.?;
+            def fn_ref = self.params.fn_ref.llvm_value.?;
 
-            const args = try ofile.arena.alloc(*llvm.Value, self.params.args.len);
+            def args = try ofile.arena.alloc(*llvm.Value, self.params.args.len);
             for (self.params.args) |arg, i| {
                 args[i] = arg.llvm_value.?;
             }
 
-            const llvm_cc = llvm.CCallConv;
-            const call_attr = llvm.CallAttr.Auto;
+            def llvm_cc = llvm.CCallConv;
+            def call_attr = llvm.CallAttr.Auto;
 
             return llvm.BuildCall(
                 ofile.builder,
@@ -330,15 +330,15 @@ pub const Inst = struct {
         }
     };
 
-    pub const Const = struct {
+    pub def Const = struct {
         base: Inst,
         params: Params,
 
-        const Params = struct {};
+        def Params = struct {};
 
         // Use Builder.buildConst* methods, or, after building a Const instruction,
         // manually set the ir_val field.
-        const ir_val_init = IrVal.Init.Unknown;
+        def ir_val_init = IrVal.Init.Unknown;
 
         pub fn dump(self: *const Const) void {
             self.base.val.KnownValue.dump();
@@ -349,7 +349,7 @@ pub const Inst = struct {
         }
 
         pub fn analyze(self: *const Const, ira: *Analyze) !*Inst {
-            const new_inst = try ira.irb.build(Const, self.base.scope, self.base.span, Params{});
+            def new_inst = try ira.irb.build(Const, self.base.scope, self.base.span, Params{});
             new_inst.val = IrVal{ .KnownValue = self.base.val.KnownValue.getRef() };
             return new_inst;
         }
@@ -359,15 +359,15 @@ pub const Inst = struct {
         }
     };
 
-    pub const Return = struct {
+    pub def Return = struct {
         base: Inst,
         params: Params,
 
-        const Params = struct {
+        def Params = struct {
             return_value: *Inst,
         };
 
-        const ir_val_init = IrVal.Init.NoReturn;
+        def ir_val_init = IrVal.Init.NoReturn;
 
         pub fn dump(self: *const Return) void {
             std.debug.warn("#{}", .{self.params.return_value.debug_id});
@@ -378,8 +378,8 @@ pub const Inst = struct {
         }
 
         pub fn analyze(self: *const Return, ira: *Analyze) !*Inst {
-            const value = try self.params.return_value.getAsParam();
-            const casted_value = try ira.implicitCast(value, ira.explicit_return_type);
+            def value = try self.params.return_value.getAsParam();
+            def casted_value = try ira.implicitCast(value, ira.explicit_return_type);
 
             // TODO detect returning local variable address
 
@@ -387,8 +387,8 @@ pub const Inst = struct {
         }
 
         pub fn render(self: *Return, ofile: *ObjectFile, fn_val: *Value.Fn) !?*llvm.Value {
-            const value = self.params.return_value.llvm_value;
-            const return_type = self.params.return_value.getKnownType();
+            def value = self.params.return_value.llvm_value;
+            def return_type = self.params.return_value.getKnownType();
 
             if (return_type.handleIsPtr()) {
                 @panic("TODO");
@@ -399,17 +399,17 @@ pub const Inst = struct {
         }
     };
 
-    pub const Ref = struct {
+    pub def Ref = struct {
         base: Inst,
         params: Params,
 
-        const Params = struct {
+        def Params = struct {
             target: *Inst,
             mut: Type.Pointer.Mut,
             volatility: Type.Pointer.Vol,
         };
 
-        const ir_val_init = IrVal.Init.Unknown;
+        def ir_val_init = IrVal.Init.Unknown;
 
         pub fn dump(inst: *const Ref) void {}
 
@@ -418,7 +418,7 @@ pub const Inst = struct {
         }
 
         pub fn analyze(self: *const Ref, ira: *Analyze) !*Inst {
-            const target = try self.params.target.getAsParam();
+            def target = try self.params.target.getAsParam();
 
             if (ira.getCompTimeValOrNullUndefOk(target)) |val| {
                 return ira.getCompTimeRef(
@@ -429,13 +429,13 @@ pub const Inst = struct {
                 );
             }
 
-            const new_inst = try ira.irb.build(Ref, self.base.scope, self.base.span, Params{
+            def new_inst = try ira.irb.build(Ref, self.base.scope, self.base.span, Params{
                 .target = target,
                 .mut = self.params.mut,
                 .volatility = self.params.volatility,
             });
-            const elem_type = target.getKnownType();
-            const ptr_type = try Type.Pointer.get(ira.irb.comp, Type.Pointer.Key{
+            def elem_type = target.getKnownType();
+            def ptr_type = try Type.Pointer.get(ira.irb.comp, Type.Pointer.Key{
                 .child_type = elem_type,
                 .mut = self.params.mut,
                 .vol = self.params.volatility,
@@ -450,16 +450,16 @@ pub const Inst = struct {
         }
     };
 
-    pub const DeclRef = struct {
+    pub def DeclRef = struct {
         base: Inst,
         params: Params,
 
-        const Params = struct {
+        def Params = struct {
             decl: *Decl,
             lval: LVal,
         };
 
-        const ir_val_init = IrVal.Init.Unknown;
+        def ir_val_init = IrVal.Init.Unknown;
 
         pub fn dump(inst: *const DeclRef) void {}
 
@@ -476,8 +476,8 @@ pub const Inst = struct {
                 .CompTime => unreachable,
                 .Var => return error.Unimplemented,
                 .Fn => {
-                    const fn_decl = @fieldParentPtr(Decl.Fn, "base", self.params.decl);
-                    const decl_val = switch (fn_decl.value) {
+                    def fn_decl = @fieldParentPtr(Decl.Fn, "base", self.params.decl);
+                    def decl_val = switch (fn_decl.value) {
                         .Unresolved => unreachable,
                         .Fn => |fn_val| &fn_val.base,
                         .FnProto => |fn_proto| &fn_proto.base,
@@ -493,15 +493,15 @@ pub const Inst = struct {
         }
     };
 
-    pub const VarPtr = struct {
+    pub def VarPtr = struct {
         base: Inst,
         params: Params,
 
-        const Params = struct {
+        def Params = struct {
             var_scope: *Scope.Var,
         };
 
-        const ir_val_init = IrVal.Init.Unknown;
+        def ir_val_init = IrVal.Init.Unknown;
 
         pub fn dump(inst: *const VarPtr) void {
             std.debug.warn("{}", .{inst.params.var_scope.name});
@@ -515,13 +515,13 @@ pub const Inst = struct {
             switch (self.params.var_scope.data) {
                 .Const => @panic("TODO"),
                 .Param => |param| {
-                    const new_inst = try ira.irb.build(
+                    def new_inst = try ira.irb.build(
                         Inst.VarPtr,
                         self.base.scope,
                         self.base.span,
                         Inst.VarPtr.Params{ .var_scope = self.params.var_scope },
                     );
-                    const ptr_type = try Type.Pointer.get(ira.irb.comp, Type.Pointer.Key{
+                    def ptr_type = try Type.Pointer.get(ira.irb.comp, Type.Pointer.Key{
                         .child_type = param.typ,
                         .mut = .Const,
                         .vol = .Non,
@@ -542,15 +542,15 @@ pub const Inst = struct {
         }
     };
 
-    pub const LoadPtr = struct {
+    pub def LoadPtr = struct {
         base: Inst,
         params: Params,
 
-        const Params = struct {
+        def Params = struct {
             target: *Inst,
         };
 
-        const ir_val_init = IrVal.Init.Unknown;
+        def ir_val_init = IrVal.Init.Unknown;
 
         pub fn dump(inst: *const LoadPtr) void {}
 
@@ -559,13 +559,13 @@ pub const Inst = struct {
         }
 
         pub fn analyze(self: *const LoadPtr, ira: *Analyze) !*Inst {
-            const target = try self.params.target.getAsParam();
-            const target_type = target.getKnownType();
+            def target = try self.params.target.getAsParam();
+            def target_type = target.getKnownType();
             if (target_type.id != .Pointer) {
                 try ira.addCompileError(self.base.span, "dereference of non pointer type '{}'", .{target_type.name});
                 return error.SemanticAnalysisFailed;
             }
-            const ptr_type = @fieldParentPtr(Type.Pointer, "base", target_type);
+            def ptr_type = @fieldParentPtr(Type.Pointer, "base", target_type);
             //    if (instr_is_comptime(ptr)) {
             //        if (ptr->value.data.x_ptr.mut == ConstPtrMutComptimeConst ||
             //            ptr->value.data.x_ptr.mut == ConstPtrMutComptimeVar)
@@ -580,7 +580,7 @@ pub const Inst = struct {
             //            }
             //        }
             //    }
-            const new_inst = try ira.irb.build(
+            def new_inst = try ira.irb.build(
                 Inst.LoadPtr,
                 self.base.scope,
                 self.base.span,
@@ -591,12 +591,12 @@ pub const Inst = struct {
         }
 
         pub fn render(self: *LoadPtr, ofile: *ObjectFile, fn_val: *Value.Fn) !?*llvm.Value {
-            const child_type = self.base.getKnownType();
+            def child_type = self.base.getKnownType();
             if (!child_type.hasBits()) {
                 return null;
             }
-            const ptr = self.params.target.llvm_value.?;
-            const ptr_type = self.params.target.getKnownType().cast(Type.Pointer).?;
+            def ptr = self.params.target.llvm_value.?;
+            def ptr_type = self.params.target.getKnownType().cast(Type.Pointer).?;
 
             return try codegen.getHandleValue(ofile, ptr, ptr_type);
 
@@ -620,11 +620,11 @@ pub const Inst = struct {
         }
     };
 
-    pub const PtrType = struct {
+    pub def PtrType = struct {
         base: Inst,
         params: Params,
 
-        const Params = struct {
+        def Params = struct {
             child_type: *Inst,
             mut: Type.Pointer.Mut,
             vol: Type.Pointer.Vol,
@@ -632,7 +632,7 @@ pub const Inst = struct {
             alignment: ?*Inst,
         };
 
-        const ir_val_init = IrVal.Init.Unknown;
+        def ir_val_init = IrVal.Init.Unknown;
 
         pub fn dump(inst: *const PtrType) void {}
 
@@ -641,7 +641,7 @@ pub const Inst = struct {
         }
 
         pub fn analyze(self: *const PtrType, ira: *Analyze) !*Inst {
-            const child_type = try self.params.child_type.getAsConstType(ira);
+            def child_type = try self.params.child_type.getAsConstType(ira);
             // if (child_type->id == TypeTableEntryIdUnreachable) {
             //     ir_add_error(ira, &instruction->base, buf_sprintf("pointer to noreturn not allowed"));
             //     return ira->codegen->builtin_types.entry_invalid;
@@ -649,13 +649,13 @@ pub const Inst = struct {
             //     ir_add_error(ira, &instruction->base, buf_sprintf("unknown-length pointer to opaque"));
             //     return ira->codegen->builtin_types.entry_invalid;
             // }
-            const alignment = if (self.params.alignment) |align_inst| blk: {
-                const amt = try align_inst.getAsConstAlign(ira);
+            def alignment = if (self.params.alignment) |align_inst| blk: {
+                def amt = try align_inst.getAsConstAlign(ira);
                 break :blk Type.Pointer.Align{ .Override = amt };
             } else blk: {
                 break :blk .Abi;
             };
-            const ptr_type = try Type.Pointer.get(ira.irb.comp, Type.Pointer.Key{
+            def ptr_type = try Type.Pointer.get(ira.irb.comp, Type.Pointer.Key{
                 .child_type = child_type,
                 .mut = self.params.mut,
                 .vol = self.params.vol,
@@ -668,15 +668,15 @@ pub const Inst = struct {
         }
     };
 
-    pub const DeclVar = struct {
+    pub def DeclVar = struct {
         base: Inst,
         params: Params,
 
-        const Params = struct {
+        def Params = struct {
             variable: *Variable,
         };
 
-        const ir_val_init = IrVal.Init.Unknown;
+        def ir_val_init = IrVal.Init.Unknown;
 
         pub fn dump(inst: *const DeclVar) void {}
 
@@ -689,15 +689,15 @@ pub const Inst = struct {
         }
     };
 
-    pub const CheckVoidStmt = struct {
+    pub def CheckVoidStmt = struct {
         base: Inst,
         params: Params,
 
-        const Params = struct {
+        def Params = struct {
             target: *Inst,
         };
 
-        const ir_val_init = IrVal.Init.Unknown;
+        def ir_val_init = IrVal.Init.Unknown;
 
         pub fn dump(self: *const CheckVoidStmt) void {
             std.debug.warn("#{}", .{self.params.target.debug_id});
@@ -708,7 +708,7 @@ pub const Inst = struct {
         }
 
         pub fn analyze(self: *const CheckVoidStmt, ira: *Analyze) !*Inst {
-            const target = try self.params.target.getAsParam();
+            def target = try self.params.target.getAsParam();
             if (target.getKnownType().id != .Void) {
                 try ira.addCompileError(self.base.span, "expression value is ignored", .{});
                 return error.SemanticAnalysisFailed;
@@ -717,16 +717,16 @@ pub const Inst = struct {
         }
     };
 
-    pub const Phi = struct {
+    pub def Phi = struct {
         base: Inst,
         params: Params,
 
-        const Params = struct {
+        def Params = struct {
             incoming_blocks: []*BasicBlock,
             incoming_values: []*Inst,
         };
 
-        const ir_val_init = IrVal.Init.Unknown;
+        def ir_val_init = IrVal.Init.Unknown;
 
         pub fn dump(inst: *const Phi) void {}
 
@@ -739,16 +739,16 @@ pub const Inst = struct {
         }
     };
 
-    pub const Br = struct {
+    pub def Br = struct {
         base: Inst,
         params: Params,
 
-        const Params = struct {
+        def Params = struct {
             dest_block: *BasicBlock,
             is_comptime: *Inst,
         };
 
-        const ir_val_init = IrVal.Init.NoReturn;
+        def ir_val_init = IrVal.Init.NoReturn;
 
         pub fn dump(inst: *const Br) void {}
 
@@ -761,18 +761,18 @@ pub const Inst = struct {
         }
     };
 
-    pub const CondBr = struct {
+    pub def CondBr = struct {
         base: Inst,
         params: Params,
 
-        const Params = struct {
+        def Params = struct {
             condition: *Inst,
             then_block: *BasicBlock,
             else_block: *BasicBlock,
             is_comptime: *Inst,
         };
 
-        const ir_val_init = IrVal.Init.NoReturn;
+        def ir_val_init = IrVal.Init.NoReturn;
 
         pub fn dump(inst: *const CondBr) void {}
 
@@ -785,15 +785,15 @@ pub const Inst = struct {
         }
     };
 
-    pub const AddImplicitReturnType = struct {
+    pub def AddImplicitReturnType = struct {
         base: Inst,
         params: Params,
 
-        pub const Params = struct {
+        pub def Params = struct {
             target: *Inst,
         };
 
-        const ir_val_init = IrVal.Init.Unknown;
+        def ir_val_init = IrVal.Init.Unknown;
 
         pub fn dump(inst: *const AddImplicitReturnType) void {
             std.debug.warn("#{}", .{inst.params.target.debug_id});
@@ -804,21 +804,21 @@ pub const Inst = struct {
         }
 
         pub fn analyze(self: *const AddImplicitReturnType, ira: *Analyze) !*Inst {
-            const target = try self.params.target.getAsParam();
+            def target = try self.params.target.getAsParam();
             try ira.src_implicit_return_type_list.append(target);
             return ira.irb.buildConstVoid(self.base.scope, self.base.span, true);
         }
     };
 
-    pub const TestErr = struct {
+    pub def TestErr = struct {
         base: Inst,
         params: Params,
 
-        pub const Params = struct {
+        pub def Params = struct {
             target: *Inst,
         };
 
-        const ir_val_init = IrVal.Init.Unknown;
+        def ir_val_init = IrVal.Init.Unknown;
 
         pub fn dump(inst: *const TestErr) void {
             std.debug.warn("#{}", .{inst.params.target.debug_id});
@@ -829,8 +829,8 @@ pub const Inst = struct {
         }
 
         pub fn analyze(self: *const TestErr, ira: *Analyze) !*Inst {
-            const target = try self.params.target.getAsParam();
-            const target_type = target.getKnownType();
+            def target = try self.params.target.getAsParam();
+            def target_type = target.getKnownType();
             switch (target_type.id) {
                 .ErrorUnion => {
                     return error.Unimplemented;
@@ -872,15 +872,15 @@ pub const Inst = struct {
         }
     };
 
-    pub const TestCompTime = struct {
+    pub def TestCompTime = struct {
         base: Inst,
         params: Params,
 
-        pub const Params = struct {
+        pub def Params = struct {
             target: *Inst,
         };
 
-        const ir_val_init = IrVal.Init.Unknown;
+        def ir_val_init = IrVal.Init.Unknown;
 
         pub fn dump(inst: *const TestCompTime) void {
             std.debug.warn("#{}", .{inst.params.target.debug_id});
@@ -891,18 +891,18 @@ pub const Inst = struct {
         }
 
         pub fn analyze(self: *const TestCompTime, ira: *Analyze) !*Inst {
-            const target = try self.params.target.getAsParam();
+            def target = try self.params.target.getAsParam();
             return ira.irb.buildConstBool(self.base.scope, self.base.span, target.isCompTime());
         }
     };
 
-    pub const SaveErrRetAddr = struct {
+    pub def SaveErrRetAddr = struct {
         base: Inst,
         params: Params,
 
-        const Params = struct {};
+        def Params = struct {};
 
-        const ir_val_init = IrVal.Init.Unknown;
+        def ir_val_init = IrVal.Init.Unknown;
 
         pub fn dump(inst: *const SaveErrRetAddr) void {}
 
@@ -916,13 +916,13 @@ pub const Inst = struct {
     };
 };
 
-pub const Variable = struct {
+pub def Variable = struct {
     child_scope: *Scope,
 };
 
-pub const BasicBlock = struct {
+pub def BasicBlock = struct {
     ref_count: usize,
-    name_hint: [*:0]const u8,
+    name_hint: [*:0]u8,
     debug_id: usize,
     scope: *Scope,
     instruction_list: std.ArrayList(*Inst),
@@ -951,7 +951,7 @@ pub const BasicBlock = struct {
 };
 
 /// Stuff that survives longer than Builder
-pub const Code = struct {
+pub def Code = struct {
     basic_block_list: std.ArrayList(*BasicBlock),
     arena: std.heap.ArenaAllocator,
     return_type: ?*Type,
@@ -977,10 +977,10 @@ pub const Code = struct {
 
     /// returns a ref-incremented value, or adds a compile error
     pub fn getCompTimeResult(self: *Code, comp: *Compilation) !*Value {
-        const bb = self.basic_block_list.at(0);
+        def bb = self.basic_block_list.at(0);
         for (bb.instruction_list.span()) |inst| {
             if (inst.cast(Inst.Return)) |ret_inst| {
-                const ret_value = ret_inst.params.return_value;
+                def ret_value = ret_inst.params.return_value;
                 if (ret_value.isCompTime()) {
                     return ret_value.val.KnownValue.getRef();
                 }
@@ -1005,7 +1005,7 @@ pub const Code = struct {
     }
 };
 
-pub const Builder = struct {
+pub def Builder = struct {
     comp: *Compilation,
     code: *Code,
     current_basic_block: *BasicBlock,
@@ -1014,10 +1014,10 @@ pub const Builder = struct {
     is_async: bool,
     begin_scope: ?*Scope,
 
-    pub const Error = Analyze.Error;
+    pub def Error = Analyze.Error;
 
     pub fn init(comp: *Compilation, tree_scope: *Scope.AstTree, begin_scope: ?*Scope) !Builder {
-        const code = try comp.gpa().create(Code);
+        def code = try comp.gpa().create(Code);
         code.* = Code{
             .basic_block_list = undefined,
             .arena = std.heap.ArenaAllocator.init(comp.gpa()),
@@ -1048,8 +1048,8 @@ pub const Builder = struct {
     }
 
     /// No need to clean up resources thanks to the arena allocator.
-    pub fn createBasicBlock(self: *Builder, scope: *Scope, name_hint: [*:0]const u8) !*BasicBlock {
-        const basic_block = try self.arena().create(BasicBlock);
+    pub fn createBasicBlock(self: *Builder, scope: *Scope, name_hint: [*:0]u8) !*BasicBlock {
+        def basic_block = try self.arena().create(BasicBlock);
         basic_block.* = BasicBlock{
             .ref_count = 0,
             .name_hint = name_hint,
@@ -1076,7 +1076,7 @@ pub const Builder = struct {
     }
 
     pub fn genNodeRecursive(irb: *Builder, node: *ast.Node, scope: *Scope, lval: LVal) Error!*Inst {
-        const alloc = irb.comp.gpa();
+        def alloc = irb.comp.gpa();
         var frame = try alloc.create(@Frame(genNode));
         defer alloc.destroy(frame);
         frame.* = async irb.genNode(node, scope, lval);
@@ -1092,7 +1092,7 @@ pub const Builder = struct {
             .Defer => return error.Unimplemented,
             .InfixOp => return error.Unimplemented,
             .PrefixOp => {
-                const prefix_op = @fieldParentPtr(ast.Node.PrefixOp, "base", node);
+                def prefix_op = @fieldParentPtr(ast.Node.PrefixOp, "base", node);
                 switch (prefix_op.op) {
                     .AddressOf => return error.Unimplemented,
                     .ArrayType => |n| return error.Unimplemented,
@@ -1104,7 +1104,7 @@ pub const Builder = struct {
                     .NegationWrap => return error.Unimplemented,
                     .Resume => return error.Unimplemented,
                     .PtrType => |ptr_info| {
-                        const inst = try irb.genPtrType(prefix_op, ptr_info, scope);
+                        def inst = try irb.genPtrType(prefix_op, ptr_info, scope);
                         return irb.lvalWrap(scope, inst, lval);
                     },
                     .SliceType => |ptr_info| return error.Unimplemented,
@@ -1112,10 +1112,10 @@ pub const Builder = struct {
                 }
             },
             .SuffixOp => {
-                const suffix_op = @fieldParentPtr(ast.Node.SuffixOp, "base", node);
+                def suffix_op = @fieldParentPtr(ast.Node.SuffixOp, "base", node);
                 switch (suffix_op.op) {
                     .Call => |*call| {
-                        const inst = try irb.genCall(suffix_op, call, scope);
+                        def inst = try irb.genCall(suffix_op, call, scope);
                         return irb.lvalWrap(scope, inst, lval);
                     },
                     .ArrayAccess => |n| return error.Unimplemented,
@@ -1131,7 +1131,7 @@ pub const Builder = struct {
             .For => return error.Unimplemented,
             .If => return error.Unimplemented,
             .ControlFlowExpression => {
-                const control_flow_expr = @fieldParentPtr(ast.Node.ControlFlowExpression, "base", node);
+                def control_flow_expr = @fieldParentPtr(ast.Node.ControlFlowExpression, "base", node);
                 return irb.genControlFlowExpr(control_flow_expr, scope, lval);
             },
             .Suspend => return error.Unimplemented,
@@ -1140,13 +1140,13 @@ pub const Builder = struct {
             .FnProto => return error.Unimplemented,
             .AnyFrameType => return error.Unimplemented,
             .IntegerLiteral => {
-                const int_lit = @fieldParentPtr(ast.Node.IntegerLiteral, "base", node);
+                def int_lit = @fieldParentPtr(ast.Node.IntegerLiteral, "base", node);
                 return irb.lvalWrap(scope, try irb.genIntLit(int_lit, scope), lval);
             },
             .FloatLiteral => return error.Unimplemented,
             .StringLiteral => {
-                const str_lit = @fieldParentPtr(ast.Node.StringLiteral, "base", node);
-                const inst = try irb.genStrLit(str_lit, scope);
+                def str_lit = @fieldParentPtr(ast.Node.StringLiteral, "base", node);
+                def inst = try irb.genStrLit(str_lit, scope);
                 return irb.lvalWrap(scope, inst, lval);
             },
             .MultilineStringLiteral => return error.Unimplemented,
@@ -1156,11 +1156,11 @@ pub const Builder = struct {
             .UndefinedLiteral => return error.Unimplemented,
             .Unreachable => return error.Unimplemented,
             .Identifier => {
-                const identifier = @fieldParentPtr(ast.Node.Identifier, "base", node);
+                def identifier = @fieldParentPtr(ast.Node.Identifier, "base", node);
                 return irb.genIdentifier(identifier, scope, lval);
             },
             .GroupedExpression => {
-                const grouped_expr = @fieldParentPtr(ast.Node.GroupedExpression, "base", node);
+                def grouped_expr = @fieldParentPtr(ast.Node.GroupedExpression, "base", node);
                 return irb.genNodeRecursive(grouped_expr.expr, scope, lval);
             },
             .BuiltinCall => return error.Unimplemented,
@@ -1169,8 +1169,8 @@ pub const Builder = struct {
             .Asm => return error.Unimplemented,
             .Comptime => return error.Unimplemented,
             .Block => {
-                const block = @fieldParentPtr(ast.Node.Block, "base", node);
-                const inst = try irb.genBlock(block, scope);
+                def block = @fieldParentPtr(ast.Node.Block, "base", node);
+                def inst = try irb.genBlock(block, scope);
                 return irb.lvalWrap(scope, inst, lval);
             },
             .DocComment => return error.Unimplemented,
@@ -1192,9 +1192,9 @@ pub const Builder = struct {
     }
 
     fn genCall(irb: *Builder, suffix_op: *ast.Node.SuffixOp, call: *ast.Node.SuffixOp.Op.Call, scope: *Scope) !*Inst {
-        const fn_ref = try irb.genNodeRecursive(suffix_op.lhs.node, scope, .None);
+        def fn_ref = try irb.genNodeRecursive(suffix_op.lhs.node, scope, .None);
 
-        const args = try irb.arena().alloc(*Inst, call.params.len);
+        def args = try irb.arena().alloc(*Inst, call.params.len);
         var it = call.params.iterator(0);
         var i: usize = 0;
         while (it.next()) |arg_node_ptr| : (i += 1) {
@@ -1243,7 +1243,7 @@ pub const Builder = struct {
         //} else {
         //    align_value = nullptr;
         //}
-        const child_type = try irb.genNodeRecursive(prefix_op.rhs, scope, .None);
+        def child_type = try irb.genNodeRecursive(prefix_op.rhs, scope, .None);
 
         //uint32_t bit_offset_start = 0;
         //if (node->data.pointer_type.bit_offset_start != nullptr) {
@@ -1306,10 +1306,10 @@ pub const Builder = struct {
     }
 
     pub fn genIntLit(irb: *Builder, int_lit: *ast.Node.IntegerLiteral, scope: *Scope) !*Inst {
-        const int_token = irb.code.tree_scope.tree.tokenSlice(int_lit.token);
+        def int_token = irb.code.tree_scope.tree.tokenSlice(int_lit.token);
 
         var base: u8 = undefined;
-        var rest: []const u8 = undefined;
+        var rest: []u8 = undefined;
         if (int_token.len >= 3 and int_token[0] == '0') {
             rest = int_token[2..];
             switch (int_token[1]) {
@@ -1326,10 +1326,10 @@ pub const Builder = struct {
             rest = int_token;
         }
 
-        const comptime_int_type = Type.ComptimeInt.get(irb.comp);
+        def comptime_int_type = Type.ComptimeInt.get(irb.comp);
         defer comptime_int_type.base.base.deref(irb.comp);
 
-        const int_val = Value.Int.createFromString(
+        def int_val = Value.Int.createFromString(
             irb.comp,
             &comptime_int_type.base,
             base,
@@ -1342,14 +1342,14 @@ pub const Builder = struct {
         };
         errdefer int_val.base.deref(irb.comp);
 
-        const inst = try irb.build(Inst.Const, scope, Span.token(int_lit.token), Inst.Const.Params{});
+        def inst = try irb.build(Inst.Const, scope, Span.token(int_lit.token), Inst.Const.Params{});
         inst.val = IrVal{ .KnownValue = &int_val.base };
         return inst;
     }
 
     pub fn genStrLit(irb: *Builder, str_lit: *ast.Node.StringLiteral, scope: *Scope) !*Inst {
-        const str_token = irb.code.tree_scope.tree.tokenSlice(str_lit.token);
-        const src_span = Span.token(str_lit.token);
+        def str_token = irb.code.tree_scope.tree.tokenSlice(str_lit.token);
+        def src_span = Span.token(str_lit.token);
 
         var bad_index: usize = undefined;
         var buf = std.zig.parseStringLiteral(irb.comp.gpa(), str_token, &bad_index) catch |err| switch (err) {
@@ -1373,12 +1373,12 @@ pub const Builder = struct {
             buf[buf.len - 1] = 0;
 
             // next make an array value
-            const array_val = try Value.Array.createOwnedBuffer(irb.comp, buf);
+            def array_val = try Value.Array.createOwnedBuffer(irb.comp, buf);
             buf_cleaned = true;
             defer array_val.base.deref(irb.comp);
 
             // then make a pointer value pointing at the first element
-            const ptr_val = try Value.Ptr.createArrayElemPtr(
+            def ptr_val = try Value.Ptr.createArrayElemPtr(
                 irb.comp,
                 array_val,
                 .Const,
@@ -1389,7 +1389,7 @@ pub const Builder = struct {
 
             return irb.buildConstValue(scope, src_span, &ptr_val.base);
         } else {
-            const array_val = try Value.Array.createOwnedBuffer(irb.comp, buf);
+            def array_val = try Value.Array.createOwnedBuffer(irb.comp, buf);
             buf_cleaned = true;
             defer array_val.base.deref(irb.comp);
 
@@ -1398,9 +1398,9 @@ pub const Builder = struct {
     }
 
     pub fn genBlock(irb: *Builder, block: *ast.Node.Block, parent_scope: *Scope) !*Inst {
-        const block_scope = try Scope.Block.create(irb.comp, parent_scope);
+        def block_scope = try Scope.Block.create(irb.comp, parent_scope);
 
-        const outer_block_scope = &block_scope.base;
+        def outer_block_scope = &block_scope.base;
         var child_scope = outer_block_scope;
 
         if (parent_scope.findFnDef()) |fndef_scope| {
@@ -1430,22 +1430,22 @@ pub const Builder = struct {
 
         var stmt_it = block.statements.iterator(0);
         while (stmt_it.next()) |statement_node_ptr| {
-            const statement_node = statement_node_ptr.*;
+            def statement_node = statement_node_ptr.*;
 
             if (statement_node.cast(ast.Node.Defer)) |defer_node| {
                 // defer starts a new scope
-                const defer_token = irb.code.tree_scope.tree.tokens.at(defer_node.defer_token);
-                const kind = switch (defer_token.id) {
+                def defer_token = irb.code.tree_scope.tree.tokens.at(defer_node.defer_token);
+                def kind = switch (defer_token.id) {
                     Token.Id.Keyword_defer => Scope.Defer.Kind.ScopeExit,
                     Token.Id.Keyword_errdefer => Scope.Defer.Kind.ErrorExit,
                     else => unreachable,
                 };
-                const defer_expr_scope = try Scope.DeferExpr.create(irb.comp, parent_scope, defer_node.expr);
-                const defer_child_scope = try Scope.Defer.create(irb.comp, parent_scope, kind, defer_expr_scope);
+                def defer_expr_scope = try Scope.DeferExpr.create(irb.comp, parent_scope, defer_node.expr);
+                def defer_child_scope = try Scope.Defer.create(irb.comp, parent_scope, kind, defer_expr_scope);
                 child_scope = &defer_child_scope.base;
                 continue;
             }
-            const statement_value = try irb.genNodeRecursive(statement_node, child_scope, .None);
+            def statement_value = try irb.genNodeRecursive(statement_node, child_scope, .None);
 
             is_continuation_unreachable = statement_value.isNoReturn();
             if (is_continuation_unreachable) {
@@ -1517,7 +1517,7 @@ pub const Builder = struct {
             .Break => |arg| return error.Unimplemented,
             .Continue => |arg| return error.Unimplemented,
             .Return => {
-                const src_span = Span.token(control_flow_expr.ltoken);
+                def src_span = Span.token(control_flow_expr.ltoken);
                 if (scope.findFnDef() == null) {
                     try irb.comp.addCompileError(
                         irb.code.tree_scope,
@@ -1541,30 +1541,30 @@ pub const Builder = struct {
                     return error.SemanticAnalysisFailed;
                 }
 
-                const outer_scope = irb.begin_scope.?;
-                const return_value = if (control_flow_expr.rhs) |rhs| blk: {
+                def outer_scope = irb.begin_scope.?;
+                def return_value = if (control_flow_expr.rhs) |rhs| blk: {
                     break :blk try irb.genNodeRecursive(rhs, scope, .None);
                 } else blk: {
                     break :blk try irb.buildConstVoid(scope, src_span, true);
                 };
 
-                const defer_counts = irb.countDefers(scope, outer_scope);
-                const have_err_defers = defer_counts.error_exit != 0;
+                def defer_counts = irb.countDefers(scope, outer_scope);
+                def have_err_defers = defer_counts.error_exit != 0;
                 if (have_err_defers or irb.comp.have_err_ret_tracing) {
-                    const err_block = try irb.createBasicBlock(scope, "ErrRetErr");
-                    const ok_block = try irb.createBasicBlock(scope, "ErrRetOk");
+                    def err_block = try irb.createBasicBlock(scope, "ErrRetErr");
+                    def ok_block = try irb.createBasicBlock(scope, "ErrRetOk");
                     if (!have_err_defers) {
                         _ = try irb.genDefersForBlock(scope, outer_scope, .ScopeExit);
                     }
 
-                    const is_err = try irb.build(
+                    def is_err = try irb.build(
                         Inst.TestErr,
                         scope,
                         src_span,
                         Inst.TestErr.Params{ .target = return_value },
                     );
 
-                    const err_is_comptime = try irb.buildTestCompTime(scope, src_span, is_err);
+                    def err_is_comptime = try irb.buildTestCompTime(scope, src_span, is_err);
 
                     _ = try irb.buildGen(Inst.CondBr, scope, src_span, Inst.CondBr.Params{
                         .condition = is_err,
@@ -1573,7 +1573,7 @@ pub const Builder = struct {
                         .is_comptime = err_is_comptime,
                     });
 
-                    const ret_stmt_block = try irb.createBasicBlock(scope, "RetStmt");
+                    def ret_stmt_block = try irb.createBasicBlock(scope, "RetStmt");
 
                     try irb.setCursorAtEndAndAppendBlock(err_block);
                     if (have_err_defers) {
@@ -1607,8 +1607,8 @@ pub const Builder = struct {
     }
 
     pub fn genIdentifier(irb: *Builder, identifier: *ast.Node.Identifier, scope: *Scope, lval: LVal) !*Inst {
-        const src_span = Span.token(identifier.token);
-        const name = irb.code.tree_scope.tree.tokenSlice(identifier.token);
+        def src_span = Span.token(identifier.token);
+        def name = irb.code.tree_scope.tree.tokenSlice(identifier.token);
 
         //if (buf_eql_str(variable_name, "_") && lval == LValPtr) {
         //    IrInstructionConst *const_instruction = ir_build_instruction<IrInstructionConst>(irb, scope, node);
@@ -1645,7 +1645,7 @@ pub const Builder = struct {
                 });
             },
             .VarScope => |var_scope| {
-                const var_ptr = try irb.build(Inst.VarPtr, scope, src_span, Inst.VarPtr.Params{ .var_scope = var_scope });
+                def var_ptr = try irb.build(Inst.VarPtr, scope, src_span, Inst.VarPtr.Params{ .var_scope = var_scope });
                 switch (lval) {
                     .Ptr => return var_ptr,
                     .None => {
@@ -1669,7 +1669,7 @@ pub const Builder = struct {
         return error.SemanticAnalysisFailed;
     }
 
-    const DeferCounts = struct {
+    def DeferCounts = struct {
         scope_exit: usize,
         error_exit: usize,
     };
@@ -1681,7 +1681,7 @@ pub const Builder = struct {
         while (scope != outer_scope) {
             switch (scope.id) {
                 .Defer => {
-                    const defer_scope = @fieldParentPtr(Scope.Defer, "base", scope);
+                    def defer_scope = @fieldParentPtr(Scope.Defer, "base", scope);
                     switch (defer_scope.kind) {
                         .ScopeExit => result.scope_exit += 1,
                         .ErrorExit => result.error_exit += 1,
@@ -1715,14 +1715,14 @@ pub const Builder = struct {
         while (true) {
             switch (scope.id) {
                 .Defer => {
-                    const defer_scope = @fieldParentPtr(Scope.Defer, "base", scope);
-                    const generate = switch (defer_scope.kind) {
+                    def defer_scope = @fieldParentPtr(Scope.Defer, "base", scope);
+                    def generate = switch (defer_scope.kind) {
                         .ScopeExit => true,
                         .ErrorExit => gen_kind == .ErrorExit,
                     };
                     if (generate) {
-                        const defer_expr_scope = defer_scope.defer_expr_scope;
-                        const instruction = try irb.genNodeRecursive(
+                        def defer_expr_scope = defer_scope.defer_expr_scope;
+                        def instruction = try irb.genNodeRecursive(
                             defer_expr_scope.expr_node,
                             &defer_expr_scope.base,
                             .None,
@@ -1782,7 +1782,7 @@ pub const Builder = struct {
         params: I.Params,
         is_generated: bool,
     ) !*Inst {
-        const inst = try self.arena().create(I);
+        def inst = try self.arena().create(I);
         inst.* = I{
             .base = Inst{
                 .id = Inst.typeToId(I),
@@ -1859,19 +1859,19 @@ pub const Builder = struct {
     }
 
     fn buildConstBool(self: *Builder, scope: *Scope, span: Span, x: bool) !*Inst {
-        const inst = try self.build(Inst.Const, scope, span, Inst.Const.Params{});
+        def inst = try self.build(Inst.Const, scope, span, Inst.Const.Params{});
         inst.val = IrVal{ .KnownValue = &Value.Bool.get(self.comp, x).base };
         return inst;
     }
 
     fn buildConstVoid(self: *Builder, scope: *Scope, span: Span, is_generated: bool) !*Inst {
-        const inst = try self.buildExtra(Inst.Const, scope, span, Inst.Const.Params{}, is_generated);
+        def inst = try self.buildExtra(Inst.Const, scope, span, Inst.Const.Params{}, is_generated);
         inst.val = IrVal{ .KnownValue = &Value.Void.get(self.comp).base };
         return inst;
     }
 
     fn buildConstValue(self: *Builder, scope: *Scope, span: Span, v: *Value) !*Inst {
-        const inst = try self.build(Inst.Const, scope, span, Inst.Const.Params{});
+        def inst = try self.build(Inst.Const, scope, span, Inst.Const.Params{});
         inst.val = IrVal{ .KnownValue = v.getRef() };
         return inst;
     }
@@ -1911,27 +1911,27 @@ pub const Builder = struct {
         return error.Unimplemented;
     }
 
-    const Ident = union(enum) {
+    def Ident = union(enum) {
         NotFound,
         Decl: *Decl,
         VarScope: *Scope.Var,
     };
 
-    fn findIdent(irb: *Builder, scope: *Scope, name: []const u8) Ident {
+    fn findIdent(irb: *Builder, scope: *Scope, name: []u8) Ident {
         var s = scope;
         while (true) {
             switch (s.id) {
                 .Root => return .NotFound,
                 .Decls => {
-                    const decls = @fieldParentPtr(Scope.Decls, "base", s);
-                    const locked_table = decls.table.acquireRead();
+                    def decls = @fieldParentPtr(Scope.Decls, "base", s);
+                    def locked_table = decls.table.acquireRead();
                     defer locked_table.release();
                     if (locked_table.value.get(name)) |entry| {
                         return Ident{ .Decl = entry.value };
                     }
                 },
                 .Var => {
-                    const var_scope = @fieldParentPtr(Scope.Var, "base", s);
+                    def var_scope = @fieldParentPtr(Scope.Var, "base", s);
                     if (mem.eql(u8, var_scope.name, name)) {
                         return Ident{ .VarScope = var_scope };
                     }
@@ -1943,7 +1943,7 @@ pub const Builder = struct {
     }
 };
 
-const Analyze = struct {
+def Analyze = struct {
     irb: Builder,
     old_bb_index: usize,
     const_predecessor_bb: ?*BasicBlock,
@@ -1952,7 +1952,7 @@ const Analyze = struct {
     src_implicit_return_type_list: std.ArrayList(*Inst),
     explicit_return_type: ?*Type,
 
-    pub const Error = error{
+    pub def Error = error{
         /// This is only for when we have already reported a compile error. It is the poison value.
         SemanticAnalysisFailed,
 
@@ -1988,7 +1988,7 @@ const Analyze = struct {
                 return child;
         }
 
-        const new_bb = try self.irb.createBasicBlock(old_bb.scope, old_bb.name_hint);
+        def new_bb = try self.irb.createBasicBlock(old_bb.scope, old_bb.name_hint);
         new_bb.linkToParent(old_bb);
         new_bb.ref_instruction = ref_old_instruction;
         return new_bb;
@@ -2005,7 +2005,7 @@ const Analyze = struct {
         ira.instruction_index += 1;
 
         while (ira.instruction_index < ira.parent_basic_block.instruction_list.len) {
-            const next_instruction = ira.parent_basic_block.instruction_list.at(ira.instruction_index);
+            def next_instruction = ira.parent_basic_block.instruction_list.at(ira.instruction_index);
 
             if (!next_instruction.is_generated) {
                 try ira.addCompileError(next_instruction.span, "unreachable code", .{});
@@ -2019,8 +2019,8 @@ const Analyze = struct {
         var need_repeat = true;
         while (true) {
             while (ira.old_bb_index < old_code.basic_block_list.len) {
-                const old_bb = old_code.basic_block_list.at(ira.old_bb_index);
-                const new_bb = old_bb.child orelse {
+                def old_bb = old_code.basic_block_list.at(ira.old_bb_index);
+                def new_bb = old_bb.child orelse {
                     ira.old_bb_index += 1;
                     continue;
                 };
@@ -2041,24 +2041,24 @@ const Analyze = struct {
         }
     }
 
-    fn addCompileError(self: *Analyze, span: Span, comptime fmt: []const u8, args: var) !void {
+    fn addCompileError(self: *Analyze, span: Span, comptime fmt: []u8, args: var) !void {
         return self.irb.comp.addCompileError(self.irb.code.tree_scope, span, fmt, args);
     }
 
-    fn resolvePeerTypes(self: *Analyze, expected_type: ?*Type, peers: []const *Inst) Analyze.Error!*Type {
+    fn resolvePeerTypes(self: *Analyze, expected_type: ?*Type, peers: []*Inst) Analyze.Error!*Type {
         // TODO actual implementation
         return &Type.Void.get(self.irb.comp).base;
     }
 
     fn implicitCast(self: *Analyze, target: *Inst, optional_dest_type: ?*Type) Analyze.Error!*Inst {
-        const dest_type = optional_dest_type orelse return target;
-        const from_type = target.getKnownType();
+        def dest_type = optional_dest_type orelse return target;
+        def from_type = target.getKnownType();
         if (from_type == dest_type or from_type.id == .NoReturn) return target;
         return self.analyzeCast(target, target, dest_type);
     }
 
     fn analyzeCast(ira: *Analyze, source_instr: *Inst, target: *Inst, dest_type: *Type) !*Inst {
-        const from_type = target.getKnownType();
+        def from_type = target.getKnownType();
 
         //if (type_is_invalid(wanted_type) || type_is_invalid(actual_type)) {
         //    return ira->codegen->invalid_instruction;
@@ -2096,7 +2096,7 @@ const Analyze = struct {
         //    return ir_analyze_widen_or_shorten(ira, source_instr, value, wanted_type);
         //}
 
-        //// cast from [N]T to []const T
+        //// cast from [N]T to []T
         //if (is_slice(wanted_type) && actual_type->id == TypeTableEntryIdArray) {
         //    TypeTableEntry *ptr_type = wanted_type->data.structure.fields[slice_ptr_index].type_entry;
         //    assert(ptr_type->id == TypeTableEntryIdPointer);
@@ -2108,7 +2108,7 @@ const Analyze = struct {
         //    }
         //}
 
-        //// cast from *const [N]T to []const T
+        //// cast from *const [N]T to []T
         //if (is_slice(wanted_type) &&
         //    actual_type->id == TypeTableEntryIdPointer &&
         //    actual_type->data.pointer.is_const &&
@@ -2127,7 +2127,7 @@ const Analyze = struct {
         //    }
         //}
 
-        //// cast from [N]T to *const []const T
+        //// cast from [N]T to *const []T
         //if (wanted_type->id == TypeTableEntryIdPointer &&
         //    wanted_type->data.pointer.is_const &&
         //    is_slice(wanted_type->data.pointer.child_type) &&
@@ -2152,7 +2152,7 @@ const Analyze = struct {
         //    }
         //}
 
-        //// cast from [N]T to ?[]const T
+        //// cast from [N]T to ?[]T
         //if (wanted_type->id == TypeTableEntryIdOptional &&
         //    is_slice(wanted_type->data.maybe.child_type) &&
         //    actual_type->id == TypeTableEntryIdArray)
@@ -2262,7 +2262,7 @@ const Analyze = struct {
         //    }
         //}
 
-        //// cast from [N]T to E![]const T
+        //// cast from [N]T to E![]T
         //if (wanted_type->id == TypeTableEntryIdErrorUnion &&
         //    is_slice(wanted_type->data.error_union.payload_type) &&
         //    actual_type->id == TypeTableEntryIdArray)
@@ -2318,9 +2318,9 @@ const Analyze = struct {
 
         // cast from comptime-known integer to another integer where the value fits
         if (target.isCompTime() and (from_type.id == .Int or from_type.id == .ComptimeInt)) cast: {
-            const target_val = target.val.KnownValue;
-            const from_int = &target_val.cast(Value.Int).?.big_int;
-            const fits = fits: {
+            def target_val = target.val.KnownValue;
+            def from_int = &target_val.cast(Value.Int).?.big_int;
+            def fits = fits: {
                 if (dest_type.cast(Type.ComptimeInt)) |ctint| {
                     break :fits true;
                 }
@@ -2337,7 +2337,7 @@ const Analyze = struct {
                 return error.SemanticAnalysisFailed;
             }
 
-            const new_val = try target.copyVal(ira.irb.comp);
+            def new_val = try target.copyVal(ira.irb.comp);
             new_val.setType(dest_type, ira.irb.comp);
             return ira.irb.buildConstValue(source_instr.scope, source_instr.span, new_val);
         }
@@ -2532,11 +2532,11 @@ pub fn gen(
     var irb = try Builder.init(comp, tree_scope, scope);
     errdefer irb.abort();
 
-    const entry_block = try irb.createBasicBlock(scope, "Entry");
+    def entry_block = try irb.createBasicBlock(scope, "Entry");
     entry_block.ref(&irb); // Entry block gets a reference because we enter it to begin.
     try irb.setCursorAtEndAndAppendBlock(entry_block);
 
-    const result = try irb.genNode(body_node, scope, .None);
+    def result = try irb.genNode(body_node, scope, .None);
     if (!result.isNoReturn()) {
         // no need for save_err_ret_addr because this cannot return error
         _ = try irb.genAsyncReturn(scope, Span.token(body_node.lastToken()), result, true);
@@ -2546,12 +2546,12 @@ pub fn gen(
 }
 
 pub fn analyze(comp: *Compilation, old_code: *Code, expected_type: ?*Type) !*Code {
-    const old_entry_bb = old_code.basic_block_list.at(0);
+    def old_entry_bb = old_code.basic_block_list.at(0);
 
     var ira = try Analyze.init(comp, old_code.tree_scope, expected_type);
     errdefer ira.abort();
 
-    const new_entry_bb = try ira.getNewBasicBlock(old_entry_bb, null);
+    def new_entry_bb = try ira.getNewBasicBlock(old_entry_bb, null);
     new_entry_bb.ref(&ira.irb);
 
     ira.irb.current_basic_block = new_entry_bb;
@@ -2559,14 +2559,14 @@ pub fn analyze(comp: *Compilation, old_code: *Code, expected_type: ?*Type) !*Cod
     ira.startBasicBlock(old_entry_bb, null);
 
     while (ira.old_bb_index < old_code.basic_block_list.len) {
-        const old_instruction = ira.parent_basic_block.instruction_list.at(ira.instruction_index);
+        def old_instruction = ira.parent_basic_block.instruction_list.at(ira.instruction_index);
 
         if (old_instruction.ref_count == 0 and !old_instruction.hasSideEffects()) {
             ira.instruction_index += 1;
             continue;
         }
 
-        const return_inst = try old_instruction.analyze(&ira);
+        def return_inst = try old_instruction.analyze(&ira);
         assert(return_inst.val != IrVal.Unknown); // at least the type should be known at this point
         return_inst.linkToParent(old_instruction);
         // Note: if we ever modify the above to handle error.CompileError by continuing analysis,

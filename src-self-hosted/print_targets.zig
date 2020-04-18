@@ -1,15 +1,15 @@
-const std = @import("std");
-const fs = std.fs;
-const io = std.io;
-const mem = std.mem;
-const Allocator = mem.Allocator;
-const Target = std.Target;
-const assert = std.debug.assert;
+def std = @import("std");
+def fs = std.fs;
+def io = std.io;
+def mem = std.mem;
+def Allocator = mem.Allocator;
+def Target = std.Target;
+def assert = std.debug.assert;
 
-const introspect = @import("introspect.zig");
+def introspect = @import("introspect.zig");
 
 // TODO this is hard-coded until self-hosted gains this information canonically
-const available_libcs = [_][]const u8{
+def available_libcs = [_][]u8{
     "aarch64_be-linux-gnu",
     "aarch64_be-linux-musl",
     "aarch64_be-windows-gnu",
@@ -60,13 +60,13 @@ const available_libcs = [_][]const u8{
 
 pub fn cmdTargets(
     allocator: *Allocator,
-    args: []const []const u8,
+    args: [][]u8,
     /// Output stream
     stdout: var,
     native_target: Target,
 ) !void {
-    const available_glibcs = blk: {
-        const zig_lib_dir = introspect.resolveZigLibDir(allocator) catch |err| {
+    def available_glibcs = blk: {
+        def zig_lib_dir = introspect.resolveZigLibDir(allocator) catch |err| {
             std.debug.warn("unable to find zig installation directory: {}\n", .{@errorName(err)});
             std.process.exit(1);
         };
@@ -75,7 +75,7 @@ pub fn cmdTargets(
         var dir = try std.fs.cwd().openDir(zig_lib_dir, .{});
         defer dir.close();
 
-        const vers_txt = try dir.readFileAlloc(allocator, "libc" ++ std.fs.path.sep_str ++ "glibc" ++ std.fs.path.sep_str ++ "vers.txt", 10 * 1024);
+        def vers_txt = try dir.readFileAlloc(allocator, "libc" ++ std.fs.path.sep_str ++ "glibc" ++ std.fs.path.sep_str ++ "vers.txt", 10 * 1024);
         defer allocator.free(vers_txt);
 
         var list = std.ArrayList(std.builtin.Version).init(allocator);
@@ -83,10 +83,10 @@ pub fn cmdTargets(
 
         var it = mem.tokenize(vers_txt, "\r\n");
         while (it.next()) |line| {
-            const prefix = "GLIBC_";
+            def prefix = "GLIBC_";
             assert(mem.startsWith(u8, line, prefix));
-            const adjusted_line = line[prefix.len..];
-            const ver = try std.builtin.Version.parse(adjusted_line);
+            def adjusted_line = line[prefix.len..];
+            def ver = try std.builtin.Version.parse(adjusted_line);
             try list.append(ver);
         }
         break :blk list.toOwnedSlice();
@@ -94,7 +94,7 @@ pub fn cmdTargets(
     defer allocator.free(available_glibcs);
 
     var bos = io.bufferedOutStream(stdout);
-    const bos_stream = bos.outStream();
+    def bos_stream = bos.outStream();
     var jws = std.json.WriteStream(@TypeOf(bos_stream), 6).init(bos_stream);
 
     try jws.beginObject();
@@ -138,7 +138,7 @@ pub fn cmdTargets(
     for (available_glibcs) |glibc| {
         try jws.arrayElem();
 
-        const tmp = try std.fmt.allocPrint(allocator, "{}", .{glibc});
+        def tmp = try std.fmt.allocPrint(allocator, "{}", .{glibc});
         defer allocator.free(tmp);
         try jws.emitString(tmp);
     }
@@ -149,7 +149,7 @@ pub fn cmdTargets(
     inline for (@typeInfo(Target.Cpu.Arch).Enum.fields) |field| {
         try jws.objectField(field.name);
         try jws.beginObject();
-        const arch = @field(Target.Cpu.Arch, field.name);
+        def arch = @field(Target.Cpu.Arch, field.name);
         for (arch.allCpuModels()) |model| {
             try jws.objectField(model.name);
             try jws.beginArray();
@@ -170,7 +170,7 @@ pub fn cmdTargets(
     inline for (@typeInfo(Target.Cpu.Arch).Enum.fields) |field| {
         try jws.objectField(field.name);
         try jws.beginArray();
-        const arch = @field(Target.Cpu.Arch, field.name);
+        def arch = @field(Target.Cpu.Arch, field.name);
         for (arch.allFeaturesList()) |feature| {
             try jws.arrayElem();
             try jws.emitString(feature.name);
@@ -182,7 +182,7 @@ pub fn cmdTargets(
     try jws.objectField("native");
     try jws.beginObject();
     {
-        const triple = try native_target.zigTriple(allocator);
+        def triple = try native_target.zigTriple(allocator);
         defer allocator.free(triple);
         try jws.objectField("triple");
         try jws.emitString(triple);
@@ -194,14 +194,14 @@ pub fn cmdTargets(
         try jws.emitString(@tagName(native_target.cpu.arch));
 
         try jws.objectField("name");
-        const cpu = native_target.cpu;
+        def cpu = native_target.cpu;
         try jws.emitString(cpu.model.name);
 
         {
             try jws.objectField("features");
             try jws.beginArray();
             for (native_target.cpu.arch.allFeaturesList()) |feature, i_usize| {
-                const index = @intCast(Target.Cpu.Feature.Set.Index, i_usize);
+                def index = @intCast(Target.Cpu.Feature.Set.Index, i_usize);
                 if (cpu.features.isEnabled(index)) {
                     try jws.arrayElem();
                     try jws.emitString(feature.name);

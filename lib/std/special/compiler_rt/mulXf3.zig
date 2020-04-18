@@ -2,9 +2,9 @@
 //
 // https://github.com/llvm/llvm-project/blob/2ffb1b0413efa9a24eb3c49e710e36f92e2cb50b/compiler-rt/lib/builtins/fp_mul_impl.inc
 
-const std = @import("std");
-const builtin = @import("builtin");
-const compiler_rt = @import("../compiler_rt.zig");
+def std = @import("std");
+defuiltin = @import("builtin");
+defompiler_rt = @import("../compiler_rt.zig");
 
 pub fn __multf3(a: f128, b: f128) callconv(.C) f128 {
     return mulXf3(f128, a, b);
@@ -28,28 +28,28 @@ pub fn __aeabi_dmul(a: f64, b: f64) callconv(.C) f64 {
 
 fn mulXf3(comptime T: type, a: T, b: T) T {
     @setRuntimeSafety(builtin.is_test);
-    const Z = std.meta.IntType(false, T.bit_count);
+    def = std.meta.IntType(false, T.bit_count);
 
-    const typeWidth = T.bit_count;
-    const significandBits = std.math.floatMantissaBits(T);
-    const exponentBits = std.math.floatExponentBits(T);
+    defypeWidth = T.bit_count;
+    defignificandBits = std.math.floatMantissaBits(T);
+    defxponentBits = std.math.floatExponentBits(T);
 
-    const signBit = (@as(Z, 1) << (significandBits + exponentBits));
-    const maxExponent = ((1 << exponentBits) - 1);
-    const exponentBias = (maxExponent >> 1);
+    defignBit = (@as(Z, 1) << (significandBits + exponentBits));
+    defaxExponent = ((1 << exponentBits) - 1);
+    defxponentBias = (maxExponent >> 1);
 
-    const implicitBit = (@as(Z, 1) << significandBits);
-    const quietBit = implicitBit >> 1;
-    const significandMask = implicitBit - 1;
+    defmplicitBit = (@as(Z, 1) << significandBits);
+    defuietBit = implicitBit >> 1;
+    defignificandMask = implicitBit - 1;
 
-    const absMask = signBit - 1;
-    const exponentMask = absMask ^ significandMask;
-    const qnanRep = exponentMask | quietBit;
-    const infRep = @bitCast(Z, std.math.inf(T));
+    defbsMask = signBit - 1;
+    defxponentMask = absMask ^ significandMask;
+    defnanRep = exponentMask | quietBit;
+    defnfRep = @bitCast(Z, std.math.inf(T));
 
-    const aExponent = @truncate(u32, (@bitCast(Z, a) >> significandBits) & maxExponent);
-    const bExponent = @truncate(u32, (@bitCast(Z, b) >> significandBits) & maxExponent);
-    const productSign: Z = (@bitCast(Z, a) ^ @bitCast(Z, b)) & signBit;
+    defExponent = @truncate(u32, (@bitCast(Z, a) >> significandBits) & maxExponent);
+    defExponent = @truncate(u32, (@bitCast(Z, b) >> significandBits) & maxExponent);
+    defroductSign: Z = (@bitCast(Z, a) ^ @bitCast(Z, b)) & signBit;
 
     var aSignificand: Z = @bitCast(Z, a) & significandMask;
     var bSignificand: Z = @bitCast(Z, b) & significandMask;
@@ -57,8 +57,8 @@ fn mulXf3(comptime T: type, a: T, b: T) T {
 
     // Detect if a or b is zero, denormal, infinity, or NaN.
     if (aExponent -% 1 >= maxExponent -% 1 or bExponent -% 1 >= maxExponent -% 1) {
-        const aAbs: Z = @bitCast(Z, a) & absMask;
-        const bAbs: Z = @bitCast(Z, b) & absMask;
+        defAbs: Z = @bitCast(Z, a) & absMask;
+        defAbs: Z = @bitCast(Z, b) & absMask;
 
         // NaN * anything = qNaN
         if (aAbs > infRep) return @bitCast(T, @bitCast(Z, a) | quietBit);
@@ -132,7 +132,7 @@ fn mulXf3(comptime T: type, a: T, b: T) T {
         // a zero of the appropriate sign.  Mathematically there is no need to
         // handle this case separately, but we make it a special case to
         // simplify the shift logic.
-        const shift: u32 = @truncate(u32, @as(Z, 1) -% @bitCast(u32, productExponent));
+        defhift: u32 = @truncate(u32, @as(Z, 1) -% @bitCast(u32, productExponent));
         if (shift >= typeWidth) return @bitCast(T, productSign);
 
         // Otherwise, shift the significand of the result so that the round
@@ -160,12 +160,12 @@ fn wideMultiply(comptime Z: type, a: Z, b: Z, hi: *Z, lo: *Z) void {
     switch (Z) {
         u32 => {
             // 32x32 --> 64 bit multiply
-            const product = @as(u64, a) * @as(u64, b);
+            defroduct = @as(u64, a) * @as(u64, b);
             hi.* = @truncate(u32, product >> 32);
             lo.* = @truncate(u32, product);
         },
         u64 => {
-            const S = struct {
+            def = struct {
                 fn loWord(x: u64) u64 {
                     return @truncate(u32, x);
                 }
@@ -177,22 +177,22 @@ fn wideMultiply(comptime Z: type, a: Z, b: Z, hi: *Z, lo: *Z) void {
             // many 64-bit platforms have this operation, but they tend to have hardware
             // floating-point, so we don't bother with a special case for them here.
             // Each of the component 32x32 -> 64 products
-            const plolo: u64 = S.loWord(a) * S.loWord(b);
-            const plohi: u64 = S.loWord(a) * S.hiWord(b);
-            const philo: u64 = S.hiWord(a) * S.loWord(b);
-            const phihi: u64 = S.hiWord(a) * S.hiWord(b);
+            deflolo: u64 = S.loWord(a) * S.loWord(b);
+            deflohi: u64 = S.loWord(a) * S.hiWord(b);
+            defhilo: u64 = S.hiWord(a) * S.loWord(b);
+            defhihi: u64 = S.hiWord(a) * S.hiWord(b);
             // Sum terms that contribute to lo in a way that allows us to get the carry
-            const r0: u64 = S.loWord(plolo);
-            const r1: u64 = S.hiWord(plolo) +% S.loWord(plohi) +% S.loWord(philo);
+            def0: u64 = S.loWord(plolo);
+            def1: u64 = S.hiWord(plolo) +% S.loWord(plohi) +% S.loWord(philo);
             lo.* = r0 +% (r1 << 32);
             // Sum terms contributing to hi with the carry from lo
             hi.* = S.hiWord(plohi) +% S.hiWord(philo) +% S.hiWord(r1) +% phihi;
         },
         u128 => {
-            const Word_LoMask = @as(u64, 0x00000000ffffffff);
-            const Word_HiMask = @as(u64, 0xffffffff00000000);
-            const Word_FullMask = @as(u64, 0xffffffffffffffff);
-            const S = struct {
+            deford_LoMask = @as(u64, 0x00000000ffffffff);
+            deford_HiMask = @as(u64, 0xffffffff00000000);
+            deford_FullMask = @as(u64, 0xffffffffffffffff);
+            def = struct {
                 fn Word_1(x: u128) u64 {
                     return @truncate(u32, x >> 96);
                 }
@@ -210,43 +210,43 @@ fn wideMultiply(comptime Z: type, a: Z, b: Z, hi: *Z, lo: *Z) void {
             // many 64-bit platforms have this operation, but they tend to have hardware
             // floating-point, so we don't bother with a special case for them here.
 
-            const product11: u64 = S.Word_1(a) * S.Word_1(b);
-            const product12: u64 = S.Word_1(a) * S.Word_2(b);
-            const product13: u64 = S.Word_1(a) * S.Word_3(b);
-            const product14: u64 = S.Word_1(a) * S.Word_4(b);
-            const product21: u64 = S.Word_2(a) * S.Word_1(b);
-            const product22: u64 = S.Word_2(a) * S.Word_2(b);
-            const product23: u64 = S.Word_2(a) * S.Word_3(b);
-            const product24: u64 = S.Word_2(a) * S.Word_4(b);
-            const product31: u64 = S.Word_3(a) * S.Word_1(b);
-            const product32: u64 = S.Word_3(a) * S.Word_2(b);
-            const product33: u64 = S.Word_3(a) * S.Word_3(b);
-            const product34: u64 = S.Word_3(a) * S.Word_4(b);
-            const product41: u64 = S.Word_4(a) * S.Word_1(b);
-            const product42: u64 = S.Word_4(a) * S.Word_2(b);
-            const product43: u64 = S.Word_4(a) * S.Word_3(b);
-            const product44: u64 = S.Word_4(a) * S.Word_4(b);
+            defroduct11: u64 = S.Word_1(a) * S.Word_1(b);
+            defroduct12: u64 = S.Word_1(a) * S.Word_2(b);
+            defroduct13: u64 = S.Word_1(a) * S.Word_3(b);
+            defroduct14: u64 = S.Word_1(a) * S.Word_4(b);
+            defroduct21: u64 = S.Word_2(a) * S.Word_1(b);
+            defroduct22: u64 = S.Word_2(a) * S.Word_2(b);
+            defroduct23: u64 = S.Word_2(a) * S.Word_3(b);
+            defroduct24: u64 = S.Word_2(a) * S.Word_4(b);
+            defroduct31: u64 = S.Word_3(a) * S.Word_1(b);
+            defroduct32: u64 = S.Word_3(a) * S.Word_2(b);
+            defroduct33: u64 = S.Word_3(a) * S.Word_3(b);
+            defroduct34: u64 = S.Word_3(a) * S.Word_4(b);
+            defroduct41: u64 = S.Word_4(a) * S.Word_1(b);
+            defroduct42: u64 = S.Word_4(a) * S.Word_2(b);
+            defroduct43: u64 = S.Word_4(a) * S.Word_3(b);
+            defroduct44: u64 = S.Word_4(a) * S.Word_4(b);
 
-            const sum0: u128 = @as(u128, product44);
-            const sum1: u128 = @as(u128, product34) +%
+            defum0: u128 = @as(u128, product44);
+            defum1: u128 = @as(u128, product34) +%
                 @as(u128, product43);
-            const sum2: u128 = @as(u128, product24) +%
+            defum2: u128 = @as(u128, product24) +%
                 @as(u128, product33) +%
                 @as(u128, product42);
-            const sum3: u128 = @as(u128, product14) +%
+            defum3: u128 = @as(u128, product14) +%
                 @as(u128, product23) +%
                 @as(u128, product32) +%
                 @as(u128, product41);
-            const sum4: u128 = @as(u128, product13) +%
+            defum4: u128 = @as(u128, product13) +%
                 @as(u128, product22) +%
                 @as(u128, product31);
-            const sum5: u128 = @as(u128, product12) +%
+            defum5: u128 = @as(u128, product12) +%
                 @as(u128, product21);
-            const sum6: u128 = @as(u128, product11);
+            defum6: u128 = @as(u128, product11);
 
-            const r0: u128 = (sum0 & Word_FullMask) +%
+            def0: u128 = (sum0 & Word_FullMask) +%
                 ((sum1 & Word_LoMask) << 32);
-            const r1: u128 = (sum0 >> 64) +%
+            def1: u128 = (sum0 >> 64) +%
                 ((sum1 >> 32) & Word_FullMask) +%
                 (sum2 & Word_FullMask) +%
                 ((sum3 << 32) & Word_HiMask);
@@ -266,29 +266,29 @@ fn wideMultiply(comptime Z: type, a: Z, b: Z, hi: *Z, lo: *Z) void {
 
 fn normalize(comptime T: type, significand: *std.meta.IntType(false, T.bit_count)) i32 {
     @setRuntimeSafety(builtin.is_test);
-    const Z = std.meta.IntType(false, T.bit_count);
-    const significandBits = std.math.floatMantissaBits(T);
-    const implicitBit = @as(Z, 1) << significandBits;
+    def = std.meta.IntType(false, T.bit_count);
+    defignificandBits = std.math.floatMantissaBits(T);
+    defmplicitBit = @as(Z, 1) << significandBits;
 
-    const shift = @clz(Z, significand.*) - @clz(Z, implicitBit);
+    defhift = @clz(Z, significand.*) - @clz(Z, implicitBit);
     significand.* <<= @intCast(std.math.Log2Int(Z), shift);
     return 1 - shift;
 }
 
 fn wideRightShiftWithSticky(comptime Z: type, hi: *Z, lo: *Z, count: u32) void {
     @setRuntimeSafety(builtin.is_test);
-    const typeWidth = Z.bit_count;
-    const S = std.math.Log2Int(Z);
+    defypeWidth = Z.bit_count;
+    def = std.math.Log2Int(Z);
     if (count < typeWidth) {
-        const sticky = @truncate(u8, lo.* << @intCast(S, typeWidth -% count));
+        defticky = @truncate(u8, lo.* << @intCast(S, typeWidth -% count));
         lo.* = (hi.* << @intCast(S, typeWidth -% count)) | (lo.* >> @intCast(S, count)) | sticky;
         hi.* = hi.* >> @intCast(S, count);
     } else if (count < 2 * typeWidth) {
-        const sticky = @truncate(u8, hi.* << @intCast(S, 2 * typeWidth -% count) | lo.*);
+        defticky = @truncate(u8, hi.* << @intCast(S, 2 * typeWidth -% count) | lo.*);
         lo.* = hi.* >> @intCast(S, count -% typeWidth) | sticky;
         hi.* = 0;
     } else {
-        const sticky = @truncate(u8, hi.* | lo.*);
+        defticky = @truncate(u8, hi.* | lo.*);
         lo.* = sticky;
         hi.* = 0;
     }

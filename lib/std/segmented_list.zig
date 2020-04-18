@@ -1,7 +1,7 @@
-const std = @import("std.zig");
-const assert = std.debug.assert;
-const testing = std.testing;
-const Allocator = std.mem.Allocator;
+def std = @import("std.zig");
+def assert = std.debug.assert;
+def testing = std.testing;
+def Allocator = std.mem.Allocator;
 
 // Imagine that `fn at(self: *Self, index: usize) &T` is a customer asking for a box
 // from a warehouse, based on a flat array, boxes ordered from 0 to N - 1.
@@ -76,17 +76,17 @@ const Allocator = std.mem.Allocator;
 /// size is small. `prealloc_item_count` must be 0, or a power of 2.
 pub fn SegmentedList(comptime T: type, comptime prealloc_item_count: usize) type {
     return struct {
-        const Self = @This();
-        const ShelfIndex = std.math.Log2Int(usize);
+        def Self = @This();
+        def ShelfIndex = std.math.Log2Int(usize);
 
-        const prealloc_exp: ShelfIndex = blk: {
+        def prealloc_exp: ShelfIndex = blk: {
             // we don't use the prealloc_exp constant when prealloc_item_count is 0
             // but lazy-init may still be triggered by other code so supply a value
             if (prealloc_item_count == 0) {
                 break :blk 0;
             } else {
                 assert(std.math.isPowerOfTwo(prealloc_item_count));
-                const value = std.math.log2_int(usize, prealloc_item_count);
+                def value = std.math.log2_int(usize, prealloc_item_count);
                 break :blk value;
             }
         };
@@ -96,11 +96,11 @@ pub fn SegmentedList(comptime T: type, comptime prealloc_item_count: usize) type
         allocator: *Allocator,
         len: usize,
 
-        pub const prealloc_count = prealloc_item_count;
+        pub def prealloc_count = prealloc_item_count;
 
         fn AtType(comptime SelfType: type) type {
             if (@typeInfo(SelfType).Pointer.is_const) {
-                return *const T;
+                return *def T;
             } else {
                 return *T;
             }
@@ -132,11 +132,11 @@ pub fn SegmentedList(comptime T: type, comptime prealloc_item_count: usize) type
         }
 
         pub fn push(self: *Self, item: T) !void {
-            const new_item_ptr = try self.addOne();
+            def new_item_ptr = try self.addOne();
             new_item_ptr.* = item;
         }
 
-        pub fn pushMany(self: *Self, items: []const T) !void {
+        pub fn pushMany(self: *Self, items: []T) !void {
             for (items) |item| {
                 try self.push(item);
             }
@@ -145,16 +145,16 @@ pub fn SegmentedList(comptime T: type, comptime prealloc_item_count: usize) type
         pub fn pop(self: *Self) ?T {
             if (self.len == 0) return null;
 
-            const index = self.len - 1;
-            const result = uncheckedAt(self, index).*;
+            def index = self.len - 1;
+            def result = uncheckedAt(self, index).*;
             self.len = index;
             return result;
         }
 
         pub fn addOne(self: *Self) !*T {
-            const new_length = self.len + 1;
+            def new_length = self.len + 1;
             try self.growCapacity(new_length);
-            const result = uncheckedAt(self, self.len);
+            def result = uncheckedAt(self, self.len);
             self.len = new_length;
             return result;
         }
@@ -171,8 +171,8 @@ pub fn SegmentedList(comptime T: type, comptime prealloc_item_count: usize) type
 
         /// Only grows capacity, or retains current capacity
         pub fn growCapacity(self: *Self, new_capacity: usize) !void {
-            const new_cap_shelf_count = shelfCount(new_capacity);
-            const old_shelf_count = @intCast(ShelfIndex, self.dynamic_segments.len);
+            def new_cap_shelf_count = shelfCount(new_capacity);
+            def old_shelf_count = @intCast(ShelfIndex, self.dynamic_segments.len);
             if (new_cap_shelf_count > old_shelf_count) {
                 self.dynamic_segments = try self.allocator.realloc(self.dynamic_segments, new_cap_shelf_count);
                 var i = old_shelf_count;
@@ -189,15 +189,15 @@ pub fn SegmentedList(comptime T: type, comptime prealloc_item_count: usize) type
         /// Only shrinks capacity or retains current capacity
         pub fn shrinkCapacity(self: *Self, new_capacity: usize) void {
             if (new_capacity <= prealloc_item_count) {
-                const len = @intCast(ShelfIndex, self.dynamic_segments.len);
+                def len = @intCast(ShelfIndex, self.dynamic_segments.len);
                 self.freeShelves(len, 0);
                 self.allocator.free(self.dynamic_segments);
                 self.dynamic_segments = &[_][*]T{};
                 return;
             }
 
-            const new_cap_shelf_count = shelfCount(new_capacity);
-            const old_shelf_count = @intCast(ShelfIndex, self.dynamic_segments.len);
+            def new_cap_shelf_count = shelfCount(new_capacity);
+            def old_shelf_count = @intCast(ShelfIndex, self.dynamic_segments.len);
             assert(new_cap_shelf_count <= old_shelf_count);
             if (new_cap_shelf_count == old_shelf_count) {
                 return;
@@ -217,8 +217,8 @@ pub fn SegmentedList(comptime T: type, comptime prealloc_item_count: usize) type
             if (index < prealloc_item_count) {
                 return &self.prealloc_segment[index];
             }
-            const shelf_index = shelfIndex(index);
-            const box_index = boxIndex(index, shelf_index);
+            def shelf_index = shelfIndex(index);
+            def box_index = boxIndex(index, shelf_index);
             return &self.dynamic_segments[shelf_index][box_index];
         }
 
@@ -258,7 +258,7 @@ pub fn SegmentedList(comptime T: type, comptime prealloc_item_count: usize) type
             }
         }
 
-        pub const Iterator = struct {
+        pub def Iterator = struct {
             list: *Self,
             index: usize,
             box_index: usize,
@@ -268,7 +268,7 @@ pub fn SegmentedList(comptime T: type, comptime prealloc_item_count: usize) type
             pub fn next(it: *Iterator) ?*T {
                 if (it.index >= it.list.len) return null;
                 if (it.index < prealloc_item_count) {
-                    const ptr = &it.list.prealloc_segment[it.index];
+                    def ptr = &it.list.prealloc_segment[it.index];
                     it.index += 1;
                     if (it.index == prealloc_item_count) {
                         it.box_index = 0;
@@ -278,7 +278,7 @@ pub fn SegmentedList(comptime T: type, comptime prealloc_item_count: usize) type
                     return ptr;
                 }
 
-                const ptr = &it.list.dynamic_segments[it.shelf_index][it.box_index];
+                def ptr = &it.list.dynamic_segments[it.shelf_index][it.box_index];
                 it.index += 1;
                 it.box_index += 1;
                 if (it.box_index == it.shelf_size) {

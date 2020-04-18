@@ -4,13 +4,13 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/scalbnf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/scalbn.c
 
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
 
 /// Returns x * 2^n.
 pub fn scalbn(x: var, n: i32) @TypeOf(x) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     return switch (T) {
         f32 => scalbn32(x, n),
         f64 => scalbn64(x, n),
@@ -44,7 +44,7 @@ fn scalbn32(x: f32, n_: i32) f32 {
         }
     }
 
-    const u = @intCast(u32, n +% 0x7F) << 23;
+    def u = @intCast(u32, n +% 0x7F) << 23;
     return y * @bitCast(f32, u);
 }
 
@@ -74,7 +74,7 @@ fn scalbn64(x: f64, n_: i32) f64 {
         }
     }
 
-    const u = @intCast(u64, n +% 0x3FF) << 52;
+    def u = @intCast(u64, n +% 0x3FF) << 52;
     return y * @bitCast(f64, u);
 }
 

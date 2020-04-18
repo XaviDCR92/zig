@@ -1,8 +1,8 @@
-const std = @import("std");
-const Target = std.Target;
-const llvm = @import("llvm.zig");
+def std = @import("std");
+def Target = std.Target;
+def llvm = @import("llvm.zig");
 
-pub fn getDarwinArchString(self: Target) [:0]const u8 {
+pub fn getDarwinArchString(self: Target) [:0]u8 {
     switch (self.cpu.arch) {
         .aarch64 => return "arm64",
         .thumb,
@@ -16,7 +16,7 @@ pub fn getDarwinArchString(self: Target) [:0]const u8 {
     }
 }
 
-pub fn llvmTargetFromTriple(triple: [:0]const u8) !*llvm.Target {
+pub fn llvmTargetFromTriple(triple: [:0]u8) !*llvm.Target {
     var result: *llvm.Target = undefined;
     var err_msg: [*:0]u8 = undefined;
     if (llvm.GetTargetFromTriple(triple, &result, &err_msg) != 0) {

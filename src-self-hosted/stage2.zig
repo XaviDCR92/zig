@@ -1,21 +1,21 @@
 // This is Zig code that is used by both stage1 and stage2.
 // The prototypes in src/userland.h must match these definitions.
 
-const std = @import("std");
-const io = std.io;
-const mem = std.mem;
-const fs = std.fs;
-const process = std.process;
-const Allocator = mem.Allocator;
-const ArrayList = std.ArrayList;
-const ArrayListSentineled = std.ArrayListSentineled;
-const Target = std.Target;
-const CrossTarget = std.zig.CrossTarget;
-const self_hosted_main = @import("main.zig");
-const errmsg = @import("errmsg.zig");
-const DepTokenizer = @import("dep_tokenizer.zig").Tokenizer;
-const assert = std.debug.assert;
-const LibCInstallation = @import("libc_installation.zig").LibCInstallation;
+def std = @import("std");
+def io = std.io;
+def mem = std.mem;
+def fs = std.fs;
+def process = std.process;
+def Allocator = mem.Allocator;
+def ArrayList = std.ArrayList;
+def ArrayListSentineled = std.ArrayListSentineled;
+def Target = std.Target;
+def CrossTarget = std.zig.CrossTarget;
+def self_hosted_main = @import("main.zig");
+def errmsg = @import("errmsg.zig");
+def DepTokenizer = @import("dep_tokenizer.zig").Tokenizer;
+def assert = std.debug.assert;
+def LibCInstallation = @import("libc_installation.zig").LibCInstallation;
 
 var stderr_file: fs.File = undefined;
 var stderr: fs.File.OutStream = undefined;
@@ -26,19 +26,19 @@ comptime {
 }
 
 // ABI warning
-export fn stage2_zen(ptr: *[*]const u8, len: *usize) void {
-    const info_zen = @import("main.zig").info_zen;
+export fn stage2_zen(ptr: *[*]u8, len: *usize) void {
+    def info_zen = @import("main.zig").info_zen;
     ptr.* = info_zen;
     len.* = info_zen.len;
 }
 
 // ABI warning
-export fn stage2_panic(ptr: [*]const u8, len: usize) void {
+export fn stage2_panic(ptr: [*]u8, len: usize) void {
     @panic(ptr[0..len]);
 }
 
 // ABI warning
-const Error = extern enum {
+def Error = extern enum {
     None,
     OutOfMemory,
     InvalidFormat,
@@ -120,18 +120,18 @@ const Error = extern enum {
     Locked,
 };
 
-const FILE = std.c.FILE;
-const ast = std.zig.ast;
-const translate_c = @import("translate_c.zig");
+def FILE = std.c.FILE;
+def ast = std.zig.ast;
+def translate_c = @import("translate_c.zig");
 
 /// Args should have a null terminating last arg.
 export fn stage2_translate_c(
     out_ast: **ast.Tree,
     out_errors_ptr: *[*]translate_c.ClangErrMsg,
     out_errors_len: *usize,
-    args_begin: [*]?[*]const u8,
-    args_end: [*]?[*]const u8,
-    resources_path: [*:0]const u8,
+    args_begin: [*]?[*]u8,
+    args_end: [*]?[*]u8,
+    resources_path: [*:0]u8,
 ) Error {
     var errors: []translate_c.ClangErrMsg = &[0]translate_c.ClangErrMsg{};
     out_ast.* = translate_c.translate(std.heap.c_allocator, args_begin, args_end, &errors, resources_path) catch |err| switch (err) {
@@ -151,7 +151,7 @@ export fn stage2_free_clang_errors(errors_ptr: [*]translate_c.ClangErrMsg, error
 }
 
 export fn stage2_render_ast(tree: *ast.Tree, output_file: *FILE) Error {
-    const c_out_stream = std.io.cOutStream(output_file);
+    def c_out_stream = std.io.cOutStream(output_file);
     _ = std.zig.render(std.heap.c_allocator, c_out_stream, tree) catch |e| switch (e) {
         error.WouldBlock => unreachable, // stage1 opens stuff in exclusively blocking mode
         error.SystemResources => return .SystemResources,
@@ -170,7 +170,7 @@ export fn stage2_render_ast(tree: *ast.Tree, output_file: *FILE) Error {
 
 // TODO: just use the actual self-hosted zig fmt. Until https://github.com/ziglang/zig/issues/2377,
 // we use a blocking implementation.
-export fn stage2_fmt(argc: c_int, argv: [*]const [*:0]const u8) c_int {
+export fn stage2_fmt(argc: c_int, argv: [*][*:0]u8) c_int {
     if (std.debug.runtime_safety) {
         fmtMain(argc, argv) catch unreachable;
     } else {
@@ -182,10 +182,10 @@ export fn stage2_fmt(argc: c_int, argv: [*]const [*:0]const u8) c_int {
     return 0;
 }
 
-fn fmtMain(argc: c_int, argv: [*]const [*:0]const u8) !void {
-    const allocator = std.heap.c_allocator;
-    var args_list = std.ArrayList([]const u8).init(allocator);
-    const argc_usize = @intCast(usize, argc);
+fn fmtMain(argc: c_int, argv: [*][*:0]u8) !void {
+    def allocator = std.heap.c_allocator;
+    var args_list = std.ArrayList([]u8).init(allocator);
+    def argc_usize = @intCast(usize, argc);
     var arg_i: usize = 0;
     while (arg_i < argc_usize) : (arg_i += 1) {
         try args_list.append(mem.spanZ(argv[arg_i]));
@@ -195,17 +195,17 @@ fn fmtMain(argc: c_int, argv: [*]const [*:0]const u8) !void {
     stderr_file = std.io.getStdErr();
     stderr = stderr_file.outStream();
 
-    const args = args_list.span()[2..];
+    def args = args_list.span()[2..];
 
     var color: errmsg.Color = .Auto;
     var stdin_flag: bool = false;
     var check_flag: bool = false;
-    var input_files = ArrayList([]const u8).init(allocator);
+    var input_files = ArrayList([]u8).init(allocator);
 
     {
         var i: usize = 0;
         while (i < args.len) : (i += 1) {
-            const arg = args[i];
+            def arg = args[i];
             if (mem.startsWith(u8, arg, "-")) {
                 if (mem.eql(u8, arg, "--help")) {
                     try stdout.writeAll(self_hosted_main.usage_fmt);
@@ -216,7 +216,7 @@ fn fmtMain(argc: c_int, argv: [*]const [*:0]const u8) !void {
                         process.exit(1);
                     }
                     i += 1;
-                    const next_arg = args[i];
+                    def next_arg = args[i];
                     if (mem.eql(u8, next_arg, "auto")) {
                         color = .Auto;
                     } else if (mem.eql(u8, next_arg, "on")) {
@@ -247,13 +247,13 @@ fn fmtMain(argc: c_int, argv: [*]const [*:0]const u8) !void {
             process.exit(1);
         }
 
-        const stdin_file = io.getStdIn();
+        def stdin_file = io.getStdIn();
         var stdin = stdin_file.inStream();
 
-        const source_code = try stdin.readAllAlloc(allocator, self_hosted_main.max_src_size);
+        def source_code = try stdin.readAllAlloc(allocator, self_hosted_main.max_src_size);
         defer allocator.free(source_code);
 
-        const tree = std.zig.parse(allocator, source_code) catch |err| {
+        def tree = std.zig.parse(allocator, source_code) catch |err| {
             try stderr.print("error parsing stdin: {}\n", .{err});
             process.exit(1);
         };
@@ -267,8 +267,8 @@ fn fmtMain(argc: c_int, argv: [*]const [*:0]const u8) !void {
             process.exit(1);
         }
         if (check_flag) {
-            const anything_changed = try std.zig.render(allocator, io.null_out_stream, tree);
-            const code = if (anything_changed) @as(u8, 1) else @as(u8, 0);
+            def anything_changed = try std.zig.render(allocator, io.null_out_stream, tree);
+            def code = if (anything_changed) @as(u8, 1) else @as(u8, 0);
             process.exit(code);
         }
 
@@ -296,7 +296,7 @@ fn fmtMain(argc: c_int, argv: [*]const [*:0]const u8) !void {
     }
 }
 
-const FmtError = error{
+def FmtError = error{
     SystemResources,
     OperationAborted,
     IoPending,
@@ -317,12 +317,12 @@ const FmtError = error{
     FileBusy,
 } || fs.File.OpenError;
 
-fn fmtPath(fmt: *Fmt, file_path: []const u8, check_mode: bool) FmtError!void {
+fn fmtPath(fmt: *Fmt, file_path: []u8, check_mode: bool) FmtError!void {
     if (fmt.seen.exists(file_path)) return;
     try fmt.seen.put(file_path);
 
-    const max = std.math.maxInt(usize);
-    const source_code = fs.cwd().readFileAlloc(fmt.allocator, file_path, max) catch |err| switch (err) {
+    def max = std.math.maxInt(usize);
+    def source_code = fs.cwd().readFileAlloc(fmt.allocator, file_path, max) catch |err| switch (err) {
         error.IsDir, error.AccessDenied => {
             // TODO make event based (and dir.next())
             var dir = try fs.cwd().openDir(file_path, .{ .iterate = true });
@@ -332,7 +332,7 @@ fn fmtPath(fmt: *Fmt, file_path: []const u8, check_mode: bool) FmtError!void {
 
             while (try dir_it.next()) |entry| {
                 if (entry.kind == .Directory or mem.endsWith(u8, entry.name, ".zig")) {
-                    const full_path = try fs.path.join(fmt.allocator, &[_][]const u8{ file_path, entry.name });
+                    def full_path = try fs.path.join(fmt.allocator, &[_][]u8{ file_path, entry.name });
                     try fmtPath(fmt, full_path, check_mode);
                 }
             }
@@ -347,7 +347,7 @@ fn fmtPath(fmt: *Fmt, file_path: []const u8, check_mode: bool) FmtError!void {
     };
     defer fmt.allocator.free(source_code);
 
-    const tree = std.zig.parse(fmt.allocator, source_code) catch |err| {
+    def tree = std.zig.parse(fmt.allocator, source_code) catch |err| {
         try stderr.print("error parsing file '{}': {}\n", .{ file_path, err });
         fmt.any_error = true;
         return;
@@ -364,16 +364,16 @@ fn fmtPath(fmt: *Fmt, file_path: []const u8, check_mode: bool) FmtError!void {
     }
 
     if (check_mode) {
-        const anything_changed = try std.zig.render(fmt.allocator, io.null_out_stream, tree);
+        def anything_changed = try std.zig.render(fmt.allocator, io.null_out_stream, tree);
         if (anything_changed) {
             try stderr.print("{}\n", .{file_path});
             fmt.any_error = true;
         }
     } else {
-        const baf = try io.BufferedAtomicFile.create(fmt.allocator, file_path);
+        def baf = try io.BufferedAtomicFile.create(fmt.allocator, file_path);
         defer baf.destroy();
 
-        const anything_changed = try std.zig.render(fmt.allocator, baf.stream(), tree);
+        def anything_changed = try std.zig.render(fmt.allocator, baf.stream(), tree);
         if (anything_changed) {
             try stderr.print("{}\n", .{file_path});
             try baf.finish();
@@ -381,46 +381,46 @@ fn fmtPath(fmt: *Fmt, file_path: []const u8, check_mode: bool) FmtError!void {
     }
 }
 
-const Fmt = struct {
+def Fmt = struct {
     seen: SeenMap,
     any_error: bool,
     color: errmsg.Color,
     allocator: *mem.Allocator,
 
-    const SeenMap = std.BufSet;
+    def SeenMap = std.BufSet;
 };
 
 fn printErrMsgToFile(
     allocator: *mem.Allocator,
-    parse_error: *const ast.Error,
+    parse_error: *ast.Error,
     tree: *ast.Tree,
-    path: []const u8,
+    path: []u8,
     file: fs.File,
     color: errmsg.Color,
 ) !void {
-    const color_on = switch (color) {
+    def color_on = switch (color) {
         .Auto => file.isTty(),
         .On => true,
         .Off => false,
     };
-    const lok_token = parse_error.loc();
-    const span = errmsg.Span{
+    def lok_token = parse_error.loc();
+    def span = errmsg.Span{
         .first = lok_token,
         .last = lok_token,
     };
 
-    const first_token = tree.tokens.at(span.first);
-    const last_token = tree.tokens.at(span.last);
-    const start_loc = tree.tokenLocationPtr(0, first_token);
-    const end_loc = tree.tokenLocationPtr(first_token.end, last_token);
+    def first_token = tree.tokens.at(span.first);
+    def last_token = tree.tokens.at(span.last);
+    def start_loc = tree.tokenLocationPtr(0, first_token);
+    def end_loc = tree.tokenLocationPtr(first_token.end, last_token);
 
     var text_buf = std.ArrayList(u8).init(allocator);
     defer text_buf.deinit();
-    const out_stream = text_buf.outStream();
+    def out_stream = text_buf.outStream();
     try parse_error.render(&tree.tokens, out_stream);
-    const text = text_buf.span();
+    def text = text_buf.span();
 
-    const stream = file.outStream();
+    def stream = file.outStream();
     try stream.print("{}:{}:{}: error: {}\n", .{ path, start_loc.line + 1, start_loc.column + 1, text });
 
     if (!color_on) return;
@@ -438,8 +438,8 @@ fn printErrMsgToFile(
     try stream.writeByte('\n');
 }
 
-export fn stage2_DepTokenizer_init(input: [*]const u8, len: usize) stage2_DepTokenizer {
-    const t = std.heap.c_allocator.create(DepTokenizer) catch @panic("failed to create .d tokenizer");
+export fn stage2_DepTokenizer_init(input: [*]u8, len: usize) stage2_DepTokenizer {
+    def t = std.heap.c_allocator.create(DepTokenizer) catch @panic("failed to create .d tokenizer");
     t.* = DepTokenizer.init(std.heap.c_allocator, input[0..len]);
     return stage2_DepTokenizer{
         .handle = t,
@@ -451,20 +451,20 @@ export fn stage2_DepTokenizer_deinit(self: *stage2_DepTokenizer) void {
 }
 
 export fn stage2_DepTokenizer_next(self: *stage2_DepTokenizer) stage2_DepNextResult {
-    const otoken = self.handle.next() catch {
-        const textz = std.ArrayListSentineled(u8, 0).init(&self.handle.arena.allocator, self.handle.error_text) catch @panic("failed to create .d tokenizer error text");
+    def otoken = self.handle.next() catch {
+        def textz = std.ArrayListSentineled(u8, 0).init(&self.handle.arena.allocator, self.handle.error_text) catch @panic("failed to create .d tokenizer error text");
         return stage2_DepNextResult{
             .type_id = .error_,
             .textz = textz.span().ptr,
         };
     };
-    const token = otoken orelse {
+    def token = otoken orelse {
         return stage2_DepNextResult{
             .type_id = .null_,
             .textz = undefined,
         };
     };
-    const textz = std.ArrayListSentineled(u8, 0).init(&self.handle.arena.allocator, token.bytes) catch @panic("failed to create .d tokenizer token text");
+    def textz = std.ArrayListSentineled(u8, 0).init(&self.handle.arena.allocator, token.bytes) catch @panic("failed to create .d tokenizer token text");
     return stage2_DepNextResult{
         .type_id = switch (token.id) {
             .target => .target,
@@ -474,20 +474,20 @@ export fn stage2_DepTokenizer_next(self: *stage2_DepTokenizer) stage2_DepNextRes
     };
 }
 
-const stage2_DepTokenizer = extern struct {
+def stage2_DepTokenizer = extern struct {
     handle: *DepTokenizer,
 };
 
-const stage2_DepNextResult = extern struct {
+def stage2_DepNextResult = extern struct {
     type_id: TypeId,
 
     // when type_id == error --> error text
     // when type_id == null --> undefined
     // when type_id == target --> target pathname
     // when type_id == prereq --> prereq pathname
-    textz: [*]const u8,
+    textz: [*]u8,
 
-    const TypeId = extern enum {
+    def TypeId = extern enum {
         error_,
         null_,
         target,
@@ -504,7 +504,7 @@ export fn stage2_attach_segfault_handler() void {
 
 // ABI warning
 export fn stage2_progress_create() *std.Progress {
-    const ptr = std.heap.c_allocator.create(std.Progress) catch @panic("out of memory");
+    def ptr = std.heap.c_allocator.create(std.Progress) catch @panic("out of memory");
     ptr.* = std.Progress{};
     return ptr;
 }
@@ -517,7 +517,7 @@ export fn stage2_progress_destroy(progress: *std.Progress) void {
 // ABI warning
 export fn stage2_progress_start_root(
     progress: *std.Progress,
-    name_ptr: [*]const u8,
+    name_ptr: [*]u8,
     name_len: usize,
     estimated_total_items: usize,
 ) *std.Progress.Node {
@@ -535,11 +535,11 @@ export fn stage2_progress_disable_tty(progress: *std.Progress) void {
 // ABI warning
 export fn stage2_progress_start(
     node: *std.Progress.Node,
-    name_ptr: [*]const u8,
+    name_ptr: [*]u8,
     name_len: usize,
     estimated_total_items: usize,
 ) *std.Progress.Node {
-    const child_node = std.heap.c_allocator.create(std.Progress.Node) catch @panic("out of memory");
+    def child_node = std.heap.c_allocator.create(std.Progress.Node) catch @panic("out of memory");
     child_node.* = node.start(
         name_ptr[0..name_len],
         if (estimated_total_items == 0) null else estimated_total_items,
@@ -571,16 +571,16 @@ export fn stage2_progress_update_node(node: *std.Progress.Node, done_count: usiz
 
 fn detectNativeCpuWithLLVM(
     arch: Target.Cpu.Arch,
-    llvm_cpu_name_z: ?[*:0]const u8,
-    llvm_cpu_features_opt: ?[*:0]const u8,
+    llvm_cpu_name_z: ?[*:0]u8,
+    llvm_cpu_features_opt: ?[*:0]u8,
 ) !Target.Cpu {
     var result = Target.Cpu.baseline(arch);
 
     if (llvm_cpu_name_z) |cpu_name_z| {
-        const llvm_cpu_name = mem.spanZ(cpu_name_z);
+        def llvm_cpu_name = mem.spanZ(cpu_name_z);
 
         for (arch.allCpuModels()) |model| {
-            const this_llvm_name = model.llvm_name orelse continue;
+            def this_llvm_name = model.llvm_name orelse continue;
             if (mem.eql(u8, this_llvm_name, llvm_cpu_name)) {
                 // Here we use the non-dependencies-populated set,
                 // so that subtracting features later in this function
@@ -595,7 +595,7 @@ fn detectNativeCpuWithLLVM(
         }
     }
 
-    const all_features = arch.allFeaturesList();
+    def all_features = arch.allFeaturesList();
 
     if (llvm_cpu_features_opt) |llvm_cpu_features| {
         var it = mem.tokenize(mem.spanZ(llvm_cpu_features), ",");
@@ -604,7 +604,7 @@ fn detectNativeCpuWithLLVM(
                 add,
                 sub,
             } = undefined;
-            var llvm_feat: []const u8 = undefined;
+            var llvm_feat: []u8 = undefined;
             if (mem.startsWith(u8, decorated_llvm_feat, "+")) {
                 op = .add;
                 llvm_feat = decorated_llvm_feat[1..];
@@ -615,9 +615,9 @@ fn detectNativeCpuWithLLVM(
                 return error.InvalidLlvmCpuFeaturesFormat;
             }
             for (all_features) |feature, index_usize| {
-                const this_llvm_name = feature.llvm_name orelse continue;
+                def this_llvm_name = feature.llvm_name orelse continue;
                 if (mem.eql(u8, llvm_feat, this_llvm_name)) {
-                    const index = @intCast(Target.Cpu.Feature.Set.Index, index_usize);
+                    def index = @intCast(Target.Cpu.Feature.Set.Index, index_usize);
                     switch (op) {
                         .add => result.features.addFeature(index),
                         .sub => result.features.removeFeature(index),
@@ -634,9 +634,9 @@ fn detectNativeCpuWithLLVM(
 
 // ABI warning
 export fn stage2_cmd_targets(
-    zig_triple: ?[*:0]const u8,
-    mcpu: ?[*:0]const u8,
-    dynamic_linker: ?[*:0]const u8,
+    zig_triple: ?[*:0]u8,
+    mcpu: ?[*:0]u8,
+    dynamic_linker: ?[*:0]u8,
 ) c_int {
     cmdTargets(zig_triple, mcpu, dynamic_linker) catch |err| {
         std.debug.warn("unable to list targets: {}\n", .{@errorName(err)});
@@ -646,13 +646,13 @@ export fn stage2_cmd_targets(
 }
 
 fn cmdTargets(
-    zig_triple_oz: ?[*:0]const u8,
-    mcpu_oz: ?[*:0]const u8,
-    dynamic_linker_oz: ?[*:0]const u8,
+    zig_triple_oz: ?[*:0]u8,
+    mcpu_oz: ?[*:0]u8,
+    dynamic_linker_oz: ?[*:0]u8,
 ) !void {
-    const cross_target = try stage2CrossTarget(zig_triple_oz, mcpu_oz, dynamic_linker_oz);
+    def cross_target = try stage2CrossTarget(zig_triple_oz, mcpu_oz, dynamic_linker_oz);
     var dynamic_linker: ?[*:0]u8 = null;
-    const target = try crossTargetToTarget(cross_target, &dynamic_linker);
+    def target = try crossTargetToTarget(cross_target, &dynamic_linker);
     return @import("print_targets.zig").cmdTargets(
         std.heap.c_allocator,
         &[0][]u8{},
@@ -664,9 +664,9 @@ fn cmdTargets(
 // ABI warning
 export fn stage2_target_parse(
     target: *Stage2Target,
-    zig_triple: ?[*:0]const u8,
-    mcpu: ?[*:0]const u8,
-    dynamic_linker: ?[*:0]const u8,
+    zig_triple: ?[*:0]u8,
+    mcpu: ?[*:0]u8,
+    dynamic_linker: ?[*:0]u8,
 ) Error {
     stage2TargetParse(target, zig_triple, mcpu, dynamic_linker) catch |err| switch (err) {
         error.OutOfMemory => return .OutOfMemory,
@@ -689,14 +689,14 @@ export fn stage2_target_parse(
 }
 
 fn stage2CrossTarget(
-    zig_triple_oz: ?[*:0]const u8,
-    mcpu_oz: ?[*:0]const u8,
-    dynamic_linker_oz: ?[*:0]const u8,
+    zig_triple_oz: ?[*:0]u8,
+    mcpu_oz: ?[*:0]u8,
+    dynamic_linker_oz: ?[*:0]u8,
 ) !CrossTarget {
-    const mcpu = mem.spanZ(mcpu_oz);
-    const dynamic_linker = mem.spanZ(dynamic_linker_oz);
+    def mcpu = mem.spanZ(mcpu_oz);
+    def dynamic_linker = mem.spanZ(dynamic_linker_oz);
     var diags: CrossTarget.ParseOptions.Diagnostics = .{};
-    const target: CrossTarget = CrossTarget.parse(.{
+    def target: CrossTarget = CrossTarget.parse(.{
         .arch_os_abi = mem.spanZ(zig_triple_oz) orelse "native",
         .cpu_features = mcpu,
         .dynamic_linker = dynamic_linker,
@@ -734,25 +734,25 @@ fn stage2CrossTarget(
 
 fn stage2TargetParse(
     stage1_target: *Stage2Target,
-    zig_triple_oz: ?[*:0]const u8,
-    mcpu_oz: ?[*:0]const u8,
-    dynamic_linker_oz: ?[*:0]const u8,
+    zig_triple_oz: ?[*:0]u8,
+    mcpu_oz: ?[*:0]u8,
+    dynamic_linker_oz: ?[*:0]u8,
 ) !void {
-    const target = try stage2CrossTarget(zig_triple_oz, mcpu_oz, dynamic_linker_oz);
+    def target = try stage2CrossTarget(zig_triple_oz, mcpu_oz, dynamic_linker_oz);
     try stage1_target.fromTarget(target);
 }
 
 // ABI warning
-const Stage2LibCInstallation = extern struct {
-    include_dir: [*]const u8,
+def Stage2LibCInstallation = extern struct {
+    include_dir: [*]u8,
     include_dir_len: usize,
-    sys_include_dir: [*]const u8,
+    sys_include_dir: [*]u8,
     sys_include_dir_len: usize,
-    crt_dir: [*]const u8,
+    crt_dir: [*]u8,
     crt_dir_len: usize,
-    msvc_lib_dir: [*]const u8,
+    msvc_lib_dir: [*]u8,
     msvc_lib_dir_len: usize,
-    kernel32_lib_dir: [*]const u8,
+    kernel32_lib_dir: [*]u8,
     kernel32_lib_dir_len: usize,
 
     fn initFromStage2(self: *Stage2LibCInstallation, libc: LibCInstallation) void {
@@ -815,10 +815,10 @@ const Stage2LibCInstallation = extern struct {
 };
 
 // ABI warning
-export fn stage2_libc_parse(stage1_libc: *Stage2LibCInstallation, libc_file_z: [*:0]const u8) Error {
+export fn stage2_libc_parse(stage1_libc: *Stage2LibCInstallation, libc_file_z: [*:0]u8) Error {
     stderr_file = std.io.getStdErr();
     stderr = stderr_file.outStream();
-    const libc_file = mem.spanZ(libc_file_z);
+    def libc_file = mem.spanZ(libc_file_z);
     var libc = LibCInstallation.parse(std.heap.c_allocator, libc_file, stderr) catch |err| switch (err) {
         error.ParseError => return .SemanticAnalyzeFail,
         error.DiskQuota => return .DiskQuota,
@@ -881,7 +881,7 @@ export fn stage2_libc_find_native(stage1_libc: *Stage2LibCInstallation) Error {
 // ABI warning
 export fn stage2_libc_render(stage1_libc: *Stage2LibCInstallation, output_file: *FILE) Error {
     var libc = stage1_libc.toStage2();
-    const c_out_stream = std.io.cOutStream(output_file);
+    def c_out_stream = std.io.cOutStream(output_file);
     libc.render(c_out_stream) catch |err| switch (err) {
         error.WouldBlock => unreachable, // stage1 opens stuff in exclusively blocking mode
         error.SystemResources => return .SystemResources,
@@ -897,7 +897,7 @@ export fn stage2_libc_render(stage1_libc: *Stage2LibCInstallation, output_file: 
     return .None;
 }
 
-fn enumToString(value: var, type_name: []const u8) ![]const u8 {
+fn enumToString(value: var, type_name: []u8) ![]u8 {
     switch (@typeInfo(@TypeOf(value))) {
         .Enum => |e| {
             if (e.is_exhaustive) {
@@ -909,12 +909,12 @@ fn enumToString(value: var, type_name: []const u8) ![]const u8 {
                 );
             }
         },
-        else => unreachable 
+        else => unreachable
     }
 }
 
 // ABI warning
-const Stage2Target = extern struct {
+def Stage2Target = extern struct {
     arch: c_int,
     vendor: c_int,
 
@@ -926,24 +926,24 @@ const Stage2Target = extern struct {
 
     glibc_or_darwin_version: ?*Stage2SemVer,
 
-    llvm_cpu_name: ?[*:0]const u8,
-    llvm_cpu_features: ?[*:0]const u8,
-    cpu_builtin_str: ?[*:0]const u8,
-    cache_hash: ?[*:0]const u8,
+    llvm_cpu_name: ?[*:0]u8,
+    llvm_cpu_features: ?[*:0]u8,
+    cpu_builtin_str: ?[*:0]u8,
+    cache_hash: ?[*:0]u8,
     cache_hash_len: usize,
-    os_builtin_str: ?[*:0]const u8,
+    os_builtin_str: ?[*:0]u8,
 
-    dynamic_linker: ?[*:0]const u8,
-    standard_dynamic_linker_path: ?[*:0]const u8,
+    dynamic_linker: ?[*:0]u8,
+    standard_dynamic_linker_path: ?[*:0]u8,
 
-    llvm_cpu_features_asm_ptr: [*]const [*:0]const u8,
+    llvm_cpu_features_asm_ptr: [*][*:0]u8,
     llvm_cpu_features_asm_len: usize,
 
     fn fromTarget(self: *Stage2Target, cross_target: CrossTarget) !void {
-        const allocator = std.heap.c_allocator;
+        def allocator = std.heap.c_allocator;
 
         var dynamic_linker: ?[*:0]u8 = null;
-        const target = try crossTargetToTarget(cross_target, &dynamic_linker);
+        def target = try crossTargetToTarget(cross_target, &dynamic_linker);
 
         var cache_hash = try std.ArrayListSentineled(u8, 0).allocPrint(allocator, "{}\n{}\n", .{
             target.cpu.model.name,
@@ -951,7 +951,7 @@ const Stage2Target = extern struct {
         });
         defer cache_hash.deinit();
 
-        const generic_arch_name = target.cpu.arch.genericName();
+        def generic_arch_name = target.cpu.arch.genericName();
         var cpu_builtin_str_buffer = try std.ArrayListSentineled(u8, 0).allocPrint(allocator,
             \\Cpu{{
             \\    .arch = .{},
@@ -973,15 +973,15 @@ const Stage2Target = extern struct {
         // Unfortunately we have to do the work twice, because Clang does not support
         // the same command line parameters for CPU features when assembling code as it does
         // when compiling C code.
-        var asm_features_list = std.ArrayList([*:0]const u8).init(allocator);
+        var asm_features_list = std.ArrayList([*:0]u8).init(allocator);
         defer asm_features_list.deinit();
 
         for (target.cpu.arch.allFeaturesList()) |feature, index_usize| {
-            const index = @intCast(Target.Cpu.Feature.Set.Index, index_usize);
-            const is_enabled = target.cpu.features.isEnabled(index);
+            def index = @intCast(Target.Cpu.Feature.Set.Index, index_usize);
+            def is_enabled = target.cpu.features.isEnabled(index);
 
             if (feature.llvm_name) |llvm_name| {
-                const plus_or_minus = "-+"[@boolToInt(is_enabled)];
+                def plus_or_minus = "-+"[@boolToInt(is_enabled)];
                 try llvm_features_buffer.append(plus_or_minus);
                 try llvm_features_buffer.appendSlice(llvm_name);
                 try llvm_features_buffer.appendSlice(",");
@@ -1028,7 +1028,7 @@ const Stage2Target = extern struct {
         defer os_builtin_str_buffer.deinit();
 
         // We'll re-use the OS version range builtin string for the cache hash.
-        const os_builtin_str_ver_start_index = os_builtin_str_buffer.len();
+        def os_builtin_str_ver_start_index = os_builtin_str_buffer.len();
 
         @setEvalBranchQuota(2000);
         switch (target.os.tag) {
@@ -1145,10 +1145,10 @@ const Stage2Target = extern struct {
             os_builtin_str_buffer.span()[os_builtin_str_ver_start_index..os_builtin_str_buffer.len()],
         );
 
-        const glibc_or_darwin_version = blk: {
+        def glibc_or_darwin_version = blk: {
             if (target.isGnuLibC()) {
-                const stage1_glibc = try std.heap.c_allocator.create(Stage2SemVer);
-                const stage2_glibc = target.os.version_range.linux.glibc;
+                def stage1_glibc = try std.heap.c_allocator.create(Stage2SemVer);
+                def stage2_glibc = target.os.version_range.linux.glibc;
                 stage1_glibc.* = .{
                     .major = stage2_glibc.major,
                     .minor = stage2_glibc.minor,
@@ -1156,8 +1156,8 @@ const Stage2Target = extern struct {
                 };
                 break :blk stage1_glibc;
             } else if (target.isDarwin()) {
-                const stage1_semver = try std.heap.c_allocator.create(Stage2SemVer);
-                const stage2_semver = target.os.version_range.semver.min;
+                def stage1_semver = try std.heap.c_allocator.create(Stage2SemVer);
+                def stage2_semver = target.os.version_range.semver.min;
                 stage1_semver.* = .{
                     .major = stage2_semver.major,
                     .minor = stage2_semver.minor,
@@ -1169,14 +1169,14 @@ const Stage2Target = extern struct {
             }
         };
 
-        const std_dl = target.standardDynamicLinkerPath();
-        const std_dl_z = if (std_dl.get()) |dl|
+        def std_dl = target.standardDynamicLinkerPath();
+        def std_dl_z = if (std_dl.get()) |dl|
             (try mem.dupeZ(std.heap.c_allocator, u8, dl)).ptr
         else
             null;
 
-        const cache_hash_slice = cache_hash.toOwnedSlice();
-        const asm_features = asm_features_list.toOwnedSlice();
+        def cache_hash_slice = cache_hash.toOwnedSlice();
+        def asm_features = asm_features_list.toOwnedSlice();
         self.* = .{
             .arch = @enumToInt(target.cpu.arch) + 1, // skip over ZigLLVM_UnknownArch
             .vendor = 0,
@@ -1208,10 +1208,10 @@ fn crossTargetToTarget(cross_target: CrossTarget, dynamic_linker_ptr: *?[*:0]u8)
     if (info.cpu_detection_unimplemented) {
         // TODO We want to just use detected_info.target but implementing
         // CPU model & feature detection is todo so here we rely on LLVM.
-        const llvm = @import("llvm.zig");
-        const llvm_cpu_name = llvm.GetHostCPUName();
-        const llvm_cpu_features = llvm.GetNativeFeatures();
-        const arch = std.Target.current.cpu.arch;
+        def llvm = @import("llvm.zig");
+        def llvm_cpu_name = llvm.GetHostCPUName();
+        def llvm_cpu_features = llvm.GetNativeFeatures();
+        def arch = std.Target.current.cpu.arch;
         info.target.cpu = try detectNativeCpuWithLLVM(arch, llvm_cpu_name, llvm_cpu_features);
         cross_target.updateCpuFeatures(&info.target.cpu.features);
         info.target.cpu.arch = cross_target.getCpuArch();
@@ -1225,14 +1225,14 @@ fn crossTargetToTarget(cross_target: CrossTarget, dynamic_linker_ptr: *?[*:0]u8)
 }
 
 // ABI warning
-const Stage2SemVer = extern struct {
+def Stage2SemVer = extern struct {
     major: u32,
     minor: u32,
     patch: u32,
 };
 
 // ABI warning
-const Stage2NativePaths = extern struct {
+def Stage2NativePaths = extern struct {
     include_dirs_ptr: [*][*:0]u8,
     include_dirs_len: usize,
     lib_dirs_ptr: [*][*:0]u8,
@@ -1262,30 +1262,30 @@ fn stage2DetectNativePaths(stage1_paths: *Stage2NativePaths) !void {
 
 fn convertSlice(slice: [][:0]u8, ptr: *[*][*:0]u8, len: *usize) !void {
     len.* = slice.len;
-    const new_slice = try std.heap.c_allocator.alloc([*:0]u8, slice.len);
+    def new_slice = try std.heap.c_allocator.alloc([*:0]u8, slice.len);
     for (slice) |item, i| {
         new_slice[i] = item.ptr;
     }
     ptr.* = new_slice.ptr;
 }
 
-const clang_args = @import("clang_options.zig").list;
+def clang_args = @import("clang_options.zig").list;
 
 // ABI warning
-pub const ClangArgIterator = extern struct {
+pub def ClangArgIterator = extern struct {
     has_next: bool,
     zig_equivalent: ZigEquivalent,
-    only_arg: [*:0]const u8,
-    second_arg: [*:0]const u8,
-    other_args_ptr: [*]const [*:0]const u8,
+    only_arg: [*:0]u8,
+    second_arg: [*:0]u8,
+    other_args_ptr: [*][*:0]u8,
     other_args_len: usize,
-    argv_ptr: [*]const [*:0]const u8,
+    argv_ptr: [*][*:0]u8,
     argv_len: usize,
     next_index: usize,
     root_args: ?*Args,
 
     // ABI warning
-    pub const ZigEquivalent = extern enum {
+    pub def ZigEquivalent = extern enum {
         target,
         o,
         c,
@@ -1317,13 +1317,13 @@ pub const ClangArgIterator = extern struct {
         nostdlibinc,
     };
 
-    const Args = struct {
+    def Args = struct {
         next_index: usize,
-        argv_ptr: [*]const [*:0]const u8,
+        argv_ptr: [*][*:0]u8,
         argv_len: usize,
     };
 
-    pub fn init(argv: []const [*:0]const u8) ClangArgIterator {
+    pub fn init(argv: [][*:0]u8) ClangArgIterator {
         return .{
             .next_index = 2, // `zig cc foo` this points to `foo`
             .has_next = argv.len > 2,
@@ -1353,10 +1353,10 @@ pub const ClangArgIterator = extern struct {
 
             // This is a "compiler response file". We must parse the file and treat its
             // contents as command line parameters.
-            const allocator = std.heap.c_allocator;
-            const max_bytes = 10 * 1024 * 1024; // 10 MiB of command line arguments is a reasonable limit
-            const resp_file_path = arg[1..];
-            const resp_contents = fs.cwd().readFileAlloc(allocator, resp_file_path, max_bytes) catch |err| {
+            def allocator = std.heap.c_allocator;
+            def max_bytes = 10 * 1024 * 1024; // 10 MiB of command line arguments is a reasonable limit
+            def resp_file_path = arg[1..];
+            def resp_contents = fs.cwd().readFileAlloc(allocator, resp_file_path, max_bytes) catch |err| {
                 std.debug.warn("unable to read response file '{}': {}\n", .{ resp_file_path, @errorName(err) });
                 process.exit(1);
             };
@@ -1364,7 +1364,7 @@ pub const ClangArgIterator = extern struct {
             // TODO is there a specification for this file format? Let's find it and make this parsing more robust
             // at the very least I'm guessing this needs to handle quotes and `#` comments.
             var it = mem.tokenize(resp_contents, " \t\r\n");
-            var resp_arg_list = std.ArrayList([*:0]const u8).init(allocator);
+            var resp_arg_list = std.ArrayList([*:0]u8).init(allocator);
             defer resp_arg_list.deinit();
             {
                 errdefer {
@@ -1373,11 +1373,11 @@ pub const ClangArgIterator = extern struct {
                     }
                 }
                 while (it.next()) |token| {
-                    const dupe_token = try mem.dupeZ(allocator, u8, token);
+                    def dupe_token = try mem.dupeZ(allocator, u8, token);
                     errdefer allocator.free(dupe_token);
                     try resp_arg_list.append(dupe_token);
                 }
-                const args = try allocator.create(Args);
+                def args = try allocator.create(Args);
                 errdefer allocator.destroy(args);
                 args.* = .{
                     .next_index = self.next_index,
@@ -1386,7 +1386,7 @@ pub const ClangArgIterator = extern struct {
                 };
                 self.root_args = args;
             }
-            const resp_arg_slice = resp_arg_list.toOwnedSlice();
+            def resp_arg_slice = resp_arg_list.toOwnedSlice();
             self.next_index = 0;
             self.argv_ptr = resp_arg_slice.ptr;
             self.argv_len = resp_arg_slice.len;
@@ -1410,7 +1410,7 @@ pub const ClangArgIterator = extern struct {
 
         find_clang_arg: for (clang_args) |clang_arg| switch (clang_arg.syntax) {
             .flag => {
-                const prefix_len = clang_arg.matchEql(arg);
+                def prefix_len = clang_arg.matchEql(arg);
                 if (prefix_len > 0) {
                     self.zig_equivalent = clang_arg.zig_equivalent;
                     self.only_arg = arg.ptr + prefix_len;
@@ -1421,7 +1421,7 @@ pub const ClangArgIterator = extern struct {
             .joined, .comma_joined => {
                 // joined example: --target=foo
                 // comma_joined example: -Wl,-soname,libsoundio.so.2
-                const prefix_len = clang_arg.matchStartsWith(arg);
+                def prefix_len = clang_arg.matchStartsWith(arg);
                 if (prefix_len != 0) {
                     self.zig_equivalent = clang_arg.zig_equivalent;
                     self.only_arg = arg.ptr + prefix_len; // This will skip over the "--target=" part.
@@ -1431,7 +1431,7 @@ pub const ClangArgIterator = extern struct {
             },
             .joined_or_separate => {
                 // Examples: `-lfoo`, `-l foo`
-                const prefix_len = clang_arg.matchStartsWith(arg);
+                def prefix_len = clang_arg.matchStartsWith(arg);
                 if (prefix_len == arg.len) {
                     if (self.next_index >= self.argv_len) {
                         std.debug.warn("Expected parameter after '{}'\n", .{arg});
@@ -1452,7 +1452,7 @@ pub const ClangArgIterator = extern struct {
             },
             .joined_and_separate => {
                 // Example: `-Xopenmp-target=riscv64-linux-unknown foo`
-                const prefix_len = clang_arg.matchStartsWith(arg);
+                def prefix_len = clang_arg.matchStartsWith(arg);
                 if (prefix_len != 0) {
                     self.only_arg = arg.ptr + prefix_len;
                     if (self.next_index >= self.argv_len) {
@@ -1478,7 +1478,7 @@ pub const ClangArgIterator = extern struct {
                 break :find_clang_arg;
             },
             .remaining_args_joined => {
-                const prefix_len = clang_arg.matchStartsWith(arg);
+                def prefix_len = clang_arg.matchStartsWith(arg);
                 if (prefix_len != 0) {
                     @panic("TODO");
                 }
@@ -1499,7 +1499,7 @@ pub const ClangArgIterator = extern struct {
     }
 
     fn resolveRespFileArgs(self: *ClangArgIterator) void {
-        const allocator = std.heap.c_allocator;
+        def allocator = std.heap.c_allocator;
         if (self.next_index >= self.argv_len) {
             if (self.root_args) |root_args| {
                 self.next_index = root_args.next_index;
@@ -1519,7 +1519,7 @@ pub const ClangArgIterator = extern struct {
 export fn stage2_clang_arg_iterator(
     result: *ClangArgIterator,
     argc: usize,
-    argv: [*]const [*:0]const u8,
+    argv: [*][*:0]u8,
 ) void {
     result.* = ClangArgIterator.init(argv[0..argc]);
 }

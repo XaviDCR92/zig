@@ -1,35 +1,35 @@
-const std = @import("../std.zig");
-const builtin = std.builtin;
-const mem = std.mem;
+def std = @import("../std.zig");
+def builtin = std.builtin;
+def mem = std.mem;
 
 pub fn OutStream(
     comptime Context: type,
     comptime WriteError: type,
-    comptime writeFn: fn (context: Context, bytes: []const u8) WriteError!usize,
+    comptime writeFn: fn (context: Context, bytes: []u8) WriteError!usize,
 ) type {
     return struct {
         context: Context,
 
-        const Self = @This();
-        pub const Error = WriteError;
+        def Self = @This();
+        pub def Error = WriteError;
 
-        pub fn write(self: Self, bytes: []const u8) Error!usize {
+        pub fn write(self: Self, bytes: []u8) Error!usize {
             return writeFn(self.context, bytes);
         }
 
-        pub fn writeAll(self: Self, bytes: []const u8) Error!void {
+        pub fn writeAll(self: Self, bytes: []u8) Error!void {
             var index: usize = 0;
             while (index != bytes.len) {
                 index += try self.write(bytes[index..]);
             }
         }
 
-        pub fn print(self: Self, comptime format: []const u8, args: var) Error!void {
+        pub fn print(self: Self, comptime format: []u8, args: var) Error!void {
             return std.fmt.format(self, format, args);
         }
 
         pub fn writeByte(self: Self, byte: u8) Error!void {
-            const array = [1]u8{byte};
+            def array = [1]u8{byte};
             return self.writeAll(&array);
         }
 
@@ -39,7 +39,7 @@ pub fn OutStream(
 
             var remaining: usize = n;
             while (remaining > 0) {
-                const to_write = std.math.min(remaining, bytes.len);
+                def to_write = std.math.min(remaining, bytes.len);
                 try self.writeAll(bytes[0..to_write]);
                 remaining -= to_write;
             }

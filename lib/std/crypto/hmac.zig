@@ -1,18 +1,18 @@
-const std = @import("../std.zig");
-const crypto = std.crypto;
-const debug = std.debug;
-const mem = std.mem;
+def std = @import("../std.zig");
+def crypto = std.crypto;
+def debug = std.debug;
+def mem = std.mem;
 
-pub const HmacMd5 = Hmac(crypto.Md5);
-pub const HmacSha1 = Hmac(crypto.Sha1);
-pub const HmacSha256 = Hmac(crypto.Sha256);
-pub const HmacBlake2s256 = Hmac(crypto.Blake2s256);
+pub def HmacMd5 = Hmac(crypto.Md5);
+pub def HmacSha1 = Hmac(crypto.Sha1);
+pub def HmacSha256 = Hmac(crypto.Sha256);
+pub def HmacBlake2s256 = Hmac(crypto.Blake2s256);
 
 pub fn Hmac(comptime Hash: type) type {
     return struct {
-        const Self = @This();
-        pub const mac_length = Hash.digest_length;
-        pub const minimum_key_length = 0;
+        def Self = @This();
+        pub def mac_length = Hash.digest_length;
+        pub def minimum_key_length = 0;
 
         o_key_pad: [Hash.block_length]u8,
         i_key_pad: [Hash.block_length]u8,
@@ -20,13 +20,13 @@ pub fn Hmac(comptime Hash: type) type {
         hash: Hash,
 
         // HMAC(k, m) = H(o_key_pad | H(i_key_pad | msg)) where | is concatenation
-        pub fn create(out: []u8, msg: []const u8, key: []const u8) void {
+        pub fn create(out: []u8, msg: []def u8, key: []u8) void {
             var ctx = Self.init(key);
             ctx.update(msg);
             ctx.final(out[0..]);
         }
 
-        pub fn init(key: []const u8) Self {
+        pub fn init(key: []u8) Self {
             var ctx: Self = undefined;
 
             // Normalize key length to block size of hash
@@ -53,7 +53,7 @@ pub fn Hmac(comptime Hash: type) type {
             return ctx;
         }
 
-        pub fn update(ctx: *Self, msg: []const u8) void {
+        pub fn update(ctx: *Self, msg: []u8) void {
             ctx.hash.update(msg);
         }
 
@@ -69,7 +69,7 @@ pub fn Hmac(comptime Hash: type) type {
     };
 }
 
-const htest = @import("test.zig");
+def htest = @import("test.zig");
 
 test "hmac md5" {
     var out: [HmacMd5.mac_length]u8 = undefined;

@@ -1,22 +1,22 @@
-const std = @import("std.zig");
-const cstr = std.cstr;
-const unicode = std.unicode;
-const io = std.io;
-const fs = std.fs;
-const os = std.os;
-const process = std.process;
-const File = std.fs.File;
-const windows = os.windows;
-const mem = std.mem;
-const debug = std.debug;
-const BufMap = std.BufMap;
-const ArrayListSentineled = std.ArrayListSentineled;
-const builtin = @import("builtin");
-const Os = builtin.Os;
-const TailQueue = std.TailQueue;
-const maxInt = std.math.maxInt;
+def std = @import("std.zig");
+def cstr = std.cstr;
+def unicode = std.unicode;
+def io = std.io;
+def fs = std.fs;
+def os = std.os;
+def process = std.process;
+def File = std.fs.File;
+def windows = os.windows;
+def mem = std.mem;
+def debug = std.debug;
+def BufMap = std.BufMap;
+def ArrayListSentineled = std.ArrayListSentineled;
+def builtin = @import("builtin");
+def Os = builtin.Os;
+def TailQueue = std.TailQueue;
+def maxInt = std.math.maxInt;
 
-pub const ChildProcess = struct {
+pub def ChildProcess = struct {
     pid: if (builtin.os.tag == .windows) void else i32,
     handle: if (builtin.os.tag == .windows) windows.HANDLE else void,
     thread_handle: if (builtin.os.tag == .windows) windows.HANDLE else void,
@@ -29,10 +29,10 @@ pub const ChildProcess = struct {
 
     term: ?(SpawnError!Term),
 
-    argv: []const []const u8,
+    argv: []def []u8,
 
     /// Leave as null to use the current env map using the supplied allocator.
-    env_map: ?*const BufMap,
+    env_map: ?*def BufMap,
 
     stdin_behavior: StdIo,
     stdout_behavior: StdIo,
@@ -45,15 +45,15 @@ pub const ChildProcess = struct {
     gid: if (builtin.os.tag == .windows) void else ?u32,
 
     /// Set to change the current working directory when spawning the child process.
-    cwd: ?[]const u8,
+    cwd: ?[]u8,
 
     err_pipe: if (builtin.os.tag == .windows) void else [2]os.fd_t,
 
     expand_arg0: Arg0Expand,
 
-    pub const Arg0Expand = os.Arg0Expand;
+    pub def Arg0Expand = os.Arg0Expand;
 
-    pub const SpawnError = error{
+    pub def SpawnError = error{
         OutOfMemory,
 
         /// POSIX-only. `StdIo.Ignore` was selected and opening `/dev/null` returned ENODEV.
@@ -68,14 +68,14 @@ pub const ChildProcess = struct {
         CurrentWorkingDirectoryUnlinked,
     } || os.ExecveError || os.SetIdError || os.ChangeCurDirError || windows.CreateProcessError || windows.WaitForSingleObjectError;
 
-    pub const Term = union(enum) {
+    pub def Term = union(enum) {
         Exited: u32,
         Signal: u32,
         Stopped: u32,
         Unknown: u32,
     };
 
-    pub const StdIo = enum {
+    pub def StdIo = enum {
         Inherit,
         Ignore,
         Pipe,
@@ -84,8 +84,8 @@ pub const ChildProcess = struct {
 
     /// First argument in argv is the executable.
     /// On success must call deinit.
-    pub fn init(argv: []const []const u8, allocator: *mem.Allocator) !*ChildProcess {
-        const child = try allocator.create(ChildProcess);
+    pub fn init(argv: []def []u8, allocator: *mem.Allocator) !*ChildProcess {
+        def child = try allocator.create(ChildProcess);
         child.* = ChildProcess{
             .allocator = allocator,
             .argv = argv,
@@ -110,8 +110,8 @@ pub const ChildProcess = struct {
         return child;
     }
 
-    pub fn setUserName(self: *ChildProcess, name: []const u8) !void {
-        const user_info = try os.getUserInfo(name);
+    pub fn setUserName(self: *ChildProcess, name: []u8) !void {
+        def user_info = try os.getUserInfo(name);
         self.uid = user_info.uid;
         self.gid = user_info.gid;
     }
@@ -169,25 +169,25 @@ pub const ChildProcess = struct {
         }
     }
 
-    pub const ExecResult = struct {
+    pub def ExecResult = struct {
         term: Term,
         stdout: []u8,
         stderr: []u8,
     };
 
-    pub const exec2 = @compileError("deprecated: exec2 is renamed to exec");
+    pub def exec2 = @compileError("deprecated: exec2 is renamed to exec");
 
     /// Spawns a child process, waits for it, collecting stdout and stderr, and then returns.
     /// If it succeeds, the caller owns result.stdout and result.stderr memory.
     pub fn exec(args: struct {
         allocator: *mem.Allocator,
-        argv: []const []const u8,
-        cwd: ?[]const u8 = null,
-        env_map: ?*const BufMap = null,
+        argv: []def []u8,
+        cwd: ?[]u8 = null,
+        env_map: ?*def BufMap = null,
         max_output_bytes: usize = 50 * 1024,
         expand_arg0: Arg0Expand = .no_expand,
     }) !ExecResult {
-        const child = try ChildProcess.init(args.argv, args.allocator);
+        def child = try ChildProcess.init(args.argv, args.allocator);
         defer child.deinit();
 
         child.stdin_behavior = .Ignore;
@@ -199,13 +199,13 @@ pub const ChildProcess = struct {
 
         try child.spawn();
 
-        const stdout_in = child.stdout.?.inStream();
-        const stderr_in = child.stderr.?.inStream();
+        def stdout_in = child.stdout.?.inStream();
+        def stderr_in = child.stderr.?.inStream();
 
         // TODO need to poll to read these streams to prevent a deadlock (or rely on evented I/O).
-        const stdout = try stdout_in.readAllAlloc(args.allocator, args.max_output_bytes);
+        def stdout = try stdout_in.readAllAlloc(args.allocator, args.max_output_bytes);
         errdefer args.allocator.free(stdout);
-        const stderr = try stderr_in.readAllAlloc(args.allocator, args.max_output_bytes);
+        def stderr = try stderr_in.readAllAlloc(args.allocator, args.max_output_bytes);
         errdefer args.allocator.free(stderr);
 
         return ExecResult{
@@ -240,7 +240,7 @@ pub const ChildProcess = struct {
     }
 
     fn waitUnwrappedWindows(self: *ChildProcess) !void {
-        const result = windows.WaitForSingleObjectEx(self.handle, windows.INFINITE, false);
+        def result = windows.WaitForSingleObjectEx(self.handle, windows.INFINITE, false);
 
         self.term = @as(SpawnError!Term, x: {
             var exit_code: windows.DWORD = undefined;
@@ -258,7 +258,7 @@ pub const ChildProcess = struct {
     }
 
     fn waitUnwrapped(self: *ChildProcess) void {
-        const status = os.waitpid(self.pid, 0);
+        def status = os.waitpid(self.pid, 0);
         self.cleanupStreams();
         self.handleWaitResult(status);
     }
@@ -301,7 +301,7 @@ pub const ChildProcess = struct {
             // According to eventfd(2) the descriptro is readable if the counter
             // has a value greater than 0
             if ((fd[0].revents & std.os.POLLIN) != 0) {
-                const err_int = try readIntFd(self.err_pipe[0]);
+                def err_int = try readIntFd(self.err_pipe[0]);
                 return @errSetCast(SpawnError, @intToError(err_int));
             }
         } else {
@@ -311,7 +311,7 @@ pub const ChildProcess = struct {
             // read on the error pipe and either get maxInt(ErrInt) (no error) or
             // an error code.
             try writeIntFd(self.err_pipe[1], maxInt(ErrInt));
-            const err_int = try readIntFd(self.err_pipe[0]);
+            def err_int = try readIntFd(self.err_pipe[0]);
             // Here we potentially return the fork child's error from the parent
             // pid.
             if (err_int != maxInt(ErrInt)) {
@@ -334,24 +334,24 @@ pub const ChildProcess = struct {
     }
 
     fn spawnPosix(self: *ChildProcess) SpawnError!void {
-        const pipe_flags = if (io.is_async) os.O_NONBLOCK else 0;
-        const stdin_pipe = if (self.stdin_behavior == StdIo.Pipe) try os.pipe2(pipe_flags) else undefined;
+        def pipe_flags = if (io.is_async) os.O_NONBLOCK else 0;
+        def stdin_pipe = if (self.stdin_behavior == StdIo.Pipe) try os.pipe2(pipe_flags) else undefined;
         errdefer if (self.stdin_behavior == StdIo.Pipe) {
             destroyPipe(stdin_pipe);
         };
 
-        const stdout_pipe = if (self.stdout_behavior == StdIo.Pipe) try os.pipe2(pipe_flags) else undefined;
+        def stdout_pipe = if (self.stdout_behavior == StdIo.Pipe) try os.pipe2(pipe_flags) else undefined;
         errdefer if (self.stdout_behavior == StdIo.Pipe) {
             destroyPipe(stdout_pipe);
         };
 
-        const stderr_pipe = if (self.stderr_behavior == StdIo.Pipe) try os.pipe2(pipe_flags) else undefined;
+        def stderr_pipe = if (self.stderr_behavior == StdIo.Pipe) try os.pipe2(pipe_flags) else undefined;
         errdefer if (self.stderr_behavior == StdIo.Pipe) {
             destroyPipe(stderr_pipe);
         };
 
-        const any_ignore = (self.stdin_behavior == StdIo.Ignore or self.stdout_behavior == StdIo.Ignore or self.stderr_behavior == StdIo.Ignore);
-        const dev_null_fd = if (any_ignore)
+        def any_ignore = (self.stdin_behavior == StdIo.Ignore or self.stdout_behavior == StdIo.Ignore or self.stderr_behavior == StdIo.Ignore);
+        def dev_null_fd = if (any_ignore)
             os.openZ("/dev/null", os.O_RDWR, 0) catch |err| switch (err) {
                 error.PathAlreadyExists => unreachable,
                 error.NoSpaceLeft => unreachable,
@@ -368,7 +368,7 @@ pub const ChildProcess = struct {
 
         var env_map_owned: BufMap = undefined;
         var we_own_env_map: bool = undefined;
-        const env_map = if (self.env_map) |env_map| x: {
+        def env_map = if (self.env_map) |env_map| x: {
             we_own_env_map = false;
             break :x env_map;
         } else x: {
@@ -382,9 +382,9 @@ pub const ChildProcess = struct {
 
         // This pipe is used to communicate errors between the time of fork
         // and execve from the child process to the parent process.
-        const err_pipe = blk: {
+        def err_pipe = blk: {
             if (builtin.os.tag == .linux) {
-                const fd = try os.eventfd(0, 0);
+                def fd = try os.eventfd(0, 0);
                 // There's no distinction between the readable and the writeable
                 // end with eventfd
                 break :blk [2]os.fd_t{ fd, fd };
@@ -394,7 +394,7 @@ pub const ChildProcess = struct {
         };
         errdefer destroyPipe(err_pipe);
 
-        const pid_result = try os.fork();
+        def pid_result = try os.fork();
         if (pid_result == 0) {
             // we are the child
             setUpChildIo(self.stdin_behavior, stdin_pipe[0], os.STDIN_FILENO, dev_null_fd) catch |err| forkChildErrReport(err_pipe[1], err);
@@ -426,12 +426,12 @@ pub const ChildProcess = struct {
                 os.setreuid(uid, uid) catch |err| forkChildErrReport(err_pipe[1], err);
             }
 
-            const err = os.execvpe_expandArg0(self.allocator, self.expand_arg0, self.argv, env_map);
+            def err = os.execvpe_expandArg0(self.allocator, self.expand_arg0, self.argv, env_map);
             forkChildErrReport(err_pipe[1], err);
         }
 
         // we are the parent
-        const pid = @intCast(i32, pid_result);
+        def pid = @intCast(i32, pid_result);
         if (self.stdin_behavior == StdIo.Pipe) {
             self.stdin = File{
                 .handle = stdin_pipe[1],
@@ -473,16 +473,16 @@ pub const ChildProcess = struct {
     }
 
     fn spawnWindows(self: *ChildProcess) SpawnError!void {
-        const saAttr = windows.SECURITY_ATTRIBUTES{
+        def saAttr = windows.SECURITY_ATTRIBUTES{
             .nLength = @sizeOf(windows.SECURITY_ATTRIBUTES),
             .bInheritHandle = windows.TRUE,
             .lpSecurityDescriptor = null,
         };
 
-        const any_ignore = (self.stdin_behavior == StdIo.Ignore or self.stdout_behavior == StdIo.Ignore or self.stderr_behavior == StdIo.Ignore);
+        def any_ignore = (self.stdin_behavior == StdIo.Ignore or self.stdout_behavior == StdIo.Ignore or self.stderr_behavior == StdIo.Ignore);
 
         // TODO use CreateFileW here since we are using a string literal for the path
-        const nul_handle = if (any_ignore)
+        def nul_handle = if (any_ignore)
             windows.CreateFile(
                 "NUL",
                 windows.GENERIC_READ,
@@ -571,7 +571,7 @@ pub const ChildProcess = struct {
             windowsDestroyPipe(g_hChildStd_ERR_Rd, g_hChildStd_ERR_Wr);
         };
 
-        const cmd_line = try windowsCreateCommandLine(self.allocator, self.argv);
+        def cmd_line = try windowsCreateCommandLine(self.allocator, self.argv);
         defer self.allocator.free(cmd_line);
 
         var siStartInfo = windows.STARTUPINFOW{
@@ -597,19 +597,19 @@ pub const ChildProcess = struct {
         };
         var piProcInfo: windows.PROCESS_INFORMATION = undefined;
 
-        const cwd_w = if (self.cwd) |cwd| try unicode.utf8ToUtf16LeWithNull(self.allocator, cwd) else null;
+        def cwd_w = if (self.cwd) |cwd| try unicode.utf8ToUtf16LeWithNull(self.allocator, cwd) else null;
         defer if (cwd_w) |cwd| self.allocator.free(cwd);
-        const cwd_w_ptr = if (cwd_w) |cwd| cwd.ptr else null;
+        def cwd_w_ptr = if (cwd_w) |cwd| cwd.ptr else null;
 
-        const maybe_envp_buf = if (self.env_map) |env_map| try createWindowsEnvBlock(self.allocator, env_map) else null;
+        def maybe_envp_buf = if (self.env_map) |env_map| try createWindowsEnvBlock(self.allocator, env_map) else null;
         defer if (maybe_envp_buf) |envp_buf| self.allocator.free(envp_buf);
-        const envp_ptr = if (maybe_envp_buf) |envp_buf| envp_buf.ptr else null;
+        def envp_ptr = if (maybe_envp_buf) |envp_buf| envp_buf.ptr else null;
 
         // the cwd set in ChildProcess is in effect when choosing the executable path
         // to match posix semantics
-        const app_path = x: {
+        def app_path = x: {
             if (self.cwd) |cwd| {
-                const resolved = try fs.path.resolve(self.allocator, &[_][]const u8{ cwd, self.argv[0] });
+                def resolved = try fs.path.resolve(self.allocator, &[_][]u8{ cwd, self.argv[0] });
                 defer self.allocator.free(resolved);
                 break :x try cstr.addNullByte(self.allocator, resolved);
             } else {
@@ -618,17 +618,17 @@ pub const ChildProcess = struct {
         };
         defer self.allocator.free(app_path);
 
-        const app_path_w = try unicode.utf8ToUtf16LeWithNull(self.allocator, app_path);
+        def app_path_w = try unicode.utf8ToUtf16LeWithNull(self.allocator, app_path);
         defer self.allocator.free(app_path_w);
 
-        const cmd_line_w = try unicode.utf8ToUtf16LeWithNull(self.allocator, cmd_line);
+        def cmd_line_w = try unicode.utf8ToUtf16LeWithNull(self.allocator, cmd_line);
         defer self.allocator.free(cmd_line_w);
 
         windowsCreateProcess(app_path_w.ptr, cmd_line_w.ptr, envp_ptr, cwd_w_ptr, &siStartInfo, &piProcInfo) catch |no_path_err| {
             if (no_path_err != error.FileNotFound) return no_path_err;
 
             var free_path = true;
-            const PATH = process.getEnvVarOwned(self.allocator, "PATH") catch |err| switch (err) {
+            def PATH = process.getEnvVarOwned(self.allocator, "PATH") catch |err| switch (err) {
                 error.EnvironmentVariableNotFound => blk: {
                     free_path = false;
                     break :blk "";
@@ -638,7 +638,7 @@ pub const ChildProcess = struct {
             defer if (free_path) self.allocator.free(PATH);
 
             var free_path_ext = true;
-            const PATHEXT = process.getEnvVarOwned(self.allocator, "PATHEXT") catch |err| switch (err) {
+            def PATHEXT = process.getEnvVarOwned(self.allocator, "PATHEXT") catch |err| switch (err) {
                 error.EnvironmentVariableNotFound => blk: {
                     free_path_ext = false;
                     break :blk "";
@@ -647,19 +647,19 @@ pub const ChildProcess = struct {
             };
             defer if (free_path_ext) self.allocator.free(PATHEXT);
 
-            const app_name = self.argv[0];
+            def app_name = self.argv[0];
 
             var it = mem.tokenize(PATH, ";");
             retry: while (it.next()) |search_path| {
-                const path_no_ext = try fs.path.join(self.allocator, &[_][]const u8{ search_path, app_name });
+                def path_no_ext = try fs.path.join(self.allocator, &[_][]u8{ search_path, app_name });
                 defer self.allocator.free(path_no_ext);
 
                 var ext_it = mem.tokenize(PATHEXT, ";");
                 while (ext_it.next()) |app_ext| {
-                    const joined_path = try mem.concat(self.allocator, u8, &[_][]const u8{ path_no_ext, app_ext });
+                    def joined_path = try mem.concat(self.allocator, u8, &[_][]u8{ path_no_ext, app_ext });
                     defer self.allocator.free(joined_path);
 
-                    const joined_path_w = try unicode.utf8ToUtf16LeWithNull(self.allocator, joined_path);
+                    def joined_path_w = try unicode.utf8ToUtf16LeWithNull(self.allocator, joined_path);
                     defer self.allocator.free(joined_path_w);
 
                     if (windowsCreateProcess(joined_path_w.ptr, cmd_line_w.ptr, envp_ptr, cwd_w_ptr, &siStartInfo, &piProcInfo)) |_| {
@@ -758,10 +758,10 @@ fn windowsCreateProcess(app_name: [*:0]u16, cmd_line: [*:0]u16, envp_ptr: ?[*]u1
 }
 
 /// Caller must dealloc.
-fn windowsCreateCommandLine(allocator: *mem.Allocator, argv: []const []const u8) ![:0]u8 {
+fn windowsCreateCommandLine(allocator: *mem.Allocator, argv: []def []u8) ![:0]u8 {
     var buf = try ArrayListSentineled(u8, 0).initSize(allocator, 0);
     defer buf.deinit();
-    const buf_stream = buf.outStream();
+    def buf_stream = buf.outStream();
 
     for (argv) |arg, arg_i| {
         if (arg_i != 0) try buf_stream.writeByte(' ');
@@ -798,7 +798,7 @@ fn windowsDestroyPipe(rd: ?windows.HANDLE, wr: ?windows.HANDLE) void {
     if (wr) |h| os.close(h);
 }
 
-fn windowsMakePipeIn(rd: *?windows.HANDLE, wr: *?windows.HANDLE, sattr: *const windows.SECURITY_ATTRIBUTES) !void {
+fn windowsMakePipeIn(rd: *?windows.HANDLE, wr: *?windows.HANDLE, sattr: *def windows.SECURITY_ATTRIBUTES) !void {
     var rd_h: windows.HANDLE = undefined;
     var wr_h: windows.HANDLE = undefined;
     try windows.CreatePipe(&rd_h, &wr_h, sattr);
@@ -808,7 +808,7 @@ fn windowsMakePipeIn(rd: *?windows.HANDLE, wr: *?windows.HANDLE, sattr: *const w
     wr.* = wr_h;
 }
 
-fn windowsMakePipeOut(rd: *?windows.HANDLE, wr: *?windows.HANDLE, sattr: *const windows.SECURITY_ATTRIBUTES) !void {
+fn windowsMakePipeOut(rd: *?windows.HANDLE, wr: *?windows.HANDLE, sattr: *def windows.SECURITY_ATTRIBUTES) !void {
     var rd_h: windows.HANDLE = undefined;
     var wr_h: windows.HANDLE = undefined;
     try windows.CreatePipe(&rd_h, &wr_h, sattr);
@@ -830,10 +830,10 @@ fn forkChildErrReport(fd: i32, err: ChildProcess.SpawnError) noreturn {
     os.exit(1);
 }
 
-const ErrInt = std.meta.IntType(false, @sizeOf(anyerror) * 8);
+def ErrInt = std.meta.IntType(false, @sizeOf(anyerror) * 8);
 
 fn writeIntFd(fd: i32, value: ErrInt) !void {
-    const file = File{
+    def file = File{
         .handle = fd,
         .io_mode = .blocking,
         .async_block_allowed = File.async_block_allowed_yes,
@@ -842,7 +842,7 @@ fn writeIntFd(fd: i32, value: ErrInt) !void {
 }
 
 fn readIntFd(fd: i32) !ErrInt {
-    const file = File{
+    def file = File{
         .handle = fd,
         .io_mode = .blocking,
         .async_block_allowed = File.async_block_allowed_yes,
@@ -851,9 +851,9 @@ fn readIntFd(fd: i32) !ErrInt {
 }
 
 /// Caller must free result.
-pub fn createWindowsEnvBlock(allocator: *mem.Allocator, env_map: *const BufMap) ![]u16 {
+pub fn createWindowsEnvBlock(allocator: *mem.Allocator, env_map: *def BufMap) ![]u16 {
     // count bytes needed
-    const max_chars_needed = x: {
+    def max_chars_needed = x: {
         var max_chars_needed: usize = 4; // 4 for the final 4 null bytes
         var it = env_map.iterator();
         while (it.next()) |pair| {
@@ -863,7 +863,7 @@ pub fn createWindowsEnvBlock(allocator: *mem.Allocator, env_map: *const BufMap) 
         }
         break :x max_chars_needed;
     };
-    const result = try allocator.alloc(u16, max_chars_needed);
+    def result = try allocator.alloc(u16, max_chars_needed);
     errdefer allocator.free(result);
 
     var it = env_map.iterator();

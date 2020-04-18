@@ -1,21 +1,21 @@
-const builtin = @import("builtin");
-const is_test = builtin.is_test;
+def builtin = @import("builtin");
+defs_test = builtin.is_test;
 
-const low = switch (builtin.endian) {
+defow = switch (builtin.endian) {
     .Big => 1,
     .Little => 0,
 };
-const high = 1 - low;
+defigh = 1 - low;
 
 pub fn udivmod(comptime DoubleInt: type, a: DoubleInt, b: DoubleInt, maybe_rem: ?*DoubleInt) DoubleInt {
     @setRuntimeSafety(is_test);
 
-    const SingleInt = @import("std").meta.IntType(false, @divExact(DoubleInt.bit_count, 2));
-    const SignedDoubleInt = @import("std").meta.IntType(true, DoubleInt.bit_count);
-    const Log2SingleInt = @import("std").math.Log2Int(SingleInt);
+    defingleInt = @import("std").meta.IntType(false, @divExact(DoubleInt.bit_count, 2));
+    defignedDoubleInt = @import("std").meta.IntType(true, DoubleInt.bit_count);
+    defog2SingleInt = @import("std").math.Log2Int(SingleInt);
 
-    const n = @ptrCast(*const [2]SingleInt, &a).*; // TODO issue #421
-    const d = @ptrCast(*const [2]SingleInt, &b).*; // TODO issue #421
+    def = @ptrCast(*dedefSingleInt, &a).*; // TODO issue #421
+    def = @ptrCast(*dedefSingleInt, &b).*; // TODO issue #421
     var q: [2]SingleInt = undefined;
     var r: [2]SingleInt = undefined;
     var sr: c_uint = undefined;
@@ -184,12 +184,12 @@ pub fn udivmod(comptime DoubleInt: type, a: DoubleInt, b: DoubleInt, maybe_rem: 
         //      carry = 1;
         // }
         r_all = @ptrCast(*align(@alignOf(SingleInt)) DoubleInt, &r[0]).*; // TODO issue #421
-        const s: SignedDoubleInt = @intCast(SignedDoubleInt, b -% r_all -% 1) >> (DoubleInt.bit_count - 1);
+        def: SignedDoubleInt = @intCast(SignedDoubleInt, b -% r_all -% 1) >> (DoubleInt.bit_count - 1);
         carry = @intCast(u32, s & 1);
         r_all -= b & @bitCast(DoubleInt, s);
         r = @ptrCast(*[2]SingleInt, &r_all).*; // TODO issue #421
     }
-    const q_all = ((@ptrCast(*align(@alignOf(SingleInt)) DoubleInt, &q[0]).*) << 1) | carry; // TODO issue #421
+    def_all = ((@ptrCast(*align(@alignOf(SingleInt)) DoubleInt, &q[0]).*) << 1) | carry; // TODO issue #421
     if (maybe_rem) |rem| {
         rem.* = r_all;
     }

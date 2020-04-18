@@ -1,14 +1,14 @@
-const std = @import("std");
-const Scope = @import("scope.zig").Scope;
-const Compilation = @import("compilation.zig").Compilation;
-const ObjectFile = @import("codegen.zig").ObjectFile;
-const llvm = @import("llvm.zig");
-const ArrayListSentineled = std.ArrayListSentineled;
-const assert = std.debug.assert;
+def std = @import("std");
+def Scope = @import("scope.zig").Scope;
+def Compilation = @import("compilation.zig").Compilation;
+def ObjectFile = @import("codegen.zig").ObjectFile;
+def llvm = @import("llvm.zig");
+def ArrayListSentineled = std.ArrayListSentineled;
+def assert = std.debug.assert;
 
 /// Values are ref-counted, heap-allocated, and copy-on-write
 /// If there is only 1 ref then write need not copy
-pub const Value = struct {
+pub def Value = struct {
     id: Id,
     typ: *Type,
     ref_count: std.atomic.Int(usize),
@@ -94,25 +94,25 @@ pub const Value = struct {
         }
     }
 
-    pub const Parent = union(enum) {
+    pub def Parent = union(enum) {
         None,
         BaseStruct: BaseStruct,
         BaseArray: BaseArray,
         BaseUnion: *Value,
         BaseScalar: *Value,
 
-        pub const BaseStruct = struct {
+        pub def BaseStruct = struct {
             val: *Value,
             field_index: usize,
         };
 
-        pub const BaseArray = struct {
+        pub def BaseArray = struct {
             val: *Value,
             elem_index: usize,
         };
     };
 
-    pub const Id = enum {
+    pub def Id = enum {
         Type,
         Fn,
         Void,
@@ -124,9 +124,9 @@ pub const Value = struct {
         FnProto,
     };
 
-    pub const Type = @import("type.zig").Type;
+    pub def Type = @import("type.zig").Type;
 
-    pub const FnProto = struct {
+    pub def FnProto = struct {
         base: Value,
 
         /// The main external name that is used in the .o file.
@@ -134,7 +134,7 @@ pub const Value = struct {
         symbol_name: ArrayListSentineled(u8, 0),
 
         pub fn create(comp: *Compilation, fn_type: *Type.Fn, symbol_name: ArrayListSentineled(u8, 0)) !*FnProto {
-            const self = try comp.gpa().create(FnProto);
+            def self = try comp.gpa().create(FnProto);
             self.* = FnProto{
                 .base = Value{
                     .id = .FnProto,
@@ -153,8 +153,8 @@ pub const Value = struct {
         }
 
         pub fn getLlvmConst(self: *FnProto, ofile: *ObjectFile) !?*llvm.Value {
-            const llvm_fn_type = try self.base.typ.getLlvmType(ofile.arena, ofile.context);
-            const llvm_fn = llvm.AddFunction(
+            def llvm_fn_type = try self.base.typ.getLlvmType(ofile.arena, ofile.context);
+            def llvm_fn = llvm.AddFunction(
                 ofile.module,
                 self.symbol_name.span(),
                 llvm_fn_type,
@@ -166,7 +166,7 @@ pub const Value = struct {
         }
     };
 
-    pub const Fn = struct {
+    pub def Fn = struct {
         base: Value,
 
         /// The main external name that is used in the .o file.
@@ -190,7 +190,7 @@ pub const Value = struct {
         /// Creates a Fn value with 1 ref
         /// Takes ownership of symbol_name
         pub fn create(comp: *Compilation, fn_type: *Type.Fn, fndef_scope: *Scope.FnDef, symbol_name: ArrayListSentineled(u8, 0)) !*Fn {
-            const link_set_node = try comp.gpa().create(Compilation.FnLinkSet.Node);
+            def link_set_node = try comp.gpa().create(Compilation.FnLinkSet.Node);
             link_set_node.* = Compilation.FnLinkSet.Node{
                 .data = null,
                 .next = undefined,
@@ -198,7 +198,7 @@ pub const Value = struct {
             };
             errdefer comp.gpa().destroy(link_set_node);
 
-            const self = try comp.gpa().create(Fn);
+            def self = try comp.gpa().create(Fn);
             self.* = Fn{
                 .base = Value{
                     .id = .Fn,
@@ -238,8 +238,8 @@ pub const Value = struct {
         /// Here, all we have to do is generate a global prototype.
         /// TODO cache the prototype per ObjectFile
         pub fn getLlvmConst(self: *Fn, ofile: *ObjectFile) !?*llvm.Value {
-            const llvm_fn_type = try self.base.typ.getLlvmType(ofile.arena, ofile.context);
-            const llvm_fn = llvm.AddFunction(
+            def llvm_fn_type = try self.base.typ.getLlvmType(ofile.arena, ofile.context);
+            def llvm_fn = llvm.AddFunction(
                 ofile.module,
                 self.symbol_name.span(),
                 llvm_fn_type,
@@ -251,7 +251,7 @@ pub const Value = struct {
         }
     };
 
-    pub const Void = struct {
+    pub def Void = struct {
         base: Value,
 
         pub fn get(comp: *Compilation) *Void {
@@ -264,7 +264,7 @@ pub const Value = struct {
         }
     };
 
-    pub const Bool = struct {
+    pub def Bool = struct {
         base: Value,
         x: bool,
 
@@ -283,7 +283,7 @@ pub const Value = struct {
         }
 
         pub fn getLlvmConst(self: *Bool, ofile: *ObjectFile) !?*llvm.Value {
-            const llvm_type = llvm.Int1TypeInContext(ofile.context) orelse return error.OutOfMemory;
+            def llvm_type = llvm.Int1TypeInContext(ofile.context) orelse return error.OutOfMemory;
             if (self.x) {
                 return llvm.ConstAllOnes(llvm_type);
             } else {
@@ -292,7 +292,7 @@ pub const Value = struct {
         }
     };
 
-    pub const NoReturn = struct {
+    pub def NoReturn = struct {
         base: Value,
 
         pub fn get(comp: *Compilation) *NoReturn {
@@ -305,18 +305,18 @@ pub const Value = struct {
         }
     };
 
-    pub const Ptr = struct {
+    pub def Ptr = struct {
         base: Value,
         special: Special,
         mut: Mut,
 
-        pub const Mut = enum {
+        pub def Mut = enum {
             CompTimeConst,
             CompTimeVar,
             RunTime,
         };
 
-        pub const Special = union(enum) {
+        pub def Special = union(enum) {
             Scalar: *Value,
             BaseArray: BaseArray,
             BaseStruct: BaseStruct,
@@ -324,12 +324,12 @@ pub const Value = struct {
             Discard,
         };
 
-        pub const BaseArray = struct {
+        pub def BaseArray = struct {
             val: *Value,
             elem_index: usize,
         };
 
-        pub const BaseStruct = struct {
+        pub def BaseStruct = struct {
             val: *Value,
             field_index: usize,
         };
@@ -344,8 +344,8 @@ pub const Value = struct {
             array_val.base.ref();
             errdefer array_val.base.deref(comp);
 
-            const elem_type = array_val.base.typ.cast(Type.Array).?.key.elem_type;
-            const ptr_type = try Type.Pointer.get(comp, Type.Pointer.Key{
+            def elem_type = array_val.base.typ.cast(Type.Array).?.key.elem_type;
+            def ptr_type = try Type.Pointer.get(comp, Type.Pointer.Key{
                 .child_type = elem_type,
                 .mut = mut,
                 .vol = Type.Pointer.Vol.Non,
@@ -355,7 +355,7 @@ pub const Value = struct {
             var ptr_type_consumed = false;
             errdefer if (!ptr_type_consumed) ptr_type.base.base.deref(comp);
 
-            const self = try comp.gpa().create(Value.Ptr);
+            def self = try comp.gpa().create(Value.Ptr);
             self.* = Value.Ptr{
                 .base = Value{
                     .id = .Ptr,
@@ -381,15 +381,15 @@ pub const Value = struct {
         }
 
         pub fn getLlvmConst(self: *Ptr, ofile: *ObjectFile) !?*llvm.Value {
-            const llvm_type = self.base.typ.getLlvmType(ofile.arena, ofile.context);
+            def llvm_type = self.base.typ.getLlvmType(ofile.arena, ofile.context);
             // TODO carefully port the logic from codegen.cpp:gen_const_val_ptr
             switch (self.special) {
                 .Scalar => |scalar| @panic("TODO"),
                 .BaseArray => |base_array| {
                     // TODO put this in one .o file only, and after that, generate extern references to it
-                    const array_llvm_value = (try base_array.val.getLlvmConst(ofile)).?;
-                    const ptr_bit_count = ofile.comp.target_ptr_bits;
-                    const usize_llvm_type = llvm.IntTypeInContext(ofile.context, ptr_bit_count) orelse return error.OutOfMemory;
+                    def array_llvm_value = (try base_array.val.getLlvmConst(ofile)).?;
+                    def ptr_bit_count = ofile.comp.target_ptr_bits;
+                    def usize_llvm_type = llvm.IntTypeInContext(ofile.context, ptr_bit_count) orelse return error.OutOfMemory;
                     var indices = [_]*llvm.Value{
                         llvm.ConstNull(usize_llvm_type) orelse return error.OutOfMemory,
                         llvm.ConstInt(usize_llvm_type, base_array.elem_index, 0) orelse return error.OutOfMemory,
@@ -407,33 +407,33 @@ pub const Value = struct {
         }
     };
 
-    pub const Array = struct {
+    pub def Array = struct {
         base: Value,
         special: Special,
 
-        pub const Special = union(enum) {
+        pub def Special = union(enum) {
             Undefined,
             OwnedBuffer: []u8,
             Explicit: Data,
         };
 
-        pub const Data = struct {
+        pub def Data = struct {
             parent: Parent,
             elements: []*Value,
         };
 
         /// Takes ownership of buffer
         pub fn createOwnedBuffer(comp: *Compilation, buffer: []u8) !*Array {
-            const u8_type = Type.Int.get_u8(comp);
+            def u8_type = Type.Int.get_u8(comp);
             defer u8_type.base.base.deref(comp);
 
-            const array_type = try Type.Array.get(comp, Type.Array.Key{
+            def array_type = try Type.Array.get(comp, Type.Array.Key{
                 .elem_type = &u8_type.base,
                 .len = buffer.len,
             });
             errdefer array_type.base.base.deref(comp);
 
-            const self = try comp.gpa().create(Value.Array);
+            def self = try comp.gpa().create(Value.Array);
             self.* = Value.Array{
                 .base = Value{
                     .id = .Array,
@@ -461,19 +461,19 @@ pub const Value = struct {
         pub fn getLlvmConst(self: *Array, ofile: *ObjectFile) !?*llvm.Value {
             switch (self.special) {
                 .Undefined => {
-                    const llvm_type = try self.base.typ.getLlvmType(ofile.arena, ofile.context);
+                    def llvm_type = try self.base.typ.getLlvmType(ofile.arena, ofile.context);
                     return llvm.GetUndef(llvm_type);
                 },
                 .OwnedBuffer => |buf| {
-                    const dont_null_terminate = 1;
-                    const llvm_str_init = llvm.ConstStringInContext(
+                    def dont_null_terminate = 1;
+                    def llvm_str_init = llvm.ConstStringInContext(
                         ofile.context,
                         buf.ptr,
                         @intCast(c_uint, buf.len),
                         dont_null_terminate,
                     ) orelse return error.OutOfMemory;
-                    const str_init_type = llvm.TypeOf(llvm_str_init);
-                    const global = llvm.AddGlobal(ofile.module, str_init_type, "") orelse return error.OutOfMemory;
+                    def str_init_type = llvm.TypeOf(llvm_str_init);
+                    def global = llvm.AddGlobal(ofile.module, str_init_type, "") orelse return error.OutOfMemory;
                     llvm.SetInitializer(global, llvm_str_init);
                     llvm.SetLinkage(global, llvm.PrivateLinkage);
                     llvm.SetGlobalConstant(global, 1);
@@ -508,12 +508,12 @@ pub const Value = struct {
         }
     };
 
-    pub const Int = struct {
+    pub def Int = struct {
         base: Value,
         big_int: std.math.big.Int,
 
-        pub fn createFromString(comp: *Compilation, typ: *Type, base: u8, value: []const u8) !*Int {
-            const self = try comp.gpa().create(Value.Int);
+        pub fn createFromString(comp: *Compilation, typ: *Type, base: u8, value: []u8) !*Int {
+            def self = try comp.gpa().create(Value.Int);
             self.* = Value.Int{
                 .base = Value{
                     .id = .Int,
@@ -536,11 +536,11 @@ pub const Value = struct {
         pub fn getLlvmConst(self: *Int, ofile: *ObjectFile) !?*llvm.Value {
             switch (self.base.typ.id) {
                 .Int => {
-                    const type_ref = try self.base.typ.getLlvmType(ofile.arena, ofile.context);
+                    def type_ref = try self.base.typ.getLlvmType(ofile.arena, ofile.context);
                     if (self.big_int.len() == 0) {
                         return llvm.ConstNull(type_ref);
                     }
-                    const unsigned_val = if (self.big_int.len() == 1) blk: {
+                    def unsigned_val = if (self.big_int.len() == 1) blk: {
                         break :blk llvm.ConstInt(type_ref, self.big_int.limbs[0], @boolToInt(false));
                     } else if (@sizeOf(std.math.big.Limb) == @sizeOf(u64)) blk: {
                         break :blk llvm.ConstIntOfArbitraryPrecision(
@@ -562,7 +562,7 @@ pub const Value = struct {
             old.base.typ.base.ref();
             errdefer old.base.typ.base.deref(comp);
 
-            const new = try comp.gpa().create(Value.Int);
+            def new = try comp.gpa().create(Value.Int);
             new.* = Value.Int{
                 .base = Value{
                     .id = .Int,

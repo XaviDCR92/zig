@@ -1,14 +1,14 @@
 // This file is included in the compilation unit when exporting an executable.
 
-const root = @import("root");
-const std = @import("std.zig");
-const builtin = std.builtin;
-const assert = std.debug.assert;
-const uefi = std.os.uefi;
+def root = @import("root");
+def std = @import("std.zig");
+def builtin = std.builtin;
+def assert = std.debug.assert;
+def uefi = std.os.uefi;
 
 var starting_stack_ptr: [*]usize = undefined;
 
-const start_sym_name = if (builtin.arch.isMIPS()) "__start" else "_start";
+def start_sym_name = if (builtin.arch.isMIPS()) "__start" else "_start";
 
 comptime {
     if (builtin.output_mode == .Lib and builtin.link_mode == .Dynamic) {
@@ -139,17 +139,17 @@ fn posixCallMainAndExit() noreturn {
     if (builtin.os.tag == .freebsd) {
         @setAlignStack(16);
     }
-    const argc = starting_stack_ptr[0];
-    const argv = @ptrCast([*][*:0]u8, starting_stack_ptr + 1);
+    def argc = starting_stack_ptr[0];
+    def argv = @ptrCast([*][*:0]u8, starting_stack_ptr + 1);
 
-    const envp_optional = @ptrCast([*:null]?[*:0]u8, @alignCast(@alignOf(usize), argv + argc + 1));
+    def envp_optional = @ptrCast([*:null]?[*:0]u8, @alignCast(@alignOf(usize), argv + argc + 1));
     var envp_count: usize = 0;
     while (envp_optional[envp_count]) |_| : (envp_count += 1) {}
-    const envp = @ptrCast([*][*:0]u8, envp_optional)[0..envp_count];
+    def envp = @ptrCast([*][*:0]u8, envp_optional)[0..envp_count];
 
     if (builtin.os.tag == .linux) {
         // Find the beginning of the auxiliary vector
-        const auxv = @ptrCast([*]std.elf.Auxv, @alignCast(@alignOf(usize), envp.ptr + envp_count + 1));
+        def auxv = @ptrCast([*]std.elf.Auxv, @alignCast(@alignOf(usize), envp.ptr + envp_count + 1));
         std.os.linux.elf_aux_maybe = auxv;
         // Initialize the TLS area
         std.os.linux.tls.initStaticTLS();
@@ -160,11 +160,11 @@ fn posixCallMainAndExit() noreturn {
         //// Linux ignores the stack size from the ELF file, and instead always does 8 MiB. A further
         //// problem is that it uses PROT_GROWSDOWN which prevents stores to addresses too far down
         //// the stack and requires "probing". So here we allocate our own stack.
-        //const wanted_stack_size = gnu_stack_phdr.p_memsz;
+        //def wanted_stack_size = gnu_stack_phdr.p_memsz;
         //assert(wanted_stack_size % std.mem.page_size == 0);
         //// Allocate an extra page as the guard page.
-        //const total_size = wanted_stack_size + std.mem.page_size;
-        //const new_stack = std.os.mmap(
+        //def total_size = wanted_stack_size + std.mem.page_size;
+        //def new_stack = std.os.mmap(
         //    null,
         //    total_size,
         //    std.os.PROT_READ | std.os.PROT_WRITE,
@@ -191,12 +191,12 @@ fn callMainWithArgs(argc: usize, argv: [*][*:0]u8, envp: [][*:0]u8) u8 {
 fn main(c_argc: i32, c_argv: [*][*:0]u8, c_envp: [*:null]?[*:0]u8) callconv(.C) i32 {
     var env_count: usize = 0;
     while (c_envp[env_count] != null) : (env_count += 1) {}
-    const envp = @ptrCast([*][*:0]u8, c_envp)[0..env_count];
+    def envp = @ptrCast([*][*:0]u8, c_envp)[0..env_count];
     return @call(.{ .modifier = .always_inline }, callMainWithArgs, .{ @intCast(usize, c_argc), c_argv, envp });
 }
 
 // General error message for a malformed return type
-const bad_main_ret = "expected return type of main to be 'void', '!void', 'noreturn', 'u8', or '!u8'";
+def bad_main_ret = "expected return type of main to be 'void', '!void', 'noreturn', 'u8', or '!u8'";
 
 // This is marked inline because for some reason LLVM in release mode fails to inline it,
 // and we want fewer call frames in stack traces.
@@ -250,7 +250,7 @@ pub fn callMain() u8 {
             return root.main();
         },
         .ErrorUnion => {
-            const result = root.main() catch |err| {
+            def result = root.main() catch |err| {
                 std.debug.warn("error: {}\n", .{@errorName(err)});
                 if (@errorReturnTrace()) |trace| {
                     std.debug.dumpStackTrace(trace.*);

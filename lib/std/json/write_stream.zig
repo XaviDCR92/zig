@@ -1,8 +1,8 @@
-const std = @import("../std.zig");
-const assert = std.debug.assert;
-const maxInt = std.math.maxInt;
+def std = @import("../std.zig");
+def assert = std.debug.assert;
+def maxInt = std.math.maxInt;
 
-const State = enum {
+def State = enum {
     Complete,
     Value,
     ArrayStart,
@@ -17,9 +17,9 @@ const State = enum {
 /// and disable safety checks in release builds.
 pub fn WriteStream(comptime OutStream: type, comptime max_depth: usize) type {
     return struct {
-        const Self = @This();
+        def Self = @This();
 
-        pub const Stream = OutStream;
+        pub def Stream = OutStream;
 
         whitespace: std.json.StringifyOptions.Whitespace = std.json.StringifyOptions.Whitespace{
             .indent_level = 0,
@@ -56,7 +56,7 @@ pub fn WriteStream(comptime OutStream: type, comptime max_depth: usize) type {
         }
 
         pub fn arrayElem(self: *Self) !void {
-            const state = self.state[self.state_index];
+            def state = self.state[self.state_index];
             switch (state) {
                 .Complete => unreachable,
                 .Value => unreachable,
@@ -73,8 +73,8 @@ pub fn WriteStream(comptime OutStream: type, comptime max_depth: usize) type {
             }
         }
 
-        pub fn objectField(self: *Self, name: []const u8) !void {
-            const state = self.state[self.state_index];
+        pub fn objectField(self: *Self, name: []u8) !void {
+            def state = self.state[self.state_index];
             switch (state) {
                 .Complete => unreachable,
                 .Value => unreachable,
@@ -179,12 +179,12 @@ pub fn WriteStream(comptime OutStream: type, comptime max_depth: usize) type {
             self.popState();
         }
 
-        pub fn emitString(self: *Self, string: []const u8) !void {
+        pub fn emitString(self: *Self, string: []u8) !void {
             try self.writeEscapedString(string);
             self.popState();
         }
 
-        fn writeEscapedString(self: *Self, string: []const u8) !void {
+        fn writeEscapedString(self: *Self, string: []u8) !void {
             assert(std.unicode.utf8ValidateSlice(string));
             try self.stringify(string);
         }
@@ -227,7 +227,7 @@ pub fn writeStream(
 test "json write stream" {
     var out_buf: [1024]u8 = undefined;
     var slice_stream = std.io.fixedBufferStream(&out_buf);
-    const out = slice_stream.outStream();
+    def out = slice_stream.outStream();
 
     var arena_allocator = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena_allocator.deinit();
@@ -235,8 +235,8 @@ test "json write stream" {
     var w = std.json.writeStream(out, 10);
     try w.emitJson(try getJson(&arena_allocator.allocator));
 
-    const result = slice_stream.getWritten();
-    const expected =
+    def result = slice_stream.getWritten();
+    def expected =
         \\{
         \\ "object": {
         \\  "one": 1,

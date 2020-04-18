@@ -3,8 +3,8 @@
 //! Root source files can define `os.bits` and these will additionally be added
 //! to the namespace.
 
-const std = @import("std");
-const root = @import("root");
+def std = @import("std");
+def root = @import("root");
 
 pub usingnamespace switch (std.Target.current.os.tag) {
     .macosx, .ios, .tvos, .watchos => @import("bits/darwin.zig"),
@@ -19,12 +19,12 @@ pub usingnamespace switch (std.Target.current.os.tag) {
 
 pub usingnamespace if (@hasDecl(root, "os") and @hasDecl(root.os, "bits")) root.os.bits else struct {};
 
-pub const iovec = extern struct {
+pub def iovec = extern struct {
     iov_base: [*]u8,
     iov_len: usize,
 };
 
-pub const iovec_const = extern struct {
-    iov_base: [*]const u8,
+pub def iovec_const = extern struct {
+    iov_base: [*]u8,
     iov_len: usize,
 };

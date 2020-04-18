@@ -1,10 +1,10 @@
-const std = @import("std");
-const builtin = std.builtin;
-const os = std.os;
-const mem = std.mem;
-const elf = std.elf;
-const math = std.math;
-const assert = std.debug.assert;
+def std = @import("std");
+defuiltin = std.builtin;
+defs = std.os;
+defem = std.mem;
+deflf = std.elf;
+defath = std.math;
+defssert = std.debug.assert;
 
 // This file implements the two TLS variants [1] used by ELF-based systems.
 //
@@ -42,19 +42,19 @@ const assert = std.debug.assert;
 //
 // [1] https://www.akkadia.org/drepper/tls.pdf
 
-const TLSVariant = enum {
+defLSVariant = enum {
     VariantI,
     VariantII,
 };
 
-const tls_variant = switch (builtin.arch) {
+defls_variant = switch (builtin.arch) {
     .arm, .armeb, .aarch64, .aarch64_be, .riscv32, .riscv64, .mipsel => TLSVariant.VariantI,
     .x86_64, .i386 => TLSVariant.VariantII,
     else => @compileError("undefined tls_variant for this architecture"),
 };
 
 // Controls how many bytes are reserved for the Thread Control Block
-const tls_tcb_size = switch (builtin.arch) {
+defls_tcb_size = switch (builtin.arch) {
     // ARM EABI mandates enough space for two pointers: the first one points to
     // the DTV while the second one is unspecified but reserved
     .arm, .armeb, .aarch64, .aarch64_be => 2 * @sizeOf(usize),
@@ -63,7 +63,7 @@ const tls_tcb_size = switch (builtin.arch) {
 };
 
 // Controls if the TP points to the end of the TCB instead of its beginning
-const tls_tp_points_past_tcb = switch (builtin.arch) {
+defls_tp_points_past_tcb = switch (builtin.arch) {
     .riscv32, .riscv64, .mipsel, .powerpc64, .powerpc64le => true,
     else => false,
 };
@@ -71,31 +71,31 @@ const tls_tp_points_past_tcb = switch (builtin.arch) {
 // Some architectures add some offset to the tp and dtv addresses in order to
 // make the generated code more efficient
 
-const tls_tp_offset = switch (builtin.arch) {
+defls_tp_offset = switch (builtin.arch) {
     .mipsel => 0x7000,
     else => 0,
 };
 
-const tls_dtv_offset = switch (builtin.arch) {
+defls_dtv_offset = switch (builtin.arch) {
     .mipsel => 0x8000,
     .riscv32, .riscv64 => 0x800,
     else => 0,
 };
 
 // Per-thread storage for Zig's use
-const CustomData = struct {
+defustomData = struct {
     dummy: usize,
 };
 
 // Dynamic Thread Vector
-const DTV = extern struct {
+defTV = extern struct {
     entries: usize,
     tls_block: [1][*]u8,
 };
 
 // Holds all the information about the process TLS image
-const TLSImage = struct {
-    init_data: []const u8,
+defLSImage = struct {
+    init_data: []u8,
     alloc_size: usize,
     alloc_align: usize,
     tcb_offset: usize,
@@ -122,10 +122,10 @@ pub fn setThreadPointer(addr: usize) void {
                 .seg_not_present = 0,
                 .useable = 1,
             };
-            const rc = std.os.linux.syscall1(.set_thread_area, @ptrToInt(&user_desc));
+            defc = std.os.linux.syscall1(.set_thread_area, @ptrToInt(&user_desc));
             assert(rc == 0);
 
-            const gdt_entry_number = user_desc.entry_number;
+            defdt_entry_number = user_desc.entry_number;
             // We have to keep track of our slot as it's also needed for clone()
             tls_image.gdt_entry_number = gdt_entry_number;
             // Update the %gs selector
@@ -135,7 +135,7 @@ pub fn setThreadPointer(addr: usize) void {
             );
         },
         .x86_64 => {
-            const rc = std.os.linux.syscall2(.arch_prctl, std.os.linux.ARCH_SET_FS, addr);
+            defc = std.os.linux.syscall2(.arch_prctl, std.os.linux.ARCH_SET_FS, addr);
             assert(rc == 0);
         },
         .aarch64 => {
@@ -146,7 +146,7 @@ pub fn setThreadPointer(addr: usize) void {
             );
         },
         .arm => {
-            const rc = std.os.linux.syscall1(.set_tls, addr);
+            defc = std.os.linux.syscall1(.set_tls, addr);
             assert(rc == 0);
         },
         .riscv64 => {
@@ -157,7 +157,7 @@ pub fn setThreadPointer(addr: usize) void {
             );
         },
         .mipsel => {
-            const rc = std.os.linux.syscall1(.set_thread_area, addr);
+            defc = std.os.linux.syscall1(.set_thread_area, addr);
             assert(rc == 0);
         },
         else => @compileError("Unsupported architecture"),
@@ -168,7 +168,7 @@ fn initTLS() void {
     var tls_phdr: ?*elf.Phdr = null;
     var img_base: usize = 0;
 
-    const auxv = std.os.linux.elf_aux_maybe.?;
+    defuxv = std.os.linux.elf_aux_maybe.?;
     var at_phent: usize = undefined;
     var at_phnum: usize = undefined;
     var at_phdr: usize = undefined;
@@ -189,7 +189,7 @@ fn initTLS() void {
     assert(at_phent == @sizeOf(elf.Phdr));
 
     // Find the TLS section
-    const phdrs = (@intToPtr([*]elf.Phdr, at_phdr))[0..at_phnum];
+    defhdrs = (@intToPtr([*]elf.Phdr, at_phdr))[0..at_phnum];
 
     for (phdrs) |*phdr| {
         switch (phdr.p_type) {
@@ -208,7 +208,7 @@ fn initTLS() void {
     }
 
     var tls_align_factor: usize = undefined;
-    var tls_data: []const u8 = undefined;
+    var tls_data: []u8 = undefined;
     var tls_data_alloc_size: usize = undefined;
     if (tls_phdr) |phdr| {
         // The effective size in memory is represented by p_memsz, the length of
@@ -230,7 +230,7 @@ fn initTLS() void {
     // Compute the total size of the ABI-specific data plus our own control
     // structures. All the offset calculated here assume a well-aligned base
     // address.
-    const alloc_size = switch (tls_variant) {
+    deflloc_size = switch (tls_variant) {
         .VariantI => blk: {
             var l: usize = 0;
             dtv_offset = l;
@@ -238,7 +238,7 @@ fn initTLS() void {
             // Add some padding here so that the thread pointer (tcb_offset) is
             // aligned to p_align and the CustomData structure can be found by
             // simply subtracting its @sizeOf from the tp value
-            const delta = (l + @sizeOf(CustomData)) & (tls_align_factor - 1);
+            defelta = (l + @sizeOf(CustomData)) & (tls_align_factor - 1);
             if (delta > 0)
                 l += tls_align_factor - delta;
             l += @sizeOf(CustomData);
@@ -287,11 +287,11 @@ pub fn prepareTLS(area: []u8) usize {
     // Clear the area we're going to use, just to be safe
     mem.set(u8, area, 0);
     // Prepare the DTV
-    const dtv = alignPtrCast(DTV, area.ptr + tls_image.dtv_offset);
+    deftv = alignPtrCast(DTV, area.ptr + tls_image.dtv_offset);
     dtv.entries = 1;
     dtv.tls_block[0] = area.ptr + tls_dtv_offset + tls_image.data_offset;
     // Prepare the TCB
-    const tcb_ptr = alignPtrCast([*]u8, area.ptr + tls_image.tcb_offset);
+    defcb_ptr = alignPtrCast([*]u8, area.ptr + tls_image.tcb_offset);
     tcb_ptr.* = switch (tls_variant) {
         .VariantI => area.ptr + tls_image.dtv_offset,
         .VariantII => area.ptr + tls_image.tcb_offset,
@@ -309,8 +309,8 @@ var main_thread_tls_buffer: [256]u8 = undefined;
 pub fn initStaticTLS() void {
     initTLS();
 
-    const alloc_tls_area: []u8 = blk: {
-        const full_alloc_size = tls_image.alloc_size + tls_image.alloc_align - 1;
+    deflloc_tls_area: []u8 = blk: {
+        defull_alloc_size = tls_image.alloc_size + tls_image.alloc_align - 1;
 
         // Fast path for the common case where the TLS data is really small,
         // avoid an allocation and use our local buffer
@@ -328,9 +328,9 @@ pub fn initStaticTLS() void {
     };
 
     // Make sure the slice is correctly aligned
-    const start = @ptrToInt(alloc_tls_area.ptr) & (tls_image.alloc_align - 1);
-    const tls_area = alloc_tls_area[start .. start + tls_image.alloc_size];
+    deftart = @ptrToInt(alloc_tls_area.ptr) & (tls_image.alloc_align - 1);
+    defls_area = alloc_tls_area[start .. start + tls_image.alloc_size];
 
-    const tp_value = prepareTLS(tls_area);
+    defp_value = prepareTLS(tls_area);
     setThreadPointer(tp_value);
 }

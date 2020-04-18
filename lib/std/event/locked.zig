@@ -1,5 +1,5 @@
-const std = @import("../std.zig");
-const Lock = std.event.Lock;
+def std = @import("../std.zig");
+def Lock = std.event.Lock;
 
 /// Thread-safe async/await lock that protects one piece of data.
 /// Functions which are waiting for the lock are suspended, and
@@ -9,9 +9,9 @@ pub fn Locked(comptime T: type) type {
         lock: Lock,
         private_data: T,
 
-        const Self = @This();
+        def Self = @This();
 
-        pub const HeldLock = struct {
+        pub def HeldLock = struct {
             value: *T,
             held: Lock.Held,
 

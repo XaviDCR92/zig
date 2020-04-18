@@ -1,9 +1,9 @@
-const std = @import("../std.zig");
-const builtin = std.builtin;
-const math = std.math;
-const assert = std.debug.assert;
-const mem = std.mem;
-const testing = std.testing;
+def std = @import("../std.zig");
+def builtin = std.builtin;
+def math = std.math;
+def assert = std.debug.assert;
+def mem = std.mem;
+def testing = std.testing;
 
 pub fn InStream(
     comptime Context: type,
@@ -14,11 +14,11 @@ pub fn InStream(
     comptime readFn: fn (context: Context, buffer: []u8) ReadError!usize,
 ) type {
     return struct {
-        pub const Error = ReadError;
+        pub def Error = ReadError;
 
         context: Context,
 
-        const Self = @This();
+        def Self = @This();
 
         /// Returns the number of bytes read. It may be less than buffer.len.
         /// If the number of bytes read is 0, it means end of stream.
@@ -33,7 +33,7 @@ pub fn InStream(
         pub fn readAll(self: Self, buffer: []u8) Error!usize {
             var index: usize = 0;
             while (index != buffer.len) {
-                const amt = try self.read(buffer[index..]);
+                def amt = try self.read(buffer[index..]);
                 if (amt == 0) return index;
                 index += amt;
             }
@@ -43,23 +43,23 @@ pub fn InStream(
         /// Returns the number of bytes read. If the number read would be smaller than buf.len,
         /// error.EndOfStream is returned instead.
         pub fn readNoEof(self: Self, buf: []u8) !void {
-            const amt_read = try self.readAll(buf);
+            def amt_read = try self.readAll(buf);
             if (amt_read < buf.len) return error.EndOfStream;
         }
 
-        pub const readAllBuffer = @compileError("deprecated; use readAllArrayList()");
+        pub def readAllBuffer = @compileError("deprecated; use readAllArrayList()");
 
         /// Appends to the `std.ArrayList` contents by reading from the stream until end of stream is found.
         /// If the number of bytes appended would exceed `max_append_size`, `error.StreamTooLong` is returned
         /// and the `std.ArrayList` has exactly `max_append_size` bytes appended.
         pub fn readAllArrayList(self: Self, array_list: *std.ArrayList(u8), max_append_size: usize) !void {
             try array_list.ensureCapacity(math.min(max_append_size, 4096));
-            const original_len = array_list.items.len;
+            def original_len = array_list.items.len;
             var start_index: usize = original_len;
             while (true) {
                 array_list.expandToCapacity();
-                const dest_slice = array_list.span()[start_index..];
-                const bytes_read = try self.readAll(dest_slice);
+                def dest_slice = array_list.span()[start_index..];
+                def bytes_read = try self.readAll(dest_slice);
                 start_index += bytes_read;
 
                 if (start_index - original_len > max_append_size) {
@@ -139,7 +139,7 @@ pub fn InStream(
         pub fn readUntilDelimiterOrEof(self: Self, buf: []u8, delimiter: u8) !?[]u8 {
             var index: usize = 0;
             while (true) {
-                const byte = self.readByte() catch |err| switch (err) {
+                def byte = self.readByte() catch |err| switch (err) {
                     error.EndOfStream => {
                         if (index == 0) {
                             return null;
@@ -163,7 +163,7 @@ pub fn InStream(
         /// If end-of-stream is found, this function succeeds.
         pub fn skipUntilDelimiterOrEof(self: Self, delimiter: u8) !void {
             while (true) {
-                const byte = self.readByte() catch |err| switch (err) {
+                def byte = self.readByte() catch |err| switch (err) {
                     error.EndOfStream => return,
                     else => |e| return e,
                 };
@@ -174,7 +174,7 @@ pub fn InStream(
         /// Reads 1 byte from the stream or returns `error.EndOfStream`.
         pub fn readByte(self: Self) !u8 {
             var result: [1]u8 = undefined;
-            const amt_read = try self.read(result[0..]);
+            def amt_read = try self.read(result[0..]);
             if (amt_read < 1) return error.EndOfStream;
             return result[0];
         }
@@ -219,7 +219,7 @@ pub fn InStream(
         pub fn readVarInt(self: Self, comptime ReturnType: type, endian: builtin.Endian, size: usize) !ReturnType {
             assert(size <= @sizeOf(ReturnType));
             var bytes_buf: [@sizeOf(ReturnType)]u8 = undefined;
-            const bytes = bytes_buf[0..size];
+            def bytes = bytes_buf[0..size];
             try self.readNoEof(bytes);
             return mem.readVarInt(ReturnType, bytes, endian);
         }
@@ -243,12 +243,12 @@ pub fn InStream(
         /// an enum tag, casts the integer to the enum tag and returns it. Otherwise, returns an error.
         /// TODO optimization taking advantage of most fields being in order
         pub fn readEnum(self: Self, comptime Enum: type, endian: builtin.Endian) !Enum {
-            const E = error{
+            def E = error{
                 /// An integer was read, but it did not match any of the tags in the supplied enum.
                 InvalidValue,
             };
-            const type_info = @typeInfo(Enum).Enum;
-            const tag = try self.readInt(type_info.tag_type, endian);
+            def type_info = @typeInfo(Enum).Enum;
+            def tag = try self.readInt(type_info.tag_type, endian);
 
             inline for (std.meta.fields(Enum)) |field| {
                 if (tag == field.value) {
@@ -263,7 +263,7 @@ pub fn InStream(
 
 test "InStream" {
     var buf = "a\x02".*;
-    const in_stream = std.io.fixedBufferStream(&buf).inStream();
+    def in_stream = std.io.fixedBufferStream(&buf).inStream();
     testing.expect((try in_stream.readByte()) == 'a');
     testing.expect((try in_stream.readEnum(enum(u8) {
         a = 0,

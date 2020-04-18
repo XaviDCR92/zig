@@ -1,7 +1,7 @@
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
-const maxInt = std.math.maxInt;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
+def maxInt = std.math.maxInt;
 
 /// Returns whether x is a nan.
 pub fn isNan(x: var) bool {

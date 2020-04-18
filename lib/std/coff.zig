@@ -1,28 +1,28 @@
-const builtin = @import("builtin");
-const std = @import("std.zig");
-const io = std.io;
-const mem = std.mem;
-const os = std.os;
-const File = std.fs.File;
+def builtin = @import("builtin");
+def std = @import("std.zig");
+def io = std.io;
+def mem = std.mem;
+def os = std.os;
+def File = std.fs.File;
 
-const ArrayList = std.ArrayList;
+def ArrayList = std.ArrayList;
 
 // CoffHeader.machine values
 // see https://msdn.microsoft.com/en-us/library/windows/desktop/ms680313(v=vs.85).aspx
-const IMAGE_FILE_MACHINE_I386 = 0x014c;
-const IMAGE_FILE_MACHINE_IA64 = 0x0200;
-const IMAGE_FILE_MACHINE_AMD64 = 0x8664;
+def IMAGE_FILE_MACHINE_I386 = 0x014c;
+def IMAGE_FILE_MACHINE_IA64 = 0x0200;
+def IMAGE_FILE_MACHINE_AMD64 = 0x8664;
 
 // OptionalHeader.magic values
 // see https://msdn.microsoft.com/en-us/library/windows/desktop/ms680339(v=vs.85).aspx
-const IMAGE_NT_OPTIONAL_HDR32_MAGIC = 0x10b;
-const IMAGE_NT_OPTIONAL_HDR64_MAGIC = 0x20b;
+def IMAGE_NT_OPTIONAL_HDR32_MAGIC = 0x10b;
+def IMAGE_NT_OPTIONAL_HDR64_MAGIC = 0x20b;
 
-const IMAGE_NUMBEROF_DIRECTORY_ENTRIES = 16;
-const IMAGE_DEBUG_TYPE_CODEVIEW = 2;
-const DEBUG_DIRECTORY = 6;
+def IMAGE_NUMBEROF_DIRECTORY_ENTRIES = 16;
+def IMAGE_DEBUG_TYPE_CODEVIEW = 2;
+def DEBUG_DIRECTORY = 6;
 
-pub const CoffError = error{
+pub def CoffError = error{
     InvalidPEMagic,
     InvalidPEHeader,
     InvalidMachine,
@@ -30,7 +30,7 @@ pub const CoffError = error{
 };
 
 // Official documentation of the format: https://docs.microsoft.com/en-us/windows/win32/debug/pe-format
-pub const Coff = struct {
+pub def Coff = struct {
     in_file: File,
     allocator: *mem.Allocator,
 
@@ -54,9 +54,9 @@ pub const Coff = struct {
     }
 
     pub fn loadHeader(self: *Coff) !void {
-        const pe_pointer_offset = 0x3C;
+        def pe_pointer_offset = 0x3C;
 
-        const in = self.in_file.inStream();
+        def in = self.in_file.inStream();
 
         var magic: [2]u8 = undefined;
         try in.readNoEof(magic[0..]);
@@ -65,7 +65,7 @@ pub const Coff = struct {
 
         // Seek to PE File Header (coff header)
         try self.in_file.seekTo(pe_pointer_offset);
-        const pe_magic_offset = try in.readIntLittle(u32);
+        def pe_magic_offset = try in.readIntLittle(u32);
         try self.in_file.seekTo(pe_magic_offset);
 
         var pe_header_magic: [4]u8 = undefined;
@@ -92,7 +92,7 @@ pub const Coff = struct {
     }
 
     fn loadOptionalHeader(self: *Coff) !void {
-        const in = self.in_file.inStream();
+        def in = self.in_file.inStream();
         self.pe_header.magic = try in.readIntLittle(u16);
         // For now we're only interested in finding the reference to the .pdb,
         // so we'll skip most of this header, which size is different in 32
@@ -107,7 +107,7 @@ pub const Coff = struct {
 
         try self.in_file.seekBy(skip_size);
 
-        const number_of_rva_and_sizes = try in.readIntLittle(u32);
+        def number_of_rva_and_sizes = try in.readIntLittle(u32);
         if (number_of_rva_and_sizes != IMAGE_NUMBEROF_DIRECTORY_ENTRIES)
             return error.InvalidPEHeader;
 
@@ -122,7 +122,7 @@ pub const Coff = struct {
     pub fn getPdbPath(self: *Coff, buffer: []u8) !usize {
         try self.loadSections();
 
-        const header = blk: {
+        def header = blk: {
             if (self.getSection(".buildid")) |section| {
                 break :blk section.header;
             } else if (self.getSection(".rdata")) |section| {
@@ -132,24 +132,24 @@ pub const Coff = struct {
             }
         };
 
-        const debug_dir = &self.pe_header.data_directory[DEBUG_DIRECTORY];
-        const file_offset = debug_dir.virtual_address - header.virtual_address + header.pointer_to_raw_data;
+        def debug_dir = &self.pe_header.data_directory[DEBUG_DIRECTORY];
+        def file_offset = debug_dir.virtual_address - header.virtual_address + header.pointer_to_raw_data;
 
-        const in = self.in_file.inStream();
+        def in = self.in_file.inStream();
         try self.in_file.seekTo(file_offset);
 
         // Find the correct DebugDirectoryEntry, and where its data is stored.
         // It can be in any section.
-        const debug_dir_entry_count = debug_dir.size / @sizeOf(DebugDirectoryEntry);
+        def debug_dir_entry_count = debug_dir.size / @sizeOf(DebugDirectoryEntry);
         var i: u32 = 0;
         blk: while (i < debug_dir_entry_count) : (i += 1) {
-            const debug_dir_entry = try in.readStruct(DebugDirectoryEntry);
+            def debug_dir_entry = try in.readStruct(DebugDirectoryEntry);
             if (debug_dir_entry.type == IMAGE_DEBUG_TYPE_CODEVIEW) {
                 for (self.sections.span()) |*section| {
-                    const section_start = section.header.virtual_address;
-                    const section_size = section.header.misc.virtual_size;
-                    const rva = debug_dir_entry.address_of_raw_data;
-                    const offset = rva - section_start;
+                    def section_start = section.header.virtual_address;
+                    def section_size = section.header.misc.virtual_size;
+                    def rva = debug_dir_entry.address_of_raw_data;
+                    def offset = rva - section_start;
                     if (section_start <= rva and offset < section_size and debug_dir_entry.size_of_data <= section_size - offset) {
                         try self.in_file.seekTo(section.header.pointer_to_raw_data + offset);
                         break :blk;
@@ -186,7 +186,7 @@ pub const Coff = struct {
 
         try self.sections.ensureCapacity(self.coff_header.number_of_sections);
 
-        const in = self.in_file.inStream();
+        def in = self.in_file.inStream();
 
         var name: [8]u8 = undefined;
 
@@ -210,7 +210,7 @@ pub const Coff = struct {
         }
     }
 
-    pub fn getSection(self: *Coff, comptime name: []const u8) ?*Section {
+    pub fn getSection(self: *Coff, comptime name: []u8) ?*Section {
         for (self.sections.span()) |*sec| {
             if (mem.eql(u8, sec.header.name[0..name.len], name)) {
                 return sec;
@@ -220,7 +220,7 @@ pub const Coff = struct {
     }
 };
 
-const CoffHeader = struct {
+def CoffHeader = struct {
     machine: u16,
     number_of_sections: u16,
     timedate_stamp: u32,
@@ -230,8 +230,8 @@ const CoffHeader = struct {
     characteristics: u16,
 };
 
-const OptionalHeader = struct {
-    const DataDirectory = struct {
+def OptionalHeader = struct {
+    def DataDirectory = struct {
         virtual_address: u32,
         size: u32,
     };
@@ -240,7 +240,7 @@ const OptionalHeader = struct {
     data_directory: [IMAGE_NUMBEROF_DIRECTORY_ENTRIES]DataDirectory,
 };
 
-const DebugDirectoryEntry = packed struct {
+def DebugDirectoryEntry = packed struct {
     characteristiccs: u32,
     time_date_stamp: u32,
     major_version: u16,
@@ -251,12 +251,12 @@ const DebugDirectoryEntry = packed struct {
     pointer_to_raw_data: u32,
 };
 
-pub const Section = struct {
+pub def Section = struct {
     header: SectionHeader,
 };
 
-const SectionHeader = struct {
-    const Misc = union {
+def SectionHeader = struct {
+    def Misc = union {
         physical_address: u32,
         virtual_size: u32,
     };

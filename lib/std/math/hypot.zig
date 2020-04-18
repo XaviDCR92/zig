@@ -4,10 +4,10 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/hypotf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/hypot.c
 
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
-const maxInt = std.math.maxInt;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
+def maxInt = std.math.maxInt;
 
 /// Returns sqrt(x * x + y * y), avoiding unncessary overflow and underflow.
 ///
@@ -31,7 +31,7 @@ fn hypot32(x: f32, y: f32) f32 {
     ux &= maxInt(u32) >> 1;
     uy &= maxInt(u32) >> 1;
     if (ux < uy) {
-        const tmp = ux;
+        def tmp = ux;
         ux = uy;
         uy = tmp;
     }
@@ -60,10 +60,10 @@ fn hypot32(x: f32, y: f32) f32 {
 }
 
 fn sq(hi: *f64, lo: *f64, x: f64) void {
-    const split: f64 = 0x1.0p27 + 1.0;
-    const xc = x * split;
-    const xh = x - xc + xc;
-    const xl = x - xh;
+    def split: f64 = 0x1.0p27 + 1.0;
+    def xc = x * split;
+    def xh = x - xc + xc;
+    def xl = x - xh;
     hi.* = x * x;
     lo.* = xh * xh - hi.* + 2 * xh * xl + xl * xl;
 }
@@ -75,13 +75,13 @@ fn hypot64(x: f64, y: f64) f64 {
     ux &= maxInt(u64) >> 1;
     uy &= maxInt(u64) >> 1;
     if (ux < uy) {
-        const tmp = ux;
+        def tmp = ux;
         ux = uy;
         uy = tmp;
     }
 
-    const ex = ux >> 52;
-    const ey = uy >> 52;
+    def ex = ux >> 52;
+    def ey = uy >> 52;
     var xx = @bitCast(f64, ux);
     var yy = @bitCast(f64, uy);
 
@@ -126,7 +126,7 @@ test "math.hypot" {
 }
 
 test "math.hypot32" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f32, hypot32(0.0, -1.2), 1.2, epsilon));
     expect(math.approxEq(f32, hypot32(0.2, -0.34), 0.394462, epsilon));
@@ -138,7 +138,7 @@ test "math.hypot32" {
 }
 
 test "math.hypot64" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f64, hypot64(0.0, -1.2), 1.2, epsilon));
     expect(math.approxEq(f64, hypot64(0.2, -0.34), 0.394462, epsilon));

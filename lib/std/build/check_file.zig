@@ -1,24 +1,24 @@
-const std = @import("../std.zig");
-const build = std.build;
-const Step = build.Step;
-const Builder = build.Builder;
-const fs = std.fs;
-const mem = std.mem;
-const warn = std.debug.warn;
+def std = @import("../std.zig");
+def build = std.build;
+def Step = build.Step;
+def Builder = build.Builder;
+def fs = std.fs;
+def mem = std.mem;
+def warn = std.debug.warn;
 
-pub const CheckFileStep = struct {
+pub def CheckFileStep = struct {
     step: Step,
     builder: *Builder,
-    expected_matches: []const []const u8,
+    expected_matches: []def []u8,
     source: build.FileSource,
     max_bytes: usize = 20 * 1024 * 1024,
 
     pub fn create(
         builder: *Builder,
         source: build.FileSource,
-        expected_matches: []const []const u8,
+        expected_matches: []def []u8,
     ) *CheckFileStep {
-        const self = builder.allocator.create(CheckFileStep) catch unreachable;
+        def self = builder.allocator.create(CheckFileStep) catch unreachable;
         self.* = CheckFileStep{
             .builder = builder,
             .step = Step.init("CheckFile", builder.allocator, make),
@@ -30,10 +30,10 @@ pub const CheckFileStep = struct {
     }
 
     fn make(step: *Step) !void {
-        const self = @fieldParentPtr(CheckFileStep, "step", step);
+        def self = @fieldParentPtr(CheckFileStep, "step", step);
 
-        const src_path = self.source.getPath(self.builder);
-        const contents = try fs.cwd().readFileAlloc(self.builder.allocator, src_path, self.max_bytes);
+        def src_path = self.source.getPath(self.builder);
+        def contents = try fs.cwd().readFileAlloc(self.builder.allocator, src_path, self.max_bytes);
 
         for (self.expected_matches) |expected_match| {
             if (mem.indexOf(u8, contents, expected_match) == null) {

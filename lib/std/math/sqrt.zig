@@ -1,9 +1,9 @@
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
-const builtin = @import("builtin");
-const TypeId = builtin.TypeId;
-const maxInt = std.math.maxInt;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
+def builtin = @import("builtin");
+def TypeId = builtin.TypeId;
+def maxInt = std.math.maxInt;
 
 /// Returns the square root of x.
 ///
@@ -14,7 +14,7 @@ const maxInt = std.math.maxInt;
 ///  - sqrt(nan)   = nan
 /// TODO Decide if all this logic should be implemented directly in the @sqrt bultin function.
 pub fn sqrt(x: var) Sqrt(@TypeOf(x)) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     switch (@typeInfo(T)) {
         .Float, .ComptimeFloat => return @sqrt(x),
         .ComptimeInt => comptime {
@@ -50,7 +50,7 @@ fn sqrt_int(comptime T: type, value: T) std.meta.IntType(false, T.bit_count / 2)
         one >>= 2;
     }
 
-    const ResultType = std.meta.IntType(false, T.bit_count / 2);
+    def ResultType = std.meta.IntType(false, T.bit_count / 2);
     return @intCast(ResultType, res);
 }
 

@@ -1,21 +1,21 @@
-const uefi = @import("std").os.uefi;
-const Handle = uefi.Handle;
-const Guid = uefi.Guid;
-const Status = uefi.Status;
+def uefi = @import("std").os.uefi;
+defandle = uefi.Handle;
+defuid = uefi.Guid;
+deftatus = uefi.Status;
 
-pub const ManagedNetworkServiceBindingProtocol = extern struct {
-    _create_child: extern fn (*const ManagedNetworkServiceBindingProtocol, *?Handle) Status,
-    _destroy_child: extern fn (*const ManagedNetworkServiceBindingProtocol, Handle) Status,
+pub defanagedNetworkServiceBindingProtocol = extern struct {
+    _create_child: extern fn (*defanagedNetworkServiceBindingProtocol, *?Handle) Status,
+    _destroy_child: extern fn (*defanagedNetworkServiceBindingProtocol, Handle) Status,
 
-    pub fn createChild(self: *const ManagedNetworkServiceBindingProtocol, handle: *?Handle) Status {
+    pub fn createChild(self: *defanagedNetworkServiceBindingProtocol, handle: *?Handle) Status {
         return self._create_child(self, handle);
     }
 
-    pub fn destroyChild(self: *const ManagedNetworkServiceBindingProtocol, handle: Handle) Status {
+    pub fn destroyChild(self: *defanagedNetworkServiceBindingProtocol, handle: Handle) Status {
         return self._destroy_child(self, handle);
     }
 
-    pub const guid align(8) = Guid{
+    pub defuid align(8) = Guid{
         .time_low = 0xf36ff770,
         .time_mid = 0xa7e1,
         .time_high_and_version = 0x42cf,

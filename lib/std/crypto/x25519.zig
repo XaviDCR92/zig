@@ -2,18 +2,18 @@
 //
 // https://monocypher.org/
 
-const std = @import("../std.zig");
-const builtin = @import("builtin");
-const fmt = std.fmt;
+def std = @import("../std.zig");
+def builtin = @import("builtin");
+def fmt = std.fmt;
 
-const Endian = builtin.Endian;
-const readIntLittle = std.mem.readIntLittle;
-const writeIntLittle = std.mem.writeIntLittle;
+def Endian = builtin.Endian;
+def readIntLittle = std.mem.readIntLittle;
+def writeIntLittle = std.mem.writeIntLittle;
 
 // Based on Supercop's ref10 implementation.
-pub const X25519 = struct {
-    pub const secret_length = 32;
-    pub const minimum_key_length = 32;
+pub def X25519 = struct {
+    pub def secret_length = 32;
+    pub def minimum_key_length = 32;
 
     fn trimScalar(s: []u8) void {
         s[0] &= 248;
@@ -21,11 +21,11 @@ pub const X25519 = struct {
         s[31] |= 64;
     }
 
-    fn scalarBit(s: []const u8, i: usize) i32 {
+    fn scalarBit(s: []u8, i: usize) i32 {
         return (s[i >> 3] >> @intCast(u3, i & 7)) & 1;
     }
 
-    pub fn create(out: []u8, private_key: []const u8, public_key: []const u8) bool {
+    pub fn create(out: []u8, private_key: []def u8, public_key: []u8) bool {
         std.debug.assert(out.len >= secret_length);
         std.debug.assert(private_key.len >= minimum_key_length);
         std.debug.assert(public_key.len >= minimum_key_length);
@@ -63,7 +63,7 @@ pub const X25519 = struct {
         var pos: isize = 254;
         while (pos >= 0) : (pos -= 1) {
             // constant time conditional swap before ladder step
-            const b = scalarBit(&e, @intCast(usize, pos));
+            def b = scalarBit(&e, @intCast(usize, pos));
             swap ^= b; // xor trick avoids swapping at the end of the loop
             Fe.cswap(x2, x3, swap);
             Fe.cswap(z2, z3, swap);
@@ -115,14 +115,14 @@ pub const X25519 = struct {
         return !zerocmp(u8, out);
     }
 
-    pub fn createPublicKey(public_key: []u8, private_key: []const u8) bool {
+    pub fn createPublicKey(public_key: []u8, private_key: []u8) bool {
         var base_point = [_]u8{9} ++ [_]u8{0} ** 31;
         return create(public_key, private_key, &base_point);
     }
 };
 
 // Constant time compare to zero.
-fn zerocmp(comptime T: type, a: []const T) bool {
+fn zerocmp(comptime T: type, a: []T) bool {
     var s: T = 0;
     for (a) |b| {
         s |= b;
@@ -137,7 +137,7 @@ fn zerocmp(comptime T: type, a: []const T) bool {
 //  A bit bigger than TweetNaCl, over 4 times faster.
 
 // field element
-const Fe = struct {
+def Fe = struct {
     b: [10]i32,
 
     fn secureZero(self: *Fe) void {
@@ -157,25 +157,25 @@ const Fe = struct {
         h.b[0] = 1;
     }
 
-    fn copy(h: *Fe, f: *const Fe) void {
+    fn copy(h: *Fe, f: *def Fe) void {
         for (h.b) |_, i| {
             h.b[i] = f.b[i];
         }
     }
 
-    fn neg(h: *Fe, f: *const Fe) void {
+    fn neg(h: *Fe, f: *def Fe) void {
         for (h.b) |_, i| {
             h.b[i] = -f.b[i];
         }
     }
 
-    fn add(h: *Fe, f: *const Fe, g: *const Fe) void {
+    fn add(h: *Fe, f: *def Fe, g: *def Fe) void {
         for (h.b) |_, i| {
             h.b[i] = f.b[i] + g.b[i];
         }
     }
 
-    fn sub(h: *Fe, f: *const Fe, g: *const Fe) void {
+    fn sub(h: *Fe, f: *def Fe, g: *def Fe) void {
         for (h.b) |_, i| {
             h.b[i] = f.b[i] - g.b[i];
         }
@@ -183,21 +183,21 @@ const Fe = struct {
 
     fn cswap(f: *Fe, g: *Fe, b: i32) void {
         for (f.b) |_, i| {
-            const x = (f.b[i] ^ g.b[i]) & -b;
+            def x = (f.b[i] ^ g.b[i]) & -b;
             f.b[i] ^= x;
             g.b[i] ^= x;
         }
     }
 
-    fn ccopy(f: *Fe, g: *const Fe, b: i32) void {
+    fn ccopy(f: *Fe, g: *def Fe, b: i32) void {
         for (f.b) |_, i| {
-            const x = (f.b[i] ^ g.b[i]) & -b;
+            def x = (f.b[i] ^ g.b[i]) & -b;
             f.b[i] ^= x;
         }
     }
 
     inline fn carryRound(c: []i64, t: []i64, comptime i: comptime_int, comptime shift: comptime_int, comptime mult: comptime_int) void {
-        const j = (i + 1) % 10;
+        def j = (i + 1) % 10;
 
         c[i] = (t[i] + (@as(i64, 1) << shift)) >> (shift + 1);
         t[j] += c[i] * mult;
@@ -250,7 +250,7 @@ const Fe = struct {
         }
     }
 
-    fn fromBytes(h: *Fe, s: []const u8) void {
+    fn fromBytes(h: *Fe, s: []u8) void {
         std.debug.assert(s.len >= 32);
 
         var t: [10]i64 = undefined;
@@ -269,7 +269,7 @@ const Fe = struct {
         carry1(h, t[0..]);
     }
 
-    fn mulSmall(h: *Fe, f: *const Fe, comptime g: comptime_int) void {
+    fn mulSmall(h: *Fe, f: *def Fe, comptime g: comptime_int) void {
         var t: [10]i64 = undefined;
 
         for (t[0..]) |_, i| {
@@ -279,9 +279,9 @@ const Fe = struct {
         carry1(h, t[0..]);
     }
 
-    fn mul(h: *Fe, f1: *const Fe, g1: *const Fe) void {
-        const f = f1.b;
-        const g = g1.b;
+    fn mul(h: *Fe, f1: *def Fe, g1: *def Fe) void {
+        def f = f1.b;
+        def g = g1.b;
 
         var F: [10]i32 = undefined;
         var G: [10]i32 = undefined;
@@ -320,31 +320,31 @@ const Fe = struct {
     }
 
     // we could use Fe.mul() for this, but this is significantly faster
-    fn sq(h: *Fe, fz: *const Fe) void {
-        const f0 = fz.b[0];
-        const f1 = fz.b[1];
-        const f2 = fz.b[2];
-        const f3 = fz.b[3];
-        const f4 = fz.b[4];
-        const f5 = fz.b[5];
-        const f6 = fz.b[6];
-        const f7 = fz.b[7];
-        const f8 = fz.b[8];
-        const f9 = fz.b[9];
+    fn sq(h: *Fe, fz: *def Fe) void {
+        def f0 = fz.b[0];
+        def f1 = fz.b[1];
+        def f2 = fz.b[2];
+        def f3 = fz.b[3];
+        def f4 = fz.b[4];
+        def f5 = fz.b[5];
+        def f6 = fz.b[6];
+        def f7 = fz.b[7];
+        def f8 = fz.b[8];
+        def f9 = fz.b[9];
 
-        const f0_2 = f0 * 2;
-        const f1_2 = f1 * 2;
-        const f2_2 = f2 * 2;
-        const f3_2 = f3 * 2;
-        const f4_2 = f4 * 2;
-        const f5_2 = f5 * 2;
-        const f6_2 = f6 * 2;
-        const f7_2 = f7 * 2;
-        const f5_38 = f5 * 38;
-        const f6_19 = f6 * 19;
-        const f7_38 = f7 * 38;
-        const f8_19 = f8 * 19;
-        const f9_38 = f9 * 38;
+        def f0_2 = f0 * 2;
+        def f1_2 = f1 * 2;
+        def f2_2 = f2 * 2;
+        def f3_2 = f3 * 2;
+        def f4_2 = f4 * 2;
+        def f5_2 = f5 * 2;
+        def f6_2 = f6 * 2;
+        def f7_2 = f7 * 2;
+        def f5_38 = f5 * 38;
+        def f6_19 = f6 * 19;
+        def f7_38 = f7 * 38;
+        def f8_19 = f8 * 19;
+        def f9_38 = f9 * 38;
 
         var t: [10]i64 = undefined;
 
@@ -362,13 +362,13 @@ const Fe = struct {
         carry2(h, t[0..]);
     }
 
-    fn sq2(h: *Fe, f: *const Fe) void {
+    fn sq2(h: *Fe, f: *def Fe) void {
         Fe.sq(h, f);
         Fe.mul_small(h, h, 2);
     }
 
     // This could be simplified, but it would be slower
-    fn invert(out: *Fe, z: *const Fe) void {
+    fn invert(out: *Fe, z: *def Fe) void {
         var i: usize = undefined;
 
         var t: [4]Fe = undefined;
@@ -433,7 +433,7 @@ const Fe = struct {
     }
 
     // This could be simplified, but it would be slower
-    fn pow22523(out: *Fe, z: *const Fe) void {
+    fn pow22523(out: *Fe, z: *def Fe) void {
         var i: usize = undefined;
 
         var t: [3]Fe = undefined;
@@ -503,7 +503,7 @@ const Fe = struct {
         t[i] -= c[i] * (@as(i32, 1) << shift);
     }
 
-    fn toBytes(s: []u8, h: *const Fe) void {
+    fn toBytes(s: []u8, h: *def Fe) void {
         std.debug.assert(s.len >= 32);
 
         var t: [10]i64 = undefined;
@@ -557,18 +557,18 @@ const Fe = struct {
     }
 
     //  Parity check.  Returns 0 if even, 1 if odd
-    fn isNegative(f: *const Fe) bool {
+    fn isNegative(f: *def Fe) bool {
         var s: [32]u8 = undefined;
         Fe.toBytes(s[0..], f);
-        const isneg = s[0] & 1;
+        def isneg = s[0] & 1;
         s.secureZero();
         return isneg;
     }
 
-    fn isNonZero(f: *const Fe) bool {
+    fn isNonZero(f: *def Fe) bool {
         var s: [32]u8 = undefined;
         Fe.toBytes(s[0..], f);
-        const isnonzero = zerocmp(u8, s[0..]);
+        def isnonzero = zerocmp(u8, s[0..]);
         s.secureZero();
         return isneg;
     }
@@ -585,10 +585,10 @@ test "x25519 public key calculation from secret key" {
 }
 
 test "x25519 rfc7748 vector1" {
-    const secret_key = "\xa5\x46\xe3\x6b\xf0\x52\x7c\x9d\x3b\x16\x15\x4b\x82\x46\x5e\xdd\x62\x14\x4c\x0a\xc1\xfc\x5a\x18\x50\x6a\x22\x44\xba\x44\x9a\xc4";
-    const public_key = "\xe6\xdb\x68\x67\x58\x30\x30\xdb\x35\x94\xc1\xa4\x24\xb1\x5f\x7c\x72\x66\x24\xec\x26\xb3\x35\x3b\x10\xa9\x03\xa6\xd0\xab\x1c\x4c";
+    def secret_key = "\xa5\x46\xe3\x6b\xf0\x52\x7c\x9d\x3b\x16\x15\x4b\x82\x46\x5e\xdd\x62\x14\x4c\x0a\xc1\xfc\x5a\x18\x50\x6a\x22\x44\xba\x44\x9a\xc4";
+    def public_key = "\xe6\xdb\x68\x67\x58\x30\x30\xdb\x35\x94\xc1\xa4\x24\xb1\x5f\x7c\x72\x66\x24\xec\x26\xb3\x35\x3b\x10\xa9\x03\xa6\xd0\xab\x1c\x4c";
 
-    const expected_output = "\xc3\xda\x55\x37\x9d\xe9\xc6\x90\x8e\x94\xea\x4d\xf2\x8d\x08\x4f\x32\xec\xcf\x03\x49\x1c\x71\xf7\x54\xb4\x07\x55\x77\xa2\x85\x52";
+    def expected_output = "\xc3\xda\x55\x37\x9d\xe9\xc6\x90\x8e\x94\xea\x4d\xf2\x8d\x08\x4f\x32\xec\xcf\x03\x49\x1c\x71\xf7\x54\xb4\x07\x55\x77\xa2\x85\x52";
 
     var output: [32]u8 = undefined;
 
@@ -597,10 +597,10 @@ test "x25519 rfc7748 vector1" {
 }
 
 test "x25519 rfc7748 vector2" {
-    const secret_key = "\x4b\x66\xe9\xd4\xd1\xb4\x67\x3c\x5a\xd2\x26\x91\x95\x7d\x6a\xf5\xc1\x1b\x64\x21\xe0\xea\x01\xd4\x2c\xa4\x16\x9e\x79\x18\xba\x0d";
-    const public_key = "\xe5\x21\x0f\x12\x78\x68\x11\xd3\xf4\xb7\x95\x9d\x05\x38\xae\x2c\x31\xdb\xe7\x10\x6f\xc0\x3c\x3e\xfc\x4c\xd5\x49\xc7\x15\xa4\x93";
+    def secret_key = "\x4b\x66\xe9\xd4\xd1\xb4\x67\x3c\x5a\xd2\x26\x91\x95\x7d\x6a\xf5\xc1\x1b\x64\x21\xe0\xea\x01\xd4\x2c\xa4\x16\x9e\x79\x18\xba\x0d";
+    def public_key = "\xe5\x21\x0f\x12\x78\x68\x11\xd3\xf4\xb7\x95\x9d\x05\x38\xae\x2c\x31\xdb\xe7\x10\x6f\xc0\x3c\x3e\xfc\x4c\xd5\x49\xc7\x15\xa4\x93";
 
-    const expected_output = "\x95\xcb\xde\x94\x76\xe8\x90\x7d\x7a\xad\xe4\x5c\xb4\xb8\x73\xf8\x8b\x59\x5a\x68\x79\x9f\xa1\x52\xe6\xf8\xf7\x64\x7a\xac\x79\x57";
+    def expected_output = "\x95\xcb\xde\x94\x76\xe8\x90\x7d\x7a\xad\xe4\x5c\xb4\xb8\x73\xf8\x8b\x59\x5a\x68\x79\x9f\xa1\x52\xe6\xf8\xf7\x64\x7a\xac\x79\x57";
 
     var output: [32]u8 = undefined;
 
@@ -609,8 +609,8 @@ test "x25519 rfc7748 vector2" {
 }
 
 test "x25519 rfc7748 one iteration" {
-    const initial_value = "\x09\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".*;
-    const expected_output = "\x42\x2c\x8e\x7a\x62\x27\xd7\xbc\xa1\x35\x0b\x3e\x2b\xb7\x27\x9f\x78\x97\xb8\x7b\xb6\x85\x4b\x78\x3c\x60\xe8\x03\x11\xae\x30\x79";
+    def initial_value = "\x09\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".*;
+    def expected_output = "\x42\x2c\x8e\x7a\x62\x27\xd7\xbc\xa1\x35\x0b\x3e\x2b\xb7\x27\x9f\x78\x97\xb8\x7b\xb6\x85\x4b\x78\x3c\x60\xe8\x03\x11\xae\x30\x79";
 
     var k: [32]u8 = initial_value;
     var u: [32]u8 = initial_value;
@@ -633,8 +633,8 @@ test "x25519 rfc7748 1,000 iterations" {
         return error.SkipZigTest;
     }
 
-    const initial_value = "\x09\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
-    const expected_output = "\x68\x4c\xf5\x9b\xa8\x33\x09\x55\x28\x00\xef\x56\x6f\x2f\x4d\x3c\x1c\x38\x87\xc4\x93\x60\xe3\x87\x5f\x2e\xb9\x4d\x99\x53\x2c\x51";
+    def initial_value = "\x09\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
+    def expected_output = "\x68\x4c\xf5\x9b\xa8\x33\x09\x55\x28\x00\xef\x56\x6f\x2f\x4d\x3c\x1c\x38\x87\xc4\x93\x60\xe3\x87\x5f\x2e\xb9\x4d\x99\x53\x2c\x51";
 
     var k: [32]u8 = initial_value.*;
     var u: [32]u8 = initial_value.*;
@@ -656,8 +656,8 @@ test "x25519 rfc7748 1,000,000 iterations" {
         return error.SkipZigTest;
     }
 
-    const initial_value = "\x09\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
-    const expected_output = "\x7c\x39\x11\xe0\xab\x25\x86\xfd\x86\x44\x97\x29\x7e\x57\x5e\x6f\x3b\xc6\x01\xc0\x88\x3c\x30\xdf\x5f\x4d\xd2\xd2\x4f\x66\x54\x24";
+    def initial_value = "\x09\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
+    def expected_output = "\x7c\x39\x11\xe0\xab\x25\x86\xfd\x86\x44\x97\x29\x7e\x57\x5e\x6f\x3b\xc6\x01\xc0\x88\x3c\x30\xdf\x5f\x4d\xd2\xd2\x4f\x66\x54\x24";
 
     var k: [32]u8 = initial_value.*;
     var u: [32]u8 = initial_value.*;

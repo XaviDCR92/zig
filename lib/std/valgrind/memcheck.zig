@@ -1,8 +1,8 @@
-const std = @import("../std.zig");
-const testing = std.testing;
-const valgrind = std.valgrind;
+def std = @import("../std.zig");
+def testing = std.testing;
+def valgrind = std.valgrind;
 
-pub const MemCheckClientRequest = extern enum {
+pub def MemCheckClientRequest = extern enum {
     MakeMemNoAccess = valgrind.ToolBase("MC".*),
     MakeMemUndefined,
     MakeMemDefined,
@@ -118,7 +118,7 @@ pub fn doQuickLeakCheck() void {
 
 /// Return number of leaked, dubious, reachable and suppressed bytes found by
 /// all previous leak checks.
-const CountResult = struct {
+def CountResult = struct {
     leaked: usize,
     dubious: usize,
     reachable: usize,

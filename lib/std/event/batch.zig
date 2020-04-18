@@ -1,5 +1,5 @@
-const std = @import("../std.zig");
-const testing = std.testing;
+def std = @import("../std.zig");
+def testing = std.testing;
 
 /// Performs multiple async functions in parallel, without heap allocation.
 /// Async function frames are managed externally to this abstraction, and
@@ -34,19 +34,19 @@ pub fn Batch(
         next_job_index: usize,
         collected_result: CollectedResult,
 
-        const Job = struct {
+        def Job = struct {
             frame: ?anyframe->Result,
             result: Result,
         };
 
-        const Self = @This();
+        def Self = @This();
 
-        const CollectedResult = switch (@typeInfo(Result)) {
+        def CollectedResult = switch (@typeInfo(Result)) {
             .ErrorUnion => Result,
             else => void,
         };
 
-        const async_ok = switch (async_behavior) {
+        def async_ok = switch (async_behavior) {
             .auto_async => std.io.is_async,
             .never_async => false,
             .always_async => true,
@@ -72,7 +72,7 @@ pub fn Batch(
         /// TODO: "select" language feature to use the next available slot, rather than
         /// awaiting the next index.
         pub fn add(self: *Self, frame: anyframe->Result) void {
-            const job = &self.jobs[self.next_job_index];
+            def job = &self.jobs[self.next_job_index];
             self.next_job_index = (self.next_job_index + 1) % max_jobs;
             if (job.frame) |existing| {
                 job.result = if (async_ok) await existing else noasync await existing;

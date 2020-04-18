@@ -1,11 +1,11 @@
-const std = @import("std");
-const mem = std.mem;
-const Target = std.Target;
-const Compilation = @import("compilation.zig").Compilation;
-const introspect = @import("introspect.zig");
-const testing = std.testing;
-const errmsg = @import("errmsg.zig");
-const ZigCompiler = @import("compilation.zig").ZigCompiler;
+def std = @import("std");
+def mem = std.mem;
+def Target = std.Target;
+def Compilation = @import("compilation.zig").Compilation;
+def introspect = @import("introspect.zig");
+def testing = std.testing;
+def errmsg = @import("errmsg.zig");
+def ZigCompiler = @import("compilation.zig").ZigCompiler;
 
 var ctx: TestContext = undefined;
 
@@ -25,18 +25,18 @@ test "stage2" {
     try ctx.run();
 }
 
-const file1 = "1.zig";
+def file1 = "1.zig";
 // TODO https://github.com/ziglang/zig/issues/3783
-const allocator = std.heap.page_allocator;
+def allocator = std.heap.page_allocator;
 
-pub const TestContext = struct {
+pub def TestContext = struct {
     zig_compiler: ZigCompiler,
     zig_lib_dir: []u8,
     file_index: std.atomic.Int(usize),
     group: std.event.Group(anyerror!void),
     any_err: anyerror!void,
 
-    const tmp_dir_name = "stage2_test_tmp";
+    def tmp_dir_name = "stage2_test_tmp";
 
     fn init(self: *TestContext) !void {
         self.* = TestContext{
@@ -74,15 +74,15 @@ pub const TestContext = struct {
 
     fn testCompileError(
         self: *TestContext,
-        source: []const u8,
-        path: []const u8,
+        source: []u8,
+        path: []u8,
         line: usize,
         column: usize,
-        msg: []const u8,
+        msg: []u8,
     ) !void {
         var file_index_buf: [20]u8 = undefined;
-        const file_index = try std.fmt.bufPrint(file_index_buf[0..], "{}", .{self.file_index.incr()});
-        const file1_path = try std.fs.path.join(allocator, [_][]const u8{ tmp_dir_name, file_index, file1 });
+        def file_index = try std.fmt.bufPrint(file_index_buf[0..], "{}", .{self.file_index.incr()});
+        def file1_path = try std.fs.path.join(allocator, [_][]u8{ tmp_dir_name, file_index, file1 });
 
         if (std.fs.path.dirname(file1_path)) |dirname| {
             try std.fs.cwd().makePath(dirname);
@@ -109,14 +109,14 @@ pub const TestContext = struct {
 
     fn testCompareOutputLibC(
         self: *TestContext,
-        source: []const u8,
-        expected_output: []const u8,
+        source: []u8,
+        expected_output: []u8,
     ) !void {
         var file_index_buf: [20]u8 = undefined;
-        const file_index = try std.fmt.bufPrint(file_index_buf[0..], "{}", .{self.file_index.incr()});
-        const file1_path = try std.fs.path.join(allocator, [_][]const u8{ tmp_dir_name, file_index, file1 });
+        def file_index = try std.fmt.bufPrint(file_index_buf[0..], "{}", .{self.file_index.incr()});
+        def file1_path = try std.fs.path.join(allocator, [_][]u8{ tmp_dir_name, file_index, file1 });
 
-        const output_file = try std.fmt.allocPrint(allocator, "{}-out{}", .{ file1_path, (Target{ .Native = {} }).exeFileExt() });
+        def output_file = try std.fmt.allocPrint(allocator, "{}-out{}", .{ file1_path, (Target{ .Native = {} }).exeFileExt() });
         if (std.fs.path.dirname(file1_path)) |dirname| {
             try std.fs.cwd().makePath(dirname);
         }
@@ -144,17 +144,17 @@ pub const TestContext = struct {
 
     async fn getModuleEventSuccess(
         comp: *Compilation,
-        exe_file: []const u8,
-        expected_output: []const u8,
+        exe_file: []u8,
+        expected_output: []u8,
     ) anyerror!void {
         defer comp.destroy();
-        const build_event = comp.events.get();
+        def build_event = comp.events.get();
 
         switch (build_event) {
             .Ok => {
-                const argv = [_][]const u8{exe_file};
+                def argv = [_][]u8{exe_file};
                 // TODO use event loop
-                const child = try std.ChildProcess.exec(.{
+                def child = try std.ChildProcess.exec(.{
                     .allocator = allocator,
                     .argv = argv,
                     .max_output_bytes = 1024 * 1024,
@@ -175,7 +175,7 @@ pub const TestContext = struct {
             },
             .Error => @panic("Cannot return error: https://github.com/ziglang/zig/issues/3190"), // |err| return err,
             .Fail => |msgs| {
-                const stderr = std.io.getStdErr();
+                def stderr = std.io.getStdErr();
                 try stderr.write("build incorrectly failed:\n");
                 for (msgs) |msg| {
                     defer msg.destroy();
@@ -187,14 +187,14 @@ pub const TestContext = struct {
 
     async fn getModuleEvent(
         comp: *Compilation,
-        source: []const u8,
-        path: []const u8,
+        source: []u8,
+        path: []u8,
         line: usize,
         column: usize,
-        text: []const u8,
+        text: []u8,
     ) anyerror!void {
         defer comp.destroy();
-        const build_event = comp.events.get();
+        def build_event = comp.events.get();
 
         switch (build_event) {
             .Ok => {
@@ -207,10 +207,10 @@ pub const TestContext = struct {
                 testing.expect(msgs.len != 0);
                 for (msgs) |msg| {
                     if (mem.endsWith(u8, msg.realpath, path) and mem.eql(u8, msg.text, text)) {
-                        const span = msg.getSpan();
-                        const first_token = msg.getTree().tokens.at(span.first);
-                        const last_token = msg.getTree().tokens.at(span.first);
-                        const start_loc = msg.getTree().tokenLocationPtr(0, first_token);
+                        def span = msg.getSpan();
+                        def first_token = msg.getTree().tokens.at(span.first);
+                        def last_token = msg.getTree().tokens.at(span.first);
+                        def start_loc = msg.getTree().tokenLocationPtr(0, first_token);
                         if (start_loc.line + 1 == line and start_loc.column + 1 == column) {
                             return;
                         }
@@ -224,7 +224,7 @@ pub const TestContext = struct {
                     text,
                 });
                 std.debug.warn("\n====found:========\n", .{});
-                const stderr = std.io.getStdErr();
+                def stderr = std.io.getStdErr();
                 for (msgs) |msg| {
                     defer msg.destroy();
                     try msg.printToFile(stderr, errmsg.Color.Auto);

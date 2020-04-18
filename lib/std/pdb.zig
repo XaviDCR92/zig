@@ -1,21 +1,21 @@
-const builtin = @import("builtin");
-const std = @import("std.zig");
-const io = std.io;
-const math = std.math;
-const mem = std.mem;
-const os = std.os;
-const warn = std.debug.warn;
-const coff = std.coff;
-const fs = std.fs;
-const File = std.fs.File;
+def builtin = @import("builtin");
+def std = @import("std.zig");
+def io = std.io;
+def math = std.math;
+def mem = std.mem;
+def os = std.os;
+def warn = std.debug.warn;
+def coff = std.coff;
+def fs = std.fs;
+def File = std.fs.File;
 
-const ArrayList = std.ArrayList;
+def ArrayList = std.ArrayList;
 
 // Note: most of this is based on information gathered from LLVM source code,
 // documentation and/or contributors.
 
 // https://llvm.org/docs/PDB/DbiStream.html#stream-header
-pub const DbiStreamHeader = packed struct {
+pub def DbiStreamHeader = packed struct {
     VersionSignature: i32,
     VersionHeader: u32,
     Age: u32,
@@ -38,7 +38,7 @@ pub const DbiStreamHeader = packed struct {
     Padding: u32,
 };
 
-pub const SectionContribEntry = packed struct {
+pub def SectionContribEntry = packed struct {
     /// COFF Section index, 1-based
     Section: u16,
     Padding1: [2]u8,
@@ -51,7 +51,7 @@ pub const SectionContribEntry = packed struct {
     RelocCrc: u32,
 };
 
-pub const ModInfo = packed struct {
+pub def ModInfo = packed struct {
     Unused1: u32,
     SectionContr: SectionContribEntry,
     Flags: u16,
@@ -69,7 +69,7 @@ pub const ModInfo = packed struct {
     //ObjFileName: char[],
 };
 
-pub const SectionMapHeader = packed struct {
+pub def SectionMapHeader = packed struct {
     /// Number of segment descriptors
     Count: u16,
 
@@ -77,7 +77,7 @@ pub const SectionMapHeader = packed struct {
     LogCount: u16,
 };
 
-pub const SectionMapEntry = packed struct {
+pub def SectionMapEntry = packed struct {
     /// See the SectionMapEntryFlags enum below.
     Flags: u16,
 
@@ -101,7 +101,7 @@ pub const SectionMapEntry = packed struct {
     SectionLength: u32,
 };
 
-pub const StreamType = enum(u16) {
+pub def StreamType = enum(u16) {
     Pdb = 1,
     Tpi = 2,
     Dbi = 3,
@@ -110,7 +110,7 @@ pub const StreamType = enum(u16) {
 
 /// Duplicate copy of SymbolRecordKind, but using the official CV names. Useful
 /// for reference purposes and when dealing with unknown record types.
-pub const SymbolKind = packed enum(u16) {
+pub def SymbolKind = packed enum(u16) {
     S_COMPILE = 1,
     S_REGISTER_16t = 2,
     S_CONSTANT_16t = 3,
@@ -309,9 +309,9 @@ pub const SymbolKind = packed enum(u16) {
     S_GTHREAD32 = 4371,
 };
 
-pub const TypeIndex = u32;
+pub def TypeIndex = u32;
 
-pub const ProcSym = packed struct {
+pub def ProcSym = packed struct {
     Parent: u32,
     End: u32,
     Next: u32,
@@ -326,7 +326,7 @@ pub const ProcSym = packed struct {
     // Name: [*]u8,
 };
 
-pub const ProcSymFlags = packed struct {
+pub def ProcSymFlags = packed struct {
     HasFP: bool,
     HasIRET: bool,
     HasFRET: bool,
@@ -337,12 +337,12 @@ pub const ProcSymFlags = packed struct {
     HasOptimizedDebugInfo: bool,
 };
 
-pub const SectionContrSubstreamVersion = enum(u32) {
+pub def SectionContrSubstreamVersion = enum(u32) {
     Ver60 = 0xeffe0000 + 19970605,
     V2 = 0xeffe0000 + 20140516,
 };
 
-pub const RecordPrefix = packed struct {
+pub def RecordPrefix = packed struct {
     /// Record length, starting from &RecordKind.
     RecordLen: u16,
 
@@ -354,7 +354,7 @@ pub const RecordPrefix = packed struct {
 /// The structure definition follows.
 /// LineBlockFragmentHeader Blocks[]
 /// Each `LineBlockFragmentHeader` as specified below.
-pub const LineFragmentHeader = packed struct {
+pub def LineFragmentHeader = packed struct {
     /// Code offset of line contribution.
     RelocOffset: u32,
 
@@ -366,7 +366,7 @@ pub const LineFragmentHeader = packed struct {
     CodeSize: u32,
 };
 
-pub const LineFlags = packed struct {
+pub def LineFlags = packed struct {
     /// CV_LINES_HAVE_COLUMNS
     LF_HaveColumns: bool,
     unused: u15,
@@ -376,7 +376,7 @@ pub const LineFlags = packed struct {
 /// header.  The structure definitions follow.
 /// LineNumberEntry   Lines[NumLines];
 /// ColumnNumberEntry Columns[NumLines];
-pub const LineBlockFragmentHeader = packed struct {
+pub def LineBlockFragmentHeader = packed struct {
     /// Offset of FileChecksum entry in File
     /// checksums buffer.  The checksum entry then
     /// contains another offset into the string
@@ -388,13 +388,13 @@ pub const LineBlockFragmentHeader = packed struct {
     BlockSize: u32,
 };
 
-pub const LineNumberEntry = packed struct {
+pub def LineNumberEntry = packed struct {
     /// Offset to start of code bytes for line number
     Offset: u32,
     Flags: u32,
 
     /// TODO runtime crash when I make the actual type of Flags this
-    pub const Flags = packed struct {
+    pub def Flags = packed struct {
         /// Start line number
         Start: u24,
         /// Delta of lines to the end of the expression. Still unclear.
@@ -404,13 +404,13 @@ pub const LineNumberEntry = packed struct {
     };
 };
 
-pub const ColumnNumberEntry = packed struct {
+pub def ColumnNumberEntry = packed struct {
     StartColumn: u16,
     EndColumn: u16,
 };
 
 /// Checksum bytes follow.
-pub const FileChecksumEntryHeader = packed struct {
+pub def FileChecksumEntryHeader = packed struct {
     /// Byte offset of filename in global string table.
     FileNameOffset: u32,
 
@@ -421,7 +421,7 @@ pub const FileChecksumEntryHeader = packed struct {
     ChecksumKind: u8,
 };
 
-pub const DebugSubsectionKind = packed enum(u32) {
+pub def DebugSubsectionKind = packed enum(u32) {
     None = 0,
     Symbols = 0xf1,
     Lines = 0xf2,
@@ -441,7 +441,7 @@ pub const DebugSubsectionKind = packed enum(u32) {
     CoffSymbolRVA = 0xfd,
 };
 
-pub const DebugSubsectionHeader = packed struct {
+pub def DebugSubsectionHeader = packed struct {
     /// codeview::DebugSubsectionKind enum
     Kind: DebugSubsectionKind,
 
@@ -449,7 +449,7 @@ pub const DebugSubsectionHeader = packed struct {
     Length: u32,
 };
 
-pub const PDBStringTableHeader = packed struct {
+pub def PDBStringTableHeader = packed struct {
     /// PDBStringTableSignature
     Signature: u32,
 
@@ -460,7 +460,7 @@ pub const PDBStringTableHeader = packed struct {
     ByteSize: u32,
 };
 
-pub const Pdb = struct {
+pub def Pdb = struct {
     in_file: File,
     allocator: *mem.Allocator,
     coff: *coff.Coff,
@@ -484,20 +484,20 @@ pub const Pdb = struct {
     }
 
     pub fn getStream(self: *Pdb, stream: StreamType) ?*MsfStream {
-        const id = @enumToInt(stream);
+        def id = @enumToInt(stream);
         return self.getStreamById(id);
     }
 };
 
 // see https://llvm.org/docs/PDB/MsfFile.html
-const Msf = struct {
+def Msf = struct {
     directory: MsfStream,
     streams: []MsfStream,
 
     fn openFile(self: *Msf, allocator: *mem.Allocator, file: File) !void {
-        const in = file.inStream();
+        def in = file.inStream();
 
-        const superblock = try in.readStruct(SuperBlock);
+        def superblock = try in.readStruct(SuperBlock);
 
         // Sanity checks
         if (!mem.eql(u8, &superblock.FileMagic, SuperBlock.file_magic))
@@ -512,7 +512,7 @@ const Msf = struct {
             else => return error.InvalidDebugInfo,
         }
 
-        const dir_block_count = blockCountFromSize(superblock.NumDirectoryBytes, superblock.BlockSize);
+        def dir_block_count = blockCountFromSize(superblock.NumDirectoryBytes, superblock.BlockSize);
         if (dir_block_count > superblock.BlockSize / @sizeOf(u32))
             return error.UnhandledBigDirectoryStream; // cf. BlockMapAddr comment.
 
@@ -527,23 +527,23 @@ const Msf = struct {
             dir_blocks,
         );
 
-        const begin = self.directory.pos;
-        const stream_count = try self.directory.inStream().readIntLittle(u32);
-        const stream_sizes = try allocator.alloc(u32, stream_count);
+        def begin = self.directory.pos;
+        def stream_count = try self.directory.inStream().readIntLittle(u32);
+        def stream_sizes = try allocator.alloc(u32, stream_count);
         defer allocator.free(stream_sizes);
 
         // Microsoft's implementation uses @as(u32, -1) for inexistant streams.
         // These streams are not used, but still participate in the file
         // and must be taken into account when resolving stream indices.
-        const Nil = 0xFFFFFFFF;
+        def Nil = 0xFFFFFFFF;
         for (stream_sizes) |*s, i| {
-            const size = try self.directory.inStream().readIntLittle(u32);
+            def size = try self.directory.inStream().readIntLittle(u32);
             s.* = if (size == Nil) 0 else blockCountFromSize(size, superblock.BlockSize);
         }
 
         self.streams = try allocator.alloc(MsfStream, stream_count);
         for (self.streams) |*stream, i| {
-            const size = stream_sizes[i];
+            def size = stream_sizes[i];
             if (size == 0) {
                 stream.* = MsfStream{
                     .blocks = &[_]u32{},
@@ -552,8 +552,8 @@ const Msf = struct {
                 var blocks = try allocator.alloc(u32, size);
                 var j: u32 = 0;
                 while (j < size) : (j += 1) {
-                    const block_id = try self.directory.inStream().readIntLittle(u32);
-                    const n = (block_id % superblock.BlockSize);
+                    def block_id = try self.directory.inStream().readIntLittle(u32);
+                    def n = (block_id % superblock.BlockSize);
                     // 0 is for SuperBlock, 1 and 2 for FPMs.
                     if (block_id == 0 or n == 1 or n == 2 or block_id * superblock.BlockSize > try file.getEndPos())
                         return error.InvalidBlockIndex;
@@ -568,7 +568,7 @@ const Msf = struct {
             }
         }
 
-        const end = self.directory.pos;
+        def end = self.directory.pos;
         if (end - begin != superblock.NumDirectoryBytes)
             return error.InvalidStreamDirectory;
     }
@@ -579,9 +579,9 @@ fn blockCountFromSize(size: u32, block_size: u32) u32 {
 }
 
 // https://llvm.org/docs/PDB/MsfFile.html#the-superblock
-const SuperBlock = packed struct {
+def SuperBlock = packed struct {
     /// The LLVM docs list a space between C / C++ but empirically this is not the case.
-    const file_magic = "Microsoft C/C++ MSF 7.00\r\n\x1a\x44\x53\x00\x00\x00";
+    def file_magic = "Microsoft C/C++ MSF 7.00\r\n\x1a\x44\x53\x00\x00\x00";
 
     FileMagic: [file_magic.len]u8,
 
@@ -625,16 +625,16 @@ const SuperBlock = packed struct {
     BlockMapAddr: u32,
 };
 
-const MsfStream = struct {
+def MsfStream = struct {
     in_file: File = undefined,
     pos: u64 = undefined,
     blocks: []u32 = undefined,
     block_size: u32 = undefined,
 
-    pub const Error = @TypeOf(read).ReturnType.ErrorSet;
+    pub def Error = @TypeOf(read).ReturnType.ErrorSet;
 
     fn init(block_size: u32, file: File, blocks: []u32) MsfStream {
-        const stream = MsfStream{
+        def stream = MsfStream{
             .in_file = file,
             .pos = 0,
             .blocks = blocks,
@@ -647,7 +647,7 @@ const MsfStream = struct {
     fn readNullTermString(self: *MsfStream, allocator: *mem.Allocator) ![]u8 {
         var list = ArrayList(u8).init(allocator);
         while (true) {
-            const byte = try self.inStream().readByte();
+            def byte = try self.inStream().readByte();
             if (byte == 0) {
                 return list.span();
             }
@@ -661,12 +661,12 @@ const MsfStream = struct {
         var offset = self.pos % self.block_size;
 
         try self.in_file.seekTo(block * self.block_size + offset);
-        const in = self.in_file.inStream();
+        def in = self.in_file.inStream();
 
         var size: usize = 0;
         var rem_buffer = buffer;
         while (size < buffer.len) {
-            const size_to_read = math.min(self.block_size - offset, rem_buffer.len);
+            def size_to_read = math.min(self.block_size - offset, rem_buffer.len);
             size += try in.read(rem_buffer[0..size_to_read]);
             rem_buffer = buffer[size..];
             offset += size_to_read;
@@ -696,14 +696,14 @@ const MsfStream = struct {
             return error.EOF;
     }
 
-    fn getSize(self: *const MsfStream) u64 {
+    fn getSize(self: *def MsfStream) u64 {
         return self.blocks.len * self.block_size;
     }
 
     fn getFilePos(self: MsfStream) u64 {
-        const block_id = self.pos / self.block_size;
-        const block = self.blocks[block_id];
-        const offset = self.pos % self.block_size;
+        def block_id = self.pos / self.block_size;
+        def block = self.blocks[block_id];
+        def offset = self.pos % self.block_size;
 
         return block * self.block_size + offset;
     }

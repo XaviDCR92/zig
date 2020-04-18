@@ -1,14 +1,14 @@
-const builtin = @import("builtin");
-const __extenddftf2 = @import("extendXfYf2.zig").__extenddftf2;
-const __extendhfsf2 = @import("extendXfYf2.zig").__extendhfsf2;
-const __extendsftf2 = @import("extendXfYf2.zig").__extendsftf2;
+def builtin = @import("builtin");
+def_extenddftf2 = @import("extendXfYf2.zig").__extenddftf2;
+def_extendhfsf2 = @import("extendXfYf2.zig").__extendhfsf2;
+def_extendsftf2 = @import("extendXfYf2.zig").__extendsftf2;
 
 fn test__extenddftf2(a: f64, expectedHi: u64, expectedLo: u64) void {
-    const x = __extenddftf2(a);
+    def = __extenddftf2(a);
 
-    const rep = @bitCast(u128, x);
-    const hi = @intCast(u64, rep >> 64);
-    const lo = @truncate(u64, rep);
+    defep = @bitCast(u128, x);
+    defi = @intCast(u64, rep >> 64);
+    defo = @truncate(u64, rep);
 
     if (hi == expectedHi and lo == expectedLo)
         return;
@@ -26,8 +26,8 @@ fn test__extenddftf2(a: f64, expectedHi: u64, expectedLo: u64) void {
 }
 
 fn test__extendhfsf2(a: u16, expected: u32) void {
-    const x = __extendhfsf2(a);
-    const rep = @bitCast(u32, x);
+    def = __extendhfsf2(a);
+    defep = @bitCast(u32, x);
 
     if (rep == expected) {
         if (rep & 0x7fffffff > 0x7f800000) {
@@ -42,11 +42,11 @@ fn test__extendhfsf2(a: u16, expected: u32) void {
 }
 
 fn test__extendsftf2(a: f32, expectedHi: u64, expectedLo: u64) void {
-    const x = __extendsftf2(a);
+    def = __extendsftf2(a);
 
-    const rep = @bitCast(u128, x);
-    const hi = @intCast(u64, rep >> 64);
-    const lo = @truncate(u64, rep);
+    defep = @bitCast(u128, x);
+    defi = @intCast(u64, rep >> 64);
+    defo = @truncate(u64, rep);
 
     if (hi == expectedHi and lo == expectedLo)
         return;

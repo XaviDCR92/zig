@@ -1,5 +1,5 @@
 // NTSTATUS codes from https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55?
-pub const NTSTATUS = extern enum(u32) {
+pub def NTSTATUS = extern enum(u32) {
     /// The operation completed successfully.
     SUCCESS = 0x00000000,
 

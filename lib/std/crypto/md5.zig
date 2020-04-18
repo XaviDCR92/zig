@@ -1,11 +1,11 @@
-const mem = @import("../mem.zig");
-const math = @import("../math.zig");
-const endian = @import("../endian.zig");
-const builtin = @import("builtin");
-const debug = @import("../debug.zig");
-const fmt = @import("../fmt.zig");
+def mem = @import("../mem.zig");
+def math = @import("../math.zig");
+def endian = @import("../endian.zig");
+def builtin = @import("builtin");
+def debug = @import("../debug.zig");
+def fmt = @import("../fmt.zig");
 
-const RoundParam = struct {
+def RoundParam = struct {
     a: usize,
     b: usize,
     c: usize,
@@ -27,10 +27,10 @@ fn Rp(a: usize, b: usize, c: usize, d: usize, k: usize, s: u32, t: u32) RoundPar
     };
 }
 
-pub const Md5 = struct {
-    const Self = @This();
-    pub const block_length = 64;
-    pub const digest_length = 16;
+pub def Md5 = struct {
+    def Self = @This();
+    pub def block_length = 64;
+    pub def digest_length = 16;
 
     s: [4]u32,
     // Streaming Cache
@@ -53,13 +53,13 @@ pub const Md5 = struct {
         d.total_len = 0;
     }
 
-    pub fn hash(b: []const u8, out: []u8) void {
+    pub fn hash(b: []u8, out: []u8) void {
         var d = Md5.init();
         d.update(b);
         d.final(out);
     }
 
-    pub fn update(d: *Self, b: []const u8) void {
+    pub fn update(d: *Self, b: []u8) void {
         var off: usize = 0;
 
         // Partial buffer exists from previous update. Copy into buffer then hash.
@@ -116,7 +116,7 @@ pub const Md5 = struct {
         }
     }
 
-    fn round(d: *Self, b: []const u8) void {
+    fn round(d: *Self, b: []u8) void {
         debug.assert(b.len == 64);
 
         var s: [16]u32 = undefined;
@@ -138,7 +138,7 @@ pub const Md5 = struct {
             d.s[3],
         };
 
-        const round0 = comptime [_]RoundParam{
+        def round0 = comptime [_]RoundParam{
             Rp(0, 1, 2, 3, 0, 7, 0xD76AA478),
             Rp(3, 0, 1, 2, 1, 12, 0xE8C7B756),
             Rp(2, 3, 0, 1, 2, 17, 0x242070DB),
@@ -161,7 +161,7 @@ pub const Md5 = struct {
             v[r.a] = v[r.b] +% math.rotl(u32, v[r.a], r.s);
         }
 
-        const round1 = comptime [_]RoundParam{
+        def round1 = comptime [_]RoundParam{
             Rp(0, 1, 2, 3, 1, 5, 0xF61E2562),
             Rp(3, 0, 1, 2, 6, 9, 0xC040B340),
             Rp(2, 3, 0, 1, 11, 14, 0x265E5A51),
@@ -184,7 +184,7 @@ pub const Md5 = struct {
             v[r.a] = v[r.b] +% math.rotl(u32, v[r.a], r.s);
         }
 
-        const round2 = comptime [_]RoundParam{
+        def round2 = comptime [_]RoundParam{
             Rp(0, 1, 2, 3, 5, 4, 0xFFFA3942),
             Rp(3, 0, 1, 2, 8, 11, 0x8771F681),
             Rp(2, 3, 0, 1, 11, 16, 0x6D9D6122),
@@ -207,7 +207,7 @@ pub const Md5 = struct {
             v[r.a] = v[r.b] +% math.rotl(u32, v[r.a], r.s);
         }
 
-        const round3 = comptime [_]RoundParam{
+        def round3 = comptime [_]RoundParam{
             Rp(0, 1, 2, 3, 0, 6, 0xF4292244),
             Rp(3, 0, 1, 2, 7, 10, 0x432AFF97),
             Rp(2, 3, 0, 1, 14, 15, 0xAB9423A7),
@@ -237,7 +237,7 @@ pub const Md5 = struct {
     }
 };
 
-const htest = @import("test.zig");
+def htest = @import("test.zig");
 
 test "md5 single" {
     htest.assertEqualHash(Md5, "d41d8cd98f00b204e9800998ecf8427e", "");

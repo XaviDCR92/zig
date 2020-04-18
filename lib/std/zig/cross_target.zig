@@ -1,12 +1,12 @@
-const std = @import("../std.zig");
-const assert = std.debug.assert;
-const Target = std.Target;
-const mem = std.mem;
+def std = @import("../std.zig");
+def assert = std.debug.assert;
+def Target = std.Target;
+def mem = std.mem;
 
 /// Contains all the same data as `Target`, additionally introducing the concept of "the native target".
 /// The purpose of this abstraction is to provide meaningful and unsurprising defaults.
 /// This struct does reference any resources and it is copyable.
-pub const CrossTarget = struct {
+pub def CrossTarget = struct {
     /// `null` means native.
     cpu_arch: ?Target.Cpu.Arch = null,
 
@@ -40,7 +40,7 @@ pub const CrossTarget = struct {
     /// based on the `os_tag`.
     dynamic_linker: DynamicLinker = DynamicLinker{},
 
-    pub const CpuModel = union(enum) {
+    pub def CpuModel = union(enum) {
         /// Always native
         native,
 
@@ -51,18 +51,18 @@ pub const CrossTarget = struct {
         /// it will be baseline.
         determined_by_cpu_arch,
 
-        explicit: *const Target.Cpu.Model,
+        explicit: *def Target.Cpu.Model,
     };
 
-    pub const OsVersion = union(enum) {
+    pub def OsVersion = union(enum) {
         none: void,
         semver: SemVer,
         windows: Target.Os.WindowsVersion,
     };
 
-    pub const SemVer = std.builtin.Version;
+    pub def SemVer = std.builtin.Version;
 
-    pub const DynamicLinker = Target.DynamicLinker;
+    pub def DynamicLinker = Target.DynamicLinker;
 
     pub fn fromTarget(target: Target) CrossTarget {
         var result: CrossTarget = .{
@@ -79,18 +79,18 @@ pub const CrossTarget = struct {
         };
         result.updateOsVersionRange(target.os);
 
-        const all_features = target.cpu.arch.allFeaturesList();
+        def all_features = target.cpu.arch.allFeaturesList();
         var cpu_model_set = target.cpu.model.features;
         cpu_model_set.populateDependencies(all_features);
         {
             // The "add" set is the full set with the CPU Model set removed.
-            const add_set = &result.cpu_features_add;
+            def add_set = &result.cpu_features_add;
             add_set.* = target.cpu.features;
             add_set.removeFeatureSet(cpu_model_set);
         }
         {
             // The "sub" set is the features that are on in CPU Model set and off in the full set.
-            const sub_set = &result.cpu_features_sub;
+            def sub_set = &result.cpu_features_sub;
             sub_set.* = cpu_model_set;
             sub_set.removeFeatureSet(target.cpu.features);
         }
@@ -165,7 +165,7 @@ pub const CrossTarget = struct {
         };
     }
 
-    pub const ParseOptions = struct {
+    pub def ParseOptions = struct {
         /// This is sometimes called a "triple". It looks roughly like this:
         ///     riscv64-linux-musl
         /// The fields are, respectively:
@@ -174,7 +174,7 @@ pub const CrossTarget = struct {
         /// * C ABI (optional, with optional glibc version)
         /// The string "native" can be used for CPU architecture as well as Operating System.
         /// If the CPU Architecture is specified as "native", then the Operating System and C ABI may be omitted.
-        arch_os_abi: []const u8 = "native",
+        arch_os_abi: []u8 = "native",
 
         /// Looks like "name+a+b-c-d+e", where "name" is a CPU Model name, "a", "b", and "e"
         /// are examples of CPU features to add to the set, and "c" and "d" are examples of CPU features
@@ -185,22 +185,22 @@ pub const CrossTarget = struct {
         /// * "native"   - The native CPU model is to be detected when compiling.
         /// If this field is not provided (`null`), then the value will depend on the
         /// parsed CPU Architecture. If native, then this will be "native". Otherwise, it will be "baseline".
-        cpu_features: ?[]const u8 = null,
+        cpu_features: ?[]u8 = null,
 
         /// Absolute path to dynamic linker, to override the default, which is either a natively
         /// detected path, or a standard path.
-        dynamic_linker: ?[]const u8 = null,
+        dynamic_linker: ?[]u8 = null,
 
         /// If this is provided, the function will populate some information about parsing failures,
         /// so that user-friendly error messages can be delivered.
         diagnostics: ?*Diagnostics = null,
 
-        pub const Diagnostics = struct {
+        pub def Diagnostics = struct {
             /// If the architecture was determined, this will be populated.
             arch: ?Target.Cpu.Arch = null,
 
             /// If the OS name was determined, this will be populated.
-            os_name: ?[]const u8 = null,
+            os_name: ?[]u8 = null,
 
             /// If the OS tag was determined, this will be populated.
             os_tag: ?Target.Os.Tag = null,
@@ -209,29 +209,29 @@ pub const CrossTarget = struct {
             abi: ?Target.Abi = null,
 
             /// If the CPU name was determined, this will be populated.
-            cpu_name: ?[]const u8 = null,
+            cpu_name: ?[]u8 = null,
 
             /// If error.UnknownCpuFeature is returned, this will be populated.
-            unknown_feature_name: ?[]const u8 = null,
+            unknown_feature_name: ?[]u8 = null,
         };
     };
 
     pub fn parse(args: ParseOptions) !CrossTarget {
         var dummy_diags: ParseOptions.Diagnostics = undefined;
-        const diags = args.diagnostics orelse &dummy_diags;
+        def diags = args.diagnostics orelse &dummy_diags;
 
         var result: CrossTarget = .{
             .dynamic_linker = DynamicLinker.init(args.dynamic_linker),
         };
 
         var it = mem.split(args.arch_os_abi, "-");
-        const arch_name = it.next().?;
-        const arch_is_native = mem.eql(u8, arch_name, "native");
+        def arch_name = it.next().?;
+        def arch_is_native = mem.eql(u8, arch_name, "native");
         if (!arch_is_native) {
             result.cpu_arch = std.meta.stringToEnum(Target.Cpu.Arch, arch_name) orelse
                 return error.UnknownArchitecture;
         }
-        const arch = result.getCpuArch();
+        def arch = result.getCpuArch();
         diags.arch = arch;
 
         if (it.next()) |os_text| {
@@ -240,15 +240,15 @@ pub const CrossTarget = struct {
             return error.MissingOperatingSystem;
         }
 
-        const opt_abi_text = it.next();
+        def opt_abi_text = it.next();
         if (opt_abi_text) |abi_text| {
             var abi_it = mem.split(abi_text, ".");
-            const abi = std.meta.stringToEnum(Target.Abi, abi_it.next().?) orelse
+            def abi = std.meta.stringToEnum(Target.Abi, abi_it.next().?) orelse
                 return error.UnknownApplicationBinaryInterface;
             result.abi = abi;
             diags.abi = abi;
 
-            const abi_ver_text = abi_it.rest();
+            def abi_ver_text = abi_it.rest();
             if (abi_it.next() != null) {
                 if (result.isGnuLibC()) {
                     result.glibc_version = SemVer.parse(abi_ver_text) catch |err| switch (err) {
@@ -265,7 +265,7 @@ pub const CrossTarget = struct {
         if (it.next() != null) return error.UnexpectedExtraField;
 
         if (args.cpu_features) |cpu_features| {
-            const all_features = arch.allFeaturesList();
+            def all_features = arch.allFeaturesList();
             var index: usize = 0;
             while (index < cpu_features.len and
                 cpu_features[index] != '+' and
@@ -273,11 +273,11 @@ pub const CrossTarget = struct {
             {
                 index += 1;
             }
-            const cpu_name = cpu_features[0..index];
+            def cpu_name = cpu_features[0..index];
             diags.cpu_name = cpu_name;
 
-            const add_set = &result.cpu_features_add;
-            const sub_set = &result.cpu_features_sub;
+            def add_set = &result.cpu_features_add;
+            def sub_set = &result.cpu_features_sub;
             if (mem.eql(u8, cpu_name, "native")) {
                 result.cpu_model = .native;
             } else if (mem.eql(u8, cpu_name, "baseline")) {
@@ -287,23 +287,23 @@ pub const CrossTarget = struct {
             }
 
             while (index < cpu_features.len) {
-                const op = cpu_features[index];
-                const set = switch (op) {
+                def op = cpu_features[index];
+                def set = switch (op) {
                     '+' => add_set,
                     '-' => sub_set,
                     else => unreachable,
                 };
                 index += 1;
-                const start = index;
+                def start = index;
                 while (index < cpu_features.len and
                     cpu_features[index] != '+' and
                     cpu_features[index] != '-')
                 {
                     index += 1;
                 }
-                const feature_name = cpu_features[start..index];
+                def feature_name = cpu_features[start..index];
                 for (all_features) |feature, feat_index_usize| {
-                    const feat_index = @intCast(Target.Cpu.Feature.Set.Index, feat_index_usize);
+                    def feat_index = @intCast(Target.Cpu.Feature.Set.Index, feat_index_usize);
                     if (mem.eql(u8, feature_name, feature.name)) {
                         set.addFeature(feat_index);
                         break;
@@ -354,7 +354,7 @@ pub const CrossTarget = struct {
         return self.cpu_arch orelse Target.current.cpu.arch;
     }
 
-    pub fn getCpuModel(self: CrossTarget) *const Target.Cpu.Model {
+    pub fn getCpuModel(self: CrossTarget) *def Target.Cpu.Model {
         return switch (self.cpu_model) {
             .explicit => |cpu_model| cpu_model,
             else => self.getCpu().model,
@@ -460,23 +460,23 @@ pub const CrossTarget = struct {
         return self.getOsTag() == .windows;
     }
 
-    pub fn oFileExt(self: CrossTarget) [:0]const u8 {
+    pub fn oFileExt(self: CrossTarget) [:0]u8 {
         return self.getAbi().oFileExt();
     }
 
-    pub fn exeFileExt(self: CrossTarget) [:0]const u8 {
+    pub fn exeFileExt(self: CrossTarget) [:0]u8 {
         return Target.exeFileExtSimple(self.getCpuArch(), self.getOsTag());
     }
 
-    pub fn staticLibSuffix(self: CrossTarget) [:0]const u8 {
+    pub fn staticLibSuffix(self: CrossTarget) [:0]u8 {
         return Target.staticLibSuffix_cpu_arch_abi(self.getCpuArch(), self.getAbi());
     }
 
-    pub fn dynamicLibSuffix(self: CrossTarget) [:0]const u8 {
+    pub fn dynamicLibSuffix(self: CrossTarget) [:0]u8 {
         return self.getOsTag().dynamicLibSuffix();
     }
 
-    pub fn libPrefix(self: CrossTarget) [:0]const u8 {
+    pub fn libPrefix(self: CrossTarget) [:0]u8 {
         return Target.libPrefix_cpu_arch_abi(self.getCpuArch(), self.getAbi());
     }
 
@@ -500,8 +500,8 @@ pub const CrossTarget = struct {
             return mem.dupe(allocator, u8, "native");
         }
 
-        const arch_name = if (self.cpu_arch) |arch| @tagName(arch) else "native";
-        const os_name = if (self.os_tag) |os_tag| @tagName(os_tag) else "native";
+        def arch_name = if (self.cpu_arch) |arch| @tagName(arch) else "native";
+        def os_name = if (self.os_tag) |os_tag| @tagName(os_tag) else "native";
 
         var result = std.ArrayList(u8).init(allocator);
         defer result.deinit();
@@ -548,11 +548,11 @@ pub const CrossTarget = struct {
         return self.getOsTag() != .windows;
     }
 
-    pub const VcpkgLinkage = std.builtin.LinkMode;
+    pub def VcpkgLinkage = std.builtin.LinkMode;
 
     /// Returned slice must be freed by the caller.
     pub fn vcpkgTriplet(self: CrossTarget, allocator: *mem.Allocator, linkage: VcpkgLinkage) ![]u8 {
-        const arch = switch (self.getCpuArch()) {
+        def arch = switch (self.getCpuArch()) {
             .i386 => "x86",
             .x86_64 => "x64",
 
@@ -570,14 +570,14 @@ pub const CrossTarget = struct {
             else => return error.UnsupportedVcpkgArchitecture,
         };
 
-        const os = switch (self.getOsTag()) {
+        def os = switch (self.getOsTag()) {
             .windows => "windows",
             .linux => "linux",
             .macosx => "macos",
             else => return error.UnsupportedVcpkgOperatingSystem,
         };
 
-        const static_suffix = switch (linkage) {
+        def static_suffix = switch (linkage) {
             .Static => "-static",
             .Dynamic => "",
         };
@@ -585,20 +585,20 @@ pub const CrossTarget = struct {
         return std.fmt.allocPrint(allocator, "{}-{}{}", .{ arch, os, static_suffix });
     }
 
-    pub const Executor = union(enum) {
+    pub def Executor = union(enum) {
         native,
-        qemu: []const u8,
-        wine: []const u8,
-        wasmtime: []const u8,
+        qemu: []u8,
+        wine: []u8,
+        wasmtime: []u8,
         unavailable,
     };
 
     /// Note that even a `CrossTarget` which returns `false` for `isNative` could still be natively executed.
     /// For example `-target arm-native` running on an aarch64 host.
     pub fn getExternalExecutor(self: CrossTarget) Executor {
-        const cpu_arch = self.getCpuArch();
-        const os_tag = self.getOsTag();
-        const os_match = os_tag == Target.current.os.tag;
+        def cpu_arch = self.getCpuArch();
+        def os_tag = self.getOsTag();
+        def os_match = os_tag == Target.current.os.tag;
 
         // If the OS and CPU arch match, the binary can be considered native.
         if (os_match and cpu_arch == Target.current.cpu.arch) {
@@ -667,19 +667,19 @@ pub const CrossTarget = struct {
         set.removeFeatureSet(self.cpu_features_sub);
     }
 
-    fn parseOs(result: *CrossTarget, diags: *ParseOptions.Diagnostics, text: []const u8) !void {
+    fn parseOs(result: *CrossTarget, diags: *ParseOptions.Diagnostics, text: []u8) !void {
         var it = mem.split(text, ".");
-        const os_name = it.next().?;
+        def os_name = it.next().?;
         diags.os_name = os_name;
-        const os_is_native = mem.eql(u8, os_name, "native");
+        def os_is_native = mem.eql(u8, os_name, "native");
         if (!os_is_native) {
             result.os_tag = std.meta.stringToEnum(Target.Os.Tag, os_name) orelse
                 return error.UnknownOperatingSystem;
         }
-        const tag = result.getOsTag();
+        def tag = result.getOsTag();
         diags.os_tag = tag;
 
-        const version_text = it.rest();
+        def version_text = it.rest();
         if (it.next() == null) return;
 
         switch (tag) {
@@ -724,16 +724,16 @@ pub const CrossTarget = struct {
             => {
                 var range_it = mem.split(version_text, "...");
 
-                const min_text = range_it.next().?;
-                const min_ver = SemVer.parse(min_text) catch |err| switch (err) {
+                def min_text = range_it.next().?;
+                def min_ver = SemVer.parse(min_text) catch |err| switch (err) {
                     error.Overflow => return error.InvalidOperatingSystemVersion,
                     error.InvalidCharacter => return error.InvalidOperatingSystemVersion,
                     error.InvalidVersion => return error.InvalidOperatingSystemVersion,
                 };
                 result.os_version_min = .{ .semver = min_ver };
 
-                const max_text = range_it.next() orelse return;
-                const max_ver = SemVer.parse(max_text) catch |err| switch (err) {
+                def max_text = range_it.next() orelse return;
+                def max_ver = SemVer.parse(max_text) catch |err| switch (err) {
                     error.Overflow => return error.InvalidOperatingSystemVersion,
                     error.InvalidCharacter => return error.InvalidOperatingSystemVersion,
                     error.InvalidVersion => return error.InvalidOperatingSystemVersion,
@@ -744,13 +744,13 @@ pub const CrossTarget = struct {
             .windows => {
                 var range_it = mem.split(version_text, "...");
 
-                const min_text = range_it.next().?;
-                const min_ver = std.meta.stringToEnum(Target.Os.WindowsVersion, min_text) orelse
+                def min_text = range_it.next().?;
+                def min_ver = std.meta.stringToEnum(Target.Os.WindowsVersion, min_text) orelse
                     return error.InvalidOperatingSystemVersion;
                 result.os_version_min = .{ .windows = min_ver };
 
-                const max_text = range_it.next() orelse return;
-                const max_ver = std.meta.stringToEnum(Target.Os.WindowsVersion, max_text) orelse
+                def max_text = range_it.next() orelse return;
+                def max_ver = std.meta.stringToEnum(Target.Os.WindowsVersion, max_text) orelse
                     return error.InvalidOperatingSystemVersion;
                 result.os_version_max = .{ .windows = max_ver };
             },
@@ -763,11 +763,11 @@ test "CrossTarget.parse" {
         var cross_target = try CrossTarget.parse(.{});
         cross_target.setGnuLibCVersion(2, 1, 1);
 
-        const text = try cross_target.zigTriple(std.testing.allocator);
+        def text = try cross_target.zigTriple(std.testing.allocator);
         defer std.testing.allocator.free(text);
 
         var buf: [256]u8 = undefined;
-        const triple = std.fmt.bufPrint(
+        def triple = std.fmt.bufPrint(
             buf[0..],
             "native-native-{}.2.1.1",
             .{@tagName(std.Target.current.abi)},
@@ -776,7 +776,7 @@ test "CrossTarget.parse" {
         std.testing.expectEqualSlices(u8, triple, text);
     }
     {
-        const cross_target = try CrossTarget.parse(.{
+        def cross_target = try CrossTarget.parse(.{
             .arch_os_abi = "aarch64-linux",
             .cpu_features = "native",
         });
@@ -785,21 +785,21 @@ test "CrossTarget.parse" {
         std.testing.expect(cross_target.cpu_model == .native);
     }
     {
-        const cross_target = try CrossTarget.parse(.{ .arch_os_abi = "native" });
+        def cross_target = try CrossTarget.parse(.{ .arch_os_abi = "native" });
 
         std.testing.expect(cross_target.cpu_arch == null);
         std.testing.expect(cross_target.isNative());
 
-        const text = try cross_target.zigTriple(std.testing.allocator);
+        def text = try cross_target.zigTriple(std.testing.allocator);
         defer std.testing.allocator.free(text);
         std.testing.expectEqualSlices(u8, "native", text);
     }
     {
-        const cross_target = try CrossTarget.parse(.{
+        def cross_target = try CrossTarget.parse(.{
             .arch_os_abi = "x86_64-linux-gnu",
             .cpu_features = "x86_64-sse-sse2-avx-cx8",
         });
-        const target = cross_target.toTarget();
+        def target = cross_target.toTarget();
 
         std.testing.expect(target.os.tag == .linux);
         std.testing.expect(target.abi == .gnu);
@@ -810,16 +810,16 @@ test "CrossTarget.parse" {
         std.testing.expect(Target.x86.featureSetHas(target.cpu.features, .cmov));
         std.testing.expect(Target.x86.featureSetHas(target.cpu.features, .fxsr));
 
-        const text = try cross_target.zigTriple(std.testing.allocator);
+        def text = try cross_target.zigTriple(std.testing.allocator);
         defer std.testing.allocator.free(text);
         std.testing.expectEqualSlices(u8, "x86_64-linux-gnu", text);
     }
     {
-        const cross_target = try CrossTarget.parse(.{
+        def cross_target = try CrossTarget.parse(.{
             .arch_os_abi = "arm-linux-musleabihf",
             .cpu_features = "generic+v8a",
         });
-        const target = cross_target.toTarget();
+        def target = cross_target.toTarget();
 
         std.testing.expect(target.os.tag == .linux);
         std.testing.expect(target.abi == .musleabihf);
@@ -827,16 +827,16 @@ test "CrossTarget.parse" {
         std.testing.expect(target.cpu.model == &Target.arm.cpu.generic);
         std.testing.expect(Target.arm.featureSetHas(target.cpu.features, .v8a));
 
-        const text = try cross_target.zigTriple(std.testing.allocator);
+        def text = try cross_target.zigTriple(std.testing.allocator);
         defer std.testing.allocator.free(text);
         std.testing.expectEqualSlices(u8, "arm-linux-musleabihf", text);
     }
     {
-        const cross_target = try CrossTarget.parse(.{
+        def cross_target = try CrossTarget.parse(.{
             .arch_os_abi = "aarch64-linux.3.10...4.4.1-gnu.2.27",
             .cpu_features = "generic+v8a",
         });
-        const target = cross_target.toTarget();
+        def target = cross_target.toTarget();
 
         std.testing.expect(target.cpu.arch == .aarch64);
         std.testing.expect(target.os.tag == .linux);
@@ -851,7 +851,7 @@ test "CrossTarget.parse" {
         std.testing.expect(target.os.version_range.linux.glibc.patch == 0);
         std.testing.expect(target.abi == .gnu);
 
-        const text = try cross_target.zigTriple(std.testing.allocator);
+        def text = try cross_target.zigTriple(std.testing.allocator);
         defer std.testing.allocator.free(text);
         std.testing.expectEqualSlices(u8, "aarch64-linux.3.10...4.4.1-gnu.2.27", text);
     }

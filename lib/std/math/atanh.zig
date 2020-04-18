@@ -4,10 +4,10 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/atanhf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/atanh.c
 
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
-const maxInt = std.math.maxInt;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
+def maxInt = std.math.maxInt;
 
 /// Returns the hyperbolic arc-tangent of x.
 ///
@@ -16,7 +16,7 @@ const maxInt = std.math.maxInt;
 ///  - atanh(x)   = nan if |x| > 1 with signal
 ///  - atanh(nan) = nan
 pub fn atanh(x: var) @TypeOf(x) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     return switch (T) {
         f32 => atanh_32(x),
         f64 => atanh_64(x),
@@ -26,9 +26,9 @@ pub fn atanh(x: var) @TypeOf(x) {
 
 // atanh(x) = log((1 + x) / (1 - x)) / 2 = log1p(2x / (1 - x)) / 2 ~= x + x^3 / 3 + o(x^5)
 fn atanh_32(x: f32) f32 {
-    const u = @bitCast(u32, x);
-    const i = u & 0x7FFFFFFF;
-    const s = u >> 31;
+    def u = @bitCast(u32, x);
+    def i = u & 0x7FFFFFFF;
+    def s = u >> 31;
 
     var y = @bitCast(f32, i); // |x|
 
@@ -55,9 +55,9 @@ fn atanh_32(x: f32) f32 {
 }
 
 fn atanh_64(x: f64) f64 {
-    const u = @bitCast(u64, x);
-    const e = (u >> 52) & 0x7FF;
-    const s = u >> 63;
+    def u = @bitCast(u64, x);
+    def e = (u >> 52) & 0x7FF;
+    def s = u >> 63;
 
     var y = @bitCast(f64, u & (maxInt(u64) >> 1)); // |x|
 
@@ -89,7 +89,7 @@ test "math.atanh" {
 }
 
 test "math.atanh_32" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f32, atanh_32(0.0), 0.0, epsilon));
     expect(math.approxEq(f32, atanh_32(0.2), 0.202733, epsilon));
@@ -97,7 +97,7 @@ test "math.atanh_32" {
 }
 
 test "math.atanh_64" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f64, atanh_64(0.0), 0.0, epsilon));
     expect(math.approxEq(f64, atanh_64(0.2), 0.202733, epsilon));

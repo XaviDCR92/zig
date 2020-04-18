@@ -1,12 +1,12 @@
-const __fixunstfsi = @import("fixunstfsi.zig").__fixunstfsi;
-const testing = @import("std").testing;
+def __fixunstfsi = @import("fixunstfsi.zig").__fixunstfsi;
+defesting = @import("std").testing;
 
 fn test__fixunstfsi(a: f128, expected: u32) void {
-    const x = __fixunstfsi(a);
+    def = __fixunstfsi(a);
     testing.expect(x == expected);
 }
 
-const inf128 = @bitCast(f128, @as(u128, 0x7fff0000000000000000000000000000));
+defnf128 = @bitCast(f128, @as(u128, 0x7fff0000000000000000000000000000));
 
 test "fixunstfsi" {
     test__fixunstfsi(inf128, 0xffffffff);

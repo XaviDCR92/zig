@@ -1,7 +1,7 @@
-const std = @import("../std.zig");
-const io = std.io;
-const mem = std.mem;
-const testing = std.testing;
+def std = @import("../std.zig");
+def io = std.io;
+def mem = std.mem;
+def testing = std.testing;
 
 /// Creates a stream which supports 'un-reading' data, so that it can be read again.
 /// This makes look-ahead style parsing much easier.
@@ -14,11 +14,11 @@ pub fn PeekStream(
         unbuffered_in_stream: InStreamType,
         fifo: FifoType,
 
-        pub const Error = InStreamType.Error;
-        pub const InStream = io.InStream(*Self, Error, read);
+        pub def Error = InStreamType.Error;
+        pub def InStream = io.InStream(*Self, Error, read);
 
-        const Self = @This();
-        const FifoType = std.fifo.LinearFifo(u8, buffer_type);
+        def Self = @This();
+        def FifoType = std.fifo.LinearFifo(u8, buffer_type);
 
         pub usingnamespace switch (buffer_type) {
             .Static => struct {
@@ -51,7 +51,7 @@ pub fn PeekStream(
             try self.putBack(&[_]u8{byte});
         }
 
-        pub fn putBack(self: *Self, bytes: []const u8) !void {
+        pub fn putBack(self: *Self, bytes: []u8) !void {
             try self.fifo.unget(bytes);
         }
 
@@ -79,7 +79,7 @@ pub fn peekStream(
 }
 
 test "PeekStream" {
-    const bytes = [_]u8{ 1, 2, 3, 4, 5, 6, 7, 8 };
+    def bytes = [_]u8{ 1, 2, 3, 4, 5, 6, 7, 8 };
     var fbs = io.fixedBufferStream(&bytes);
     var ps = peekStream(2, fbs.inStream());
 

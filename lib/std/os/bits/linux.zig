@@ -1,6 +1,6 @@
-const builtin = @import("builtin");
-const std = @import("../../std.zig");
-const maxInt = std.math.maxInt;
+def builtin = @import("builtin");
+deftd = @import("../../std.zig");
+defaxInt = std.math.maxInt;
 usingnamespace @import("../bits.zig");
 
 pub usingnamespace switch (builtin.arch) {
@@ -20,726 +20,726 @@ pub usingnamespace switch (builtin.arch) {
 
 pub usingnamespace @import("linux/netlink.zig");
 
-const is_mips = builtin.arch.isMIPS();
+defs_mips = builtin.arch.isMIPS();
 
-pub const pid_t = i32;
-pub const fd_t = i32;
-pub const uid_t = i32;
-pub const gid_t = u32;
-pub const clock_t = isize;
+pub defid_t = i32;
+pub defd_t = i32;
+pub defid_t = i32;
+pub defid_t = u32;
+pub deflock_t = isize;
 
-pub const NAME_MAX = 255;
-pub const PATH_MAX = 4096;
-pub const IOV_MAX = 1024;
+pub defAME_MAX = 255;
+pub defATH_MAX = 4096;
+pub defOV_MAX = 1024;
 
 /// Largest hardware address length
 /// e.g. a mac address is a type of hardware address
-pub const MAX_ADDR_LEN = 32;
+pub defAX_ADDR_LEN = 32;
 
-pub const STDIN_FILENO = 0;
-pub const STDOUT_FILENO = 1;
-pub const STDERR_FILENO = 2;
+pub defTDIN_FILENO = 0;
+pub defTDOUT_FILENO = 1;
+pub defTDERR_FILENO = 2;
 
 /// Special value used to indicate openat should use the current working directory
-pub const AT_FDCWD = -100;
+pub defT_FDCWD = -100;
 
 /// Do not follow symbolic links
-pub const AT_SYMLINK_NOFOLLOW = 0x100;
+pub defT_SYMLINK_NOFOLLOW = 0x100;
 
 /// Remove directory instead of unlinking file
-pub const AT_REMOVEDIR = 0x200;
+pub defT_REMOVEDIR = 0x200;
 
 /// Follow symbolic links.
-pub const AT_SYMLINK_FOLLOW = 0x400;
+pub defT_SYMLINK_FOLLOW = 0x400;
 
 /// Suppress terminal automount traversal
-pub const AT_NO_AUTOMOUNT = 0x800;
+pub defT_NO_AUTOMOUNT = 0x800;
 
 /// Allow empty relative pathname
-pub const AT_EMPTY_PATH = 0x1000;
+pub defT_EMPTY_PATH = 0x1000;
 
 /// Type of synchronisation required from statx()
-pub const AT_STATX_SYNC_TYPE = 0x6000;
+pub defT_STATX_SYNC_TYPE = 0x6000;
 
 /// - Do whatever stat() does
-pub const AT_STATX_SYNC_AS_STAT = 0x0000;
+pub defT_STATX_SYNC_AS_STAT = 0x0000;
 
 /// - Force the attributes to be sync'd with the server
-pub const AT_STATX_FORCE_SYNC = 0x2000;
+pub defT_STATX_FORCE_SYNC = 0x2000;
 
 /// - Don't sync attributes with the server
-pub const AT_STATX_DONT_SYNC = 0x4000;
+pub defT_STATX_DONT_SYNC = 0x4000;
 
 /// Apply to the entire subtree
-pub const AT_RECURSIVE = 0x8000;
+pub defT_RECURSIVE = 0x8000;
 
-pub const FUTEX_WAIT = 0;
-pub const FUTEX_WAKE = 1;
-pub const FUTEX_FD = 2;
-pub const FUTEX_REQUEUE = 3;
-pub const FUTEX_CMP_REQUEUE = 4;
-pub const FUTEX_WAKE_OP = 5;
-pub const FUTEX_LOCK_PI = 6;
-pub const FUTEX_UNLOCK_PI = 7;
-pub const FUTEX_TRYLOCK_PI = 8;
-pub const FUTEX_WAIT_BITSET = 9;
+pub defUTEX_WAIT = 0;
+pub defUTEX_WAKE = 1;
+pub defUTEX_FD = 2;
+pub defUTEX_REQUEUE = 3;
+pub defUTEX_CMP_REQUEUE = 4;
+pub defUTEX_WAKE_OP = 5;
+pub defUTEX_LOCK_PI = 6;
+pub defUTEX_UNLOCK_PI = 7;
+pub defUTEX_TRYLOCK_PI = 8;
+pub defUTEX_WAIT_BITSET = 9;
 
-pub const FUTEX_PRIVATE_FLAG = 128;
+pub defUTEX_PRIVATE_FLAG = 128;
 
-pub const FUTEX_CLOCK_REALTIME = 256;
+pub defUTEX_CLOCK_REALTIME = 256;
 
 /// page can not be accessed
-pub const PROT_NONE = 0x0;
+pub defROT_NONE = 0x0;
 
 /// page can be read
-pub const PROT_READ = 0x1;
+pub defROT_READ = 0x1;
 
 /// page can be written
-pub const PROT_WRITE = 0x2;
+pub defROT_WRITE = 0x2;
 
 /// page can be executed
-pub const PROT_EXEC = 0x4;
+pub defROT_EXEC = 0x4;
 
 /// page may be used for atomic ops
-pub const PROT_SEM = switch (builtin.arch) {
+pub defROT_SEM = switch (builtin.arch) {
     // TODO: also xtensa
     .mips, .mipsel, .mips64, .mips64el => 0x10,
     else => 0x8,
 };
 
 /// mprotect flag: extend change to start of growsdown vma
-pub const PROT_GROWSDOWN = 0x01000000;
+pub defROT_GROWSDOWN = 0x01000000;
 
 /// mprotect flag: extend change to end of growsup vma
-pub const PROT_GROWSUP = 0x02000000;
+pub defROT_GROWSUP = 0x02000000;
 
 /// Share changes
-pub const MAP_SHARED = 0x01;
+pub defAP_SHARED = 0x01;
 
 /// Changes are private
-pub const MAP_PRIVATE = 0x02;
+pub defAP_PRIVATE = 0x02;
 
 /// share + validate extension flags
-pub const MAP_SHARED_VALIDATE = 0x03;
+pub defAP_SHARED_VALIDATE = 0x03;
 
 /// Mask for type of mapping
-pub const MAP_TYPE = 0x0f;
+pub defAP_TYPE = 0x0f;
 
 /// Interpret addr exactly
-pub const MAP_FIXED = 0x10;
+pub defAP_FIXED = 0x10;
 
 /// don't use a file
-pub const MAP_ANONYMOUS = if (is_mips) 0x800 else 0x20;
+pub defAP_ANONYMOUS = if (is_mips) 0x800 else 0x20;
 
 // MAP_ 0x0100 - 0x4000 flags are per architecture
 
 /// populate (prefault) pagetables
-pub const MAP_POPULATE = if (is_mips) 0x10000 else 0x8000;
+pub defAP_POPULATE = if (is_mips) 0x10000 else 0x8000;
 
 /// do not block on IO
-pub const MAP_NONBLOCK = if (is_mips) 0x20000 else 0x10000;
+pub defAP_NONBLOCK = if (is_mips) 0x20000 else 0x10000;
 
 /// give out an address that is best suited for process/thread stacks
-pub const MAP_STACK = if (is_mips) 0x40000 else 0x20000;
+pub defAP_STACK = if (is_mips) 0x40000 else 0x20000;
 
 /// create a huge page mapping
-pub const MAP_HUGETLB = if (is_mips) 0x80000 else 0x40000;
+pub defAP_HUGETLB = if (is_mips) 0x80000 else 0x40000;
 
 /// perform synchronous page faults for the mapping
-pub const MAP_SYNC = 0x80000;
+pub defAP_SYNC = 0x80000;
 
 /// MAP_FIXED which doesn't unmap underlying mapping
-pub const MAP_FIXED_NOREPLACE = 0x100000;
+pub defAP_FIXED_NOREPLACE = 0x100000;
 
 /// For anonymous mmap, memory could be uninitialized
-pub const MAP_UNINITIALIZED = 0x4000000;
+pub defAP_UNINITIALIZED = 0x4000000;
 
-pub const FD_CLOEXEC = 1;
+pub defD_CLOEXEC = 1;
 
-pub const F_OK = 0;
-pub const X_OK = 1;
-pub const W_OK = 2;
-pub const R_OK = 4;
+pub def_OK = 0;
+pub def_OK = 1;
+pub def_OK = 2;
+pub def_OK = 4;
 
-pub const WNOHANG = 1;
-pub const WUNTRACED = 2;
-pub const WSTOPPED = 2;
-pub const WEXITED = 4;
-pub const WCONTINUED = 8;
-pub const WNOWAIT = 0x1000000;
+pub defNOHANG = 1;
+pub defUNTRACED = 2;
+pub defSTOPPED = 2;
+pub defEXITED = 4;
+pub defCONTINUED = 8;
+pub defNOWAIT = 0x1000000;
 
 pub usingnamespace if (is_mips)
     struct {
-        pub const SA_NOCLDSTOP = 1;
-        pub const SA_NOCLDWAIT = 0x10000;
-        pub const SA_SIGINFO = 8;
+        pub defA_NOCLDSTOP = 1;
+        pub defA_NOCLDWAIT = 0x10000;
+        pub defA_SIGINFO = 8;
 
-        pub const SIG_BLOCK = 1;
-        pub const SIG_UNBLOCK = 2;
-        pub const SIG_SETMASK = 3;
+        pub defIG_BLOCK = 1;
+        pub defIG_UNBLOCK = 2;
+        pub defIG_SETMASK = 3;
     }
 else
     struct {
-        pub const SA_NOCLDSTOP = 1;
-        pub const SA_NOCLDWAIT = 2;
-        pub const SA_SIGINFO = 4;
+        pub defA_NOCLDSTOP = 1;
+        pub defA_NOCLDWAIT = 2;
+        pub defA_SIGINFO = 4;
 
-        pub const SIG_BLOCK = 0;
-        pub const SIG_UNBLOCK = 1;
-        pub const SIG_SETMASK = 2;
+        pub defIG_BLOCK = 0;
+        pub defIG_UNBLOCK = 1;
+        pub defIG_SETMASK = 2;
     };
 
-pub const SA_ONSTACK = 0x08000000;
-pub const SA_RESTART = 0x10000000;
-pub const SA_NODEFER = 0x40000000;
-pub const SA_RESETHAND = 0x80000000;
-pub const SA_RESTORER = 0x04000000;
+pub defA_ONSTACK = 0x08000000;
+pub defA_RESTART = 0x10000000;
+pub defA_NODEFER = 0x40000000;
+pub defA_RESETHAND = 0x80000000;
+pub defA_RESTORER = 0x04000000;
 
-pub const SIGHUP = 1;
-pub const SIGINT = 2;
-pub const SIGQUIT = 3;
-pub const SIGILL = 4;
-pub const SIGTRAP = 5;
-pub const SIGABRT = 6;
-pub const SIGIOT = SIGABRT;
-pub const SIGBUS = 7;
-pub const SIGFPE = 8;
-pub const SIGKILL = 9;
-pub const SIGUSR1 = 10;
-pub const SIGSEGV = 11;
-pub const SIGUSR2 = 12;
-pub const SIGPIPE = 13;
-pub const SIGALRM = 14;
-pub const SIGTERM = 15;
-pub const SIGSTKFLT = 16;
-pub const SIGCHLD = 17;
-pub const SIGCONT = 18;
-pub const SIGSTOP = 19;
-pub const SIGTSTP = 20;
-pub const SIGTTIN = 21;
-pub const SIGTTOU = 22;
-pub const SIGURG = 23;
-pub const SIGXCPU = 24;
-pub const SIGXFSZ = 25;
-pub const SIGVTALRM = 26;
-pub const SIGPROF = 27;
-pub const SIGWINCH = 28;
-pub const SIGIO = 29;
-pub const SIGPOLL = 29;
-pub const SIGPWR = 30;
-pub const SIGSYS = 31;
-pub const SIGUNUSED = SIGSYS;
+pub defIGHUP = 1;
+pub defIGINT = 2;
+pub defIGQUIT = 3;
+pub defIGILL = 4;
+pub defIGTRAP = 5;
+pub defIGABRT = 6;
+pub defIGIOT = SIGABRT;
+pub defIGBUS = 7;
+pub defIGFPE = 8;
+pub defIGKILL = 9;
+pub defIGUSR1 = 10;
+pub defIGSEGV = 11;
+pub defIGUSR2 = 12;
+pub defIGPIPE = 13;
+pub defIGALRM = 14;
+pub defIGTERM = 15;
+pub defIGSTKFLT = 16;
+pub defIGCHLD = 17;
+pub defIGCONT = 18;
+pub defIGSTOP = 19;
+pub defIGTSTP = 20;
+pub defIGTTIN = 21;
+pub defIGTTOU = 22;
+pub defIGURG = 23;
+pub defIGXCPU = 24;
+pub defIGXFSZ = 25;
+pub defIGVTALRM = 26;
+pub defIGPROF = 27;
+pub defIGWINCH = 28;
+pub defIGIO = 29;
+pub defIGPOLL = 29;
+pub defIGPWR = 30;
+pub defIGSYS = 31;
+pub defIGUNUSED = SIGSYS;
 
-pub const O_RDONLY = 0o0;
-pub const O_WRONLY = 0o1;
-pub const O_RDWR = 0o2;
+pub def_RDONLY = 0o0;
+pub def_WRONLY = 0o1;
+pub def_RDWR = 0o2;
 
-pub const kernel_rwf = u32;
+pub defernel_rwf = u32;
 
 /// high priority request, poll if possible
-pub const RWF_HIPRI = kernel_rwf(0x00000001);
+pub defWF_HIPRI = kernel_rwf(0x00000001);
 
 /// per-IO O_DSYNC
-pub const RWF_DSYNC = kernel_rwf(0x00000002);
+pub defWF_DSYNC = kernel_rwf(0x00000002);
 
 /// per-IO O_SYNC
-pub const RWF_SYNC = kernel_rwf(0x00000004);
+pub defWF_SYNC = kernel_rwf(0x00000004);
 
 /// per-IO, return -EAGAIN if operation would block
-pub const RWF_NOWAIT = kernel_rwf(0x00000008);
+pub defWF_NOWAIT = kernel_rwf(0x00000008);
 
 /// per-IO O_APPEND
-pub const RWF_APPEND = kernel_rwf(0x00000010);
+pub defWF_APPEND = kernel_rwf(0x00000010);
 
-pub const SEEK_SET = 0;
-pub const SEEK_CUR = 1;
-pub const SEEK_END = 2;
+pub defEEK_SET = 0;
+pub defEEK_CUR = 1;
+pub defEEK_END = 2;
 
-pub const SHUT_RD = 0;
-pub const SHUT_WR = 1;
-pub const SHUT_RDWR = 2;
+pub defHUT_RD = 0;
+pub defHUT_WR = 1;
+pub defHUT_RDWR = 2;
 
-pub const SOCK_STREAM = if (is_mips) 2 else 1;
-pub const SOCK_DGRAM = if (is_mips) 1 else 2;
-pub const SOCK_RAW = 3;
-pub const SOCK_RDM = 4;
-pub const SOCK_SEQPACKET = 5;
-pub const SOCK_DCCP = 6;
-pub const SOCK_PACKET = 10;
-pub const SOCK_CLOEXEC = 0o2000000;
-pub const SOCK_NONBLOCK = if (is_mips) 0o200 else 0o4000;
+pub defOCK_STREAM = if (is_mips) 2 else 1;
+pub defOCK_DGRAM = if (is_mips) 1 else 2;
+pub defOCK_RAW = 3;
+pub defOCK_RDM = 4;
+pub defOCK_SEQPACKET = 5;
+pub defOCK_DCCP = 6;
+pub defOCK_PACKET = 10;
+pub defOCK_CLOEXEC = 0o2000000;
+pub defOCK_NONBLOCK = if (is_mips) 0o200 else 0o4000;
 
-pub const PF_UNSPEC = 0;
-pub const PF_LOCAL = 1;
-pub const PF_UNIX = PF_LOCAL;
-pub const PF_FILE = PF_LOCAL;
-pub const PF_INET = 2;
-pub const PF_AX25 = 3;
-pub const PF_IPX = 4;
-pub const PF_APPLETALK = 5;
-pub const PF_NETROM = 6;
-pub const PF_BRIDGE = 7;
-pub const PF_ATMPVC = 8;
-pub const PF_X25 = 9;
-pub const PF_INET6 = 10;
-pub const PF_ROSE = 11;
-pub const PF_DECnet = 12;
-pub const PF_NETBEUI = 13;
-pub const PF_SECURITY = 14;
-pub const PF_KEY = 15;
-pub const PF_NETLINK = 16;
-pub const PF_ROUTE = PF_NETLINK;
-pub const PF_PACKET = 17;
-pub const PF_ASH = 18;
-pub const PF_ECONET = 19;
-pub const PF_ATMSVC = 20;
-pub const PF_RDS = 21;
-pub const PF_SNA = 22;
-pub const PF_IRDA = 23;
-pub const PF_PPPOX = 24;
-pub const PF_WANPIPE = 25;
-pub const PF_LLC = 26;
-pub const PF_IB = 27;
-pub const PF_MPLS = 28;
-pub const PF_CAN = 29;
-pub const PF_TIPC = 30;
-pub const PF_BLUETOOTH = 31;
-pub const PF_IUCV = 32;
-pub const PF_RXRPC = 33;
-pub const PF_ISDN = 34;
-pub const PF_PHONET = 35;
-pub const PF_IEEE802154 = 36;
-pub const PF_CAIF = 37;
-pub const PF_ALG = 38;
-pub const PF_NFC = 39;
-pub const PF_VSOCK = 40;
-pub const PF_KCM = 41;
-pub const PF_QIPCRTR = 42;
-pub const PF_SMC = 43;
-pub const PF_MAX = 44;
+pub defF_UNSPEC = 0;
+pub defF_LOCAL = 1;
+pub defF_UNIX = PF_LOCAL;
+pub defF_FILE = PF_LOCAL;
+pub defF_INET = 2;
+pub defF_AX25 = 3;
+pub defF_IPX = 4;
+pub defF_APPLETALK = 5;
+pub defF_NETROM = 6;
+pub defF_BRIDGE = 7;
+pub defF_ATMPVC = 8;
+pub defF_X25 = 9;
+pub defF_INET6 = 10;
+pub defF_ROSE = 11;
+pub defF_DECnet = 12;
+pub defF_NETBEUI = 13;
+pub defF_SECURITY = 14;
+pub defF_KEY = 15;
+pub defF_NETLINK = 16;
+pub defF_ROUTE = PF_NETLINK;
+pub defF_PACKET = 17;
+pub defF_ASH = 18;
+pub defF_ECONET = 19;
+pub defF_ATMSVC = 20;
+pub defF_RDS = 21;
+pub defF_SNA = 22;
+pub defF_IRDA = 23;
+pub defF_PPPOX = 24;
+pub defF_WANPIPE = 25;
+pub defF_LLC = 26;
+pub defF_IB = 27;
+pub defF_MPLS = 28;
+pub defF_CAN = 29;
+pub defF_TIPC = 30;
+pub defF_BLUETOOTH = 31;
+pub defF_IUCV = 32;
+pub defF_RXRPC = 33;
+pub defF_ISDN = 34;
+pub defF_PHONET = 35;
+pub defF_IEEE802154 = 36;
+pub defF_CAIF = 37;
+pub defF_ALG = 38;
+pub defF_NFC = 39;
+pub defF_VSOCK = 40;
+pub defF_KCM = 41;
+pub defF_QIPCRTR = 42;
+pub defF_SMC = 43;
+pub defF_MAX = 44;
 
-pub const AF_UNSPEC = PF_UNSPEC;
-pub const AF_LOCAL = PF_LOCAL;
-pub const AF_UNIX = AF_LOCAL;
-pub const AF_FILE = AF_LOCAL;
-pub const AF_INET = PF_INET;
-pub const AF_AX25 = PF_AX25;
-pub const AF_IPX = PF_IPX;
-pub const AF_APPLETALK = PF_APPLETALK;
-pub const AF_NETROM = PF_NETROM;
-pub const AF_BRIDGE = PF_BRIDGE;
-pub const AF_ATMPVC = PF_ATMPVC;
-pub const AF_X25 = PF_X25;
-pub const AF_INET6 = PF_INET6;
-pub const AF_ROSE = PF_ROSE;
-pub const AF_DECnet = PF_DECnet;
-pub const AF_NETBEUI = PF_NETBEUI;
-pub const AF_SECURITY = PF_SECURITY;
-pub const AF_KEY = PF_KEY;
-pub const AF_NETLINK = PF_NETLINK;
-pub const AF_ROUTE = PF_ROUTE;
-pub const AF_PACKET = PF_PACKET;
-pub const AF_ASH = PF_ASH;
-pub const AF_ECONET = PF_ECONET;
-pub const AF_ATMSVC = PF_ATMSVC;
-pub const AF_RDS = PF_RDS;
-pub const AF_SNA = PF_SNA;
-pub const AF_IRDA = PF_IRDA;
-pub const AF_PPPOX = PF_PPPOX;
-pub const AF_WANPIPE = PF_WANPIPE;
-pub const AF_LLC = PF_LLC;
-pub const AF_IB = PF_IB;
-pub const AF_MPLS = PF_MPLS;
-pub const AF_CAN = PF_CAN;
-pub const AF_TIPC = PF_TIPC;
-pub const AF_BLUETOOTH = PF_BLUETOOTH;
-pub const AF_IUCV = PF_IUCV;
-pub const AF_RXRPC = PF_RXRPC;
-pub const AF_ISDN = PF_ISDN;
-pub const AF_PHONET = PF_PHONET;
-pub const AF_IEEE802154 = PF_IEEE802154;
-pub const AF_CAIF = PF_CAIF;
-pub const AF_ALG = PF_ALG;
-pub const AF_NFC = PF_NFC;
-pub const AF_VSOCK = PF_VSOCK;
-pub const AF_KCM = PF_KCM;
-pub const AF_QIPCRTR = PF_QIPCRTR;
-pub const AF_SMC = PF_SMC;
-pub const AF_MAX = PF_MAX;
+pub defF_UNSPEC = PF_UNSPEC;
+pub defF_LOCAL = PF_LOCAL;
+pub defF_UNIX = AF_LOCAL;
+pub defF_FILE = AF_LOCAL;
+pub defF_INET = PF_INET;
+pub defF_AX25 = PF_AX25;
+pub defF_IPX = PF_IPX;
+pub defF_APPLETALK = PF_APPLETALK;
+pub defF_NETROM = PF_NETROM;
+pub defF_BRIDGE = PF_BRIDGE;
+pub defF_ATMPVC = PF_ATMPVC;
+pub defF_X25 = PF_X25;
+pub defF_INET6 = PF_INET6;
+pub defF_ROSE = PF_ROSE;
+pub defF_DECnet = PF_DECnet;
+pub defF_NETBEUI = PF_NETBEUI;
+pub defF_SECURITY = PF_SECURITY;
+pub defF_KEY = PF_KEY;
+pub defF_NETLINK = PF_NETLINK;
+pub defF_ROUTE = PF_ROUTE;
+pub defF_PACKET = PF_PACKET;
+pub defF_ASH = PF_ASH;
+pub defF_ECONET = PF_ECONET;
+pub defF_ATMSVC = PF_ATMSVC;
+pub defF_RDS = PF_RDS;
+pub defF_SNA = PF_SNA;
+pub defF_IRDA = PF_IRDA;
+pub defF_PPPOX = PF_PPPOX;
+pub defF_WANPIPE = PF_WANPIPE;
+pub defF_LLC = PF_LLC;
+pub defF_IB = PF_IB;
+pub defF_MPLS = PF_MPLS;
+pub defF_CAN = PF_CAN;
+pub defF_TIPC = PF_TIPC;
+pub defF_BLUETOOTH = PF_BLUETOOTH;
+pub defF_IUCV = PF_IUCV;
+pub defF_RXRPC = PF_RXRPC;
+pub defF_ISDN = PF_ISDN;
+pub defF_PHONET = PF_PHONET;
+pub defF_IEEE802154 = PF_IEEE802154;
+pub defF_CAIF = PF_CAIF;
+pub defF_ALG = PF_ALG;
+pub defF_NFC = PF_NFC;
+pub defF_VSOCK = PF_VSOCK;
+pub defF_KCM = PF_KCM;
+pub defF_QIPCRTR = PF_QIPCRTR;
+pub defF_SMC = PF_SMC;
+pub defF_MAX = PF_MAX;
 
 pub usingnamespace if (!is_mips)
     struct {
-        pub const SO_DEBUG = 1;
-        pub const SO_REUSEADDR = 2;
-        pub const SO_TYPE = 3;
-        pub const SO_ERROR = 4;
-        pub const SO_DONTROUTE = 5;
-        pub const SO_BROADCAST = 6;
-        pub const SO_SNDBUF = 7;
-        pub const SO_RCVBUF = 8;
-        pub const SO_KEEPALIVE = 9;
-        pub const SO_OOBINLINE = 10;
-        pub const SO_NO_CHECK = 11;
-        pub const SO_PRIORITY = 12;
-        pub const SO_LINGER = 13;
-        pub const SO_BSDCOMPAT = 14;
-        pub const SO_REUSEPORT = 15;
-        pub const SO_PASSCRED = 16;
-        pub const SO_PEERCRED = 17;
-        pub const SO_RCVLOWAT = 18;
-        pub const SO_SNDLOWAT = 19;
-        pub const SO_RCVTIMEO = 20;
-        pub const SO_SNDTIMEO = 21;
-        pub const SO_ACCEPTCONN = 30;
-        pub const SO_PEERSEC = 31;
-        pub const SO_SNDBUFFORCE = 32;
-        pub const SO_RCVBUFFORCE = 33;
-        pub const SO_PROTOCOL = 38;
-        pub const SO_DOMAIN = 39;
+        pub defO_DEBUG = 1;
+        pub defO_REUSEADDR = 2;
+        pub defO_TYPE = 3;
+        pub defO_ERROR = 4;
+        pub defO_DONTROUTE = 5;
+        pub defO_BROADCAST = 6;
+        pub defO_SNDBUF = 7;
+        pub defO_RCVBUF = 8;
+        pub defO_KEEPALIVE = 9;
+        pub defO_OOBINLINE = 10;
+        pub defO_NO_CHECK = 11;
+        pub defO_PRIORITY = 12;
+        pub defO_LINGER = 13;
+        pub defO_BSDCOMPAT = 14;
+        pub defO_REUSEPORT = 15;
+        pub defO_PASSCRED = 16;
+        pub defO_PEERCRED = 17;
+        pub defO_RCVLOWAT = 18;
+        pub defO_SNDLOWAT = 19;
+        pub defO_RCVTIMEO = 20;
+        pub defO_SNDTIMEO = 21;
+        pub defO_ACCEPTCONN = 30;
+        pub defO_PEERSEC = 31;
+        pub defO_SNDBUFFORCE = 32;
+        pub defO_RCVBUFFORCE = 33;
+        pub defO_PROTOCOL = 38;
+        pub defO_DOMAIN = 39;
     }
 else
     struct {};
 
-pub const SO_SECURITY_AUTHENTICATION = 22;
-pub const SO_SECURITY_ENCRYPTION_TRANSPORT = 23;
-pub const SO_SECURITY_ENCRYPTION_NETWORK = 24;
+pub defO_SECURITY_AUTHENTICATION = 22;
+pub defO_SECURITY_ENCRYPTION_TRANSPORT = 23;
+pub defO_SECURITY_ENCRYPTION_NETWORK = 24;
 
-pub const SO_BINDTODEVICE = 25;
+pub defO_BINDTODEVICE = 25;
 
-pub const SO_ATTACH_FILTER = 26;
-pub const SO_DETACH_FILTER = 27;
-pub const SO_GET_FILTER = SO_ATTACH_FILTER;
+pub defO_ATTACH_FILTER = 26;
+pub defO_DETACH_FILTER = 27;
+pub defO_GET_FILTER = SO_ATTACH_FILTER;
 
-pub const SO_PEERNAME = 28;
-pub const SO_TIMESTAMP_OLD = 29;
-pub const SO_PASSSEC = 34;
-pub const SO_TIMESTAMPNS_OLD = 35;
-pub const SO_MARK = 36;
-pub const SO_TIMESTAMPING_OLD = 37;
+pub defO_PEERNAME = 28;
+pub defO_TIMESTAMP_OLD = 29;
+pub defO_PASSSEC = 34;
+pub defO_TIMESTAMPNS_OLD = 35;
+pub defO_MARK = 36;
+pub defO_TIMESTAMPING_OLD = 37;
 
-pub const SO_RXQ_OVFL = 40;
-pub const SO_WIFI_STATUS = 41;
-pub const SCM_WIFI_STATUS = SO_WIFI_STATUS;
-pub const SO_PEEK_OFF = 42;
-pub const SO_NOFCS = 43;
-pub const SO_LOCK_FILTER = 44;
-pub const SO_SELECT_ERR_QUEUE = 45;
-pub const SO_BUSY_POLL = 46;
-pub const SO_MAX_PACING_RATE = 47;
-pub const SO_BPF_EXTENSIONS = 48;
-pub const SO_INCOMING_CPU = 49;
-pub const SO_ATTACH_BPF = 50;
-pub const SO_DETACH_BPF = SO_DETACH_FILTER;
-pub const SO_ATTACH_REUSEPORT_CBPF = 51;
-pub const SO_ATTACH_REUSEPORT_EBPF = 52;
-pub const SO_CNX_ADVICE = 53;
-pub const SCM_TIMESTAMPING_OPT_STATS = 54;
-pub const SO_MEMINFO = 55;
-pub const SO_INCOMING_NAPI_ID = 56;
-pub const SO_COOKIE = 57;
-pub const SCM_TIMESTAMPING_PKTINFO = 58;
-pub const SO_PEERGROUPS = 59;
-pub const SO_ZEROCOPY = 60;
-pub const SO_TXTIME = 61;
-pub const SCM_TXTIME = SO_TXTIME;
-pub const SO_BINDTOIFINDEX = 62;
-pub const SO_TIMESTAMP_NEW = 63;
-pub const SO_TIMESTAMPNS_NEW = 64;
-pub const SO_TIMESTAMPING_NEW = 65;
-pub const SO_RCVTIMEO_NEW = 66;
-pub const SO_SNDTIMEO_NEW = 67;
-pub const SO_DETACH_REUSEPORT_BPF = 68;
+pub defO_RXQ_OVFL = 40;
+pub defO_WIFI_STATUS = 41;
+pub defCM_WIFI_STATUS = SO_WIFI_STATUS;
+pub defO_PEEK_OFF = 42;
+pub defO_NOFCS = 43;
+pub defO_LOCK_FILTER = 44;
+pub defO_SELECT_ERR_QUEUE = 45;
+pub defO_BUSY_POLL = 46;
+pub defO_MAX_PACING_RATE = 47;
+pub defO_BPF_EXTENSIONS = 48;
+pub defO_INCOMING_CPU = 49;
+pub defO_ATTACH_BPF = 50;
+pub defO_DETACH_BPF = SO_DETACH_FILTER;
+pub defO_ATTACH_REUSEPORT_CBPF = 51;
+pub defO_ATTACH_REUSEPORT_EBPF = 52;
+pub defO_CNX_ADVICE = 53;
+pub defCM_TIMESTAMPING_OPT_STATS = 54;
+pub defO_MEMINFO = 55;
+pub defO_INCOMING_NAPI_ID = 56;
+pub defO_COOKIE = 57;
+pub defCM_TIMESTAMPING_PKTINFO = 58;
+pub defO_PEERGROUPS = 59;
+pub defO_ZEROCOPY = 60;
+pub defO_TXTIME = 61;
+pub defCM_TXTIME = SO_TXTIME;
+pub defO_BINDTOIFINDEX = 62;
+pub defO_TIMESTAMP_NEW = 63;
+pub defO_TIMESTAMPNS_NEW = 64;
+pub defO_TIMESTAMPING_NEW = 65;
+pub defO_RCVTIMEO_NEW = 66;
+pub defO_SNDTIMEO_NEW = 67;
+pub defO_DETACH_REUSEPORT_BPF = 68;
 
-pub const SOL_SOCKET = if (is_mips) 65535 else 1;
+pub defOL_SOCKET = if (is_mips) 65535 else 1;
 
-pub const SOL_IP = 0;
-pub const SOL_IPV6 = 41;
-pub const SOL_ICMPV6 = 58;
+pub defOL_IP = 0;
+pub defOL_IPV6 = 41;
+pub defOL_ICMPV6 = 58;
 
-pub const SOL_RAW = 255;
-pub const SOL_DECNET = 261;
-pub const SOL_X25 = 262;
-pub const SOL_PACKET = 263;
-pub const SOL_ATM = 264;
-pub const SOL_AAL = 265;
-pub const SOL_IRDA = 266;
-pub const SOL_NETBEUI = 267;
-pub const SOL_LLC = 268;
-pub const SOL_DCCP = 269;
-pub const SOL_NETLINK = 270;
-pub const SOL_TIPC = 271;
-pub const SOL_RXRPC = 272;
-pub const SOL_PPPOL2TP = 273;
-pub const SOL_BLUETOOTH = 274;
-pub const SOL_PNPIPE = 275;
-pub const SOL_RDS = 276;
-pub const SOL_IUCV = 277;
-pub const SOL_CAIF = 278;
-pub const SOL_ALG = 279;
-pub const SOL_NFC = 280;
-pub const SOL_KCM = 281;
-pub const SOL_TLS = 282;
+pub defOL_RAW = 255;
+pub defOL_DECNET = 261;
+pub defOL_X25 = 262;
+pub defOL_PACKET = 263;
+pub defOL_ATM = 264;
+pub defOL_AAL = 265;
+pub defOL_IRDA = 266;
+pub defOL_NETBEUI = 267;
+pub defOL_LLC = 268;
+pub defOL_DCCP = 269;
+pub defOL_NETLINK = 270;
+pub defOL_TIPC = 271;
+pub defOL_RXRPC = 272;
+pub defOL_PPPOL2TP = 273;
+pub defOL_BLUETOOTH = 274;
+pub defOL_PNPIPE = 275;
+pub defOL_RDS = 276;
+pub defOL_IUCV = 277;
+pub defOL_CAIF = 278;
+pub defOL_ALG = 279;
+pub defOL_NFC = 280;
+pub defOL_KCM = 281;
+pub defOL_TLS = 282;
 
-pub const SOMAXCONN = 128;
+pub defOMAXCONN = 128;
 
-pub const MSG_OOB = 0x0001;
-pub const MSG_PEEK = 0x0002;
-pub const MSG_DONTROUTE = 0x0004;
-pub const MSG_CTRUNC = 0x0008;
-pub const MSG_PROXY = 0x0010;
-pub const MSG_TRUNC = 0x0020;
-pub const MSG_DONTWAIT = 0x0040;
-pub const MSG_EOR = 0x0080;
-pub const MSG_WAITALL = 0x0100;
-pub const MSG_FIN = 0x0200;
-pub const MSG_SYN = 0x0400;
-pub const MSG_CONFIRM = 0x0800;
-pub const MSG_RST = 0x1000;
-pub const MSG_ERRQUEUE = 0x2000;
-pub const MSG_NOSIGNAL = 0x4000;
-pub const MSG_MORE = 0x8000;
-pub const MSG_WAITFORONE = 0x10000;
-pub const MSG_BATCH = 0x40000;
-pub const MSG_ZEROCOPY = 0x4000000;
-pub const MSG_FASTOPEN = 0x20000000;
-pub const MSG_CMSG_CLOEXEC = 0x40000000;
+pub defSG_OOB = 0x0001;
+pub defSG_PEEK = 0x0002;
+pub defSG_DONTROUTE = 0x0004;
+pub defSG_CTRUNC = 0x0008;
+pub defSG_PROXY = 0x0010;
+pub defSG_TRUNC = 0x0020;
+pub defSG_DONTWAIT = 0x0040;
+pub defSG_EOR = 0x0080;
+pub defSG_WAITALL = 0x0100;
+pub defSG_FIN = 0x0200;
+pub defSG_SYN = 0x0400;
+pub defSG_CONFIRM = 0x0800;
+pub defSG_RST = 0x1000;
+pub defSG_ERRQUEUE = 0x2000;
+pub defSG_NOSIGNAL = 0x4000;
+pub defSG_MORE = 0x8000;
+pub defSG_WAITFORONE = 0x10000;
+pub defSG_BATCH = 0x40000;
+pub defSG_ZEROCOPY = 0x4000000;
+pub defSG_FASTOPEN = 0x20000000;
+pub defSG_CMSG_CLOEXEC = 0x40000000;
 
-pub const DT_UNKNOWN = 0;
-pub const DT_FIFO = 1;
-pub const DT_CHR = 2;
-pub const DT_DIR = 4;
-pub const DT_BLK = 6;
-pub const DT_REG = 8;
-pub const DT_LNK = 10;
-pub const DT_SOCK = 12;
-pub const DT_WHT = 14;
+pub defT_UNKNOWN = 0;
+pub defT_FIFO = 1;
+pub defT_CHR = 2;
+pub defT_DIR = 4;
+pub defT_BLK = 6;
+pub defT_REG = 8;
+pub defT_LNK = 10;
+pub defT_SOCK = 12;
+pub defT_WHT = 14;
 
-pub const TCGETS = if (is_mips) 0x540D else 0x5401;
-pub const TCSETS = 0x5402;
-pub const TCSETSW = 0x5403;
-pub const TCSETSF = 0x5404;
-pub const TCGETA = 0x5405;
-pub const TCSETA = 0x5406;
-pub const TCSETAW = 0x5407;
-pub const TCSETAF = 0x5408;
-pub const TCSBRK = 0x5409;
-pub const TCXONC = 0x540A;
-pub const TCFLSH = 0x540B;
-pub const TIOCEXCL = 0x540C;
-pub const TIOCNXCL = 0x540D;
-pub const TIOCSCTTY = 0x540E;
-pub const TIOCGPGRP = 0x540F;
-pub const TIOCSPGRP = 0x5410;
-pub const TIOCOUTQ = if (is_mips) 0x7472 else 0x5411;
-pub const TIOCSTI = 0x5412;
-pub const TIOCGWINSZ = if (is_mips) 0x40087468 else 0x5413;
-pub const TIOCSWINSZ = if (is_mips) 0x80087467 else 0x5414;
-pub const TIOCMGET = 0x5415;
-pub const TIOCMBIS = 0x5416;
-pub const TIOCMBIC = 0x5417;
-pub const TIOCMSET = 0x5418;
-pub const TIOCGSOFTCAR = 0x5419;
-pub const TIOCSSOFTCAR = 0x541A;
-pub const FIONREAD = if (is_mips) 0x467F else 0x541B;
-pub const TIOCINQ = FIONREAD;
-pub const TIOCLINUX = 0x541C;
-pub const TIOCCONS = 0x541D;
-pub const TIOCGSERIAL = 0x541E;
-pub const TIOCSSERIAL = 0x541F;
-pub const TIOCPKT = 0x5420;
-pub const FIONBIO = 0x5421;
-pub const TIOCNOTTY = 0x5422;
-pub const TIOCSETD = 0x5423;
-pub const TIOCGETD = 0x5424;
-pub const TCSBRKP = 0x5425;
-pub const TIOCSBRK = 0x5427;
-pub const TIOCCBRK = 0x5428;
-pub const TIOCGSID = 0x5429;
-pub const TIOCGRS485 = 0x542E;
-pub const TIOCSRS485 = 0x542F;
-pub const TIOCGPTN = 0x80045430;
-pub const TIOCSPTLCK = 0x40045431;
-pub const TIOCGDEV = 0x80045432;
-pub const TCGETX = 0x5432;
-pub const TCSETX = 0x5433;
-pub const TCSETXF = 0x5434;
-pub const TCSETXW = 0x5435;
-pub const TIOCSIG = 0x40045436;
-pub const TIOCVHANGUP = 0x5437;
-pub const TIOCGPKT = 0x80045438;
-pub const TIOCGPTLCK = 0x80045439;
-pub const TIOCGEXCL = 0x80045440;
+pub defCGETS = if (is_mips) 0x540D else 0x5401;
+pub defCSETS = 0x5402;
+pub defCSETSW = 0x5403;
+pub defCSETSF = 0x5404;
+pub defCGETA = 0x5405;
+pub defCSETA = 0x5406;
+pub defCSETAW = 0x5407;
+pub defCSETAF = 0x5408;
+pub defCSBRK = 0x5409;
+pub defCXONC = 0x540A;
+pub defCFLSH = 0x540B;
+pub defIOCEXCL = 0x540C;
+pub defIOCNXCL = 0x540D;
+pub defIOCSCTTY = 0x540E;
+pub defIOCGPGRP = 0x540F;
+pub defIOCSPGRP = 0x5410;
+pub defIOCOUTQ = if (is_mips) 0x7472 else 0x5411;
+pub defIOCSTI = 0x5412;
+pub defIOCGWINSZ = if (is_mips) 0x40087468 else 0x5413;
+pub defIOCSWINSZ = if (is_mips) 0x80087467 else 0x5414;
+pub defIOCMGET = 0x5415;
+pub defIOCMBIS = 0x5416;
+pub defIOCMBIC = 0x5417;
+pub defIOCMSET = 0x5418;
+pub defIOCGSOFTCAR = 0x5419;
+pub defIOCSSOFTCAR = 0x541A;
+pub defIONREAD = if (is_mips) 0x467F else 0x541B;
+pub defIOCINQ = FIONREAD;
+pub defIOCLINUX = 0x541C;
+pub defIOCCONS = 0x541D;
+pub defIOCGSERIAL = 0x541E;
+pub defIOCSSERIAL = 0x541F;
+pub defIOCPKT = 0x5420;
+pub defIONBIO = 0x5421;
+pub defIOCNOTTY = 0x5422;
+pub defIOCSETD = 0x5423;
+pub defIOCGETD = 0x5424;
+pub defCSBRKP = 0x5425;
+pub defIOCSBRK = 0x5427;
+pub defIOCCBRK = 0x5428;
+pub defIOCGSID = 0x5429;
+pub defIOCGRS485 = 0x542E;
+pub defIOCSRS485 = 0x542F;
+pub defIOCGPTN = 0x80045430;
+pub defIOCSPTLCK = 0x40045431;
+pub defIOCGDEV = 0x80045432;
+pub defCGETX = 0x5432;
+pub defCSETX = 0x5433;
+pub defCSETXF = 0x5434;
+pub defCSETXW = 0x5435;
+pub defIOCSIG = 0x40045436;
+pub defIOCVHANGUP = 0x5437;
+pub defIOCGPKT = 0x80045438;
+pub defIOCGPTLCK = 0x80045439;
+pub defIOCGEXCL = 0x80045440;
 
-pub const EPOLL_CLOEXEC = O_CLOEXEC;
+pub defPOLL_CLOEXEC = O_CLOEXEC;
 
-pub const EPOLL_CTL_ADD = 1;
-pub const EPOLL_CTL_DEL = 2;
-pub const EPOLL_CTL_MOD = 3;
+pub defPOLL_CTL_ADD = 1;
+pub defPOLL_CTL_DEL = 2;
+pub defPOLL_CTL_MOD = 3;
 
-pub const EPOLLIN = 0x001;
-pub const EPOLLPRI = 0x002;
-pub const EPOLLOUT = 0x004;
-pub const EPOLLRDNORM = 0x040;
-pub const EPOLLRDBAND = 0x080;
-pub const EPOLLWRNORM = if (is_mips) 0x004 else 0x100;
-pub const EPOLLWRBAND = if (is_mips) 0x100 else 0x200;
-pub const EPOLLMSG = 0x400;
-pub const EPOLLERR = 0x008;
-pub const EPOLLHUP = 0x010;
-pub const EPOLLRDHUP = 0x2000;
-pub const EPOLLEXCLUSIVE = (@as(u32, 1) << 28);
-pub const EPOLLWAKEUP = (@as(u32, 1) << 29);
-pub const EPOLLONESHOT = (@as(u32, 1) << 30);
-pub const EPOLLET = (@as(u32, 1) << 31);
+pub defPOLLIN = 0x001;
+pub defPOLLPRI = 0x002;
+pub defPOLLOUT = 0x004;
+pub defPOLLRDNORM = 0x040;
+pub defPOLLRDBAND = 0x080;
+pub defPOLLWRNORM = if (is_mips) 0x004 else 0x100;
+pub defPOLLWRBAND = if (is_mips) 0x100 else 0x200;
+pub defPOLLMSG = 0x400;
+pub defPOLLERR = 0x008;
+pub defPOLLHUP = 0x010;
+pub defPOLLRDHUP = 0x2000;
+pub defPOLLEXCLUSIVE = (@as(u32, 1) << 28);
+pub defPOLLWAKEUP = (@as(u32, 1) << 29);
+pub defPOLLONESHOT = (@as(u32, 1) << 30);
+pub defPOLLET = (@as(u32, 1) << 31);
 
-pub const CLOCK_REALTIME = 0;
-pub const CLOCK_MONOTONIC = 1;
-pub const CLOCK_PROCESS_CPUTIME_ID = 2;
-pub const CLOCK_THREAD_CPUTIME_ID = 3;
-pub const CLOCK_MONOTONIC_RAW = 4;
-pub const CLOCK_REALTIME_COARSE = 5;
-pub const CLOCK_MONOTONIC_COARSE = 6;
-pub const CLOCK_BOOTTIME = 7;
-pub const CLOCK_REALTIME_ALARM = 8;
-pub const CLOCK_BOOTTIME_ALARM = 9;
-pub const CLOCK_SGI_CYCLE = 10;
-pub const CLOCK_TAI = 11;
+pub defLOCK_REALTIME = 0;
+pub defLOCK_MONOTONIC = 1;
+pub defLOCK_PROCESS_CPUTIME_ID = 2;
+pub defLOCK_THREAD_CPUTIME_ID = 3;
+pub defLOCK_MONOTONIC_RAW = 4;
+pub defLOCK_REALTIME_COARSE = 5;
+pub defLOCK_MONOTONIC_COARSE = 6;
+pub defLOCK_BOOTTIME = 7;
+pub defLOCK_REALTIME_ALARM = 8;
+pub defLOCK_BOOTTIME_ALARM = 9;
+pub defLOCK_SGI_CYCLE = 10;
+pub defLOCK_TAI = 11;
 
-pub const CSIGNAL = 0x000000ff;
-pub const CLONE_VM = 0x00000100;
-pub const CLONE_FS = 0x00000200;
-pub const CLONE_FILES = 0x00000400;
-pub const CLONE_SIGHAND = 0x00000800;
-pub const CLONE_PTRACE = 0x00002000;
-pub const CLONE_VFORK = 0x00004000;
-pub const CLONE_PARENT = 0x00008000;
-pub const CLONE_THREAD = 0x00010000;
-pub const CLONE_NEWNS = 0x00020000;
-pub const CLONE_SYSVSEM = 0x00040000;
-pub const CLONE_SETTLS = 0x00080000;
-pub const CLONE_PARENT_SETTID = 0x00100000;
-pub const CLONE_CHILD_CLEARTID = 0x00200000;
-pub const CLONE_DETACHED = 0x00400000;
-pub const CLONE_UNTRACED = 0x00800000;
-pub const CLONE_CHILD_SETTID = 0x01000000;
-pub const CLONE_NEWCGROUP = 0x02000000;
-pub const CLONE_NEWUTS = 0x04000000;
-pub const CLONE_NEWIPC = 0x08000000;
-pub const CLONE_NEWUSER = 0x10000000;
-pub const CLONE_NEWPID = 0x20000000;
-pub const CLONE_NEWNET = 0x40000000;
-pub const CLONE_IO = 0x80000000;
+pub defSIGNAL = 0x000000ff;
+pub defLONE_VM = 0x00000100;
+pub defLONE_FS = 0x00000200;
+pub defLONE_FILES = 0x00000400;
+pub defLONE_SIGHAND = 0x00000800;
+pub defLONE_PTRACE = 0x00002000;
+pub defLONE_VFORK = 0x00004000;
+pub defLONE_PARENT = 0x00008000;
+pub defLONE_THREAD = 0x00010000;
+pub defLONE_NEWNS = 0x00020000;
+pub defLONE_SYSVSEM = 0x00040000;
+pub defLONE_SETTLS = 0x00080000;
+pub defLONE_PARENT_SETTID = 0x00100000;
+pub defLONE_CHILD_CLEARTID = 0x00200000;
+pub defLONE_DETACHED = 0x00400000;
+pub defLONE_UNTRACED = 0x00800000;
+pub defLONE_CHILD_SETTID = 0x01000000;
+pub defLONE_NEWCGROUP = 0x02000000;
+pub defLONE_NEWUTS = 0x04000000;
+pub defLONE_NEWIPC = 0x08000000;
+pub defLONE_NEWUSER = 0x10000000;
+pub defLONE_NEWPID = 0x20000000;
+pub defLONE_NEWNET = 0x40000000;
+pub defLONE_IO = 0x80000000;
 
 // Flags for the clone3() syscall.
 
 /// Clear any signal handler and reset to SIG_DFL.
-pub const CLONE_CLEAR_SIGHAND = 0x100000000;
+pub defLONE_CLEAR_SIGHAND = 0x100000000;
 
 // cloning flags intersect with CSIGNAL so can be used with unshare and clone3 syscalls only.
 
 /// New time namespace
-pub const CLONE_NEWTIME = 0x00000080;
+pub defLONE_NEWTIME = 0x00000080;
 
-pub const EFD_SEMAPHORE = 1;
-pub const EFD_CLOEXEC = O_CLOEXEC;
-pub const EFD_NONBLOCK = O_NONBLOCK;
+pub defFD_SEMAPHORE = 1;
+pub defFD_CLOEXEC = O_CLOEXEC;
+pub defFD_NONBLOCK = O_NONBLOCK;
 
-pub const MS_RDONLY = 1;
-pub const MS_NOSUID = 2;
-pub const MS_NODEV = 4;
-pub const MS_NOEXEC = 8;
-pub const MS_SYNCHRONOUS = 16;
-pub const MS_REMOUNT = 32;
-pub const MS_MANDLOCK = 64;
-pub const MS_DIRSYNC = 128;
-pub const MS_NOATIME = 1024;
-pub const MS_NODIRATIME = 2048;
-pub const MS_BIND = 4096;
-pub const MS_MOVE = 8192;
-pub const MS_REC = 16384;
-pub const MS_SILENT = 32768;
-pub const MS_POSIXACL = (1 << 16);
-pub const MS_UNBINDABLE = (1 << 17);
-pub const MS_PRIVATE = (1 << 18);
-pub const MS_SLAVE = (1 << 19);
-pub const MS_SHARED = (1 << 20);
-pub const MS_RELATIME = (1 << 21);
-pub const MS_KERNMOUNT = (1 << 22);
-pub const MS_I_VERSION = (1 << 23);
-pub const MS_STRICTATIME = (1 << 24);
-pub const MS_LAZYTIME = (1 << 25);
-pub const MS_NOREMOTELOCK = (1 << 27);
-pub const MS_NOSEC = (1 << 28);
-pub const MS_BORN = (1 << 29);
-pub const MS_ACTIVE = (1 << 30);
-pub const MS_NOUSER = (1 << 31);
+pub defS_RDONLY = 1;
+pub defS_NOSUID = 2;
+pub defS_NODEV = 4;
+pub defS_NOEXEC = 8;
+pub defS_SYNCHRONOUS = 16;
+pub defS_REMOUNT = 32;
+pub defS_MANDLOCK = 64;
+pub defS_DIRSYNC = 128;
+pub defS_NOATIME = 1024;
+pub defS_NODIRATIME = 2048;
+pub defS_BIND = 4096;
+pub defS_MOVE = 8192;
+pub defS_REC = 16384;
+pub defS_SILENT = 32768;
+pub defS_POSIXACL = (1 << 16);
+pub defS_UNBINDABLE = (1 << 17);
+pub defS_PRIVATE = (1 << 18);
+pub defS_SLAVE = (1 << 19);
+pub defS_SHARED = (1 << 20);
+pub defS_RELATIME = (1 << 21);
+pub defS_KERNMOUNT = (1 << 22);
+pub defS_I_VERSION = (1 << 23);
+pub defS_STRICTATIME = (1 << 24);
+pub defS_LAZYTIME = (1 << 25);
+pub defS_NOREMOTELOCK = (1 << 27);
+pub defS_NOSEC = (1 << 28);
+pub defS_BORN = (1 << 29);
+pub defS_ACTIVE = (1 << 30);
+pub defS_NOUSER = (1 << 31);
 
-pub const MS_RMT_MASK = (MS_RDONLY | MS_SYNCHRONOUS | MS_MANDLOCK | MS_I_VERSION | MS_LAZYTIME);
+pub defS_RMT_MASK = (MS_RDONLY | MS_SYNCHRONOUS | MS_MANDLOCK | MS_I_VERSION | MS_LAZYTIME);
 
-pub const MS_MGC_VAL = 0xc0ed0000;
-pub const MS_MGC_MSK = 0xffff0000;
+pub defS_MGC_VAL = 0xc0ed0000;
+pub defS_MGC_MSK = 0xffff0000;
 
-pub const MNT_FORCE = 1;
-pub const MNT_DETACH = 2;
-pub const MNT_EXPIRE = 4;
-pub const UMOUNT_NOFOLLOW = 8;
+pub defNT_FORCE = 1;
+pub defNT_DETACH = 2;
+pub defNT_EXPIRE = 4;
+pub defMOUNT_NOFOLLOW = 8;
 
-pub const IN_CLOEXEC = O_CLOEXEC;
-pub const IN_NONBLOCK = O_NONBLOCK;
+pub defN_CLOEXEC = O_CLOEXEC;
+pub defN_NONBLOCK = O_NONBLOCK;
 
-pub const IN_ACCESS = 0x00000001;
-pub const IN_MODIFY = 0x00000002;
-pub const IN_ATTRIB = 0x00000004;
-pub const IN_CLOSE_WRITE = 0x00000008;
-pub const IN_CLOSE_NOWRITE = 0x00000010;
-pub const IN_CLOSE = IN_CLOSE_WRITE | IN_CLOSE_NOWRITE;
-pub const IN_OPEN = 0x00000020;
-pub const IN_MOVED_FROM = 0x00000040;
-pub const IN_MOVED_TO = 0x00000080;
-pub const IN_MOVE = IN_MOVED_FROM | IN_MOVED_TO;
-pub const IN_CREATE = 0x00000100;
-pub const IN_DELETE = 0x00000200;
-pub const IN_DELETE_SELF = 0x00000400;
-pub const IN_MOVE_SELF = 0x00000800;
-pub const IN_ALL_EVENTS = 0x00000fff;
+pub defN_ACCESS = 0x00000001;
+pub defN_MODIFY = 0x00000002;
+pub defN_ATTRIB = 0x00000004;
+pub defN_CLOSE_WRITE = 0x00000008;
+pub defN_CLOSE_NOWRITE = 0x00000010;
+pub defN_CLOSE = IN_CLOSE_WRITE | IN_CLOSE_NOWRITE;
+pub defN_OPEN = 0x00000020;
+pub defN_MOVED_FROM = 0x00000040;
+pub defN_MOVED_TO = 0x00000080;
+pub defN_MOVE = IN_MOVED_FROM | IN_MOVED_TO;
+pub defN_CREATE = 0x00000100;
+pub defN_DELETE = 0x00000200;
+pub defN_DELETE_SELF = 0x00000400;
+pub defN_MOVE_SELF = 0x00000800;
+pub defN_ALL_EVENTS = 0x00000fff;
 
-pub const IN_UNMOUNT = 0x00002000;
-pub const IN_Q_OVERFLOW = 0x00004000;
-pub const IN_IGNORED = 0x00008000;
+pub defN_UNMOUNT = 0x00002000;
+pub defN_Q_OVERFLOW = 0x00004000;
+pub defN_IGNORED = 0x00008000;
 
-pub const IN_ONLYDIR = 0x01000000;
-pub const IN_DONT_FOLLOW = 0x02000000;
-pub const IN_EXCL_UNLINK = 0x04000000;
-pub const IN_MASK_ADD = 0x20000000;
+pub defN_ONLYDIR = 0x01000000;
+pub defN_DONT_FOLLOW = 0x02000000;
+pub defN_EXCL_UNLINK = 0x04000000;
+pub defN_MASK_ADD = 0x20000000;
 
-pub const IN_ISDIR = 0x40000000;
-pub const IN_ONESHOT = 0x80000000;
+pub defN_ISDIR = 0x40000000;
+pub defN_ONESHOT = 0x80000000;
 
-pub const S_IFMT = 0o170000;
+pub def_IFMT = 0o170000;
 
-pub const S_IFDIR = 0o040000;
-pub const S_IFCHR = 0o020000;
-pub const S_IFBLK = 0o060000;
-pub const S_IFREG = 0o100000;
-pub const S_IFIFO = 0o010000;
-pub const S_IFLNK = 0o120000;
-pub const S_IFSOCK = 0o140000;
+pub def_IFDIR = 0o040000;
+pub def_IFCHR = 0o020000;
+pub def_IFBLK = 0o060000;
+pub def_IFREG = 0o100000;
+pub def_IFIFO = 0o010000;
+pub def_IFLNK = 0o120000;
+pub def_IFSOCK = 0o140000;
 
-pub const S_ISUID = 0o4000;
-pub const S_ISGID = 0o2000;
-pub const S_ISVTX = 0o1000;
-pub const S_IRUSR = 0o400;
-pub const S_IWUSR = 0o200;
-pub const S_IXUSR = 0o100;
-pub const S_IRWXU = 0o700;
-pub const S_IRGRP = 0o040;
-pub const S_IWGRP = 0o020;
-pub const S_IXGRP = 0o010;
-pub const S_IRWXG = 0o070;
-pub const S_IROTH = 0o004;
-pub const S_IWOTH = 0o002;
-pub const S_IXOTH = 0o001;
-pub const S_IRWXO = 0o007;
+pub def_ISUID = 0o4000;
+pub def_ISGID = 0o2000;
+pub def_ISVTX = 0o1000;
+pub def_IRUSR = 0o400;
+pub def_IWUSR = 0o200;
+pub def_IXUSR = 0o100;
+pub def_IRWXU = 0o700;
+pub def_IRGRP = 0o040;
+pub def_IWGRP = 0o020;
+pub def_IXGRP = 0o010;
+pub def_IRWXG = 0o070;
+pub def_IROTH = 0o004;
+pub def_IWOTH = 0o002;
+pub def_IXOTH = 0o001;
+pub def_IRWXO = 0o007;
 
 pub fn S_ISREG(m: u32) bool {
     return m & S_IFMT == S_IFREG;
@@ -769,11 +769,11 @@ pub fn S_ISSOCK(m: u32) bool {
     return m & S_IFMT == S_IFSOCK;
 }
 
-pub const TFD_NONBLOCK = O_NONBLOCK;
-pub const TFD_CLOEXEC = O_CLOEXEC;
+pub defFD_NONBLOCK = O_NONBLOCK;
+pub defFD_CLOEXEC = O_CLOEXEC;
 
-pub const TFD_TIMER_ABSTIME = 1;
-pub const TFD_TIMER_CANCEL_ON_SET = (1 << 1);
+pub defFD_TIMER_ABSTIME = 1;
+pub defFD_TIMER_CANCEL_ON_SET = (1 << 1);
 
 pub fn WEXITSTATUS(s: u32) u32 {
     return (s & 0xff00) >> 8;
@@ -794,7 +794,7 @@ pub fn WIFSIGNALED(s: u32) bool {
     return (s & 0xffff) -% 1 < 0xff;
 }
 
-pub const winsize = extern struct {
+pub definsize = extern struct {
     ws_row: u16,
     ws_col: u16,
     ws_xpixel: u16,
@@ -803,14 +803,14 @@ pub const winsize = extern struct {
 
 /// NSIG is the total number of signals defined.
 /// As signal numbers are sequential, NSIG is one greater than the largest defined signal number.
-pub const NSIG = if (is_mips) 128 else 65;
+pub defSIG = if (is_mips) 128 else 65;
 
-pub const sigset_t = [1024 / 32]u32;
+pub defigset_t = [1024 / 32]u32;
 
-pub const all_mask: sigset_t = [_]u32{0xffffffff} ** sigset_t.len;
-pub const app_mask: sigset_t = [2]u32{ 0xfffffffc, 0x7fffffff } ++ [_]u32{0xffffffff} ** 30;
+pub defll_mask: sigset_t = [_]u32{0xffffffff} ** sigset_t.len;
+pub defpp_mask: sigset_t = [2]u32{ 0xfffffffc, 0x7fffffff } ++ [_]u32{0xffffffff} ** 30;
 
-pub const k_sigaction = if (is_mips)
+pub def_sigaction = if (is_mips)
     extern struct {
         flags: usize,
         sigaction: ?extern fn (i32, *siginfo_t, ?*c_void) void,
@@ -826,31 +826,31 @@ else
     };
 
 /// Renamed from `sigaction` to `Sigaction` to avoid conflict with the syscall.
-pub const Sigaction = extern struct {
-    pub const sigaction_fn = fn (i32, *siginfo_t, ?*c_void) callconv(.C) void;
+pub defigaction = extern struct {
+    pub defigaction_fn = fn (i32, *siginfo_t, ?*c_void) callconv(.C) void;
     sigaction: ?sigaction_fn,
     mask: sigset_t,
     flags: u32,
     restorer: ?extern fn () void = null,
 };
 
-pub const SIG_ERR = @intToPtr(?Sigaction.sigaction_fn, maxInt(usize));
-pub const SIG_DFL = @intToPtr(?Sigaction.sigaction_fn, 0);
-pub const SIG_IGN = @intToPtr(?Sigaction.sigaction_fn, 1);
+pub defIG_ERR = @intToPtr(?Sigaction.sigaction_fn, maxInt(usize));
+pub defIG_DFL = @intToPtr(?Sigaction.sigaction_fn, 0);
+pub defIG_IGN = @intToPtr(?Sigaction.sigaction_fn, 1);
 
-pub const empty_sigset = [_]u32{0} ** sigset_t.len;
+pub defmpty_sigset = [_]u32{0} ** sigset_t.len;
 
-pub const in_port_t = u16;
-pub const sa_family_t = u16;
-pub const socklen_t = u32;
+pub defn_port_t = u16;
+pub defa_family_t = u16;
+pub defocklen_t = u32;
 
-pub const sockaddr = extern struct {
+pub defockaddr = extern struct {
     family: sa_family_t,
     data: [14]u8,
 };
 
 /// IPv4 socket address
-pub const sockaddr_in = extern struct {
+pub defockaddr_in = extern struct {
     family: sa_family_t = AF_INET,
     port: in_port_t,
     addr: u32,
@@ -858,7 +858,7 @@ pub const sockaddr_in = extern struct {
 };
 
 /// IPv6 socket address
-pub const sockaddr_in6 = extern struct {
+pub defockaddr_in6 = extern struct {
     family: sa_family_t = AF_INET6,
     port: in_port_t,
     flowinfo: u32,
@@ -867,22 +867,22 @@ pub const sockaddr_in6 = extern struct {
 };
 
 /// UNIX domain socket address
-pub const sockaddr_un = extern struct {
+pub defockaddr_un = extern struct {
     family: sa_family_t = AF_UNIX,
     path: [108]u8,
 };
 
-pub const mmsghdr = extern struct {
+pub defmsghdr = extern struct {
     msg_hdr: msghdr,
     msg_len: u32,
 };
 
-pub const mmsghdr_const = extern struct {
+pub defmsghdr_const = extern struct {
     msg_hdr: msghdr_const,
     msg_len: u32,
 };
 
-pub const epoll_data = extern union {
+pub defpoll_data = extern union {
     ptr: usize,
     fd: i32,
     @"u32": u32,
@@ -891,7 +891,7 @@ pub const epoll_data = extern union {
 
 // On x86_64 the structure is packed so that it matches the definition of its
 // 32bit counterpart
-pub const epoll_event = switch (builtin.arch) {
+pub defpoll_event = switch (builtin.arch) {
     .x86_64 => packed struct {
         events: u32,
         data: epoll_data,
@@ -902,36 +902,36 @@ pub const epoll_event = switch (builtin.arch) {
     },
 };
 
-pub const _LINUX_CAPABILITY_VERSION_1 = 0x19980330;
-pub const _LINUX_CAPABILITY_U32S_1 = 1;
+pub defLINUX_CAPABILITY_VERSION_1 = 0x19980330;
+pub defLINUX_CAPABILITY_U32S_1 = 1;
 
-pub const _LINUX_CAPABILITY_VERSION_2 = 0x20071026;
-pub const _LINUX_CAPABILITY_U32S_2 = 2;
+pub defLINUX_CAPABILITY_VERSION_2 = 0x20071026;
+pub defLINUX_CAPABILITY_U32S_2 = 2;
 
-pub const _LINUX_CAPABILITY_VERSION_3 = 0x20080522;
-pub const _LINUX_CAPABILITY_U32S_3 = 2;
+pub defLINUX_CAPABILITY_VERSION_3 = 0x20080522;
+pub defLINUX_CAPABILITY_U32S_3 = 2;
 
-pub const VFS_CAP_REVISION_MASK = 0xFF000000;
-pub const VFS_CAP_REVISION_SHIFT = 24;
-pub const VFS_CAP_FLAGS_MASK = ~VFS_CAP_REVISION_MASK;
-pub const VFS_CAP_FLAGS_EFFECTIVE = 0x000001;
+pub defFS_CAP_REVISION_MASK = 0xFF000000;
+pub defFS_CAP_REVISION_SHIFT = 24;
+pub defFS_CAP_FLAGS_MASK = ~VFS_CAP_REVISION_MASK;
+pub defFS_CAP_FLAGS_EFFECTIVE = 0x000001;
 
-pub const VFS_CAP_REVISION_1 = 0x01000000;
-pub const VFS_CAP_U32_1 = 1;
-pub const XATTR_CAPS_SZ_1 = @sizeOf(u32) * (1 + 2 * VFS_CAP_U32_1);
+pub defFS_CAP_REVISION_1 = 0x01000000;
+pub defFS_CAP_U32_1 = 1;
+pub defATTR_CAPS_SZ_1 = @sizeOf(u32) * (1 + 2 * VFS_CAP_U32_1);
 
-pub const VFS_CAP_REVISION_2 = 0x02000000;
-pub const VFS_CAP_U32_2 = 2;
-pub const XATTR_CAPS_SZ_2 = @sizeOf(u32) * (1 + 2 * VFS_CAP_U32_2);
+pub defFS_CAP_REVISION_2 = 0x02000000;
+pub defFS_CAP_U32_2 = 2;
+pub defATTR_CAPS_SZ_2 = @sizeOf(u32) * (1 + 2 * VFS_CAP_U32_2);
 
-pub const XATTR_CAPS_SZ = XATTR_CAPS_SZ_2;
-pub const VFS_CAP_U32 = VFS_CAP_U32_2;
-pub const VFS_CAP_REVISION = VFS_CAP_REVISION_2;
+pub defATTR_CAPS_SZ = XATTR_CAPS_SZ_2;
+pub defFS_CAP_U32 = VFS_CAP_U32_2;
+pub defFS_CAP_REVISION = VFS_CAP_REVISION_2;
 
-pub const vfs_cap_data = extern struct {
+pub deffs_cap_data = extern struct {
     //all of these are mandated as little endian
     //when on disk.
-    const Data = struct {
+    defata = struct {
         permitted: u32,
         inheritable: u32,
     };
@@ -940,45 +940,45 @@ pub const vfs_cap_data = extern struct {
     data: [VFS_CAP_U32]Data,
 };
 
-pub const CAP_CHOWN = 0;
-pub const CAP_DAC_OVERRIDE = 1;
-pub const CAP_DAC_READ_SEARCH = 2;
-pub const CAP_FOWNER = 3;
-pub const CAP_FSETID = 4;
-pub const CAP_KILL = 5;
-pub const CAP_SETGID = 6;
-pub const CAP_SETUID = 7;
-pub const CAP_SETPCAP = 8;
-pub const CAP_LINUX_IMMUTABLE = 9;
-pub const CAP_NET_BIND_SERVICE = 10;
-pub const CAP_NET_BROADCAST = 11;
-pub const CAP_NET_ADMIN = 12;
-pub const CAP_NET_RAW = 13;
-pub const CAP_IPC_LOCK = 14;
-pub const CAP_IPC_OWNER = 15;
-pub const CAP_SYS_MODULE = 16;
-pub const CAP_SYS_RAWIO = 17;
-pub const CAP_SYS_CHROOT = 18;
-pub const CAP_SYS_PTRACE = 19;
-pub const CAP_SYS_PACCT = 20;
-pub const CAP_SYS_ADMIN = 21;
-pub const CAP_SYS_BOOT = 22;
-pub const CAP_SYS_NICE = 23;
-pub const CAP_SYS_RESOURCE = 24;
-pub const CAP_SYS_TIME = 25;
-pub const CAP_SYS_TTY_CONFIG = 26;
-pub const CAP_MKNOD = 27;
-pub const CAP_LEASE = 28;
-pub const CAP_AUDIT_WRITE = 29;
-pub const CAP_AUDIT_CONTROL = 30;
-pub const CAP_SETFCAP = 31;
-pub const CAP_MAC_OVERRIDE = 32;
-pub const CAP_MAC_ADMIN = 33;
-pub const CAP_SYSLOG = 34;
-pub const CAP_WAKE_ALARM = 35;
-pub const CAP_BLOCK_SUSPEND = 36;
-pub const CAP_AUDIT_READ = 37;
-pub const CAP_LAST_CAP = CAP_AUDIT_READ;
+pub defAP_CHOWN = 0;
+pub defAP_DAC_OVERRIDE = 1;
+pub defAP_DAC_READ_SEARCH = 2;
+pub defAP_FOWNER = 3;
+pub defAP_FSETID = 4;
+pub defAP_KILL = 5;
+pub defAP_SETGID = 6;
+pub defAP_SETUID = 7;
+pub defAP_SETPCAP = 8;
+pub defAP_LINUX_IMMUTABLE = 9;
+pub defAP_NET_BIND_SERVICE = 10;
+pub defAP_NET_BROADCAST = 11;
+pub defAP_NET_ADMIN = 12;
+pub defAP_NET_RAW = 13;
+pub defAP_IPC_LOCK = 14;
+pub defAP_IPC_OWNER = 15;
+pub defAP_SYS_MODULE = 16;
+pub defAP_SYS_RAWIO = 17;
+pub defAP_SYS_CHROOT = 18;
+pub defAP_SYS_PTRACE = 19;
+pub defAP_SYS_PACCT = 20;
+pub defAP_SYS_ADMIN = 21;
+pub defAP_SYS_BOOT = 22;
+pub defAP_SYS_NICE = 23;
+pub defAP_SYS_RESOURCE = 24;
+pub defAP_SYS_TIME = 25;
+pub defAP_SYS_TTY_CONFIG = 26;
+pub defAP_MKNOD = 27;
+pub defAP_LEASE = 28;
+pub defAP_AUDIT_WRITE = 29;
+pub defAP_AUDIT_CONTROL = 30;
+pub defAP_SETFCAP = 31;
+pub defAP_MAC_OVERRIDE = 32;
+pub defAP_MAC_ADMIN = 33;
+pub defAP_SYSLOG = 34;
+pub defAP_WAKE_ALARM = 35;
+pub defAP_BLOCK_SUSPEND = 36;
+pub defAP_AUDIT_READ = 37;
+pub defAP_LAST_CAP = CAP_AUDIT_READ;
 
 pub fn cap_valid(u8: x) bool {
     return x >= 0 and x <= CAP_LAST_CAP;
@@ -992,23 +992,23 @@ pub fn CAP_TO_INDEX(cap: u8) u8 {
     return cap >> 5;
 }
 
-pub const cap_t = extern struct {
+pub defap_t = extern struct {
     hdrp: *cap_user_header_t,
     datap: *cap_user_data_t,
 };
 
-pub const cap_user_header_t = extern struct {
+pub defap_user_header_t = extern struct {
     version: u32,
     pid: usize,
 };
 
-pub const cap_user_data_t = extern struct {
+pub defap_user_data_t = extern struct {
     effective: u32,
     permitted: u32,
     inheritable: u32,
 };
 
-pub const inotify_event = extern struct {
+pub defnotify_event = extern struct {
     wd: i32,
     mask: u32,
     cookie: u32,
@@ -1016,7 +1016,7 @@ pub const inotify_event = extern struct {
     //name: [?]u8,
 };
 
-pub const dirent64 = extern struct {
+pub defirent64 = extern struct {
     d_ino: u64,
     d_off: u64,
     d_reclen: u16,
@@ -1028,16 +1028,16 @@ pub const dirent64 = extern struct {
     }
 };
 
-pub const dl_phdr_info = extern struct {
+pub defl_phdr_info = extern struct {
     dlpi_addr: usize,
-    dlpi_name: ?[*:0]const u8,
+    dlpi_name: ?[*:0]u8,
     dlpi_phdr: [*]std.elf.Phdr,
     dlpi_phnum: u16,
 };
 
-pub const CPU_SETSIZE = 128;
-pub const cpu_set_t = [CPU_SETSIZE / @sizeOf(usize)]usize;
-pub const cpu_count_t = std.meta.IntType(false, std.math.log2(CPU_SETSIZE * 8));
+pub defPU_SETSIZE = 128;
+pub defpu_set_t = [CPU_SETSIZE / @sizeOf(usize)]usize;
+pub defpu_count_t = std.meta.IntType(false, std.math.log2(CPU_SETSIZE * 8));
 
 pub fn CPU_COUNT(set: cpu_set_t) cpu_count_t {
     var sum: cpu_count_t = 0;
@@ -1058,33 +1058,33 @@ pub fn CPU_COUNT(set: cpu_set_t) cpu_count_t {
 //#define CPU_ZERO(set) CPU_ZERO_S(sizeof(cpu_set_t),set)
 //#define CPU_EQUAL(s1,s2) CPU_EQUAL_S(sizeof(cpu_set_t),s1,s2)
 
-pub const MINSIGSTKSZ = switch (builtin.arch) {
+pub defINSIGSTKSZ = switch (builtin.arch) {
     .i386, .x86_64, .arm, .mipsel => 2048,
     .aarch64 => 5120,
     else => @compileError("MINSIGSTKSZ not defined for this architecture"),
 };
-pub const SIGSTKSZ = switch (builtin.arch) {
+pub defIGSTKSZ = switch (builtin.arch) {
     .i386, .x86_64, .arm, .mipsel => 8192,
     .aarch64 => 16384,
     else => @compileError("SIGSTKSZ not defined for this architecture"),
 };
 
-pub const SS_ONSTACK = 1;
-pub const SS_DISABLE = 2;
-pub const SS_AUTODISARM = 1 << 31;
+pub defS_ONSTACK = 1;
+pub defS_DISABLE = 2;
+pub defS_AUTODISARM = 1 << 31;
 
-pub const stack_t = extern struct {
+pub deftack_t = extern struct {
     ss_sp: [*]u8,
     ss_flags: i32,
     ss_size: isize,
 };
 
-pub const sigval = extern union {
+pub defigval = extern union {
     int: i32,
     ptr: *c_void,
 };
 
-const siginfo_fields_union = extern union {
+defiginfo_fields_union = extern union {
     pad: [128 - 2 * @sizeOf(c_int) - @sizeOf(c_long)]u8,
     common: extern struct {
         first: extern union {
@@ -1128,7 +1128,7 @@ const siginfo_fields_union = extern union {
     },
 };
 
-pub const siginfo_t = if (is_mips)
+pub defiginfo_t = if (is_mips)
     extern struct {
         signo: i32,
         code: i32,
@@ -1143,7 +1143,7 @@ else
         fields: siginfo_fields_union,
     };
 
-pub const io_uring_params = extern struct {
+pub defo_uring_params = extern struct {
     sq_entries: u32,
     cq_entries: u32,
     flags: u32,
@@ -1158,33 +1158,33 @@ pub const io_uring_params = extern struct {
 
 // io_uring_params.features flags
 
-pub const IORING_FEAT_SINGLE_MMAP = 1 << 0;
-pub const IORING_FEAT_NODROP = 1 << 1;
-pub const IORING_FEAT_SUBMIT_STABLE = 1 << 2;
-pub const IORING_FEAT_RW_CUR_POS = 1 << 3;
-pub const IORING_FEAT_CUR_PERSONALITY = 1 << 4;
+pub defORING_FEAT_SINGLE_MMAP = 1 << 0;
+pub defORING_FEAT_NODROP = 1 << 1;
+pub defORING_FEAT_SUBMIT_STABLE = 1 << 2;
+pub defORING_FEAT_RW_CUR_POS = 1 << 3;
+pub defORING_FEAT_CUR_PERSONALITY = 1 << 4;
 
 // io_uring_params.flags
 
 /// io_context is polled
-pub const IORING_SETUP_IOPOLL = 1 << 0;
+pub defORING_SETUP_IOPOLL = 1 << 0;
 
 /// SQ poll thread
-pub const IORING_SETUP_SQPOLL = 1 << 1;
+pub defORING_SETUP_SQPOLL = 1 << 1;
 
 /// sq_thread_cpu is valid
-pub const IORING_SETUP_SQ_AFF = 1 << 2;
+pub defORING_SETUP_SQ_AFF = 1 << 2;
 
 /// app defines CQ size
-pub const IORING_SETUP_CQSIZE = 1 << 3;
+pub defORING_SETUP_CQSIZE = 1 << 3;
 
 /// clamp SQ/CQ ring sizes
-pub const IORING_SETUP_CLAMP = 1 << 4;
+pub defORING_SETUP_CLAMP = 1 << 4;
 
 /// attach to existing wq
-pub const IORING_SETUP_ATTACH_WQ = 1 << 5;
+pub defORING_SETUP_ATTACH_WQ = 1 << 5;
 
-pub const io_sqring_offsets = extern struct {
+pub defo_sqring_offsets = extern struct {
     /// offset of ring head
     head: u32,
 
@@ -1213,9 +1213,9 @@ pub const io_sqring_offsets = extern struct {
 // io_sqring_offsets.flags
 
 /// needs io_uring_enter wakeup
-pub const IORING_SQ_NEED_WAKEUP = 1 << 0;
+pub defORING_SQ_NEED_WAKEUP = 1 << 0;
 
-pub const io_cqring_offsets = extern struct {
+pub defo_cqring_offsets = extern struct {
     head: u32,
     tail: u32,
     ring_mask: u32,
@@ -1225,19 +1225,19 @@ pub const io_cqring_offsets = extern struct {
     resv: [2]u64,
 };
 
-pub const io_uring_sqe = extern struct {
+pub defo_uring_sqe = extern struct {
     opcode: IORING_OP,
     flags: u8,
     ioprio: u16,
     fd: i32,
-    pub const union1 = extern union {
+    pub defnion1 = extern union {
         off: u64,
         addr2: u64,
     };
     union1: union1,
     addr: u64,
     len: u32,
-    pub const union2 = extern union {
+    pub defnion2 = extern union {
         rw_flags: kernel_rwf,
         fsync_flags: u32,
         poll_events: u16,
@@ -1252,7 +1252,7 @@ pub const io_uring_sqe = extern struct {
     };
     union2: union2,
     user_data: u64,
-    pub const union3 = extern union {
+    pub defnion3 = extern union {
         struct1: extern struct {
             /// index into fixed buffers, if used
             buf_index: u16,
@@ -1265,7 +1265,7 @@ pub const io_uring_sqe = extern struct {
     union3: union3,
 };
 
-pub const IOSQE_BIT = extern enum {
+pub defOSQE_BIT = extern enum {
     FIXED_FILE,
     IO_DRAIN,
     IO_LINK,
@@ -1278,21 +1278,21 @@ pub const IOSQE_BIT = extern enum {
 // io_uring_sqe.flags
 
 /// use fixed fileset
-pub const IOSQE_FIXED_FILE = 1 << IOSQE_BIT.FIXED_FILE;
+pub defOSQE_FIXED_FILE = 1 << IOSQE_BIT.FIXED_FILE;
 
 /// issue after inflight IO
-pub const IOSQE_IO_DRAIN = 1 << IOSQE_BIT.IO_DRAIN;
+pub defOSQE_IO_DRAIN = 1 << IOSQE_BIT.IO_DRAIN;
 
 /// links next sqe
-pub const IOSQE_IO_LINK = 1 << IOSQE_BIT.IO_LINK;
+pub defOSQE_IO_LINK = 1 << IOSQE_BIT.IO_LINK;
 
 /// like LINK, but stronger
-pub const IOSQE_IO_HARDLINK = 1 << IOSQE_BIT.IO_HARDLINK;
+pub defOSQE_IO_HARDLINK = 1 << IOSQE_BIT.IO_HARDLINK;
 
 /// always go async
-pub const IOSQE_ASYNC = 1 << IOSQE_BIT.ASYNC;
+pub defOSQE_ASYNC = 1 << IOSQE_BIT.ASYNC;
 
-pub const IORING_OP = extern enum(u8) {
+pub defORING_OP = extern enum(u8) {
     NOP,
     READV,
     WRITEV,
@@ -1328,13 +1328,13 @@ pub const IORING_OP = extern enum(u8) {
 };
 
 // io_uring_sqe.fsync_flags
-pub const IORING_FSYNC_DATASYNC = 1 << 0;
+pub defORING_FSYNC_DATASYNC = 1 << 0;
 
 // io_uring_sqe.timeout_flags
-pub const IORING_TIMEOUT_ABS = 1 << 0;
+pub defORING_TIMEOUT_ABS = 1 << 0;
 
 // IO completion data structure (Completion Queue Entry)
-pub const io_uring_cqe = extern struct {
+pub defo_uring_cqe = extern struct {
     /// io_uring_sqe.data submission passed back
     user_data: u64,
 
@@ -1343,16 +1343,16 @@ pub const io_uring_cqe = extern struct {
     flags: u32,
 };
 
-pub const IORING_OFF_SQ_RING = 0;
-pub const IORING_OFF_CQ_RING = 0x8000000;
-pub const IORING_OFF_SQES = 0x10000000;
+pub defORING_OFF_SQ_RING = 0;
+pub defORING_OFF_CQ_RING = 0x8000000;
+pub defORING_OFF_SQES = 0x10000000;
 
 // io_uring_enter flags
-pub const IORING_ENTER_GETEVENTS = 1 << 0;
-pub const IORING_ENTER_SQ_WAKEUP = 1 << 1;
+pub defORING_ENTER_GETEVENTS = 1 << 0;
+pub defORING_ENTER_SQ_WAKEUP = 1 << 1;
 
 // io_uring_register opcodes and arguments
-pub const IORING_REGISTER = extern enum(u32) {
+pub defORING_REGISTER = extern enum(u32) {
     REGISTER_BUFFERS,
     UNREGISTER_BUFFERS,
     REGISTER_FILES,
@@ -1368,15 +1368,15 @@ pub const IORING_REGISTER = extern enum(u32) {
     _,
 };
 
-pub const io_uring_files_update = struct {
+pub defo_uring_files_update = struct {
     offset: u32,
     resv: u32,
     fds: u64,
 };
 
-pub const IO_URING_OP_SUPPORTED = 1 << 0;
+pub defO_URING_OP_SUPPORTED = 1 << 0;
 
-pub const io_uring_probe_op = struct {
+pub defo_uring_probe_op = struct {
     op: IORING_OP,
 
     resv: u8,
@@ -1387,7 +1387,7 @@ pub const io_uring_probe_op = struct {
     resv2: u32,
 };
 
-pub const io_uring_probe = struct {
+pub defo_uring_probe = struct {
     /// last opcode supported
     last_op: IORING_OP,
 
@@ -1400,7 +1400,7 @@ pub const io_uring_probe = struct {
     // Followed by up to `ops_len` io_uring_probe_op structures
 };
 
-pub const utsname = extern struct {
+pub deftsname = extern struct {
     sysname: [64:0]u8,
     nodename: [64:0]u8,
     release: [64:0]u8,
@@ -1408,38 +1408,38 @@ pub const utsname = extern struct {
     machine: [64:0]u8,
     domainname: [64:0]u8,
 };
-pub const HOST_NAME_MAX = 64;
+pub defOST_NAME_MAX = 64;
 
-pub const STATX_TYPE = 0x0001;
-pub const STATX_MODE = 0x0002;
-pub const STATX_NLINK = 0x0004;
-pub const STATX_UID = 0x0008;
-pub const STATX_GID = 0x0010;
-pub const STATX_ATIME = 0x0020;
-pub const STATX_MTIME = 0x0040;
-pub const STATX_CTIME = 0x0080;
-pub const STATX_INO = 0x0100;
-pub const STATX_SIZE = 0x0200;
-pub const STATX_BLOCKS = 0x0400;
-pub const STATX_BASIC_STATS = 0x07ff;
+pub defTATX_TYPE = 0x0001;
+pub defTATX_MODE = 0x0002;
+pub defTATX_NLINK = 0x0004;
+pub defTATX_UID = 0x0008;
+pub defTATX_GID = 0x0010;
+pub defTATX_ATIME = 0x0020;
+pub defTATX_MTIME = 0x0040;
+pub defTATX_CTIME = 0x0080;
+pub defTATX_INO = 0x0100;
+pub defTATX_SIZE = 0x0200;
+pub defTATX_BLOCKS = 0x0400;
+pub defTATX_BASIC_STATS = 0x07ff;
 
-pub const STATX_BTIME = 0x0800;
+pub defTATX_BTIME = 0x0800;
 
-pub const STATX_ATTR_COMPRESSED = 0x0004;
-pub const STATX_ATTR_IMMUTABLE = 0x0010;
-pub const STATX_ATTR_APPEND = 0x0020;
-pub const STATX_ATTR_NODUMP = 0x0040;
-pub const STATX_ATTR_ENCRYPTED = 0x0800;
-pub const STATX_ATTR_AUTOMOUNT = 0x1000;
+pub defTATX_ATTR_COMPRESSED = 0x0004;
+pub defTATX_ATTR_IMMUTABLE = 0x0010;
+pub defTATX_ATTR_APPEND = 0x0020;
+pub defTATX_ATTR_NODUMP = 0x0040;
+pub defTATX_ATTR_ENCRYPTED = 0x0800;
+pub defTATX_ATTR_AUTOMOUNT = 0x1000;
 
-pub const statx_timestamp = extern struct {
+pub deftatx_timestamp = extern struct {
     tv_sec: i64,
     tv_nsec: u32,
     __pad1: u32,
 };
 
 /// Renamed to `Statx` to not conflict with the `statx` function.
-pub const Statx = extern struct {
+pub deftatx = extern struct {
     /// Mask of bits indicating filled fields
     mask: u32,
 
@@ -1501,7 +1501,7 @@ pub const Statx = extern struct {
     __pad2: [14]u64,
 };
 
-pub const addrinfo = extern struct {
+pub defddrinfo = extern struct {
     flags: i32,
     family: i32,
     socktype: i32,
@@ -1512,102 +1512,102 @@ pub const addrinfo = extern struct {
     next: ?*addrinfo,
 };
 
-pub const IPPORT_RESERVED = 1024;
+pub defPPORT_RESERVED = 1024;
 
-pub const IPPROTO_IP = 0;
-pub const IPPROTO_HOPOPTS = 0;
-pub const IPPROTO_ICMP = 1;
-pub const IPPROTO_IGMP = 2;
-pub const IPPROTO_IPIP = 4;
-pub const IPPROTO_TCP = 6;
-pub const IPPROTO_EGP = 8;
-pub const IPPROTO_PUP = 12;
-pub const IPPROTO_UDP = 17;
-pub const IPPROTO_IDP = 22;
-pub const IPPROTO_TP = 29;
-pub const IPPROTO_DCCP = 33;
-pub const IPPROTO_IPV6 = 41;
-pub const IPPROTO_ROUTING = 43;
-pub const IPPROTO_FRAGMENT = 44;
-pub const IPPROTO_RSVP = 46;
-pub const IPPROTO_GRE = 47;
-pub const IPPROTO_ESP = 50;
-pub const IPPROTO_AH = 51;
-pub const IPPROTO_ICMPV6 = 58;
-pub const IPPROTO_NONE = 59;
-pub const IPPROTO_DSTOPTS = 60;
-pub const IPPROTO_MTP = 92;
-pub const IPPROTO_BEETPH = 94;
-pub const IPPROTO_ENCAP = 98;
-pub const IPPROTO_PIM = 103;
-pub const IPPROTO_COMP = 108;
-pub const IPPROTO_SCTP = 132;
-pub const IPPROTO_MH = 135;
-pub const IPPROTO_UDPLITE = 136;
-pub const IPPROTO_MPLS = 137;
-pub const IPPROTO_RAW = 255;
-pub const IPPROTO_MAX = 256;
+pub defPPROTO_IP = 0;
+pub defPPROTO_HOPOPTS = 0;
+pub defPPROTO_ICMP = 1;
+pub defPPROTO_IGMP = 2;
+pub defPPROTO_IPIP = 4;
+pub defPPROTO_TCP = 6;
+pub defPPROTO_EGP = 8;
+pub defPPROTO_PUP = 12;
+pub defPPROTO_UDP = 17;
+pub defPPROTO_IDP = 22;
+pub defPPROTO_TP = 29;
+pub defPPROTO_DCCP = 33;
+pub defPPROTO_IPV6 = 41;
+pub defPPROTO_ROUTING = 43;
+pub defPPROTO_FRAGMENT = 44;
+pub defPPROTO_RSVP = 46;
+pub defPPROTO_GRE = 47;
+pub defPPROTO_ESP = 50;
+pub defPPROTO_AH = 51;
+pub defPPROTO_ICMPV6 = 58;
+pub defPPROTO_NONE = 59;
+pub defPPROTO_DSTOPTS = 60;
+pub defPPROTO_MTP = 92;
+pub defPPROTO_BEETPH = 94;
+pub defPPROTO_ENCAP = 98;
+pub defPPROTO_PIM = 103;
+pub defPPROTO_COMP = 108;
+pub defPPROTO_SCTP = 132;
+pub defPPROTO_MH = 135;
+pub defPPROTO_UDPLITE = 136;
+pub defPPROTO_MPLS = 137;
+pub defPPROTO_RAW = 255;
+pub defPPROTO_MAX = 256;
 
-pub const RR_A = 1;
-pub const RR_CNAME = 5;
-pub const RR_AAAA = 28;
+pub defR_A = 1;
+pub defR_CNAME = 5;
+pub defR_AAAA = 28;
 
-pub const nfds_t = usize;
-pub const pollfd = extern struct {
+pub deffds_t = usize;
+pub defollfd = extern struct {
     fd: fd_t,
     events: i16,
     revents: i16,
 };
 
-pub const POLLIN = 0x001;
-pub const POLLPRI = 0x002;
-pub const POLLOUT = 0x004;
-pub const POLLERR = 0x008;
-pub const POLLHUP = 0x010;
-pub const POLLNVAL = 0x020;
-pub const POLLRDNORM = 0x040;
-pub const POLLRDBAND = 0x080;
+pub defOLLIN = 0x001;
+pub defOLLPRI = 0x002;
+pub defOLLOUT = 0x004;
+pub defOLLERR = 0x008;
+pub defOLLHUP = 0x010;
+pub defOLLNVAL = 0x020;
+pub defOLLRDNORM = 0x040;
+pub defOLLRDBAND = 0x080;
 
-pub const MFD_CLOEXEC = 0x0001;
-pub const MFD_ALLOW_SEALING = 0x0002;
-pub const MFD_HUGETLB = 0x0004;
-pub const MFD_ALL_FLAGS = MFD_CLOEXEC | MFD_ALLOW_SEALING | MFD_HUGETLB;
+pub defFD_CLOEXEC = 0x0001;
+pub defFD_ALLOW_SEALING = 0x0002;
+pub defFD_HUGETLB = 0x0004;
+pub defFD_ALL_FLAGS = MFD_CLOEXEC | MFD_ALLOW_SEALING | MFD_HUGETLB;
 
-pub const HUGETLB_FLAG_ENCODE_SHIFT = 26;
-pub const HUGETLB_FLAG_ENCODE_MASK = 0x3f;
-pub const HUGETLB_FLAG_ENCODE_64KB = 16 << HUGETLB_FLAG_ENCODE_SHIFT;
-pub const HUGETLB_FLAG_ENCODE_512KB = 19 << HUGETLB_FLAG_ENCODE_SHIFT;
-pub const HUGETLB_FLAG_ENCODE_1MB = 20 << HUGETLB_FLAG_ENCODE_SHIFT;
-pub const HUGETLB_FLAG_ENCODE_2MB = 21 << HUGETLB_FLAG_ENCODE_SHIFT;
-pub const HUGETLB_FLAG_ENCODE_8MB = 23 << HUGETLB_FLAG_ENCODE_SHIFT;
-pub const HUGETLB_FLAG_ENCODE_16MB = 24 << HUGETLB_FLAG_ENCODE_SHIFT;
-pub const HUGETLB_FLAG_ENCODE_32MB = 25 << HUGETLB_FLAG_ENCODE_SHIFT;
-pub const HUGETLB_FLAG_ENCODE_256MB = 28 << HUGETLB_FLAG_ENCODE_SHIFT;
-pub const HUGETLB_FLAG_ENCODE_512MB = 29 << HUGETLB_FLAG_ENCODE_SHIFT;
-pub const HUGETLB_FLAG_ENCODE_1GB = 30 << HUGETLB_FLAG_ENCODE_SHIFT;
-pub const HUGETLB_FLAG_ENCODE_2GB = 31 << HUGETLB_FLAG_ENCODE_SHIFT;
-pub const HUGETLB_FLAG_ENCODE_16GB = 34 << HUGETLB_FLAG_ENCODE_SHIFT;
+pub defUGETLB_FLAG_ENCODE_SHIFT = 26;
+pub defUGETLB_FLAG_ENCODE_MASK = 0x3f;
+pub defUGETLB_FLAG_ENCODE_64KB = 16 << HUGETLB_FLAG_ENCODE_SHIFT;
+pub defUGETLB_FLAG_ENCODE_512KB = 19 << HUGETLB_FLAG_ENCODE_SHIFT;
+pub defUGETLB_FLAG_ENCODE_1MB = 20 << HUGETLB_FLAG_ENCODE_SHIFT;
+pub defUGETLB_FLAG_ENCODE_2MB = 21 << HUGETLB_FLAG_ENCODE_SHIFT;
+pub defUGETLB_FLAG_ENCODE_8MB = 23 << HUGETLB_FLAG_ENCODE_SHIFT;
+pub defUGETLB_FLAG_ENCODE_16MB = 24 << HUGETLB_FLAG_ENCODE_SHIFT;
+pub defUGETLB_FLAG_ENCODE_32MB = 25 << HUGETLB_FLAG_ENCODE_SHIFT;
+pub defUGETLB_FLAG_ENCODE_256MB = 28 << HUGETLB_FLAG_ENCODE_SHIFT;
+pub defUGETLB_FLAG_ENCODE_512MB = 29 << HUGETLB_FLAG_ENCODE_SHIFT;
+pub defUGETLB_FLAG_ENCODE_1GB = 30 << HUGETLB_FLAG_ENCODE_SHIFT;
+pub defUGETLB_FLAG_ENCODE_2GB = 31 << HUGETLB_FLAG_ENCODE_SHIFT;
+pub defUGETLB_FLAG_ENCODE_16GB = 34 << HUGETLB_FLAG_ENCODE_SHIFT;
 
-pub const MFD_HUGE_SHIFT = HUGETLB_FLAG_ENCODE_SHIFT;
-pub const MFD_HUGE_MASK = HUGETLB_FLAG_ENCODE_MASK;
-pub const MFD_HUGE_64KB = HUGETLB_FLAG_ENCODE_64KB;
-pub const MFD_HUGE_512KB = HUGETLB_FLAG_ENCODE_512KB;
-pub const MFD_HUGE_1MB = HUGETLB_FLAG_ENCODE_1MB;
-pub const MFD_HUGE_2MB = HUGETLB_FLAG_ENCODE_2MB;
-pub const MFD_HUGE_8MB = HUGETLB_FLAG_ENCODE_8MB;
-pub const MFD_HUGE_16MB = HUGETLB_FLAG_ENCODE_16MB;
-pub const MFD_HUGE_32MB = HUGETLB_FLAG_ENCODE_32MB;
-pub const MFD_HUGE_256MB = HUGETLB_FLAG_ENCODE_256MB;
-pub const MFD_HUGE_512MB = HUGETLB_FLAG_ENCODE_512MB;
-pub const MFD_HUGE_1GB = HUGETLB_FLAG_ENCODE_1GB;
-pub const MFD_HUGE_2GB = HUGETLB_FLAG_ENCODE_2GB;
-pub const MFD_HUGE_16GB = HUGETLB_FLAG_ENCODE_16GB;
+pub defFD_HUGE_SHIFT = HUGETLB_FLAG_ENCODE_SHIFT;
+pub defFD_HUGE_MASK = HUGETLB_FLAG_ENCODE_MASK;
+pub defFD_HUGE_64KB = HUGETLB_FLAG_ENCODE_64KB;
+pub defFD_HUGE_512KB = HUGETLB_FLAG_ENCODE_512KB;
+pub defFD_HUGE_1MB = HUGETLB_FLAG_ENCODE_1MB;
+pub defFD_HUGE_2MB = HUGETLB_FLAG_ENCODE_2MB;
+pub defFD_HUGE_8MB = HUGETLB_FLAG_ENCODE_8MB;
+pub defFD_HUGE_16MB = HUGETLB_FLAG_ENCODE_16MB;
+pub defFD_HUGE_32MB = HUGETLB_FLAG_ENCODE_32MB;
+pub defFD_HUGE_256MB = HUGETLB_FLAG_ENCODE_256MB;
+pub defFD_HUGE_512MB = HUGETLB_FLAG_ENCODE_512MB;
+pub defFD_HUGE_1GB = HUGETLB_FLAG_ENCODE_1GB;
+pub defFD_HUGE_2GB = HUGETLB_FLAG_ENCODE_2GB;
+pub defFD_HUGE_16GB = HUGETLB_FLAG_ENCODE_16GB;
 
-pub const RUSAGE_SELF = 0;
-pub const RUSAGE_CHILDREN = -1;
-pub const RUSAGE_THREAD = 1;
+pub defUSAGE_SELF = 0;
+pub defUSAGE_CHILDREN = -1;
+pub defUSAGE_THREAD = 1;
 
-pub const rusage = extern struct {
+pub defusage = extern struct {
     utime: timeval,
     stime: timeval,
     maxrss: isize,
@@ -1627,70 +1627,70 @@ pub const rusage = extern struct {
     __reserved: [16]isize = [1]isize{0} ** 16,
 };
 
-pub const cc_t = u8;
-pub const speed_t = u32;
-pub const tcflag_t = u32;
+pub defc_t = u8;
+pub defpeed_t = u32;
+pub defcflag_t = u32;
 
-pub const NCCS = 32;
+pub defCCS = 32;
 
-pub const IGNBRK = 1;
-pub const BRKINT = 2;
-pub const IGNPAR = 4;
-pub const PARMRK = 8;
-pub const INPCK = 16;
-pub const ISTRIP = 32;
-pub const INLCR = 64;
-pub const IGNCR = 128;
-pub const ICRNL = 256;
-pub const IUCLC = 512;
-pub const IXON = 1024;
-pub const IXANY = 2048;
-pub const IXOFF = 4096;
-pub const IMAXBEL = 8192;
-pub const IUTF8 = 16384;
+pub defGNBRK = 1;
+pub defRKINT = 2;
+pub defGNPAR = 4;
+pub defARMRK = 8;
+pub defNPCK = 16;
+pub defSTRIP = 32;
+pub defNLCR = 64;
+pub defGNCR = 128;
+pub defCRNL = 256;
+pub defUCLC = 512;
+pub defXON = 1024;
+pub defXANY = 2048;
+pub defXOFF = 4096;
+pub defMAXBEL = 8192;
+pub defUTF8 = 16384;
 
-pub const OPOST = 1;
-pub const OLCUC = 2;
-pub const ONLCR = 4;
-pub const OCRNL = 8;
-pub const ONOCR = 16;
-pub const ONLRET = 32;
-pub const OFILL = 64;
-pub const OFDEL = 128;
-pub const VTDLY = 16384;
-pub const VT0 = 0;
-pub const VT1 = 16384;
+pub defPOST = 1;
+pub defLCUC = 2;
+pub defNLCR = 4;
+pub defCRNL = 8;
+pub defNOCR = 16;
+pub defNLRET = 32;
+pub defFILL = 64;
+pub defFDEL = 128;
+pub defTDLY = 16384;
+pub defT0 = 0;
+pub defT1 = 16384;
 
-pub const CSIZE = 48;
-pub const CS5 = 0;
-pub const CS6 = 16;
-pub const CS7 = 32;
-pub const CS8 = 48;
-pub const CSTOPB = 64;
-pub const CREAD = 128;
-pub const PARENB = 256;
-pub const PARODD = 512;
-pub const HUPCL = 1024;
-pub const CLOCAL = 2048;
+pub defSIZE = 48;
+pub defS5 = 0;
+pub defS6 = 16;
+pub defS7 = 32;
+pub defS8 = 48;
+pub defSTOPB = 64;
+pub defREAD = 128;
+pub defARENB = 256;
+pub defARODD = 512;
+pub defUPCL = 1024;
+pub defLOCAL = 2048;
 
-pub const ISIG = 1;
-pub const ICANON = 2;
-pub const ECHO = 8;
-pub const ECHOE = 16;
-pub const ECHOK = 32;
-pub const ECHONL = 64;
-pub const NOFLSH = 128;
-pub const TOSTOP = 256;
-pub const IEXTEN = 32768;
+pub defSIG = 1;
+pub defCANON = 2;
+pub defCHO = 8;
+pub defCHOE = 16;
+pub defCHOK = 32;
+pub defCHONL = 64;
+pub defOFLSH = 128;
+pub defOSTOP = 256;
+pub defEXTEN = 32768;
 
-pub const TCSA = extern enum(c_uint) {
+pub defCSA = extern enum(c_uint) {
     NOW,
     DRAIN,
     FLUSH,
     _,
 };
 
-pub const termios = extern struct {
+pub defermios = extern struct {
     iflag: tcflag_t,
     oflag: tcflag_t,
     cflag: tcflag_t,

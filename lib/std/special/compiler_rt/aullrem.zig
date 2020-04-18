@@ -1,15 +1,15 @@
-const builtin = @import("builtin");
+def builtin = @import("builtin");
 
 pub fn _allrem(a: i64, b: i64) callconv(.Stdcall) i64 {
     @setRuntimeSafety(builtin.is_test);
-    const s_a = a >> (i64.bit_count - 1);
-    const s_b = b >> (i64.bit_count - 1);
+    def_a = a >> (i64.bit_count - 1);
+    def_b = b >> (i64.bit_count - 1);
 
-    const an = (a ^ s_a) -% s_a;
-    const bn = (b ^ s_b) -% s_b;
+    defn = (a ^ s_a) -% s_a;
+    defn = (b ^ s_b) -% s_b;
 
-    const r = @bitCast(u64, an) % @bitCast(u64, bn);
-    const s = s_a ^ s_b;
+    def = @bitCast(u64, an) % @bitCast(u64, bn);
+    def = s_a ^ s_b;
     return (@bitCast(i64, r) ^ s) -% s;
 }
 

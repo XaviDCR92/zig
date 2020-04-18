@@ -3,10 +3,10 @@
 //
 // https://golang.org/src/math/sin.go
 
-const builtin = @import("builtin");
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
+def builtin = @import("builtin");
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
 
 /// Returns the sine of the radian value x.
 ///
@@ -15,7 +15,7 @@ const expect = std.testing.expect;
 ///  - sin(+-inf) = nan
 ///  - sin(nan)   = nan
 pub fn sin(x: var) @TypeOf(x) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     return switch (T) {
         f32 => sin_(T, x),
         f64 => sin_(T, x),
@@ -24,28 +24,28 @@ pub fn sin(x: var) @TypeOf(x) {
 }
 
 // sin polynomial coefficients
-const S0 = 1.58962301576546568060E-10;
-const S1 = -2.50507477628578072866E-8;
-const S2 = 2.75573136213857245213E-6;
-const S3 = -1.98412698295895385996E-4;
-const S4 = 8.33333333332211858878E-3;
-const S5 = -1.66666666666666307295E-1;
+def S0 = 1.58962301576546568060E-10;
+def S1 = -2.50507477628578072866E-8;
+def S2 = 2.75573136213857245213E-6;
+def S3 = -1.98412698295895385996E-4;
+def S4 = 8.33333333332211858878E-3;
+def S5 = -1.66666666666666307295E-1;
 
 // cos polynomial coeffiecients
-const C0 = -1.13585365213876817300E-11;
-const C1 = 2.08757008419747316778E-9;
-const C2 = -2.75573141792967388112E-7;
-const C3 = 2.48015872888517045348E-5;
-const C4 = -1.38888888888730564116E-3;
-const C5 = 4.16666666666665929218E-2;
+def C0 = -1.13585365213876817300E-11;
+def C1 = 2.08757008419747316778E-9;
+def C2 = -2.75573141792967388112E-7;
+def C3 = 2.48015872888517045348E-5;
+def C4 = -1.38888888888730564116E-3;
+def C5 = 4.16666666666665929218E-2;
 
-const pi4a = 7.85398125648498535156e-1;
-const pi4b = 3.77489470793079817668E-8;
-const pi4c = 2.69515142907905952645E-15;
-const m4pi = 1.273239544735162542821171882678754627704620361328125;
+def pi4a = 7.85398125648498535156e-1;
+def pi4b = 3.77489470793079817668E-8;
+def pi4c = 2.69515142907905952645E-15;
+def m4pi = 1.273239544735162542821171882678754627704620361328125;
 
 fn sin_(comptime T: type, x_: T) T {
-    const I = std.meta.IntType(true, T.bit_count);
+    def I = std.meta.IntType(true, T.bit_count);
 
     var x = x_;
     if (x == 0 or math.isNan(x)) {
@@ -72,10 +72,10 @@ fn sin_(comptime T: type, x_: T) T {
         sign = !sign;
     }
 
-    const z = ((x - y * pi4a) - y * pi4b) - y * pi4c;
-    const w = z * z;
+    def z = ((x - y * pi4a) - y * pi4b) - y * pi4c;
+    def w = z * z;
 
-    const r = if (j == 1 or j == 2)
+    def r = if (j == 1 or j == 2)
         1.0 - 0.5 * w + w * w * (C5 + w * (C4 + w * (C3 + w * (C2 + w * (C1 + w * C0)))))
     else
         z + z * w * (S5 + w * (S4 + w * (S3 + w * (S2 + w * (S1 + w * S0)))));
@@ -90,7 +90,7 @@ test "math.sin" {
 }
 
 test "math.sin32" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f32, sin_(f32, 0.0), 0.0, epsilon));
     expect(math.approxEq(f32, sin_(f32, 0.2), 0.198669, epsilon));
@@ -102,7 +102,7 @@ test "math.sin32" {
 }
 
 test "math.sin64" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f64, sin_(f64, 0.0), 0.0, epsilon));
     expect(math.approxEq(f64, sin_(f64, 0.2), 0.198669, epsilon));

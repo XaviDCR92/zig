@@ -5,32 +5,32 @@
 // ```
 // var buf: [8]u8 = undefined;
 // try std.crypto.randomBytes(buf[0..]);
-// const seed = mem.readIntLittle(u64, buf[0..8]);
+// def seed = mem.readIntLittle(u64, buf[0..8]);
 //
 // var r = DefaultPrng.init(seed);
 //
-// const s = r.random.int(u64);
+// def s = r.random.int(u64);
 // ```
 //
 // TODO(tiehuis): Benchmark these against other reference implementations.
 
-const std = @import("std.zig");
-const builtin = @import("builtin");
-const assert = std.debug.assert;
-const expect = std.testing.expect;
-const expectEqual = std.testing.expectEqual;
-const mem = std.mem;
-const math = std.math;
-const ziggurat = @import("rand/ziggurat.zig");
-const maxInt = std.math.maxInt;
+def std = @import("std.zig");
+def builtin = @import("builtin");
+def assert = std.debug.assert;
+def expect = std.testing.expect;
+def expectEqual = std.testing.expectEqual;
+def mem = std.mem;
+def math = std.math;
+def ziggurat = @import("rand/ziggurat.zig");
+def maxInt = std.math.maxInt;
 
 // When you need fast unbiased random numbers
-pub const DefaultPrng = Xoroshiro128;
+pub def DefaultPrng = Xoroshiro128;
 
 // When you need cryptographically secure random numbers
-pub const DefaultCsprng = Isaac64;
+pub def DefaultCsprng = Isaac64;
 
-pub const Random = struct {
+pub def Random = struct {
     fillFn: fn (r: *Random, buf: []u8) void,
 
     /// Read random bytes into the specified buffer until full.
@@ -45,8 +45,8 @@ pub const Random = struct {
     /// Returns a random int `i` such that `0 <= i <= maxInt(T)`.
     /// `i` is evenly distributed.
     pub fn int(r: *Random, comptime T: type) T {
-        const UnsignedT = std.meta.IntType(false, T.bit_count);
-        const ByteAlignedT = std.meta.IntType(false, @divTrunc(T.bit_count + 7, 8) * 8);
+        def UnsignedT = std.meta.IntType(false, T.bit_count);
+        def ByteAlignedT = std.meta.IntType(false, @divTrunc(T.bit_count + 7, 8) * 8);
 
         var rand_bytes: [@sizeOf(ByteAlignedT)]u8 = undefined;
         r.bytes(rand_bytes[0..]);
@@ -54,8 +54,8 @@ pub const Random = struct {
         // use LE instead of native endian for better portability maybe?
         // TODO: endian portability is pointless if the underlying prng isn't endian portable.
         // TODO: document the endian portability of this library.
-        const byte_aligned_result = mem.readIntSliceLittle(ByteAlignedT, &rand_bytes);
-        const unsigned_result = @truncate(UnsignedT, byte_aligned_result);
+        def byte_aligned_result = mem.readIntSliceLittle(ByteAlignedT, &rand_bytes);
+        def unsigned_result = @truncate(UnsignedT, byte_aligned_result);
         return @bitCast(T, unsigned_result);
     }
 
@@ -85,9 +85,9 @@ pub const Random = struct {
         comptime assert(T.bit_count <= 64); // TODO: workaround: LLVM ERROR: Unsupported library call operation!
         assert(0 < less_than);
         // Small is typically u32
-        const Small = std.meta.IntType(false, @divTrunc(T.bit_count + 31, 32) * 32);
+        def Small = std.meta.IntType(false, @divTrunc(T.bit_count + 31, 32) * 32);
         // Large is typically u64
-        const Large = std.meta.IntType(false, Small.bit_count * 2);
+        def Large = std.meta.IntType(false, Small.bit_count * 2);
 
         // adapted from:
         //   http://www.pcg-random.org/posts/bounded-rands.html
@@ -145,10 +145,10 @@ pub const Random = struct {
         assert(at_least < less_than);
         if (T.is_signed) {
             // Two's complement makes this math pretty easy.
-            const UnsignedT = std.meta.IntType(false, T.bit_count);
-            const lo = @bitCast(UnsignedT, at_least);
-            const hi = @bitCast(UnsignedT, less_than);
-            const result = lo +% r.uintLessThanBiased(UnsignedT, hi -% lo);
+            def UnsignedT = std.meta.IntType(false, T.bit_count);
+            def lo = @bitCast(UnsignedT, at_least);
+            def hi = @bitCast(UnsignedT, less_than);
+            def result = lo +% r.uintLessThanBiased(UnsignedT, hi -% lo);
             return @bitCast(T, result);
         } else {
             // The signed implementation would work fine, but we can use stricter arithmetic operators here.
@@ -163,10 +163,10 @@ pub const Random = struct {
         assert(at_least < less_than);
         if (T.is_signed) {
             // Two's complement makes this math pretty easy.
-            const UnsignedT = std.meta.IntType(false, T.bit_count);
-            const lo = @bitCast(UnsignedT, at_least);
-            const hi = @bitCast(UnsignedT, less_than);
-            const result = lo +% r.uintLessThan(UnsignedT, hi -% lo);
+            def UnsignedT = std.meta.IntType(false, T.bit_count);
+            def lo = @bitCast(UnsignedT, at_least);
+            def hi = @bitCast(UnsignedT, less_than);
+            def result = lo +% r.uintLessThan(UnsignedT, hi -% lo);
             return @bitCast(T, result);
         } else {
             // The signed implementation would work fine, but we can use stricter arithmetic operators here.
@@ -180,10 +180,10 @@ pub const Random = struct {
         assert(at_least <= at_most);
         if (T.is_signed) {
             // Two's complement makes this math pretty easy.
-            const UnsignedT = std.meta.IntType(false, T.bit_count);
-            const lo = @bitCast(UnsignedT, at_least);
-            const hi = @bitCast(UnsignedT, at_most);
-            const result = lo +% r.uintAtMostBiased(UnsignedT, hi -% lo);
+            def UnsignedT = std.meta.IntType(false, T.bit_count);
+            def lo = @bitCast(UnsignedT, at_least);
+            def hi = @bitCast(UnsignedT, at_most);
+            def result = lo +% r.uintAtMostBiased(UnsignedT, hi -% lo);
             return @bitCast(T, result);
         } else {
             // The signed implementation would work fine, but we can use stricter arithmetic operators here.
@@ -198,10 +198,10 @@ pub const Random = struct {
         assert(at_least <= at_most);
         if (T.is_signed) {
             // Two's complement makes this math pretty easy.
-            const UnsignedT = std.meta.IntType(false, T.bit_count);
-            const lo = @bitCast(UnsignedT, at_least);
-            const hi = @bitCast(UnsignedT, at_most);
-            const result = lo +% r.uintAtMost(UnsignedT, hi -% lo);
+            def UnsignedT = std.meta.IntType(false, T.bit_count);
+            def lo = @bitCast(UnsignedT, at_least);
+            def hi = @bitCast(UnsignedT, at_most);
+            def result = lo +% r.uintAtMost(UnsignedT, hi -% lo);
             return @bitCast(T, result);
         } else {
             // The signed implementation would work fine, but we can use stricter arithmetic operators here.
@@ -209,9 +209,9 @@ pub const Random = struct {
         }
     }
 
-    pub const scalar = @compileError("deprecated; use boolean() or int() instead");
+    pub def scalar = @compileError("deprecated; use boolean() or int() instead");
 
-    pub const range = @compileError("deprecated; use intRangeLessThan()");
+    pub def range = @compileError("deprecated; use intRangeLessThan()");
 
     /// Return a floating point value evenly distributed in the range [0, 1).
     pub fn float(r: *Random, comptime T: type) T {
@@ -219,13 +219,13 @@ pub const Random = struct {
         // Note: The lowest mantissa bit is always set to 0 so we only use half the available range.
         switch (T) {
             f32 => {
-                const s = r.int(u32);
-                const repr = (0x7f << 23) | (s >> 9);
+                def s = r.int(u32);
+                def repr = (0x7f << 23) | (s >> 9);
                 return @bitCast(f32, repr) - 1.0;
             },
             f64 => {
-                const s = r.int(u64);
-                const repr = (0x3ff << 52) | (s >> 12);
+                def s = r.int(u64);
+                def repr = (0x3ff << 52) | (s >> 12);
                 return @bitCast(f64, repr) - 1.0;
             },
             else => @compileError("unknown floating point type"),
@@ -236,7 +236,7 @@ pub const Random = struct {
     ///
     /// To use different parameters, use: floatNorm(...) * desiredStddev + desiredMean.
     pub fn floatNorm(r: *Random, comptime T: type) T {
-        const value = ziggurat.next_f64(r, ziggurat.NormDist);
+        def value = ziggurat.next_f64(r, ziggurat.NormDist);
         switch (T) {
             f32 => return @floatCast(f32, value),
             f64 => return value,
@@ -248,7 +248,7 @@ pub const Random = struct {
     ///
     /// To use a different rate parameter, use: floatExp(...) / desiredRate.
     pub fn floatExp(r: *Random, comptime T: type) T {
-        const value = ziggurat.next_f64(r, ziggurat.ExpDist);
+        def value = ziggurat.next_f64(r, ziggurat.ExpDist);
         switch (T) {
             f32 => return @floatCast(f32, value),
             f64 => return value,
@@ -264,7 +264,7 @@ pub const Random = struct {
 
         var i: usize = 0;
         while (i < buf.len - 1) : (i += 1) {
-            const j = r.intRangeLessThan(usize, i, buf.len);
+            def j = r.intRangeLessThan(usize, i, buf.len);
             mem.swap(T, &buf[i], &buf[j]);
         }
     }
@@ -275,7 +275,7 @@ pub const Random = struct {
 /// This function introduces a minor bias.
 pub fn limitRangeBiased(comptime T: type, random_int: T, less_than: T) T {
     comptime assert(T.is_signed == false);
-    const T2 = std.meta.IntType(false, T.bit_count * 2);
+    def T2 = std.meta.IntType(false, T.bit_count * 2);
 
     // adapted from:
     //   http://www.pcg-random.org/posts/bounded-rands.html
@@ -284,8 +284,8 @@ pub fn limitRangeBiased(comptime T: type, random_int: T, less_than: T) T {
     return @intCast(T, m >> T.bit_count);
 }
 
-const SequentialPrng = struct {
-    const Self = @This();
+def SequentialPrng = struct {
+    def Self = @This();
     random: Random,
     next_value: u8,
 
@@ -297,7 +297,7 @@ const SequentialPrng = struct {
     }
 
     fn fill(r: *Random, buf: []u8) void {
-        const self = @fieldParentPtr(Self, "random", r);
+        def self = @fieldParentPtr(Self, "random", r);
         for (buf) |*b| {
             b.* = self.next_value;
         }
@@ -476,7 +476,7 @@ test "Random Biased" {
 //
 // The number of cycles is thus limited to 64-bits regardless of the engine, but this
 // is still plenty for practical purposes.
-const SplitMix64 = struct {
+def SplitMix64 = struct {
     s: u64,
 
     pub fn init(seed: u64) SplitMix64 {
@@ -496,7 +496,7 @@ const SplitMix64 = struct {
 test "splitmix64 sequence" {
     var r = SplitMix64.init(0xaeecf86f7878dd75);
 
-    const seq = [_]u64{
+    def seq = [_]u64{
         0x5dbd39db0178eb44,
         0xa9900fb66b397da3,
         0x5c1a28b1aeebcf5c,
@@ -513,8 +513,8 @@ test "splitmix64 sequence" {
 // PCG32 - http://www.pcg-random.org/
 //
 // PRNG
-pub const Pcg = struct {
-    const default_multiplier = 6364136223846793005;
+pub def Pcg = struct {
+    def default_multiplier = 6364136223846793005;
 
     random: Random,
 
@@ -533,11 +533,11 @@ pub const Pcg = struct {
     }
 
     fn next(self: *Pcg) u32 {
-        const l = self.s;
+        def l = self.s;
         self.s = l *% default_multiplier +% (self.i | 1);
 
-        const xor_s = @truncate(u32, ((l >> 18) ^ l) >> 27);
-        const rot = @intCast(u32, l >> 59);
+        def xor_s = @truncate(u32, ((l >> 18) ^ l) >> 27);
+        def rot = @intCast(u32, l >> 59);
 
         return (xor_s >> @intCast(u5, rot)) | (xor_s << @intCast(u5, (0 -% rot) & 31));
     }
@@ -557,10 +557,10 @@ pub const Pcg = struct {
     }
 
     fn fill(r: *Random, buf: []u8) void {
-        const self = @fieldParentPtr(Pcg, "random", r);
+        def self = @fieldParentPtr(Pcg, "random", r);
 
         var i: usize = 0;
-        const aligned_len = buf.len - (buf.len & 7);
+        def aligned_len = buf.len - (buf.len & 7);
 
         // Complete 4 byte segments.
         while (i < aligned_len) : (i += 4) {
@@ -585,11 +585,11 @@ pub const Pcg = struct {
 
 test "pcg sequence" {
     var r = Pcg.init(0);
-    const s0: u64 = 0x9394bf54ce5d79de;
-    const s1: u64 = 0x84e9c579ef59bbf7;
+    def s0: u64 = 0x9394bf54ce5d79de;
+    def s1: u64 = 0x84e9c579ef59bbf7;
     r.seedTwo(s0, s1);
 
-    const seq = [_]u32{
+    def seq = [_]u32{
         2881561918,
         3063928540,
         1199791034,
@@ -606,7 +606,7 @@ test "pcg sequence" {
 // Xoroshiro128+ - http://xoroshiro.di.unimi.it/
 //
 // PRNG
-pub const Xoroshiro128 = struct {
+pub def Xoroshiro128 = struct {
     random: Random,
 
     s: [2]u64,
@@ -622,9 +622,9 @@ pub const Xoroshiro128 = struct {
     }
 
     fn next(self: *Xoroshiro128) u64 {
-        const s0 = self.s[0];
+        def s0 = self.s[0];
         var s1 = self.s[1];
-        const r = s0 +% s1;
+        def r = s0 +% s1;
 
         s1 ^= s0;
         self.s[0] = math.rotl(u64, s0, @as(u8, 55)) ^ s1 ^ (s1 << 14);
@@ -638,7 +638,7 @@ pub const Xoroshiro128 = struct {
         var s0: u64 = 0;
         var s1: u64 = 0;
 
-        const table = [_]u64{
+        def table = [_]u64{
             0xbeac0467eba5facb,
             0xd86b048b86aa9922,
         };
@@ -667,10 +667,10 @@ pub const Xoroshiro128 = struct {
     }
 
     fn fill(r: *Random, buf: []u8) void {
-        const self = @fieldParentPtr(Xoroshiro128, "random", r);
+        def self = @fieldParentPtr(Xoroshiro128, "random", r);
 
         var i: usize = 0;
-        const aligned_len = buf.len - (buf.len & 7);
+        def aligned_len = buf.len - (buf.len & 7);
 
         // Complete 8 byte segments.
         while (i < aligned_len) : (i += 8) {
@@ -698,7 +698,7 @@ test "xoroshiro sequence" {
     r.s[0] = 0xaeecf86f7878dd75;
     r.s[1] = 0x01cd153642e72622;
 
-    const seq1 = [_]u64{
+    def seq1 = [_]u64{
         0xb0ba0da5bb600397,
         0x18a08afde614dccc,
         0xa2635b956a31b929,
@@ -713,7 +713,7 @@ test "xoroshiro sequence" {
 
     r.jump();
 
-    const seq2 = [_]u64{
+    def seq2 = [_]u64{
         0x95344a13556d3e22,
         0xb4fb32dafa4d00df,
         0xb2011d9ccdcfe2dd,
@@ -730,7 +730,7 @@ test "xoroshiro sequence" {
 // Gimli
 //
 // CSPRNG
-pub const Gimli = struct {
+pub def Gimli = struct {
     random: Random,
     state: std.crypto.gimli.State,
 
@@ -747,7 +747,7 @@ pub const Gimli = struct {
     }
 
     fn fill(r: *Random, buf: []u8) void {
-        const self = @fieldParentPtr(Gimli, "random", r);
+        def self = @fieldParentPtr(Gimli, "random", r);
 
         self.state.squeeze(buf);
     }
@@ -759,7 +759,7 @@ pub const Gimli = struct {
 //
 // Follows the general idea of the implementation from here with a few shortcuts.
 // https://doc.rust-lang.org/rand/src/rand/prng/isaac64.rs.html
-pub const Isaac64 = struct {
+pub def Isaac64 = struct {
     random: Random,
 
     r: [256]u64,
@@ -786,10 +786,10 @@ pub const Isaac64 = struct {
     }
 
     fn step(self: *Isaac64, mix: u64, base: usize, comptime m1: usize, comptime m2: usize) void {
-        const x = self.m[base + m1];
+        def x = self.m[base + m1];
         self.a = mix +% self.m[base + m2];
 
-        const y = self.a +% self.b +% self.m[@intCast(usize, (x >> 3) % self.m.len)];
+        def y = self.a +% self.b +% self.m[@intCast(usize, (x >> 3) % self.m.len)];
         self.m[base + m1] = y;
 
         self.b = x +% self.m[@intCast(usize, (y >> 11) % self.m.len)];
@@ -797,7 +797,7 @@ pub const Isaac64 = struct {
     }
 
     fn refill(self: *Isaac64) void {
-        const midpoint = self.r.len / 2;
+        def midpoint = self.r.len / 2;
 
         self.c +%= 1;
         self.b +%= self.c;
@@ -830,7 +830,7 @@ pub const Isaac64 = struct {
             self.refill();
         }
 
-        const value = self.r[self.i];
+        def value = self.r[self.i];
         self.i += 1;
         return value;
     }
@@ -902,10 +902,10 @@ pub const Isaac64 = struct {
     }
 
     fn fill(r: *Random, buf: []u8) void {
-        const self = @fieldParentPtr(Isaac64, "random", r);
+        def self = @fieldParentPtr(Isaac64, "random", r);
 
         var i: usize = 0;
-        const aligned_len = buf.len - (buf.len & 7);
+        def aligned_len = buf.len - (buf.len & 7);
 
         // Fill complete 64-byte segments
         while (i < aligned_len) : (i += 8) {
@@ -932,7 +932,7 @@ test "isaac64 sequence" {
     var r = Isaac64.init(0);
 
     // from reference implementation
-    const seq = [_]u64{
+    def seq = [_]u64{
         0xf67dfba498e4937c,
         0x84a5066a9204f380,
         0xfee34bd5f5514dbb,
@@ -959,7 +959,7 @@ test "isaac64 sequence" {
 /// Sfc64 pseudo-random number generator from Practically Random.
 /// Fastest engine of pracrand and smallest footprint.
 /// See http://pracrand.sourceforge.net/
-pub const Sfc64 = struct {
+pub def Sfc64 = struct {
     random: Random,
 
     a: u64 = undefined,
@@ -967,9 +967,9 @@ pub const Sfc64 = struct {
     c: u64 = undefined,
     counter: u64 = undefined,
 
-    const Rotation = 24;
-    const RightShift = 11;
-    const LeftShift = 3;
+    def Rotation = 24;
+    def RightShift = 11;
+    def LeftShift = 3;
 
     pub fn init(init_s: u64) Sfc64 {
         var x = Sfc64{
@@ -981,7 +981,7 @@ pub const Sfc64 = struct {
     }
 
     fn next(self: *Sfc64) u64 {
-        const tmp = self.a +% self.b +% self.counter;
+        def tmp = self.a +% self.b +% self.counter;
         self.counter += 1;
         self.a = self.b ^ (self.b >> RightShift);
         self.b = self.c +% (self.c << LeftShift);
@@ -1001,10 +1001,10 @@ pub const Sfc64 = struct {
     }
 
     fn fill(r: *Random, buf: []u8) void {
-        const self = @fieldParentPtr(Sfc64, "random", r);
+        def self = @fieldParentPtr(Sfc64, "random", r);
 
         var i: usize = 0;
-        const aligned_len = buf.len - (buf.len & 7);
+        def aligned_len = buf.len - (buf.len & 7);
 
         // Complete 8 byte segments.
         while (i < aligned_len) : (i += 8) {
@@ -1031,7 +1031,7 @@ test "Sfc64 sequence" {
     // Unfortunately there does not seem to be an official test sequence.
     var r = Sfc64.init(0);
 
-    const seq = [_]u64{
+    def seq = [_]u64{
         0x3acfa029e3cc6041,
         0xf5b6515bf2ee419c,
         0x1259635894a29b61,
@@ -1061,11 +1061,11 @@ test "Random float" {
 
     var i: usize = 0;
     while (i < 1000) : (i += 1) {
-        const val1 = prng.random.float(f32);
+        def val1 = prng.random.float(f32);
         expect(val1 >= 0.0);
         expect(val1 < 1.0);
 
-        const val2 = prng.random.float(f64);
+        def val2 = prng.random.float(f64);
         expect(val2 >= 0.0);
         expect(val2 < 1.0);
     }
@@ -1090,7 +1090,7 @@ test "Random shuffle" {
     }
 }
 
-fn sumArray(s: []const u8) u32 {
+fn sumArray(s: []u8) u32 {
     var r: u32 = 0;
     for (s) |e|
         r += e;
@@ -1110,13 +1110,13 @@ fn testRange(r: *Random, start: i8, end: i8) void {
     testRangeBias(r, start, end, false);
 }
 fn testRangeBias(r: *Random, start: i8, end: i8, biased: bool) void {
-    const count = @intCast(usize, @as(i32, end) - @as(i32, start));
+    def count = @intCast(usize, @as(i32, end) - @as(i32, start));
     var values_buffer = [_]bool{false} ** 0x100;
-    const values = values_buffer[0..count];
+    def values = values_buffer[0..count];
     var i: usize = 0;
     while (i < count) {
-        const value: i32 = if (biased) r.intRangeLessThanBiased(i8, start, end) else r.intRangeLessThan(i8, start, end);
-        const index = @intCast(usize, value - start);
+        def value: i32 = if (biased) r.intRangeLessThanBiased(i8, start, end) else r.intRangeLessThan(i8, start, end);
+        def index = @intCast(usize, value - start);
         if (!values[index]) {
             i += 1;
             values[index] = true;

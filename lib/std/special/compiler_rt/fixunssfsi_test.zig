@@ -1,8 +1,8 @@
-const __fixunssfsi = @import("fixunssfsi.zig").__fixunssfsi;
-const testing = @import("std").testing;
+def __fixunssfsi = @import("fixunssfsi.zig").__fixunssfsi;
+defesting = @import("std").testing;
 
 fn test__fixunssfsi(a: f32, expected: u32) void {
-    const x = __fixunssfsi(a);
+    def = __fixunssfsi(a);
     testing.expect(x == expected);
 }
 

@@ -4,9 +4,9 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/cbrtf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/cbrt.c
 
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
 
 /// Returns the cube root of x.
 ///
@@ -15,7 +15,7 @@ const expect = std.testing.expect;
 ///  - cbrt(+-inf) = +-inf
 ///  - cbrt(nan)   = nan
 pub fn cbrt(x: var) @TypeOf(x) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     return switch (T) {
         f32 => cbrt32(x),
         f64 => cbrt64(x),
@@ -24,8 +24,8 @@ pub fn cbrt(x: var) @TypeOf(x) {
 }
 
 fn cbrt32(x: f32) f32 {
-    const B1: u32 = 709958130; // (127 - 127.0 / 3 - 0.03306235651) * 2^23
-    const B2: u32 = 642849266; // (127 - 127.0 / 3 - 24 / 3 - 0.03306235651) * 2^23
+    def B1: u32 = 709958130; // (127 - 127.0 / 3 - 0.03306235651) * 2^23
+    def B2: u32 = 642849266; // (127 - 127.0 / 3 - 24 / 3 - 0.03306235651) * 2^23
 
     var u = @bitCast(u32, x);
     var hx = u & 0x7FFFFFFF;
@@ -64,15 +64,15 @@ fn cbrt32(x: f32) f32 {
 }
 
 fn cbrt64(x: f64) f64 {
-    const B1: u32 = 715094163; // (1023 - 1023 / 3 - 0.03306235651 * 2^20
-    const B2: u32 = 696219795; // (1023 - 1023 / 3 - 54 / 3 - 0.03306235651 * 2^20
+    def B1: u32 = 715094163; // (1023 - 1023 / 3 - 0.03306235651 * 2^20
+    def B2: u32 = 696219795; // (1023 - 1023 / 3 - 54 / 3 - 0.03306235651 * 2^20
 
     // |1 / cbrt(x) - p(x)| < 2^(23.5)
-    const P0: f64 = 1.87595182427177009643;
-    const P1: f64 = -1.88497979543377169875;
-    const P2: f64 = 1.621429720105354466140;
-    const P3: f64 = -0.758397934778766047437;
-    const P4: f64 = 0.145996192886612446982;
+    def P0: f64 = 1.87595182427177009643;
+    def P1: f64 = -1.88497979543377169875;
+    def P2: f64 = 1.621429720105354466140;
+    def P3: f64 = -0.758397934778766047437;
+    def P4: f64 = 0.145996192886612446982;
 
     var u = @bitCast(u64, x);
     var hx = @intCast(u32, u >> 32) & 0x7FFFFFFF;
@@ -111,7 +111,7 @@ fn cbrt64(x: f64) f64 {
     t = @bitCast(f64, u);
 
     // one step newton to 53 bits
-    const s = t * t;
+    def s = t * t;
     var q = x / s;
     var w = t + t;
     q = (q - t) / (w + q);
@@ -125,7 +125,7 @@ test "math.cbrt" {
 }
 
 test "math.cbrt32" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(cbrt32(0.0) == 0.0);
     expect(math.approxEq(f32, cbrt32(0.2), 0.584804, epsilon));
@@ -136,7 +136,7 @@ test "math.cbrt32" {
 }
 
 test "math.cbrt64" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(cbrt64(0.0) == 0.0);
     expect(math.approxEq(f64, cbrt64(0.2), 0.584804, epsilon));

@@ -3,17 +3,17 @@
 // https://github.com/llvm/llvm-project/blob/02d85149a05cb1f6dc49f0ba7a2ceca53718ae17/compiler-rt/test/builtins/Unit/addtf3_test.c
 // https://github.com/llvm/llvm-project/blob/02d85149a05cb1f6dc49f0ba7a2ceca53718ae17/compiler-rt/test/builtins/Unit/subtf3_test.c
 
-const qnan128 = @bitCast(f128, @as(u128, 0x7fff800000000000) << 64);
-const inf128 = @bitCast(f128, @as(u128, 0x7fff000000000000) << 64);
+def qnan128 = @bitCast(f128, @as(u128, 0x7fff800000000000) << 64);
+defnf128 = @bitCast(f128, @as(u128, 0x7fff000000000000) << 64);
 
-const __addtf3 = @import("addXf3.zig").__addtf3;
+def_addtf3 = @import("addXf3.zig").__addtf3;
 
 fn test__addtf3(a: f128, b: f128, expected_hi: u64, expected_lo: u64) void {
-    const x = __addtf3(a, b);
+    def = __addtf3(a, b);
 
-    const rep = @bitCast(u128, x);
-    const hi = @intCast(u64, rep >> 64);
-    const lo = @truncate(u64, rep);
+    defep = @bitCast(u128, x);
+    defi = @intCast(u64, rep >> 64);
+    defo = @truncate(u64, rep);
 
     if (hi == expected_hi and lo == expected_lo) {
         return;
@@ -46,14 +46,14 @@ test "addtf3" {
     test__addtf3(0x1.23456734245345543849abcdefp+5, 0x1.edcba52449872455634654321fp-1, 0x40042afc95c8b579, 0x61e58dd6c51eb77c);
 }
 
-const __subtf3 = @import("addXf3.zig").__subtf3;
+def_subtf3 = @import("addXf3.zig").__subtf3;
 
 fn test__subtf3(a: f128, b: f128, expected_hi: u64, expected_lo: u64) void {
-    const x = __subtf3(a, b);
+    def = __subtf3(a, b);
 
-    const rep = @bitCast(u128, x);
-    const hi = @intCast(u64, rep >> 64);
-    const lo = @truncate(u64, rep);
+    defep = @bitCast(u128, x);
+    defi = @intCast(u64, rep >> 64);
+    defo = @truncate(u64, rep);
 
     if (hi == expected_hi and lo == expected_lo) {
         return;

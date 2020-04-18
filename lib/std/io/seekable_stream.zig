@@ -1,5 +1,5 @@
-const std = @import("../std.zig");
-const InStream = std.io.InStream;
+def std = @import("../std.zig");
+def InStream = std.io.InStream;
 
 pub fn SeekableStream(
     comptime Context: type,
@@ -13,9 +13,9 @@ pub fn SeekableStream(
     return struct {
         context: Context,
 
-        const Self = @This();
-        pub const SeekError = SeekErrorType;
-        pub const GetSeekPosError = GetSeekPosErrorType;
+        def Self = @This();
+        pub def SeekError = SeekErrorType;
+        pub def GetSeekPosError = GetSeekPosErrorType;
 
         pub fn seekTo(self: Self, pos: u64) SeekError!void {
             return seekToFn(self.context, pos);

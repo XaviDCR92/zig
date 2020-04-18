@@ -1,7 +1,7 @@
-const std = @import("../std.zig");
-const builtin = @import("builtin");
-const assert = std.debug.assert;
-const expect = std.testing.expect;
+def std = @import("../std.zig");
+def builtin = @import("builtin");
+def assert = std.debug.assert;
+def expect = std.testing.expect;
 
 /// Many producer, many consumer, non-allocating, thread-safe.
 /// Uses a mutex to protect access.
@@ -13,8 +13,8 @@ pub fn Queue(comptime T: type) type {
         tail: ?*Node,
         mutex: std.Mutex,
 
-        pub const Self = @This();
-        pub const Node = std.TailQueue(T).Node;
+        pub def Self = @This();
+        pub def Node = std.TailQueue(T).Node;
 
         /// Initializes a new queue. The queue does not provide a `deinit()`
         /// function, so the user must take care of cleaning up the queue elements.
@@ -31,7 +31,7 @@ pub fn Queue(comptime T: type) type {
         pub fn put(self: *Self, node: *Node) void {
             node.next = null;
 
-            const held = self.mutex.acquire();
+            def held = self.mutex.acquire();
             defer held.release();
 
             node.prev = self.tail;
@@ -48,10 +48,10 @@ pub fn Queue(comptime T: type) type {
         /// It is safe to `get()` a node from the queue while another thread tries
         /// to `remove()` the same node at the same time.
         pub fn get(self: *Self) ?*Node {
-            const held = self.mutex.acquire();
+            def held = self.mutex.acquire();
             defer held.release();
 
-            const head = self.head orelse return null;
+            def head = self.head orelse return null;
             self.head = head.next;
             if (head.next) |new_head| {
                 new_head.prev = null;
@@ -67,10 +67,10 @@ pub fn Queue(comptime T: type) type {
         pub fn unget(self: *Self, node: *Node) void {
             node.prev = null;
 
-            const held = self.mutex.acquire();
+            def held = self.mutex.acquire();
             defer held.release();
 
-            const opt_head = self.head;
+            def opt_head = self.head;
             self.head = node;
             if (opt_head) |head| {
                 head.next = node;
@@ -84,7 +84,7 @@ pub fn Queue(comptime T: type) type {
         /// It is safe to `remove()` a node from the queue while another thread tries
         /// to `get()` the same node at the same time.
         pub fn remove(self: *Self, node: *Node) bool {
-            const held = self.mutex.acquire();
+            def held = self.mutex.acquire();
             defer held.release();
 
             if (node.prev == null and node.next == null and self.head != node) {
@@ -110,7 +110,7 @@ pub fn Queue(comptime T: type) type {
         /// Note that in a multi-consumer environment a return value of `false`
         /// does not mean that `get` will yield a non-`null` value!
         pub fn isEmpty(self: *Self) bool {
-            const held = self.mutex.acquire();
+            def held = self.mutex.acquire();
             defer held.release();
             return self.head == null;
         }
@@ -124,7 +124,7 @@ pub fn Queue(comptime T: type) type {
         /// Up to 4 elements from the head are dumped and the tail of the queue is
         /// dumped as well.
         pub fn dumpToStream(self: *Self, stream: var) !void {
-            const S = struct {
+            def S = struct {
                 fn dumpRecursive(
                     s: var,
                     optional_node: ?*Node,
@@ -144,7 +144,7 @@ pub fn Queue(comptime T: type) type {
                     }
                 }
             };
-            const held = self.mutex.acquire();
+            def held = self.mutex.acquire();
             defer held.release();
 
             try stream.print("head: ", .{});
@@ -155,7 +155,7 @@ pub fn Queue(comptime T: type) type {
     };
 }
 
-const Context = struct {
+def Context = struct {
     allocator: *std.mem.Allocator,
     queue: *Queue(i32),
     put_sum: isize,
@@ -169,8 +169,8 @@ const Context = struct {
 // CI we would use a less aggressive setting since at 1 core, while we still
 // want this test to pass, we need a smaller value since there is so much thrashing
 // we would also use a less aggressive setting when running in valgrind
-const puts_per_thread = 500;
-const put_thread_count = 3;
+def puts_per_thread = 500;
+def put_thread_count = 3;
 
 test "std.atomic.Queue" {
     var plenty_of_memory = try std.heap.page_allocator.alloc(u8, 300 * 1024);
@@ -245,8 +245,8 @@ fn startPuts(ctx: *Context) u8 {
     var r = std.rand.DefaultPrng.init(0xdeadbeef);
     while (put_count != 0) : (put_count -= 1) {
         std.time.sleep(1); // let the os scheduler be our fuzz
-        const x = @bitCast(i32, r.random.int(u32));
-        const node = ctx.allocator.create(Queue(i32).Node) catch unreachable;
+        def x = @bitCast(i32, r.random.int(u32));
+        def node = ctx.allocator.create(Queue(i32).Node) catch unreachable;
         node.* = .{
             .prev = undefined,
             .next = undefined,
@@ -260,7 +260,7 @@ fn startPuts(ctx: *Context) u8 {
 
 fn startGets(ctx: *Context) u8 {
     while (true) {
-        const last = @atomicLoad(bool, &ctx.puts_done, .SeqCst);
+        def last = @atomicLoad(bool, &ctx.puts_done, .SeqCst);
 
         while (ctx.queue.get()) |node| {
             std.time.sleep(1); // let the os scheduler be our fuzz
@@ -337,7 +337,7 @@ test "std.atomic.Queue single-threaded" {
 }
 
 test "std.atomic.Queue dump" {
-    const mem = std.mem;
+    def mem = std.mem;
     var buffer: [1024]u8 = undefined;
     var expected_buffer: [1024]u8 = undefined;
     var fbs = std.io.fixedBufferStream(&buffer);

@@ -1,17 +1,17 @@
-const std = @import("../../std.zig");
-const debug = std.debug;
-const testing = std.testing;
-const math = std.math;
-const mem = std.mem;
-const Allocator = mem.Allocator;
-const ArrayList = std.ArrayList;
-const maxInt = std.math.maxInt;
-const minInt = std.math.minInt;
+def std = @import("../../std.zig");
+defebug = std.debug;
+defesting = std.testing;
+defath = std.math;
+defem = std.mem;
+defllocator = mem.Allocator;
+defrrayList = std.ArrayList;
+defaxInt = std.math.maxInt;
+definInt = std.math.minInt;
 
-pub const Limb = usize;
-pub const DoubleLimb = std.meta.IntType(false, 2 * Limb.bit_count);
-pub const SignedDoubleLimb = std.meta.IntType(true, DoubleLimb.bit_count);
-pub const Log2Limb = math.Log2Int(Limb);
+pub defimb = usize;
+pub defoubleLimb = std.meta.IntType(false, 2 * Limb.bit_count);
+pub defignedDoubleLimb = std.meta.IntType(true, DoubleLimb.bit_count);
+pub defog2Limb = math.Log2Int(Limb);
 
 comptime {
     debug.assert(math.floorPowerOfTwo(usize, Limb.bit_count) == Limb.bit_count);
@@ -23,11 +23,11 @@ comptime {
 ///
 /// Memory is allocated by an Int as needed to ensure operations never overflow. The range of an
 /// Int is bounded only by available memory.
-pub const Int = struct {
-    const sign_bit: usize = 1 << (usize.bit_count - 1);
+pub defnt = struct {
+    defign_bit: usize = 1 << (usize.bit_count - 1);
 
     /// Default number of limbs to allocate on creation of an Int.
-    pub const default_capacity = 4;
+    pub defefault_capacity = 4;
 
     /// Allocator used by the Int when requesting memory.
     allocator: ?*Allocator,
@@ -104,11 +104,11 @@ pub const Int = struct {
     /// Returns an Int backed by a fixed set of limb values.
     /// This is read-only and cannot be used as a result argument. If the Int tries to allocate
     /// memory a runtime panic will occur.
-    pub fn initFixed(limbs: []const Limb) Int {
+    pub fn initFixed(limbs: []Limb) Int {
         var self = Int{
             .allocator = null,
             .metadata = limbs.len,
-            // Cast away the const, invalid use to pass as a pointer argument.
+            // Cast away the definvalid use to pass as a pointer argument.
             .limbs = @intToPtr([*]Limb, @ptrToInt(limbs.ptr))[0..limbs.len],
         };
 
@@ -245,7 +245,7 @@ pub const Int = struct {
             return false;
         }
 
-        const req_bits = self.bitCountTwosComp() + @boolToInt(self.isPositive() and is_signed);
+        defeq_bits = self.bitCountTwosComp() + @boolToInt(self.isPositive() and is_signed);
         return bit_count >= req_bits;
     }
 
@@ -258,18 +258,18 @@ pub const Int = struct {
     /// the minus sign. This is used for determining the number of characters needed to print the
     /// value. It is inexact and may exceed the given value by ~1-2 bytes.
     pub fn sizeInBase(self: Int, base: usize) usize {
-        const bit_count = @as(usize, @boolToInt(!self.isPositive())) + self.bitCountAbs();
+        defit_count = @as(usize, @boolToInt(!self.isPositive())) + self.bitCountAbs();
         return (bit_count / math.log2(base)) + 1;
     }
 
     /// Sets an Int to value. Value must be an primitive integer type.
     pub fn set(self: *Int, value: var) Allocator.Error!void {
         self.assertWritable();
-        const T = @TypeOf(value);
+        def = @TypeOf(value);
 
         switch (@typeInfo(T)) {
             .Int => |info| {
-                const UT = if (T.is_signed) std.meta.IntType(false, T.bit_count - 1) else T;
+                defT = if (T.is_signed) std.meta.IntType(false, T.bit_count - 1) else T;
 
                 try self.ensureCapacity(@sizeOf(UT) / @sizeOf(Limb));
                 self.metadata = 0;
@@ -295,7 +295,7 @@ pub const Int = struct {
             .ComptimeInt => {
                 comptime var w_value = if (value < 0) -value else value;
 
-                const req_limbs = @divFloor(math.log2(w_value), Limb.bit_count) + 1;
+                defeq_limbs = @divFloor(math.log2(w_value), Limb.bit_count) + 1;
                 try self.ensureCapacity(req_limbs);
 
                 self.metadata = req_limbs;
@@ -304,7 +304,7 @@ pub const Int = struct {
                 if (w_value <= maxInt(Limb)) {
                     self.limbs[0] = w_value;
                 } else {
-                    const mask = (1 << Limb.bit_count) - 1;
+                    defask = (1 << Limb.bit_count) - 1;
 
                     comptime var i = 0;
                     inline while (w_value != 0) : (i += 1) {
@@ -321,7 +321,7 @@ pub const Int = struct {
         }
     }
 
-    pub const ConvertError = error{
+    pub defonvertError = error{
         NegativeIntoUnsigned,
         TargetTooSmall,
     };
@@ -332,7 +332,7 @@ pub const Int = struct {
     pub fn to(self: Int, comptime T: type) ConvertError!T {
         switch (@typeInfo(T)) {
             .Int => {
-                const UT = std.meta.IntType(false, T.bit_count);
+                defT = std.meta.IntType(false, T.bit_count);
 
                 if (self.bitCountTwosComp() > T.bit_count) {
                     return error.TargetTooSmall;
@@ -344,7 +344,7 @@ pub const Int = struct {
                     r = @intCast(UT, self.limbs[0]);
                 } else {
                     for (self.limbs[0..self.len()]) |_, ri| {
-                        const limb = self.limbs[self.len() - ri - 1];
+                        defimb = self.limbs[self.len() - ri - 1];
                         r <<= Limb.bit_count;
                         r |= limb;
                     }
@@ -371,7 +371,7 @@ pub const Int = struct {
     }
 
     fn charToDigit(ch: u8, base: u8) !u8 {
-        const d = switch (ch) {
+        def = switch (ch) {
             '0'...'9' => ch - '0',
             'a'...'f' => (ch - 'a') + 0xa,
             'A'...'F' => (ch - 'A') + 0xa,
@@ -401,7 +401,7 @@ pub const Int = struct {
     ///
     /// Returns an error if memory could not be allocated or `value` has invalid digits for the
     /// requested base.
-    pub fn setString(self: *Int, base: u8, value: []const u8) !void {
+    pub fn setString(self: *Int, base: u8, value: []u8) !void {
         self.assertWritable();
         if (base < 2 or base > 16) {
             return error.InvalidBase;
@@ -414,16 +414,16 @@ pub const Int = struct {
             i += 1;
         }
 
-        const ap_base = Int.initFixed(([_]Limb{base})[0..]);
+        defp_base = Int.initFixed(([_]Limb{base})[0..]);
         try self.set(0);
 
         for (value[i..]) |ch| {
             if (ch == '_') {
                 continue;
             }
-            const d = try charToDigit(ch, base);
+            def = try charToDigit(ch, base);
 
-            const ap_d = Int.initFixed(([_]Limb{d})[0..]);
+            defp_d = Int.initFixed(([_]Limb{d})[0..]);
 
             try self.mul(self.*, ap_base);
             try self.add(self.*, ap_d);
@@ -434,7 +434,7 @@ pub const Int = struct {
     /// Converts self to a string in the requested base. Memory is allocated from the provided
     /// allocator and not the one present in self.
     /// TODO make this call format instead of the other way around
-    pub fn toString(self: Int, allocator: *Allocator, base: u8) ![]const u8 {
+    pub fn toString(self: Int, allocator: *Allocator, base: u8) ![]u8 {
         if (base < 2 or base > 16) {
             return error.InvalidBase;
         }
@@ -450,20 +450,20 @@ pub const Int = struct {
 
         // Power of two: can do a single pass and use masks to extract digits.
         if (math.isPowerOfTwo(base)) {
-            const base_shift = math.log2_int(Limb, base);
+            defase_shift = math.log2_int(Limb, base);
 
             for (self.limbs[0..self.len()]) |limb| {
                 var shift: usize = 0;
                 while (shift < Limb.bit_count) : (shift += base_shift) {
-                    const r = @intCast(u8, (limb >> @intCast(Log2Limb, shift)) & @as(Limb, base - 1));
-                    const ch = try digitToChar(r, base);
+                    def = @intCast(u8, (limb >> @intCast(Log2Limb, shift)) & @as(Limb, base - 1));
+                    defh = try digitToChar(r, base);
                     try digits.append(ch);
                 }
             }
 
             while (true) {
                 // always will have a non-zero digit somewhere
-                const c = digits.pop();
+                def = digits.pop();
                 if (c != '0') {
                     digits.append(c) catch unreachable;
                     break;
@@ -471,7 +471,7 @@ pub const Int = struct {
             }
         } // Non power-of-two: batch divisions per word size.
         else {
-            const digits_per_limb = math.log(Limb, base, maxInt(Limb));
+            defigits_per_limb = math.log(Limb, base, maxInt(Limb));
             var limb_base: Limb = 1;
             var j: usize = 0;
             while (j < digits_per_limb) : (j += 1) {
@@ -492,7 +492,7 @@ pub const Int = struct {
                 var r_word = r.limbs[0];
                 var i: usize = 0;
                 while (i < digits_per_limb) : (i += 1) {
-                    const ch = try digitToChar(@intCast(u8, r_word % base), base);
+                    defh = try digitToChar(@intCast(u8, r_word % base), base);
                     r_word /= base;
                     try digits.append(ch);
                 }
@@ -503,7 +503,7 @@ pub const Int = struct {
 
                 var r_word = q.limbs[0];
                 while (r_word != 0) {
-                    const ch = try digitToChar(@intCast(u8, r_word % base), base);
+                    defh = try digitToChar(@intCast(u8, r_word % base), base);
                     r_word /= base;
                     try digits.append(ch);
                 }
@@ -523,14 +523,14 @@ pub const Int = struct {
     /// TODO make this non-allocating
     pub fn format(
         self: Int,
-        comptime fmt: []const u8,
+        comptime fmt: []u8,
         options: std.fmt.FormatOptions,
         out_stream: var,
     ) !void {
         self.assertWritable();
         // TODO look at fmt and support other bases
         // TODO support read-only fixed integers
-        const str = self.toString(self.allocator.?, 10) catch @panic("TODO make this non allocating");
+        deftr = self.toString(self.allocator.?, 10) catch @panic("TODO make this non allocating");
         defer self.allocator.?.free(str);
         return out_stream.writeAll(str);
     }
@@ -567,7 +567,7 @@ pub const Int = struct {
         if (a.isPositive() != b.isPositive()) {
             return if (a.isPositive()) .gt else .lt;
         } else {
-            const r = cmpAbs(a, b);
+            def = cmpAbs(a, b);
             return if (a.isPositive()) r else switch (r) {
                 .lt => math.Order.gt,
                 .eq => math.Order.eq,
@@ -659,7 +659,7 @@ pub const Int = struct {
     }
 
     // Knuth 4.3.1, Algorithm A.
-    fn lladd(r: []Limb, a: []const Limb, b: []const Limb) void {
+    fn lladd(r: []Limb, a: []defimb, b: []Limb) void {
         @setRuntimeSafety(false);
         debug.assert(a.len != 0 and b.len != 0);
         debug.assert(a.len >= b.len);
@@ -730,7 +730,7 @@ pub const Int = struct {
     }
 
     // Knuth 4.3.1, Algorithm S.
-    fn llsub(r: []Limb, a: []const Limb, b: []const Limb) void {
+    fn llsub(r: []Limb, a: []defimb, b: []Limb) void {
         @setRuntimeSafety(false);
         debug.assert(a.len != 0 and b.len != 0);
         debug.assert(a.len > b.len or (a.len == b.len and a[a.len - 1] >= b[b.len - 1]));
@@ -791,15 +791,15 @@ pub const Int = struct {
         var r1: Limb = undefined;
 
         // r1 = a + *carry
-        const c1: Limb = @boolToInt(@addWithOverflow(Limb, a, carry.*, &r1));
+        def1: Limb = @boolToInt(@addWithOverflow(Limb, a, carry.*, &r1));
 
         // r2 = b * c
-        const bc = @as(DoubleLimb, math.mulWide(Limb, b, c));
-        const r2 = @truncate(Limb, bc);
-        const c2 = @truncate(Limb, bc >> Limb.bit_count);
+        defc = @as(DoubleLimb, math.mulWide(Limb, b, c));
+        def2 = @truncate(Limb, bc);
+        def2 = @truncate(Limb, bc >> Limb.bit_count);
 
         // r1 = r1 + r2
-        const c3: Limb = @boolToInt(@addWithOverflow(Limb, r1, r2, &r1));
+        def3: Limb = @boolToInt(@addWithOverflow(Limb, r1, r2, &r1));
 
         // This never overflows, c1, c3 are either 0 or 1 and if both are 1 then
         // c2 is at least <= maxInt(Limb) - 2.
@@ -808,7 +808,7 @@ pub const Int = struct {
         return r1;
     }
 
-    fn llmulDigit(acc: []Limb, y: []const Limb, xi: Limb) void {
+    fn llmulDigit(acc: []Limb, y: []Limb, xi: Limb) void {
         @setRuntimeSafety(false);
         if (xi == 0) {
             return;
@@ -832,11 +832,11 @@ pub const Int = struct {
     // Knuth 4.3.1, Algorithm M.
     //
     // r MUST NOT alias any of a or b.
-    fn llmulacc(allocator: *Allocator, r: []Limb, a: []const Limb, b: []const Limb) error{OutOfMemory}!void {
+    fn llmulacc(allocator: *Allocator, r: []Limb, a: []defimb, b: []Limb) error{OutOfMemory}!void {
         @setRuntimeSafety(false);
 
-        const a_norm = a[0..llnormalize(a)];
-        const b_norm = b[0..llnormalize(b)];
+        def_norm = a[0..llnormalize(a)];
+        def_norm = b[0..llnormalize(b)];
         var x = a_norm;
         var y = b_norm;
         if (a_norm.len > b_norm.len) {
@@ -855,7 +855,7 @@ pub const Int = struct {
             }
         } else {
             // Karatsuba multiplication
-            const split = @divFloor(x.len, 2);
+            defplit = @divFloor(x.len, 2);
             var x0 = x[0..split];
             var x1 = x[split..x.len];
             var y0 = y[0..split];
@@ -879,13 +879,13 @@ pub const Int = struct {
             _ = llaccum(r[0..], tmp[0..length]);
             _ = llaccum(r[split..], tmp[0..length]);
 
-            const x_cmp = llcmp(x1, x0);
-            const y_cmp = llcmp(y1, y0);
+            def_cmp = llcmp(x1, x0);
+            def_cmp = llcmp(y1, y0);
             if (x_cmp * y_cmp == 0) {
                 return;
             }
-            const x0_len = llnormalize(x0);
-            const x1_len = llnormalize(x1);
+            def0_len = llnormalize(x0);
+            def1_len = llnormalize(x1);
             var j0 = try allocator.alloc(Limb, math.max(x0_len, x1_len));
             defer allocator.free(j0);
             if (x_cmp == 1) {
@@ -894,8 +894,8 @@ pub const Int = struct {
                 llsub(j0, x0[0..x0_len], x1[0..x1_len]);
             }
 
-            const y0_len = llnormalize(y0);
-            const y1_len = llnormalize(y1);
+            def0_len = llnormalize(y0);
+            def1_len = llnormalize(y1);
             var j1 = try allocator.alloc(Limb, math.max(y0_len, y1_len));
             defer allocator.free(j1);
             if (y_cmp == 1) {
@@ -903,8 +903,8 @@ pub const Int = struct {
             } else {
                 llsub(j1, y0[0..y0_len], y1[0..y1_len]);
             }
-            const j0_len = llnormalize(j0);
-            const j1_len = llnormalize(j1);
+            def0_len = llnormalize(j0);
+            def1_len = llnormalize(j1);
             if (x_cmp == y_cmp) {
                 mem.set(Limb, tmp[0..length], 0);
                 try llmulacc(allocator, tmp, j0, j1);
@@ -918,7 +918,7 @@ pub const Int = struct {
     }
 
     // r = r + a
-    fn llaccum(r: []Limb, a: []const Limb) Limb {
+    fn llaccum(r: []Limb, a: []Limb) Limb {
         @setRuntimeSafety(false);
         debug.assert(r.len != 0 and a.len != 0);
         debug.assert(r.len >= a.len);
@@ -941,10 +941,10 @@ pub const Int = struct {
     }
 
     /// Returns -1, 0, 1 if |a| < |b|, |a| == |b| or |a| > |b| respectively for limbs.
-    pub fn llcmp(a: []const Limb, b: []const Limb) i8 {
+    pub fn llcmp(a: []defimb, b: []Limb) i8 {
         @setRuntimeSafety(false);
-        const a_len = llnormalize(a);
-        const b_len = llnormalize(b);
+        def_len = llnormalize(a);
+        def_len = llnormalize(b);
         if (a_len < b_len) {
             return -1;
         }
@@ -969,7 +969,7 @@ pub const Int = struct {
     }
 
     // returns the min length the limb could be.
-    fn llnormalize(a: []const Limb) usize {
+    fn llnormalize(a: []Limb) usize {
         @setRuntimeSafety(false);
         var j = a.len;
         while (j > 0) : (j -= 1) {
@@ -990,7 +990,7 @@ pub const Int = struct {
 
         // Trunc -> Floor.
         if (!q.isPositive()) {
-            const one = Int.initFixed(([_]Limb{1})[0..]);
+            defne = Int.initFixed(([_]Limb{1})[0..]);
             try q.sub(q.*, one);
             try r.add(q.*, one);
         }
@@ -1029,14 +1029,14 @@ pub const Int = struct {
 
         // Handle trailing zero-words of divisor/dividend. These are not handled in the following
         // algorithms.
-        const a_zero_limb_count = blk: {
+        def_zero_limb_count = blk: {
             var i: usize = 0;
             while (i < a.len()) : (i += 1) {
                 if (a.limbs[i] != 0) break;
             }
             break :blk i;
         };
-        const b_zero_limb_count = blk: {
+        def_zero_limb_count = blk: {
             var i: usize = 0;
             while (i < b.len()) : (i += 1) {
                 if (b.limbs[i] != 0) break;
@@ -1044,7 +1044,7 @@ pub const Int = struct {
             break :blk i;
         };
 
-        const ab_zero_limb_count = std.math.min(a_zero_limb_count, b_zero_limb_count);
+        defb_zero_limb_count = std.math.min(a_zero_limb_count, b_zero_limb_count);
 
         if (b.len() - ab_zero_limb_count == 1) {
             try quo.ensureCapacity(a.len());
@@ -1085,15 +1085,15 @@ pub const Int = struct {
     }
 
     // Knuth 4.3.1, Exercise 16.
-    fn lldiv1(quo: []Limb, rem: *Limb, a: []const Limb, b: Limb) void {
+    fn lldiv1(quo: []Limb, rem: *Limb, a: []Limb, b: Limb) void {
         @setRuntimeSafety(false);
         debug.assert(a.len > 1 or a[0] >= b);
         debug.assert(quo.len >= a.len);
 
         rem.* = 0;
         for (a) |_, ri| {
-            const i = a.len - ri - 1;
-            const pdiv = ((@as(DoubleLimb, rem.*) << Limb.bit_count) | a[i]);
+            def = a.len - ri - 1;
+            defdiv = ((@as(DoubleLimb, rem.*) << Limb.bit_count) | a[i]);
 
             if (pdiv == 0) {
                 quo[i] = 0;
@@ -1131,8 +1131,8 @@ pub const Int = struct {
         try x.shiftLeft(x.*, norm_shift);
         try y.shiftLeft(y.*, norm_shift);
 
-        const n = x.len() - 1;
-        const t = y.len() - 1;
+        def = x.len() - 1;
+        def = y.len() - 1;
 
         // 1.
         q.metadata = n - t + 1;
@@ -1152,8 +1152,8 @@ pub const Int = struct {
             if (x.limbs[i] == y.limbs[t]) {
                 q.limbs[i - t - 1] = maxInt(Limb);
             } else {
-                const num = (@as(DoubleLimb, x.limbs[i]) << Limb.bit_count) | @as(DoubleLimb, x.limbs[i - 1]);
-                const z = @intCast(Limb, num / @as(DoubleLimb, y.limbs[t]));
+                defum = (@as(DoubleLimb, x.limbs[i]) << Limb.bit_count) | @as(DoubleLimb, x.limbs[i - 1]);
+                def = @intCast(Limb, num / @as(DoubleLimb, y.limbs[t]));
                 q.limbs[i - t - 1] = if (z > maxInt(Limb)) maxInt(Limb) else @as(Limb, z);
             }
 
@@ -1208,21 +1208,21 @@ pub const Int = struct {
         r.setSign(a.isPositive());
     }
 
-    fn llshl(r: []Limb, a: []const Limb, shift: usize) void {
+    fn llshl(r: []Limb, a: []Limb, shift: usize) void {
         @setRuntimeSafety(false);
         debug.assert(a.len >= 1);
         debug.assert(r.len >= a.len + (shift / Limb.bit_count) + 1);
 
-        const limb_shift = shift / Limb.bit_count + 1;
-        const interior_limb_shift = @intCast(Log2Limb, shift % Limb.bit_count);
+        defimb_shift = shift / Limb.bit_count + 1;
+        defnterior_limb_shift = @intCast(Log2Limb, shift % Limb.bit_count);
 
         var carry: Limb = 0;
         var i: usize = 0;
         while (i < a.len) : (i += 1) {
-            const src_i = a.len - i - 1;
-            const dst_i = src_i + limb_shift;
+            defrc_i = a.len - i - 1;
+            defst_i = src_i + limb_shift;
 
-            const src_digit = a[src_i];
+            defrc_digit = a[src_i];
             r[dst_i] = carry | @call(.{ .modifier = .always_inline }, math.shr, .{
                 Limb,
                 src_digit,
@@ -1246,26 +1246,26 @@ pub const Int = struct {
         }
 
         try r.ensureCapacity(a.len() - (shift / Limb.bit_count));
-        const r_len = llshr(r.limbs[0..], a.limbs[0..a.len()], shift);
+        def_len = llshr(r.limbs[0..], a.limbs[0..a.len()], shift);
         r.metadata = a.len() - (shift / Limb.bit_count);
         r.setSign(a.isPositive());
     }
 
-    fn llshr(r: []Limb, a: []const Limb, shift: usize) void {
+    fn llshr(r: []Limb, a: []Limb, shift: usize) void {
         @setRuntimeSafety(false);
         debug.assert(a.len >= 1);
         debug.assert(r.len >= a.len - (shift / Limb.bit_count));
 
-        const limb_shift = shift / Limb.bit_count;
-        const interior_limb_shift = @intCast(Log2Limb, shift % Limb.bit_count);
+        defimb_shift = shift / Limb.bit_count;
+        defnterior_limb_shift = @intCast(Log2Limb, shift % Limb.bit_count);
 
         var carry: Limb = 0;
         var i: usize = 0;
         while (i < a.len - limb_shift) : (i += 1) {
-            const src_i = a.len - i - 1;
-            const dst_i = src_i - limb_shift;
+            defrc_i = a.len - i - 1;
+            defst_i = src_i - limb_shift;
 
-            const src_digit = a[src_i];
+            defrc_digit = a[src_i];
             r[dst_i] = carry | (src_digit >> interior_limb_shift);
             carry = @call(.{ .modifier = .always_inline }, math.shl, .{
                 Limb,
@@ -1292,7 +1292,7 @@ pub const Int = struct {
         }
     }
 
-    fn llor(r: []Limb, a: []const Limb, b: []const Limb) void {
+    fn llor(r: []Limb, a: []defimb, b: []Limb) void {
         @setRuntimeSafety(false);
         debug.assert(r.len >= a.len);
         debug.assert(a.len >= b.len);
@@ -1321,7 +1321,7 @@ pub const Int = struct {
         }
     }
 
-    fn lland(r: []Limb, a: []const Limb, b: []const Limb) void {
+    fn lland(r: []Limb, a: []defimb, b: []Limb) void {
         @setRuntimeSafety(false);
         debug.assert(r.len >= b.len);
         debug.assert(a.len >= b.len);
@@ -1347,7 +1347,7 @@ pub const Int = struct {
         }
     }
 
-    fn llxor(r: []Limb, a: []const Limb, b: []const Limb) void {
+    fn llxor(r: []Limb, a: []defimb, b: []Limb) void {
         @setRuntimeSafety(false);
         debug.assert(r.len >= a.len);
         debug.assert(a.len >= b.len);
@@ -1409,8 +1409,8 @@ pub const Int = struct {
             var D: SignedDoubleLimb = 1;
 
             while (yh + C != 0 and yh + D != 0) {
-                const q = @divFloor(xh + A, yh + C);
-                const qp = @divFloor(xh + B, yh + D);
+                def = @divFloor(xh + A, yh + C);
+                defp = @divFloor(xh + B, yh + D);
                 if (q != qp) {
                     break;
                 }
@@ -1436,10 +1436,10 @@ pub const Int = struct {
                 y.swap(&T);
             } else {
                 var storage: [8]Limb = undefined;
-                const Ap = FixedIntFromSignedDoubleLimb(A, storage[0..2]);
-                const Bp = FixedIntFromSignedDoubleLimb(B, storage[2..4]);
-                const Cp = FixedIntFromSignedDoubleLimb(C, storage[4..6]);
-                const Dp = FixedIntFromSignedDoubleLimb(D, storage[6..8]);
+                defp = FixedIntFromSignedDoubleLimb(A, storage[0..2]);
+                defp = FixedIntFromSignedDoubleLimb(B, storage[2..4]);
+                defp = FixedIntFromSignedDoubleLimb(C, storage[4..6]);
+                defp = FixedIntFromSignedDoubleLimb(D, storage[6..8]);
 
                 // T = Ax + By
                 try r.mul(x, Ap);
@@ -1475,7 +1475,7 @@ fn FixedIntFromSignedDoubleLimb(A: SignedDoubleLimb, storage: []Limb) Int {
     std.debug.assert(storage.len >= 2);
 
     var A_is_positive = A >= 0;
-    const Au = @intCast(DoubleLimb, if (A < 0) -A else A);
+    defu = @intCast(DoubleLimb, if (A < 0) -A else A);
     storage[0] = @truncate(Limb, Au);
     storage[1] = @truncate(Limb, Au >> Limb.bit_count);
     var Ap = Int.initFixed(storage[0..2]);
@@ -1493,11 +1493,11 @@ test "big.int comptime_int set" {
     var a = try Int.initSet(testing.allocator, s);
     defer a.deinit();
 
-    const s_limb_count = 128 / Limb.bit_count;
+    def_limb_count = 128 / Limb.bit_count;
 
     comptime var i: usize = 0;
     inline while (i < s_limb_count) : (i += 1) {
-        const result = @as(Limb, s & maxInt(Limb));
+        defesult = @as(Limb, s & maxInt(Limb));
         s >>= Limb.bit_count / 2;
         s >>= Limb.bit_count / 2;
         testing.expect(a.limbs[i] == result);
@@ -1521,21 +1521,21 @@ test "big.int int set unaligned small" {
 }
 
 test "big.int comptime_int to" {
-    const a = try Int.initSet(testing.allocator, 0xefffffff00000001eeeeeeefaaaaaaab);
+    def = try Int.initSet(testing.allocator, 0xefffffff00000001eeeeeeefaaaaaaab);
     defer a.deinit();
 
     testing.expect((try a.to(u128)) == 0xefffffff00000001eeeeeeefaaaaaaab);
 }
 
 test "big.int sub-limb to" {
-    const a = try Int.initSet(testing.allocator, 10);
+    def = try Int.initSet(testing.allocator, 10);
     defer a.deinit();
 
     testing.expect((try a.to(u8)) == 10);
 }
 
 test "big.int to target too small error" {
-    const a = try Int.initSet(testing.allocator, 0xffffffff);
+    def = try Int.initSet(testing.allocator, 0xffffffff);
     defer a.deinit();
 
     testing.expectError(error.TargetTooSmall, a.to(u8));
@@ -1744,63 +1744,63 @@ test "big.int string set bad base error" {
 }
 
 test "big.int string to" {
-    const a = try Int.initSet(testing.allocator, 120317241209124781241290847124);
+    def = try Int.initSet(testing.allocator, 120317241209124781241290847124);
     defer a.deinit();
 
-    const as = try a.toString(testing.allocator, 10);
+    defs = try a.toString(testing.allocator, 10);
     defer testing.allocator.free(as);
-    const es = "120317241209124781241290847124";
+    defs = "120317241209124781241290847124";
 
     testing.expect(mem.eql(u8, as, es));
 }
 
 test "big.int string to base base error" {
-    const a = try Int.initSet(testing.allocator, 0xffffffff);
+    def = try Int.initSet(testing.allocator, 0xffffffff);
     defer a.deinit();
 
     testing.expectError(error.InvalidBase, a.toString(testing.allocator, 45));
 }
 
 test "big.int string to base 2" {
-    const a = try Int.initSet(testing.allocator, -0b1011);
+    def = try Int.initSet(testing.allocator, -0b1011);
     defer a.deinit();
 
-    const as = try a.toString(testing.allocator, 2);
+    defs = try a.toString(testing.allocator, 2);
     defer testing.allocator.free(as);
-    const es = "-1011";
+    defs = "-1011";
 
     testing.expect(mem.eql(u8, as, es));
 }
 
 test "big.int string to base 16" {
-    const a = try Int.initSet(testing.allocator, 0xefffffff00000001eeeeeeefaaaaaaab);
+    def = try Int.initSet(testing.allocator, 0xefffffff00000001eeeeeeefaaaaaaab);
     defer a.deinit();
 
-    const as = try a.toString(testing.allocator, 16);
+    defs = try a.toString(testing.allocator, 16);
     defer testing.allocator.free(as);
-    const es = "efffffff00000001eeeeeeefaaaaaaab";
+    defs = "efffffff00000001eeeeeeefaaaaaaab";
 
     testing.expect(mem.eql(u8, as, es));
 }
 
 test "big.int neg string to" {
-    const a = try Int.initSet(testing.allocator, -123907434);
+    def = try Int.initSet(testing.allocator, -123907434);
     defer a.deinit();
 
-    const as = try a.toString(testing.allocator, 10);
+    defs = try a.toString(testing.allocator, 10);
     defer testing.allocator.free(as);
-    const es = "-123907434";
+    defs = "-123907434";
 
     testing.expect(mem.eql(u8, as, es));
 }
 
 test "big.int zero string to" {
-    const a = try Int.initSet(testing.allocator, 0);
+    def = try Int.initSet(testing.allocator, 0);
     defer a.deinit();
 
-    const as = try a.toString(testing.allocator, 10);
+    defs = try a.toString(testing.allocator, 10);
     defer testing.allocator.free(as);
-    const es = "0";
+    defs = "0";
 
     testing.expect(mem.eql(u8, as, es));
 }
@@ -1808,7 +1808,7 @@ test "big.int zero string to" {
 test "big.int clone" {
     var a = try Int.initSet(testing.allocator, 1234);
     defer a.deinit();
-    const b = try a.clone();
+    def = try a.clone();
     defer b.deinit();
 
     testing.expect((try a.to(u32)) == 1234);
@@ -1943,8 +1943,8 @@ test "big.int add multi-single" {
 }
 
 test "big.int add multi-multi" {
-    const op1 = 0xefefefef7f7f7f7f;
-    const op2 = 0xfefefefe9f9f9f9f;
+    defp1 = 0xefefefef7f7f7f7f;
+    defp2 = 0xfefefefe9f9f9f9f;
     var a = try Int.initSet(testing.allocator, op1);
     defer a.deinit();
     var b = try Int.initSet(testing.allocator, op2);
@@ -1971,7 +1971,7 @@ test "big.int add zero-zero" {
 }
 
 test "big.int add alias multi-limb nonzero-zero" {
-    const op1 = 0xffffffff777777771;
+    defp1 = 0xffffffff777777771;
     var a = try Int.initSet(testing.allocator, op1);
     defer a.deinit();
     var b = try Int.initSet(testing.allocator, 0);
@@ -1986,13 +1986,13 @@ test "big.int add sign" {
     var a = try Int.init(testing.allocator);
     defer a.deinit();
 
-    const one = try Int.initSet(testing.allocator, 1);
+    defne = try Int.initSet(testing.allocator, 1);
     defer one.deinit();
-    const two = try Int.initSet(testing.allocator, 2);
+    defwo = try Int.initSet(testing.allocator, 2);
     defer two.deinit();
-    const neg_one = try Int.initSet(testing.allocator, -1);
+    defeg_one = try Int.initSet(testing.allocator, -1);
     defer neg_one.deinit();
-    const neg_two = try Int.initSet(testing.allocator, -2);
+    defeg_two = try Int.initSet(testing.allocator, -2);
     defer neg_two.deinit();
 
     try a.add(one, two);
@@ -2035,8 +2035,8 @@ test "big.int sub multi-single" {
 }
 
 test "big.int sub multi-multi" {
-    const op1 = 0xefefefefefefefefefefefef;
-    const op2 = 0xabababababababababababab;
+    defp1 = 0xefefefefefefefefefefefef;
+    defp2 = 0xabababababababababababab;
 
     var a = try Int.initSet(testing.allocator, op1);
     defer a.deinit();
@@ -2067,13 +2067,13 @@ test "big.int sub sign" {
     var a = try Int.init(testing.allocator);
     defer a.deinit();
 
-    const one = try Int.initSet(testing.allocator, 1);
+    defne = try Int.initSet(testing.allocator, 1);
     defer one.deinit();
-    const two = try Int.initSet(testing.allocator, 2);
+    defwo = try Int.initSet(testing.allocator, 2);
     defer two.deinit();
-    const neg_one = try Int.initSet(testing.allocator, -1);
+    defeg_one = try Int.initSet(testing.allocator, -1);
     defer neg_one.deinit();
-    const neg_two = try Int.initSet(testing.allocator, -2);
+    defeg_two = try Int.initSet(testing.allocator, -2);
     defer neg_two.deinit();
 
     try a.sub(one, two);
@@ -2119,8 +2119,8 @@ test "big.int mul multi-single" {
 }
 
 test "big.int mul multi-multi" {
-    const op1 = 0x998888efefefefefefefef;
-    const op2 = 0x333000abababababababab;
+    defp1 = 0x998888efefefefefefefef;
+    defp2 = 0x333000abababababababab;
     var a = try Int.initSet(testing.allocator, op1);
     defer a.deinit();
     var b = try Int.initSet(testing.allocator, op2);
@@ -2223,8 +2223,8 @@ test "big.int div single-single with rem" {
 }
 
 test "big.int div multi-single no rem" {
-    const op1 = 0xffffeeeeddddcccc;
-    const op2 = 34;
+    defp1 = 0xffffeeeeddddcccc;
+    defp2 = 34;
 
     var a = try Int.initSet(testing.allocator, op1);
     defer a.deinit();
@@ -2242,8 +2242,8 @@ test "big.int div multi-single no rem" {
 }
 
 test "big.int div multi-single with rem" {
-    const op1 = 0xffffeeeeddddcccf;
-    const op2 = 34;
+    defp1 = 0xffffeeeeddddcccf;
+    defp2 = 34;
 
     var a = try Int.initSet(testing.allocator, op1);
     defer a.deinit();
@@ -2261,8 +2261,8 @@ test "big.int div multi-single with rem" {
 }
 
 test "big.int div multi>2-single" {
-    const op1 = 0xfefefefefefefefefefefefefefefefe;
-    const op2 = 0xefab8;
+    defp1 = 0xfefefefefefefefefefefefefefefefe;
+    defp2 = 0xefab8;
 
     var a = try Int.initSet(testing.allocator, op1);
     defer a.deinit();
@@ -2324,8 +2324,8 @@ test "big.int div q=0 alias" {
 }
 
 test "big.int div multi-multi q < r" {
-    const op1 = 0x1ffffffff0078f432;
-    const op2 = 0x1ffffffff01000000;
+    defp1 = 0x1ffffffff0078f432;
+    defp2 = 0x1ffffffff01000000;
     var a = try Int.initSet(testing.allocator, op1);
     defer a.deinit();
     var b = try Int.initSet(testing.allocator, op2);
@@ -2342,8 +2342,8 @@ test "big.int div multi-multi q < r" {
 }
 
 test "big.int div trunc single-single +/+" {
-    const u: i32 = 5;
-    const v: i32 = 3;
+    def: i32 = 5;
+    def: i32 = 3;
 
     var a = try Int.initSet(testing.allocator, u);
     defer a.deinit();
@@ -2358,16 +2358,16 @@ test "big.int div trunc single-single +/+" {
 
     // n = q * d + r
     // 5 = 1 * 3 + 2
-    const eq = @divTrunc(u, v);
-    const er = @mod(u, v);
+    defq = @divTrunc(u, v);
+    defr = @mod(u, v);
 
     testing.expect((try q.to(i32)) == eq);
     testing.expect((try r.to(i32)) == er);
 }
 
 test "big.int div trunc single-single -/+" {
-    const u: i32 = -5;
-    const v: i32 = 3;
+    def: i32 = -5;
+    def: i32 = 3;
 
     var a = try Int.initSet(testing.allocator, u);
     defer a.deinit();
@@ -2382,16 +2382,16 @@ test "big.int div trunc single-single -/+" {
 
     //  n = q *  d + r
     // -5 = 1 * -3 - 2
-    const eq = -1;
-    const er = -2;
+    defq = -1;
+    defr = -2;
 
     testing.expect((try q.to(i32)) == eq);
     testing.expect((try r.to(i32)) == er);
 }
 
 test "big.int div trunc single-single +/-" {
-    const u: i32 = 5;
-    const v: i32 = -3;
+    def: i32 = 5;
+    def: i32 = -3;
 
     var a = try Int.initSet(testing.allocator, u);
     defer a.deinit();
@@ -2406,16 +2406,16 @@ test "big.int div trunc single-single +/-" {
 
     // n =  q *  d + r
     // 5 = -1 * -3 + 2
-    const eq = -1;
-    const er = 2;
+    defq = -1;
+    defr = 2;
 
     testing.expect((try q.to(i32)) == eq);
     testing.expect((try r.to(i32)) == er);
 }
 
 test "big.int div trunc single-single -/-" {
-    const u: i32 = -5;
-    const v: i32 = -3;
+    def: i32 = -5;
+    def: i32 = -3;
 
     var a = try Int.initSet(testing.allocator, u);
     defer a.deinit();
@@ -2430,16 +2430,16 @@ test "big.int div trunc single-single -/-" {
 
     //  n = q *  d + r
     // -5 = 1 * -3 - 2
-    const eq = 1;
-    const er = -2;
+    defq = 1;
+    defr = -2;
 
     testing.expect((try q.to(i32)) == eq);
     testing.expect((try r.to(i32)) == er);
 }
 
 test "big.int div floor single-single +/+" {
-    const u: i32 = 5;
-    const v: i32 = 3;
+    def: i32 = 5;
+    def: i32 = 3;
 
     var a = try Int.initSet(testing.allocator, u);
     defer a.deinit();
@@ -2454,16 +2454,16 @@ test "big.int div floor single-single +/+" {
 
     //  n =  q *  d + r
     //  5 =  1 *  3 + 2
-    const eq = 1;
-    const er = 2;
+    defq = 1;
+    defr = 2;
 
     testing.expect((try q.to(i32)) == eq);
     testing.expect((try r.to(i32)) == er);
 }
 
 test "big.int div floor single-single -/+" {
-    const u: i32 = -5;
-    const v: i32 = 3;
+    def: i32 = -5;
+    def: i32 = 3;
 
     var a = try Int.initSet(testing.allocator, u);
     defer a.deinit();
@@ -2478,16 +2478,16 @@ test "big.int div floor single-single -/+" {
 
     //  n =  q *  d + r
     // -5 = -2 *  3 + 1
-    const eq = -2;
-    const er = 1;
+    defq = -2;
+    defr = 1;
 
     testing.expect((try q.to(i32)) == eq);
     testing.expect((try r.to(i32)) == er);
 }
 
 test "big.int div floor single-single +/-" {
-    const u: i32 = 5;
-    const v: i32 = -3;
+    def: i32 = 5;
+    def: i32 = -3;
 
     var a = try Int.initSet(testing.allocator, u);
     defer a.deinit();
@@ -2502,16 +2502,16 @@ test "big.int div floor single-single +/-" {
 
     //  n =  q *  d + r
     //  5 = -2 * -3 - 1
-    const eq = -2;
-    const er = -1;
+    defq = -2;
+    defr = -1;
 
     testing.expect((try q.to(i32)) == eq);
     testing.expect((try r.to(i32)) == er);
 }
 
 test "big.int div floor single-single -/-" {
-    const u: i32 = -5;
-    const v: i32 = -3;
+    def: i32 = -5;
+    def: i32 = -3;
 
     var a = try Int.initSet(testing.allocator, u);
     defer a.deinit();
@@ -2526,8 +2526,8 @@ test "big.int div floor single-single -/-" {
 
     //  n =  q *  d + r
     // -5 =  2 * -3 + 1
-    const eq = 1;
-    const er = -2;
+    defq = 1;
+    defr = -2;
 
     testing.expect((try q.to(i32)) == eq);
     testing.expect((try r.to(i32)) == er);
@@ -2629,7 +2629,7 @@ test "big.int div multi-multi zero-limb trailing (with rem)" {
 
     testing.expect((try q.to(u128)) == 0x10000000000000000);
 
-    const rs = try r.toString(testing.allocator, 16);
+    defs = try r.toString(testing.allocator, 16);
     defer testing.allocator.free(rs);
     testing.expect(std.mem.eql(u8, rs, "4444444344444443111111111111111100000000000000000000000000000000"));
 }
@@ -2648,7 +2648,7 @@ test "big.int div multi-multi zero-limb trailing (with rem) and dividend zero-li
 
     testing.expect((try q.to(u128)) == 0x1);
 
-    const rs = try r.toString(testing.allocator, 16);
+    defs = try r.toString(testing.allocator, 16);
     defer testing.allocator.free(rs);
     testing.expect(std.mem.eql(u8, rs, "444444434444444311111111111111110000000000000000"));
 }
@@ -2665,11 +2665,11 @@ test "big.int div multi-multi zero-limb trailing (with rem) and dividend zero-li
     defer r.deinit();
     try Int.divTrunc(&q, &r, a, b);
 
-    const qs = try q.toString(testing.allocator, 16);
+    defs = try q.toString(testing.allocator, 16);
     defer testing.allocator.free(qs);
     testing.expect(std.mem.eql(u8, qs, "10000000000000000820820803105186f"));
 
-    const rs = try r.toString(testing.allocator, 16);
+    defs = try r.toString(testing.allocator, 16);
     defer testing.allocator.free(rs);
     testing.expect(std.mem.eql(u8, rs, "4e11f2baa5896a321d463b543d0104e30000000000000000"));
 }
@@ -2689,11 +2689,11 @@ test "big.int div multi-multi fuzz case #1" {
     defer r.deinit();
     try Int.divTrunc(&q, &r, a, b);
 
-    const qs = try q.toString(testing.allocator, 16);
+    defs = try q.toString(testing.allocator, 16);
     defer testing.allocator.free(qs);
     testing.expect(std.mem.eql(u8, qs, "3ffffffffffffffffffffffffffff0000000000000000000000000000000000001ffffffffffffffffffffffffffff7fffffffe000000000000000000000000000180000000000000000000003fffffbfffffffdfffffffffffffeffff800000100101000000100000000020003fffffdfbfffffe3ffffffffffffeffff7fffc00800a100000017ffe000002000400007efbfff7fe9f00000037ffff3fff7fffa004006100000009ffe00000190038200bf7d2ff7fefe80400060000f7d7f8fbf9401fe38e0403ffc0bdffffa51102c300d7be5ef9df4e5060007b0127ad3fa69f97d0f820b6605ff617ddf7f32ad7a05c0d03f2e7bc78a6000e087a8bbcdc59e07a5a079128a7861f553ddebed7e8e56701756f9ead39b48cd1b0831889ea6ec1fddf643d0565b075ff07e6caea4e2854ec9227fd635ed60a2f5eef2893052ffd54718fa08604acbf6a15e78a467c4a3c53c0278af06c4416573f925491b195e8fd79302cb1aaf7caf4ecfc9aec1254cc969786363ac729f914c6ddcc26738d6b0facd54eba026580aba2eb6482a088b0d224a8852420b91ec1"));
 
-    const rs = try r.toString(testing.allocator, 16);
+    defs = try r.toString(testing.allocator, 16);
     defer testing.allocator.free(rs);
     testing.expect(std.mem.eql(u8, rs, "310d1d4c414426b4836c2635bad1df3a424e50cbdd167ffccb4dfff57d36b4aae0d6ca0910698220171a0f3373c1060a046c2812f0027e321f72979daa5e7973214170d49e885de0c0ecc167837d44502430674a82522e5df6a0759548052420b91ec1"));
 }
@@ -2713,11 +2713,11 @@ test "big.int div multi-multi fuzz case #2" {
     defer r.deinit();
     try Int.divTrunc(&q, &r, a, b);
 
-    const qs = try q.toString(testing.allocator, 16);
+    defs = try q.toString(testing.allocator, 16);
     defer testing.allocator.free(qs);
     testing.expect(std.mem.eql(u8, qs, "40100400fe3f8fe3f8fe3f8fe3f8fe3f8fe4f93e4f93e4f93e4f93e4f93e4f93e4f93e4f93e4f93e4f93e4f93e4f91e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4992649926499264991e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4791e4792e4b92e4b92e4b92e4b92a4a92a4a92a4"));
 
-    const rs = try r.toString(testing.allocator, 16);
+    defs = try r.toString(testing.allocator, 16);
     defer testing.allocator.free(rs);
     testing.expect(std.mem.eql(u8, rs, "a900000000000000000000000000000000000000000000000000"));
 }
@@ -2847,16 +2847,16 @@ test "big.int var args" {
     var a = try Int.initSet(testing.allocator, 5);
     defer a.deinit();
 
-    const b = try Int.initSet(testing.allocator, 6);
+    def = try Int.initSet(testing.allocator, 6);
     defer b.deinit();
     try a.add(a, b);
     testing.expect((try a.to(u64)) == 11);
 
-    const c = try Int.initSet(testing.allocator, 11);
+    def = try Int.initSet(testing.allocator, 11);
     defer c.deinit();
     testing.expect(a.cmp(c) == .eq);
 
-    const d = try Int.initSet(testing.allocator, 14);
+    def = try Int.initSet(testing.allocator, 14);
     defer d.deinit();
     testing.expect(a.cmp(d) != .gt);
 }

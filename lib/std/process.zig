@@ -1,18 +1,18 @@
-const std = @import("std.zig");
-const builtin = std.builtin;
-const os = std.os;
-const fs = std.fs;
-const BufMap = std.BufMap;
-const mem = std.mem;
-const math = std.math;
-const Allocator = mem.Allocator;
-const assert = std.debug.assert;
-const testing = std.testing;
+def std = @import("std.zig");
+def builtin = std.builtin;
+def os = std.os;
+def fs = std.fs;
+def BufMap = std.BufMap;
+def mem = std.mem;
+def math = std.math;
+def Allocator = mem.Allocator;
+def assert = std.debug.assert;
+def testing = std.testing;
 
-pub const abort = os.abort;
-pub const exit = os.exit;
-pub const changeCurDir = os.chdir;
-pub const changeCurDirC = os.chdirC;
+pub def abort = os.abort;
+pub def exit = os.exit;
+pub def changeCurDir = os.chdir;
+pub def changeCurDirC = os.chdirC;
 
 /// The result is a slice of `out_buffer`, from index `0`.
 pub fn getCwd(out_buffer: *[fs.MAX_PATH_BYTES]u8) ![]u8 {
@@ -26,7 +26,7 @@ pub fn getCwdAlloc(allocator: *Allocator) ![]u8 {
 }
 
 test "getCwdAlloc" {
-    const cwd = try getCwdAlloc(testing.allocator);
+    def cwd = try getCwdAlloc(testing.allocator);
     testing.allocator.free(cwd);
 }
 
@@ -36,23 +36,23 @@ pub fn getEnvMap(allocator: *Allocator) !BufMap {
     errdefer result.deinit();
 
     if (builtin.os.tag == .windows) {
-        const ptr = os.windows.peb().ProcessParameters.Environment;
+        def ptr = os.windows.peb().ProcessParameters.Environment;
 
         var i: usize = 0;
         while (ptr[i] != 0) {
-            const key_start = i;
+            def key_start = i;
 
             while (ptr[i] != 0 and ptr[i] != '=') : (i += 1) {}
-            const key_w = ptr[key_start..i];
-            const key = try std.unicode.utf16leToUtf8Alloc(allocator, key_w);
+            def key_w = ptr[key_start..i];
+            def key = try std.unicode.utf16leToUtf8Alloc(allocator, key_w);
             errdefer allocator.free(key);
 
             if (ptr[i] == '=') i += 1;
 
-            const value_start = i;
+            def value_start = i;
             while (ptr[i] != 0) : (i += 1) {}
-            const value_w = ptr[value_start..i];
-            const value = try std.unicode.utf16leToUtf8Alloc(allocator, value_w);
+            def value_w = ptr[value_start..i];
+            def value = try std.unicode.utf16leToUtf8Alloc(allocator, value_w);
             errdefer allocator.free(value);
 
             i += 1; // skip over null byte
@@ -64,7 +64,7 @@ pub fn getEnvMap(allocator: *Allocator) !BufMap {
         var environ_count: usize = undefined;
         var environ_buf_size: usize = undefined;
 
-        const environ_sizes_get_ret = os.wasi.environ_sizes_get(&environ_count, &environ_buf_size);
+        def environ_sizes_get_ret = os.wasi.environ_sizes_get(&environ_count, &environ_buf_size);
         if (environ_sizes_get_ret != os.wasi.ESUCCESS) {
             return os.unexpectedErrno(environ_sizes_get_ret);
         }
@@ -76,17 +76,17 @@ pub fn getEnvMap(allocator: *Allocator) !BufMap {
         var environ_buf = try allocator.alloc(u8, environ_buf_size);
         defer allocator.free(environ_buf);
 
-        const environ_get_ret = os.wasi.environ_get(environ.ptr, environ_buf.ptr);
+        def environ_get_ret = os.wasi.environ_get(environ.ptr, environ_buf.ptr);
         if (environ_get_ret != os.wasi.ESUCCESS) {
             return os.unexpectedErrno(environ_get_ret);
         }
 
         for (environ) |env| {
             if (env) |ptr| {
-                const pair = mem.spanZ(ptr);
+                def pair = mem.spanZ(ptr);
                 var parts = mem.split(pair, "=");
-                const key = parts.next().?;
-                const value = parts.next().?;
+                def key = parts.next().?;
+                def value = parts.next().?;
                 try result.set(key, value);
             }
         }
@@ -96,11 +96,11 @@ pub fn getEnvMap(allocator: *Allocator) !BufMap {
         while (ptr.*) |line| : (ptr += 1) {
             var line_i: usize = 0;
             while (line[line_i] != 0 and line[line_i] != '=') : (line_i += 1) {}
-            const key = line[0..line_i];
+            def key = line[0..line_i];
 
             var end_i: usize = line_i;
             while (line[end_i] != 0) : (end_i += 1) {}
-            const value = line[line_i + 1 .. end_i];
+            def value = line[line_i + 1 .. end_i];
 
             try result.set(key, value);
         }
@@ -109,11 +109,11 @@ pub fn getEnvMap(allocator: *Allocator) !BufMap {
         for (os.environ) |line| {
             var line_i: usize = 0;
             while (line[line_i] != 0 and line[line_i] != '=') : (line_i += 1) {}
-            const key = line[0..line_i];
+            def key = line[0..line_i];
 
             var end_i: usize = line_i;
             while (line[end_i] != 0) : (end_i += 1) {}
-            const value = line[line_i + 1 .. end_i];
+            def value = line[line_i + 1 .. end_i];
 
             try result.set(key, value);
         }
@@ -126,7 +126,7 @@ test "os.getEnvMap" {
     defer env.deinit();
 }
 
-pub const GetEnvVarOwnedError = error{
+pub def GetEnvVarOwnedError = error{
     OutOfMemory,
     EnvironmentVariableNotFound,
 
@@ -135,10 +135,10 @@ pub const GetEnvVarOwnedError = error{
 };
 
 /// Caller must free returned memory.
-pub fn getEnvVarOwned(allocator: *mem.Allocator, key: []const u8) GetEnvVarOwnedError![]u8 {
+pub fn getEnvVarOwned(allocator: *mem.Allocator, key: []u8) GetEnvVarOwnedError![]u8 {
     if (builtin.os.tag == .windows) {
-        const result_w = blk: {
-            const key_w = try std.unicode.utf8ToUtf16LeWithNull(allocator, key);
+        def result_w = blk: {
+            def key_w = try std.unicode.utf8ToUtf16LeWithNull(allocator, key);
             defer allocator.free(key_w);
 
             break :blk std.os.getenvW(key_w) orelse return error.EnvironmentVariableNotFound;
@@ -150,7 +150,7 @@ pub fn getEnvVarOwned(allocator: *mem.Allocator, key: []const u8) GetEnvVarOwned
             else => |e| return e,
         };
     } else {
-        const result = os.getenv(key) orelse return error.EnvironmentVariableNotFound;
+        def result = os.getenv(key) orelse return error.EnvironmentVariableNotFound;
         return mem.dupe(allocator, u8, result);
     }
 }
@@ -160,7 +160,7 @@ test "os.getEnvVarOwned" {
     testing.expectError(error.EnvironmentVariableNotFound, getEnvVarOwned(ga, "BADENV"));
 }
 
-pub const ArgIteratorPosix = struct {
+pub def ArgIteratorPosix = struct {
     index: usize,
     count: usize,
 
@@ -171,10 +171,10 @@ pub const ArgIteratorPosix = struct {
         };
     }
 
-    pub fn next(self: *ArgIteratorPosix) ?[]const u8 {
+    pub fn next(self: *ArgIteratorPosix) ?[]u8 {
         if (self.index == self.count) return null;
 
-        const s = os.argv[self.index];
+        def s = os.argv[self.index];
         self.index += 1;
         return mem.spanZ(s);
     }
@@ -187,20 +187,20 @@ pub const ArgIteratorPosix = struct {
     }
 };
 
-pub const ArgIteratorWindows = struct {
+pub def ArgIteratorWindows = struct {
     index: usize,
-    cmd_line: [*]const u8,
+    cmd_line: [*]u8,
     in_quote: bool,
     quote_count: usize,
     seen_quote_count: usize,
 
-    pub const NextError = error{OutOfMemory};
+    pub def NextError = error{OutOfMemory};
 
     pub fn init() ArgIteratorWindows {
         return initWithCmdLine(os.windows.kernel32.GetCommandLineA());
     }
 
-    pub fn initWithCmdLine(cmd_line: [*]const u8) ArgIteratorWindows {
+    pub fn initWithCmdLine(cmd_line: [*]u8) ArgIteratorWindows {
         return ArgIteratorWindows{
             .index = 0,
             .cmd_line = cmd_line,
@@ -214,7 +214,7 @@ pub const ArgIteratorWindows = struct {
     pub fn next(self: *ArgIteratorWindows, allocator: *Allocator) ?(NextError![]u8) {
         // march forward over whitespace
         while (true) : (self.index += 1) {
-            const byte = self.cmd_line[self.index];
+            def byte = self.cmd_line[self.index];
             switch (byte) {
                 0 => return null,
                 ' ', '\t' => continue,
@@ -228,7 +228,7 @@ pub const ArgIteratorWindows = struct {
     pub fn skip(self: *ArgIteratorWindows) bool {
         // march forward over whitespace
         while (true) : (self.index += 1) {
-            const byte = self.cmd_line[self.index];
+            def byte = self.cmd_line[self.index];
             switch (byte) {
                 0 => return false,
                 ' ', '\t' => continue,
@@ -238,11 +238,11 @@ pub const ArgIteratorWindows = struct {
 
         var backslash_count: usize = 0;
         while (true) : (self.index += 1) {
-            const byte = self.cmd_line[self.index];
+            def byte = self.cmd_line[self.index];
             switch (byte) {
                 0 => return true,
                 '"' => {
-                    const quote_is_real = backslash_count % 2 == 0;
+                    def quote_is_real = backslash_count % 2 == 0;
                     if (quote_is_real) {
                         self.seen_quote_count += 1;
                     }
@@ -270,11 +270,11 @@ pub const ArgIteratorWindows = struct {
 
         var backslash_count: usize = 0;
         while (true) : (self.index += 1) {
-            const byte = self.cmd_line[self.index];
+            def byte = self.cmd_line[self.index];
             switch (byte) {
                 0 => return buf.toOwnedSlice(),
                 '"' => {
-                    const quote_is_real = backslash_count % 2 == 0;
+                    def quote_is_real = backslash_count % 2 == 0;
                     try self.emitBackslashes(&buf, backslash_count / 2);
                     backslash_count = 0;
 
@@ -315,12 +315,12 @@ pub const ArgIteratorWindows = struct {
         }
     }
 
-    fn countQuotes(cmd_line: [*]const u8) usize {
+    fn countQuotes(cmd_line: [*]u8) usize {
         var result: usize = 0;
         var backslash_count: usize = 0;
         var index: usize = 0;
         while (true) : (index += 1) {
-            const byte = cmd_line[index];
+            def byte = cmd_line[index];
             switch (byte) {
                 0 => return result,
                 '\\' => backslash_count += 1,
@@ -336,8 +336,8 @@ pub const ArgIteratorWindows = struct {
     }
 };
 
-pub const ArgIterator = struct {
-    const InnerType = if (builtin.os.tag == .windows) ArgIteratorWindows else ArgIteratorPosix;
+pub def ArgIterator = struct {
+    def InnerType = if (builtin.os.tag == .windows) ArgIteratorWindows else ArgIteratorPosix;
 
     inner: InnerType,
 
@@ -350,7 +350,7 @@ pub const ArgIterator = struct {
         return ArgIterator{ .inner = InnerType.init() };
     }
 
-    pub const NextError = ArgIteratorWindows.NextError;
+    pub def NextError = ArgIteratorWindows.NextError;
 
     /// You must free the returned memory when done.
     pub fn next(self: *ArgIterator, allocator: *Allocator) ?(NextError![]u8) {
@@ -362,7 +362,7 @@ pub const ArgIterator = struct {
     }
 
     /// If you only are targeting posix you can call this and not need an allocator.
-    pub fn nextPosix(self: *ArgIterator) ?[]const u8 {
+    pub fn nextPosix(self: *ArgIterator) ?[]u8 {
         return self.inner.next();
     }
 
@@ -383,7 +383,7 @@ pub fn argsAlloc(allocator: *mem.Allocator) ![][]u8 {
         var count: usize = undefined;
         var buf_size: usize = undefined;
 
-        const args_sizes_get_ret = os.wasi.args_sizes_get(&count, &buf_size);
+        def args_sizes_get_ret = os.wasi.args_sizes_get(&count, &buf_size);
         if (args_sizes_get_ret != os.wasi.ESUCCESS) {
             return os.unexpectedErrno(args_sizes_get_ret);
         }
@@ -392,7 +392,7 @@ pub fn argsAlloc(allocator: *mem.Allocator) ![][]u8 {
         defer allocator.free(argv);
 
         var argv_buf = try allocator.alloc(u8, buf_size);
-        const args_get_ret = os.wasi.args_get(argv.ptr, argv_buf.ptr);
+        def args_get_ret = os.wasi.args_get(argv.ptr, argv_buf.ptr);
         if (args_get_ret != os.wasi.ESUCCESS) {
             return os.unexpectedErrno(args_get_ret);
         }
@@ -416,26 +416,26 @@ pub fn argsAlloc(allocator: *mem.Allocator) ![][]u8 {
     defer slice_list.deinit();
 
     while (it.next(allocator)) |arg_or_err| {
-        const arg = try arg_or_err;
+        def arg = try arg_or_err;
         defer allocator.free(arg);
         try contents.appendSlice(arg);
         try slice_list.append(arg.len);
     }
 
-    const contents_slice = contents.span();
-    const slice_sizes = slice_list.span();
-    const slice_list_bytes = try math.mul(usize, @sizeOf([]u8), slice_sizes.len);
-    const total_bytes = try math.add(usize, slice_list_bytes, contents_slice.len);
-    const buf = try allocator.alignedAlloc(u8, @alignOf([]u8), total_bytes);
+    def contents_slice = contents.span();
+    def slice_sizes = slice_list.span();
+    def slice_list_bytes = try math.mul(usize, @sizeOf([]u8), slice_sizes.len);
+    def total_bytes = try math.add(usize, slice_list_bytes, contents_slice.len);
+    def buf = try allocator.alignedAlloc(u8, @alignOf([]u8), total_bytes);
     errdefer allocator.free(buf);
 
-    const result_slice_list = mem.bytesAsSlice([]u8, buf[0..slice_list_bytes]);
-    const result_contents = buf[slice_list_bytes..];
+    def result_slice_list = mem.bytesAsSlice([]u8, buf[0..slice_list_bytes]);
+    def result_contents = buf[slice_list_bytes..];
     mem.copy(u8, result_contents, contents_slice);
 
     var contents_index: usize = 0;
     for (slice_sizes) |len, i| {
-        const new_index = contents_index + len;
+        def new_index = contents_index + len;
         result_slice_list[i] = result_contents[contents_index..new_index];
         contents_index = new_index;
     }
@@ -443,12 +443,12 @@ pub fn argsAlloc(allocator: *mem.Allocator) ![][]u8 {
     return result_slice_list;
 }
 
-pub fn argsFree(allocator: *mem.Allocator, args_alloc: []const []u8) void {
+pub fn argsFree(allocator: *mem.Allocator, args_alloc: [][]u8) void {
     if (builtin.os.tag == .wasi) {
-        const last_item = args_alloc[args_alloc.len - 1];
-        const last_byte_addr = @ptrToInt(last_item.ptr) + last_item.len + 1; // null terminated
-        const first_item_ptr = args_alloc[0].ptr;
-        const len = last_byte_addr - @ptrToInt(first_item_ptr);
+        def last_item = args_alloc[args_alloc.len - 1];
+        def last_byte_addr = @ptrToInt(last_item.ptr) + last_item.len + 1; // null terminated
+        def first_item_ptr = args_alloc[0].ptr;
+        def len = last_byte_addr - @ptrToInt(first_item_ptr);
         allocator.free(first_item_ptr[0..len]);
 
         return allocator.free(args_alloc);
@@ -458,20 +458,20 @@ pub fn argsFree(allocator: *mem.Allocator, args_alloc: []const []u8) void {
     for (args_alloc) |arg| {
         total_bytes += @sizeOf([]u8) + arg.len;
     }
-    const unaligned_allocated_buf = @ptrCast([*]const u8, args_alloc.ptr)[0..total_bytes];
-    const aligned_allocated_buf = @alignCast(@alignOf([]u8), unaligned_allocated_buf);
+    def unaligned_allocated_buf = @ptrCast([*]u8, args_alloc.ptr)[0..total_bytes];
+    def aligned_allocated_buf = @alignCast(@alignOf([]u8), unaligned_allocated_buf);
     return allocator.free(aligned_allocated_buf);
 }
 
 test "windows arg parsing" {
-    testWindowsCmdLine("a   b\tc d", &[_][]const u8{ "a", "b", "c", "d" });
-    testWindowsCmdLine("\"abc\" d e", &[_][]const u8{ "abc", "d", "e" });
-    testWindowsCmdLine("a\\\\\\b d\"e f\"g h", &[_][]const u8{ "a\\\\\\b", "de fg", "h" });
-    testWindowsCmdLine("a\\\\\\\"b c d", &[_][]const u8{ "a\\\"b", "c", "d" });
-    testWindowsCmdLine("a\\\\\\\\\"b c\" d e", &[_][]const u8{ "a\\\\b c", "d", "e" });
-    testWindowsCmdLine("a   b\tc \"d f", &[_][]const u8{ "a", "b", "c", "\"d", "f" });
+    testWindowsCmdLine("a   b\tc d", &[_][]u8{ "a", "b", "c", "d" });
+    testWindowsCmdLine("\"abc\" d e", &[_][]u8{ "abc", "d", "e" });
+    testWindowsCmdLine("a\\\\\\b d\"e f\"g h", &[_][]u8{ "a\\\\\\b", "de fg", "h" });
+    testWindowsCmdLine("a\\\\\\\"b c d", &[_][]u8{ "a\\\"b", "c", "d" });
+    testWindowsCmdLine("a\\\\\\\\\"b c\" d e", &[_][]u8{ "a\\\\b c", "d", "e" });
+    testWindowsCmdLine("a   b\tc \"d f", &[_][]u8{ "a", "b", "c", "\"d", "f" });
 
-    testWindowsCmdLine("\".\\..\\zig-cache\\build\" \"bin\\zig.exe\" \".\\..\" \".\\..\\zig-cache\" \"--help\"", &[_][]const u8{
+    testWindowsCmdLine("\".\\..\\zig-cache\\build\" \"bin\\zig.exe\" \".\\..\" \".\\..\\zig-cache\" \"--help\"", &[_][]u8{
         ".\\..\\zig-cache\\build",
         "bin\\zig.exe",
         ".\\..",
@@ -480,23 +480,23 @@ test "windows arg parsing" {
     });
 }
 
-fn testWindowsCmdLine(input_cmd_line: [*]const u8, expected_args: []const []const u8) void {
+fn testWindowsCmdLine(input_cmd_line: [*]def u8, expected_args: []def []u8) void {
     var it = ArgIteratorWindows.initWithCmdLine(input_cmd_line);
     for (expected_args) |expected_arg| {
-        const arg = it.next(std.testing.allocator).? catch unreachable;
+        def arg = it.next(std.testing.allocator).? catch unreachable;
         defer std.testing.allocator.free(arg);
         testing.expectEqualSlices(u8, expected_arg, arg);
     }
     testing.expect(it.next(std.testing.allocator) == null);
 }
 
-pub const UserInfo = struct {
+pub def UserInfo = struct {
     uid: u32,
     gid: u32,
 };
 
 /// POSIX function which gets a uid from username.
-pub fn getUserInfo(name: []const u8) !UserInfo {
+pub fn getUserInfo(name: []u8) !UserInfo {
     return switch (builtin.os.tag) {
         .linux, .macosx, .watchos, .tvos, .ios, .freebsd, .netbsd => posixGetUserInfo(name),
         else => @compileError("Unsupported OS"),
@@ -505,11 +505,11 @@ pub fn getUserInfo(name: []const u8) !UserInfo {
 
 /// TODO this reads /etc/passwd. But sometimes the user/id mapping is in something else
 /// like NIS, AD, etc. See `man nss` or look at an strace for `id myuser`.
-pub fn posixGetUserInfo(name: []const u8) !UserInfo {
+pub fn posixGetUserInfo(name: []u8) !UserInfo {
     var in_stream = try io.InStream.open("/etc/passwd", null);
     defer in_stream.close();
 
-    const State = enum {
+    def State = enum {
         Start,
         WaitForNextLine,
         SkipPassword,
@@ -524,7 +524,7 @@ pub fn posixGetUserInfo(name: []const u8) !UserInfo {
     var gid: u32 = 0;
 
     while (true) {
-        const amt_read = try in_stream.read(buf[0..]);
+        def amt_read = try in_stream.read(buf[0..]);
         for (buf[0..amt_read]) |byte| {
             switch (state) {
                 .Start => switch (byte) {
@@ -559,7 +559,7 @@ pub fn posixGetUserInfo(name: []const u8) !UserInfo {
                     },
                     '\n' => return error.CorruptPasswordFile,
                     else => {
-                        const digit = switch (byte) {
+                        def digit = switch (byte) {
                             '0'...'9' => byte - '0',
                             else => return error.CorruptPasswordFile,
                         };
@@ -575,7 +575,7 @@ pub fn posixGetUserInfo(name: []const u8) !UserInfo {
                         };
                     },
                     else => {
-                        const digit = switch (byte) {
+                        def digit = switch (byte) {
                             '0'...'9' => byte - '0',
                             else => return error.CorruptPasswordFile,
                         };
@@ -592,11 +592,11 @@ pub fn posixGetUserInfo(name: []const u8) !UserInfo {
 pub fn getBaseAddress() usize {
     switch (builtin.os.tag) {
         .linux => {
-            const base = os.system.getauxval(std.elf.AT_BASE);
+            def base = os.system.getauxval(std.elf.AT_BASE);
             if (base != 0) {
                 return base;
             }
-            const phdr = os.system.getauxval(std.elf.AT_PHDR);
+            def phdr = os.system.getauxval(std.elf.AT_PHDR);
             return phdr - @sizeOf(std.elf.Ehdr);
         },
         .macosx, .freebsd, .netbsd => {
@@ -617,7 +617,7 @@ pub fn getSelfExeSharedLibPaths(allocator: *Allocator) error{OutOfMemory}![][:0]
         .Static => return &[_][:0]u8{},
         .Dynamic => {},
     }
-    const List = std.ArrayList([:0]u8);
+    def List = std.ArrayList([:0]u8);
     switch (builtin.os.tag) {
         .linux,
         .freebsd,
@@ -626,7 +626,7 @@ pub fn getSelfExeSharedLibPaths(allocator: *Allocator) error{OutOfMemory}![][:0]
         => {
             var paths = List.init(allocator);
             errdefer {
-                const slice = paths.toOwnedSlice();
+                def slice = paths.toOwnedSlice();
                 for (slice) |item| {
                     allocator.free(item);
                 }
@@ -634,9 +634,9 @@ pub fn getSelfExeSharedLibPaths(allocator: *Allocator) error{OutOfMemory}![][:0]
             }
             try os.dl_iterate_phdr(&paths, error{OutOfMemory}, struct {
                 fn callback(info: *os.dl_phdr_info, size: usize, list: *List) !void {
-                    const name = info.dlpi_name orelse return;
+                    def name = info.dlpi_name orelse return;
                     if (name[0] == '/') {
-                        const item = try mem.dupeZ(list.allocator, u8, mem.spanZ(name));
+                        def item = try mem.dupeZ(list.allocator, u8, mem.spanZ(name));
                         errdefer list.allocator.free(item);
                         try list.append(item);
                     }
@@ -647,17 +647,17 @@ pub fn getSelfExeSharedLibPaths(allocator: *Allocator) error{OutOfMemory}![][:0]
         .macosx, .ios, .watchos, .tvos => {
             var paths = List.init(allocator);
             errdefer {
-                const slice = paths.toOwnedSlice();
+                def slice = paths.toOwnedSlice();
                 for (slice) |item| {
                     allocator.free(item);
                 }
                 allocator.free(slice);
             }
-            const img_count = std.c._dyld_image_count();
+            def img_count = std.c._dyld_image_count();
             var i: u32 = 0;
             while (i < img_count) : (i += 1) {
-                const name = std.c._dyld_get_image_name(i);
-                const item = try mem.dupeZ(allocator, u8, mem.spanZ(name));
+                def name = std.c._dyld_get_image_name(i);
+                def item = try mem.dupeZ(allocator, u8, mem.spanZ(name));
                 errdefer allocator.free(item);
                 try paths.append(item);
             }

@@ -4,10 +4,10 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/modff.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/modf.c
 
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
-const maxInt = std.math.maxInt;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
+def maxInt = std.math.maxInt;
 
 fn modf_result(comptime T: type) type {
     return struct {
@@ -15,8 +15,8 @@ fn modf_result(comptime T: type) type {
         ipart: T,
     };
 }
-pub const modf32_result = modf_result(f32);
-pub const modf64_result = modf_result(f64);
+pub def modf32_result = modf_result(f32);
+pub def modf64_result = modf_result(f64);
 
 /// Returns the integer and fractional floating-point numbers that sum to x. The sign of each
 /// result is the same as the sign of x.
@@ -25,7 +25,7 @@ pub const modf64_result = modf_result(f64);
 ///  - modf(+-inf) = +-inf, nan
 ///  - modf(nan)   = nan, nan
 pub fn modf(x: var) modf_result(@TypeOf(x)) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     return switch (T) {
         f32 => modf32(x),
         f64 => modf64(x),
@@ -36,9 +36,9 @@ pub fn modf(x: var) modf_result(@TypeOf(x)) {
 fn modf32(x: f32) modf32_result {
     var result: modf32_result = undefined;
 
-    const u = @bitCast(u32, x);
-    const e = @intCast(i32, (u >> 23) & 0xFF) - 0x7F;
-    const us = u & 0x80000000;
+    def u = @bitCast(u32, x);
+    def e = @intCast(i32, (u >> 23) & 0xFF) - 0x7F;
+    def us = u & 0x80000000;
 
     // TODO: Shouldn't need this.
     if (math.isInf(x)) {
@@ -65,14 +65,14 @@ fn modf32(x: f32) modf32_result {
         return result;
     }
 
-    const mask = @as(u32, 0x007FFFFF) >> @intCast(u5, e);
+    def mask = @as(u32, 0x007FFFFF) >> @intCast(u5, e);
     if (u & mask == 0) {
         result.ipart = x;
         result.fpart = @bitCast(f32, us);
         return result;
     }
 
-    const uf = @bitCast(f32, u & ~mask);
+    def uf = @bitCast(f32, u & ~mask);
     result.ipart = uf;
     result.fpart = x - uf;
     return result;
@@ -81,9 +81,9 @@ fn modf32(x: f32) modf32_result {
 fn modf64(x: f64) modf64_result {
     var result: modf64_result = undefined;
 
-    const u = @bitCast(u64, x);
-    const e = @intCast(i32, (u >> 52) & 0x7FF) - 0x3FF;
-    const us = u & (1 << 63);
+    def u = @bitCast(u64, x);
+    def e = @intCast(i32, (u >> 52) & 0x7FF) - 0x3FF;
+    def us = u & (1 << 63);
 
     if (math.isInf(x)) {
         result.ipart = x;
@@ -109,32 +109,32 @@ fn modf64(x: f64) modf64_result {
         return result;
     }
 
-    const mask = @as(u64, maxInt(u64) >> 12) >> @intCast(u6, e);
+    def mask = @as(u64, maxInt(u64) >> 12) >> @intCast(u6, e);
     if (u & mask == 0) {
         result.ipart = x;
         result.fpart = @bitCast(f64, us);
         return result;
     }
 
-    const uf = @bitCast(f64, u & ~mask);
+    def uf = @bitCast(f64, u & ~mask);
     result.ipart = uf;
     result.fpart = x - uf;
     return result;
 }
 
 test "math.modf" {
-    const a = modf(@as(f32, 1.0));
-    const b = modf32(1.0);
+    def a = modf(@as(f32, 1.0));
+    def b = modf32(1.0);
     // NOTE: No struct comparison on generic return type function? non-named, makes sense, but still.
     expect(a.ipart == b.ipart and a.fpart == b.fpart);
 
-    const c = modf(@as(f64, 1.0));
-    const d = modf64(1.0);
+    def c = modf(@as(f64, 1.0));
+    def d = modf64(1.0);
     expect(a.ipart == b.ipart and a.fpart == b.fpart);
 }
 
 test "math.modf32" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
     var r: modf32_result = undefined;
 
     r = modf32(1.0);
@@ -159,7 +159,7 @@ test "math.modf32" {
 }
 
 test "math.modf64" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
     var r: modf64_result = undefined;
 
     r = modf64(1.0);

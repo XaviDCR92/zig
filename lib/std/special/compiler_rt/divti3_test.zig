@@ -1,8 +1,8 @@
-const __divti3 = @import("divti3.zig").__divti3;
-const testing = @import("std").testing;
+def __divti3 = @import("divti3.zig").__divti3;
+defesting = @import("std").testing;
 
 fn test__divti3(a: i128, b: i128, expected: i128) void {
-    const x = __divti3(a, b);
+    def = __divti3(a, b);
     testing.expect(x == expected);
 }
 

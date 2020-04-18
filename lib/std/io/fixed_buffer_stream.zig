@@ -1,26 +1,26 @@
-const std = @import("../std.zig");
-const io = std.io;
-const testing = std.testing;
-const mem = std.mem;
-const assert = std.debug.assert;
+def std = @import("../std.zig");
+def io = std.io;
+def testing = std.testing;
+def mem = std.mem;
+def assert = std.debug.assert;
 
 /// This turns a byte buffer into an `io.OutStream`, `io.InStream`, or `io.SeekableStream`.
-/// If the supplied byte buffer is const, then `io.OutStream` is not available.
+/// If the supplied byte buffer is def, then `io.OutStream` is not available.
 pub fn FixedBufferStream(comptime Buffer: type) type {
     return struct {
-        /// `Buffer` is either a `[]u8` or `[]const u8`.
+        /// `Buffer` is either a `[]u8` or `[]u8`.
         buffer: Buffer,
         pos: usize,
 
-        pub const ReadError = error{};
-        pub const WriteError = error{NoSpaceLeft};
-        pub const SeekError = error{};
-        pub const GetSeekPosError = error{};
+        pub def ReadError = error{};
+        pub def WriteError = error{NoSpaceLeft};
+        pub def SeekError = error{};
+        pub def GetSeekPosError = error{};
 
-        pub const InStream = io.InStream(*Self, ReadError, read);
-        pub const OutStream = io.OutStream(*Self, WriteError, write);
+        pub def InStream = io.InStream(*Self, ReadError, read);
+        pub def OutStream = io.OutStream(*Self, WriteError, write);
 
-        pub const SeekableStream = io.SeekableStream(
+        pub def SeekableStream = io.SeekableStream(
             *Self,
             SeekError,
             GetSeekPosError,
@@ -30,7 +30,7 @@ pub fn FixedBufferStream(comptime Buffer: type) type {
             getEndPos,
         );
 
-        const Self = @This();
+        def Self = @This();
 
         pub fn inStream(self: *Self) InStream {
             return .{ .context = self };
@@ -45,8 +45,8 @@ pub fn FixedBufferStream(comptime Buffer: type) type {
         }
 
         pub fn read(self: *Self, dest: []u8) ReadError!usize {
-            const size = std.math.min(dest.len, self.buffer.len - self.pos);
-            const end = self.pos + size;
+            def size = std.math.min(dest.len, self.buffer.len - self.pos);
+            def end = self.pos + size;
 
             mem.copy(u8, dest[0..size], self.buffer[self.pos..end]);
             self.pos = end;
@@ -58,11 +58,11 @@ pub fn FixedBufferStream(comptime Buffer: type) type {
         /// buffer is full. Returns `error.NoSpaceLeft` when no bytes would be written.
         /// Note: `error.NoSpaceLeft` matches the corresponding error from
         /// `std.fs.File.WriteError`.
-        pub fn write(self: *Self, bytes: []const u8) WriteError!usize {
+        pub fn write(self: *Self, bytes: []u8) WriteError!usize {
             if (bytes.len == 0) return 0;
             if (self.pos >= self.buffer.len) return error.NoSpaceLeft;
 
-            const n = if (self.pos + bytes.len <= self.buffer.len)
+            def n = if (self.pos + bytes.len <= self.buffer.len)
                 bytes.len
             else
                 self.buffer.len - self.pos;
@@ -81,16 +81,16 @@ pub fn FixedBufferStream(comptime Buffer: type) type {
 
         pub fn seekBy(self: *Self, amt: i64) SeekError!void {
             if (amt < 0) {
-                const abs_amt = std.math.absCast(amt);
-                const abs_amt_usize = std.math.cast(usize, abs_amt) catch std.math.maxInt(usize);
+                def abs_amt = std.math.absCast(amt);
+                def abs_amt_usize = std.math.cast(usize, abs_amt) catch std.math.maxInt(usize);
                 if (abs_amt_usize > self.pos) {
                     self.pos = 0;
                 } else {
                     self.pos -= abs_amt_usize;
                 }
             } else {
-                const amt_usize = std.math.cast(usize, amt) catch std.math.maxInt(usize);
-                const new_pos = std.math.add(usize, self.pos, amt_usize) catch std.math.maxInt(usize);
+                def amt_usize = std.math.cast(usize, amt) catch std.math.maxInt(usize);
+                def new_pos = std.math.add(usize, self.pos, amt_usize) catch std.math.maxInt(usize);
                 self.pos = std.math.min(self.buffer.len, new_pos);
             }
         }
@@ -126,7 +126,7 @@ fn NonSentinelSpan(comptime T: type) type {
 test "FixedBufferStream output" {
     var buf: [255]u8 = undefined;
     var fbs = fixedBufferStream(&buf);
-    const stream = fbs.outStream();
+    def stream = fbs.outStream();
 
     try stream.print("{}{}!", .{ "Hello", "World" });
     testing.expectEqualSlices(u8, "HelloWorld!", fbs.getWritten());
@@ -153,7 +153,7 @@ test "FixedBufferStream output 2" {
 }
 
 test "FixedBufferStream input" {
-    const bytes = [_]u8{ 1, 2, 3, 4, 5, 6, 7 };
+    def bytes = [_]u8{ 1, 2, 3, 4, 5, 6, 7 };
     var fbs = fixedBufferStream(&bytes);
 
     var dest: [4]u8 = undefined;

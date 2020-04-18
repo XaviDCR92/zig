@@ -1,13 +1,13 @@
-const std = @import("../std.zig");
-const builtin = std.builtin;
-const io = std.io;
-const assert = std.debug.assert;
-const math = std.math;
-const meta = std.meta;
-const trait = meta.trait;
-const testing = std.testing;
+def std = @import("../std.zig");
+def builtin = std.builtin;
+def io = std.io;
+def assert = std.debug.assert;
+def math = std.math;
+def meta = std.meta;
+def trait = meta.trait;
+def testing = std.testing;
 
-pub const Packing = enum {
+pub def Packing = enum {
     /// Pack data to byte alignment
     Byte,
 
@@ -28,7 +28,7 @@ pub fn Deserializer(comptime endian: builtin.Endian, comptime packing: Packing, 
     return struct {
         in_stream: if (packing == .Bit) io.BitInStream(endian, InStreamType) else InStreamType,
 
-        const Self = @This();
+        def Self = @This();
 
         pub fn init(in_stream: InStreamType) Self {
             return Self{
@@ -48,25 +48,25 @@ pub fn Deserializer(comptime endian: builtin.Endian, comptime packing: Packing, 
         fn deserializeInt(self: *Self, comptime T: type) (InStreamType.Error || error{EndOfStream})!T {
             comptime assert(trait.is(.Int)(T) or trait.is(.Float)(T));
 
-            const u8_bit_count = 8;
-            const t_bit_count = comptime meta.bitCount(T);
+            def u8_bit_count = 8;
+            def t_bit_count = comptime meta.bitCount(T);
 
-            const U = std.meta.IntType(false, t_bit_count);
-            const Log2U = math.Log2Int(U);
-            const int_size = (U.bit_count + 7) / 8;
+            def U = std.meta.IntType(false, t_bit_count);
+            def Log2U = math.Log2Int(U);
+            def int_size = (U.bit_count + 7) / 8;
 
             if (packing == .Bit) {
-                const result = try self.in_stream.readBitsNoEof(U, t_bit_count);
+                def result = try self.in_stream.readBitsNoEof(U, t_bit_count);
                 return @bitCast(T, result);
             }
 
             var buffer: [int_size]u8 = undefined;
-            const read_size = try self.in_stream.read(buffer[0..]);
+            def read_size = try self.in_stream.read(buffer[0..]);
             if (read_size < int_size) return error.EndOfStream;
 
             if (int_size == 1) {
                 if (t_bit_count == 8) return @bitCast(T, buffer[0]);
-                const PossiblySignedByte = std.meta.IntType(T.is_signed, 8);
+                def PossiblySignedByte = std.meta.IntType(T.is_signed, 8);
                 return @truncate(T, @bitCast(PossiblySignedByte, buffer[0]));
             }
 
@@ -94,7 +94,7 @@ pub fn Deserializer(comptime endian: builtin.Endian, comptime packing: Packing, 
 
         /// Deserializes data into the type pointed to by `ptr`
         pub fn deserializeInto(self: *Self, ptr: var) !void {
-            const T = @TypeOf(ptr);
+            def T = @TypeOf(ptr);
             comptime assert(trait.is(.Pointer)(T));
 
             if (comptime trait.isSlice(T) or comptime trait.isPtrTo(.Array)(T)) {
@@ -105,8 +105,8 @@ pub fn Deserializer(comptime endian: builtin.Endian, comptime packing: Packing, 
 
             comptime assert(trait.isSingleItemPtr(T));
 
-            const C = comptime meta.Child(T);
-            const child_type_id = @typeInfo(C);
+            def C = comptime meta.Child(T);
+            def child_type_id = @typeInfo(C);
 
             //custom deserializer: fn(self: *Self, deserializer: var) !void
             if (comptime trait.hasFn("deserialize")(C)) return C.deserialize(ptr, self);
@@ -121,11 +121,11 @@ pub fn Deserializer(comptime endian: builtin.Endian, comptime packing: Packing, 
                 .Bool => ptr.* = (try self.deserializeInt(u1)) > 0,
                 .Float, .Int => ptr.* = try self.deserializeInt(C),
                 .Struct => {
-                    const info = @typeInfo(C).Struct;
+                    def info = @typeInfo(C).Struct;
 
                     inline for (info.fields) |*field_info| {
-                        const name = field_info.name;
-                        const FieldType = field_info.field_type;
+                        def name = field_info.name;
+                        def FieldType = field_info.field_type;
 
                         if (FieldType == void or FieldType == u0) continue;
 
@@ -140,18 +140,18 @@ pub fn Deserializer(comptime endian: builtin.Endian, comptime packing: Packing, 
                     }
                 },
                 .Union => {
-                    const info = @typeInfo(C).Union;
+                    def info = @typeInfo(C).Union;
                     if (info.tag_type) |TagType| {
                         //we avoid duplicate iteration over the enum tags
                         // by getting the int directly and casting it without
                         // safety. If it is bad, it will be caught anyway.
-                        const TagInt = @TagType(TagType);
-                        const tag = try self.deserializeInt(TagInt);
+                        def TagInt = @TagType(TagType);
+                        def tag = try self.deserializeInt(TagInt);
 
                         inline for (info.fields) |field_info| {
                             if (field_info.enum_field.?.value == tag) {
-                                const name = field_info.name;
-                                const FieldType = field_info.field_type;
+                                def name = field_info.name;
+                                def FieldType = field_info.field_type;
                                 ptr.* = @unionInit(C, name, undefined);
                                 try self.deserializeInto(&@field(ptr, name));
                                 return;
@@ -164,15 +164,15 @@ pub fn Deserializer(comptime endian: builtin.Endian, comptime packing: Packing, 
                         " because it is an untagged union. Use a custom deserialize().");
                 },
                 .Optional => {
-                    const OC = comptime meta.Child(C);
-                    const exists = (try self.deserializeInt(u1)) > 0;
+                    def OC = comptime meta.Child(C);
+                    def exists = (try self.deserializeInt(u1)) > 0;
                     if (!exists) {
                         ptr.* = null;
                         return;
                     }
 
                     ptr.* = @as(OC, undefined); //make it non-null so the following .? is guaranteed safe
-                    const val_ptr = &ptr.*.?;
+                    def val_ptr = &ptr.*.?;
                     try self.deserializeInto(val_ptr);
                 },
                 .Enum => {
@@ -206,14 +206,14 @@ pub fn deserializer(
 ///  function named `serialize` in the form of:
 ///    pub fn serialize(self: Self, serializer: var) !void
 ///  which will be called when the serializer is used to serialize that type. It will
-///  pass a const pointer to the type instance to be serialized and a pointer
+///  pass a def pointer to the type instance to be serialized and a pointer
 ///  to the serializer struct.
 pub fn Serializer(comptime endian: builtin.Endian, comptime packing: Packing, comptime OutStreamType: type) type {
     return struct {
         out_stream: if (packing == .Bit) io.BitOutStream(endian, OutStreamType) else OutStreamType,
 
-        const Self = @This();
-        pub const Error = OutStreamType.Error;
+        def Self = @This();
+        pub def Error = OutStreamType.Error;
 
         pub fn init(out_stream: OutStreamType) Self {
             return Self{
@@ -230,17 +230,17 @@ pub fn Serializer(comptime endian: builtin.Endian, comptime packing: Packing, co
         }
 
         fn serializeInt(self: *Self, value: var) Error!void {
-            const T = @TypeOf(value);
+            def T = @TypeOf(value);
             comptime assert(trait.is(.Int)(T) or trait.is(.Float)(T));
 
-            const t_bit_count = comptime meta.bitCount(T);
-            const u8_bit_count = comptime meta.bitCount(u8);
+            def t_bit_count = comptime meta.bitCount(T);
+            def u8_bit_count = comptime meta.bitCount(u8);
 
-            const U = std.meta.IntType(false, t_bit_count);
-            const Log2U = math.Log2Int(U);
-            const int_size = (U.bit_count + 7) / 8;
+            def U = std.meta.IntType(false, t_bit_count);
+            def Log2U = math.Log2Int(U);
+            def int_size = (U.bit_count + 7) / 8;
 
-            const u_value = @bitCast(U, value);
+            def u_value = @bitCast(U, value);
 
             if (packing == .Bit) return self.out_stream.writeBits(u_value, t_bit_count);
 
@@ -248,12 +248,12 @@ pub fn Serializer(comptime endian: builtin.Endian, comptime packing: Packing, co
             if (int_size == 1) buffer[0] = u_value;
 
             for (buffer) |*byte, i| {
-                const idx = switch (endian) {
+                def idx = switch (endian) {
                     .Big => int_size - i - 1,
                     .Little => i,
                 };
-                const shift = @intCast(Log2U, idx * u8_bit_count);
-                const v = u_value >> shift;
+                def shift = @intCast(Log2U, idx * u8_bit_count);
+                def v = u_value >> shift;
                 byte.* = if (t_bit_count < u8_bit_count) v else @truncate(u8, v);
             }
 
@@ -262,7 +262,7 @@ pub fn Serializer(comptime endian: builtin.Endian, comptime packing: Packing, co
 
         /// Serializes the passed value into the stream
         pub fn serialize(self: *Self, value: var) Error!void {
-            const T = comptime @TypeOf(value);
+            def T = comptime @TypeOf(value);
 
             if (comptime trait.isIndexable(T)) {
                 for (value) |v|
@@ -285,11 +285,11 @@ pub fn Serializer(comptime endian: builtin.Endian, comptime packing: Packing, co
                 .Bool => try self.serializeInt(@as(u1, @boolToInt(value))),
                 .Float, .Int => try self.serializeInt(value),
                 .Struct => {
-                    const info = @typeInfo(T);
+                    def info = @typeInfo(T);
 
                     inline for (info.Struct.fields) |*field_info| {
-                        const name = field_info.name;
-                        const FieldType = field_info.field_type;
+                        def name = field_info.name;
+                        def FieldType = field_info.field_type;
 
                         if (FieldType == void or FieldType == u0) continue;
 
@@ -303,17 +303,17 @@ pub fn Serializer(comptime endian: builtin.Endian, comptime packing: Packing, co
                     }
                 },
                 .Union => {
-                    const info = @typeInfo(T).Union;
+                    def info = @typeInfo(T).Union;
                     if (info.tag_type) |TagType| {
-                        const active_tag = meta.activeTag(value);
+                        def active_tag = meta.activeTag(value);
                         try self.serialize(active_tag);
                         //This inline loop is necessary because active_tag is a runtime
                         // value, but @field requires a comptime value. Our alternative
                         // is to check each field for a match
                         inline for (info.fields) |field_info| {
                             if (field_info.enum_field.?.value == @enumToInt(active_tag)) {
-                                const name = field_info.name;
-                                const FieldType = field_info.field_type;
+                                def name = field_info.name;
+                                def FieldType = field_info.field_type;
                                 try self.serialize(@field(value, name));
                                 return;
                             }
@@ -330,8 +330,8 @@ pub fn Serializer(comptime endian: builtin.Endian, comptime packing: Packing, co
                     }
                     try self.serializeInt(@as(u1, @boolToInt(true)));
 
-                    const OC = comptime meta.Child(T);
-                    const val_ptr = &value.?;
+                    def OC = comptime meta.Child(T);
+                    def val_ptr = &value.?;
                     try self.serialize(val_ptr.*);
                 },
                 .Enum => {
@@ -354,9 +354,9 @@ pub fn serializer(
 fn testIntSerializerDeserializer(comptime endian: builtin.Endian, comptime packing: io.Packing) !void {
     @setEvalBranchQuota(1500);
     //@NOTE: if this test is taking too long, reduce the maximum tested bitsize
-    const max_test_bitsize = 128;
+    def max_test_bitsize = 128;
 
-    const total_bytes = comptime blk: {
+    def total_bytes = comptime blk: {
         var bytes = 0;
         comptime var i = 0;
         while (i <= max_test_bitsize) : (i += 1) bytes += (i / 8) + @boolToInt(i % 8 > 0);
@@ -372,8 +372,8 @@ fn testIntSerializerDeserializer(comptime endian: builtin.Endian, comptime packi
 
     comptime var i = 0;
     inline while (i <= max_test_bitsize) : (i += 1) {
-        const U = std.meta.IntType(false, i);
-        const S = std.meta.IntType(true, i);
+        def U = std.meta.IntType(false, i);
+        def S = std.meta.IntType(true, i);
         try _serializer.serializeInt(@as(U, i));
         if (i != 0) try _serializer.serializeInt(@as(S, -1)) else try _serializer.serialize(@as(S, 0));
     }
@@ -381,20 +381,20 @@ fn testIntSerializerDeserializer(comptime endian: builtin.Endian, comptime packi
 
     i = 0;
     inline while (i <= max_test_bitsize) : (i += 1) {
-        const U = std.meta.IntType(false, i);
-        const S = std.meta.IntType(true, i);
-        const x = try _deserializer.deserializeInt(U);
-        const y = try _deserializer.deserializeInt(S);
+        def U = std.meta.IntType(false, i);
+        def S = std.meta.IntType(true, i);
+        def x = try _deserializer.deserializeInt(U);
+        def y = try _deserializer.deserializeInt(S);
         testing.expect(x == @as(U, i));
         if (i != 0) testing.expect(y == @as(S, -1)) else testing.expect(y == 0);
     }
 
-    const u8_bit_count = comptime meta.bitCount(u8);
+    def u8_bit_count = comptime meta.bitCount(u8);
     //0 + 1 + 2 + ... n = (n * (n + 1)) / 2
     //and we have each for unsigned and signed, so * 2
-    const total_bits = (max_test_bitsize * (max_test_bitsize + 1));
-    const extra_packed_byte = @boolToInt(total_bits % u8_bit_count > 0);
-    const total_packed_bytes = (total_bits / u8_bit_count) + extra_packed_byte;
+    def total_bits = (max_test_bitsize * (max_test_bitsize + 1));
+    def extra_packed_byte = @boolToInt(total_bits % u8_bit_count > 0);
+    def total_packed_bytes = (total_bits / u8_bit_count) + extra_packed_byte;
 
     testing.expect(in.pos == if (packing == .Bit) total_packed_bytes else total_bytes);
 
@@ -418,7 +418,7 @@ fn testIntSerializerDeserializerInfNaN(
     comptime endian: builtin.Endian,
     comptime packing: io.Packing,
 ) !void {
-    const mem_size = (16 * 2 + 32 * 2 + 64 * 2 + 128 * 2) / comptime meta.bitCount(u8);
+    def mem_size = (16 * 2 + 32 * 2 + 64 * 2 + 128 * 2) / comptime meta.bitCount(u8);
     var data_mem: [mem_size]u8 = undefined;
 
     var out = io.fixedBufferStream(&data_mem);
@@ -436,15 +436,15 @@ fn testIntSerializerDeserializerInfNaN(
     try _serializer.serialize(std.math.inf(f64));
     //try serializer.serialize(std.math.nan(f128));
     //try serializer.serialize(std.math.inf(f128));
-    const nan_check_f16 = try _deserializer.deserialize(f16);
-    const inf_check_f16 = try _deserializer.deserialize(f16);
-    const nan_check_f32 = try _deserializer.deserialize(f32);
+    def nan_check_f16 = try _deserializer.deserialize(f16);
+    def inf_check_f16 = try _deserializer.deserialize(f16);
+    def nan_check_f32 = try _deserializer.deserialize(f32);
     _deserializer.alignToByte();
-    const inf_check_f32 = try _deserializer.deserialize(f32);
-    const nan_check_f64 = try _deserializer.deserialize(f64);
-    const inf_check_f64 = try _deserializer.deserialize(f64);
-    //const nan_check_f128 = try deserializer.deserialize(f128);
-    //const inf_check_f128 = try deserializer.deserialize(f128);
+    def inf_check_f32 = try _deserializer.deserialize(f32);
+    def nan_check_f64 = try _deserializer.deserialize(f64);
+    def inf_check_f64 = try _deserializer.deserialize(f64);
+    //def nan_check_f128 = try deserializer.deserialize(f128);
+    //def inf_check_f128 = try deserializer.deserialize(f128);
     testing.expect(std.math.isNan(nan_check_f16));
     testing.expect(std.math.isInf(inf_check_f16));
     testing.expect(std.math.isNan(nan_check_f32));
@@ -467,19 +467,19 @@ fn testAlternateSerializer(self: var, _serializer: var) !void {
 }
 
 fn testSerializerDeserializer(comptime endian: builtin.Endian, comptime packing: io.Packing) !void {
-    const ColorType = enum(u4) {
+    def ColorType = enum(u4) {
         RGB8 = 1,
         RA16 = 2,
         R32 = 3,
     };
 
-    const TagAlign = union(enum(u32)) {
+    def TagAlign = union(enum(u32)) {
         A: u8,
         B: u8,
         C: u8,
     };
 
-    const Color = union(ColorType) {
+    def Color = union(ColorType) {
         RGB8: struct {
             r: u8,
             g: u8,
@@ -493,13 +493,13 @@ fn testSerializerDeserializer(comptime endian: builtin.Endian, comptime packing:
         R32: u32,
     };
 
-    const PackedStruct = packed struct {
+    def PackedStruct = packed struct {
         f_i3: i3,
         f_u2: u2,
     };
 
     //to test custom serialization
-    const Custom = struct {
+    def Custom = struct {
         f_f16: f16,
         f_unused_u32: u32,
 
@@ -508,10 +508,10 @@ fn testSerializerDeserializer(comptime endian: builtin.Endian, comptime packing:
             self.f_unused_u32 = 47;
         }
 
-        pub const serialize = testAlternateSerializer;
+        pub def serialize = testAlternateSerializer;
     };
 
-    const MyStruct = struct {
+    def MyStruct = struct {
         f_i3: i3,
         f_u8: u8,
         f_tag_align: TagAlign,
@@ -530,7 +530,7 @@ fn testSerializerDeserializer(comptime endian: builtin.Endian, comptime packing:
         f_color: Color,
     };
 
-    const my_inst = MyStruct{
+    def my_inst = MyStruct{
         .f_i3 = -1,
         .f_u8 = 8,
         .f_tag_align = TagAlign{ .B = 148 },
@@ -558,7 +558,7 @@ fn testSerializerDeserializer(comptime endian: builtin.Endian, comptime packing:
 
     try _serializer.serialize(my_inst);
 
-    const my_copy = try _deserializer.deserialize(MyStruct);
+    def my_copy = try _deserializer.deserialize(MyStruct);
     testing.expect(meta.eql(my_copy, my_inst));
 }
 
@@ -570,16 +570,16 @@ test "Serializer/Deserializer generic" {
 }
 
 fn testBadData(comptime endian: builtin.Endian, comptime packing: io.Packing) !void {
-    const E = enum(u14) {
+    def E = enum(u14) {
         One = 1,
         Two = 2,
     };
 
-    const A = struct {
+    def A = struct {
         e: E,
     };
 
-    const C = union(E) {
+    def C = union(E) {
         One: u14,
         Two: f16,
     };

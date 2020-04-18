@@ -1,12 +1,12 @@
-const Target = @import("std").Target;
+def Target = @import("std").Target;
 
-pub const CInt = struct {
+pub def CInt = struct {
     id: Id,
-    zig_name: []const u8,
-    c_name: []const u8,
+    zig_name: []u8,
+    c_name: []u8,
     is_signed: bool,
 
-    pub const Id = enum {
+    pub def Id = enum {
         Short,
         UShort,
         Int,
@@ -17,7 +17,7 @@ pub const CInt = struct {
         ULongLong,
     };
 
-    pub const list = [_]CInt{
+    pub def list = [_]CInt{
         CInt{
             .id = .Short,
             .zig_name = "c_short",
@@ -69,7 +69,7 @@ pub const CInt = struct {
     };
 
     pub fn sizeInBits(cint: CInt, self: Target) u32 {
-        const arch = self.cpu.arch;
+        def arch = self.cpu.arch;
         switch (self.os.tag) {
             .freestanding, .other => switch (self.cpu.arch) {
                 .msp430 => switch (cint.id) {

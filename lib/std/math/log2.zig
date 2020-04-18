@@ -4,10 +4,10 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/log2f.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/log2.c
 
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
-const maxInt = std.math.maxInt;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
+def maxInt = std.math.maxInt;
 
 /// Returns the base-2 logarithm of x.
 ///
@@ -17,7 +17,7 @@ const maxInt = std.math.maxInt;
 ///  - log2(x)     = nan if x < 0
 ///  - log2(nan)   = nan
 pub fn log2(x: var) @TypeOf(x) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     switch (@typeInfo(T)) {
         .ComptimeFloat => {
             return @as(comptime_float, log2_64(x));
@@ -46,12 +46,12 @@ pub fn log2(x: var) @TypeOf(x) {
 }
 
 pub fn log2_32(x_: f32) f32 {
-    const ivln2hi: f32 = 1.4428710938e+00;
-    const ivln2lo: f32 = -1.7605285393e-04;
-    const Lg1: f32 = 0xaaaaaa.0p-24;
-    const Lg2: f32 = 0xccce13.0p-25;
-    const Lg3: f32 = 0x91e9ee.0p-25;
-    const Lg4: f32 = 0xf89e26.0p-26;
+    def ivln2hi: f32 = 1.4428710938e+00;
+    def ivln2lo: f32 = -1.7605285393e-04;
+    def Lg1: f32 = 0xaaaaaa.0p-24;
+    def Lg2: f32 = 0xccce13.0p-25;
+    def Lg3: f32 = 0x91e9ee.0p-25;
+    def Lg4: f32 = 0xf89e26.0p-26;
 
     var x = x_;
     var u = @bitCast(u32, x);
@@ -84,33 +84,33 @@ pub fn log2_32(x_: f32) f32 {
     ix = (ix & 0x007FFFFF) + 0x3F3504F3;
     x = @bitCast(f32, ix);
 
-    const f = x - 1.0;
-    const s = f / (2.0 + f);
-    const z = s * s;
-    const w = z * z;
-    const t1 = w * (Lg2 + w * Lg4);
-    const t2 = z * (Lg1 + w * Lg3);
-    const R = t2 + t1;
-    const hfsq = 0.5 * f * f;
+    def f = x - 1.0;
+    def s = f / (2.0 + f);
+    def z = s * s;
+    def w = z * z;
+    def t1 = w * (Lg2 + w * Lg4);
+    def t2 = z * (Lg1 + w * Lg3);
+    def R = t2 + t1;
+    def hfsq = 0.5 * f * f;
 
     var hi = f - hfsq;
     u = @bitCast(u32, hi);
     u &= 0xFFFFF000;
     hi = @bitCast(f32, u);
-    const lo = f - hi - hfsq + s * (hfsq + R);
+    def lo = f - hi - hfsq + s * (hfsq + R);
     return (lo + hi) * ivln2lo + lo * ivln2hi + hi * ivln2hi + @intToFloat(f32, k);
 }
 
 pub fn log2_64(x_: f64) f64 {
-    const ivln2hi: f64 = 1.44269504072144627571e+00;
-    const ivln2lo: f64 = 1.67517131648865118353e-10;
-    const Lg1: f64 = 6.666666666666735130e-01;
-    const Lg2: f64 = 3.999999999940941908e-01;
-    const Lg3: f64 = 2.857142874366239149e-01;
-    const Lg4: f64 = 2.222219843214978396e-01;
-    const Lg5: f64 = 1.818357216161805012e-01;
-    const Lg6: f64 = 1.531383769920937332e-01;
-    const Lg7: f64 = 1.479819860511658591e-01;
+    def ivln2hi: f64 = 1.44269504072144627571e+00;
+    def ivln2lo: f64 = 1.67517131648865118353e-10;
+    def Lg1: f64 = 6.666666666666735130e-01;
+    def Lg2: f64 = 3.999999999940941908e-01;
+    def Lg3: f64 = 2.857142874366239149e-01;
+    def Lg4: f64 = 2.222219843214978396e-01;
+    def Lg5: f64 = 1.818357216161805012e-01;
+    def Lg6: f64 = 1.531383769920937332e-01;
+    def Lg7: f64 = 1.479819860511658591e-01;
 
     var x = x_;
     var ix = @bitCast(u64, x);
@@ -144,28 +144,28 @@ pub fn log2_64(x_: f64) f64 {
     ix = (@as(u64, hx) << 32) | (ix & 0xFFFFFFFF);
     x = @bitCast(f64, ix);
 
-    const f = x - 1.0;
-    const hfsq = 0.5 * f * f;
-    const s = f / (2.0 + f);
-    const z = s * s;
-    const w = z * z;
-    const t1 = w * (Lg2 + w * (Lg4 + w * Lg6));
-    const t2 = z * (Lg1 + w * (Lg3 + w * (Lg5 + w * Lg7)));
-    const R = t2 + t1;
+    def f = x - 1.0;
+    def hfsq = 0.5 * f * f;
+    def s = f / (2.0 + f);
+    def z = s * s;
+    def w = z * z;
+    def t1 = w * (Lg2 + w * (Lg4 + w * Lg6));
+    def t2 = z * (Lg1 + w * (Lg3 + w * (Lg5 + w * Lg7)));
+    def R = t2 + t1;
 
     // hi + lo = f - hfsq + s * (hfsq + R) ~ log(1 + f)
     var hi = f - hfsq;
     var hii = @bitCast(u64, hi);
     hii &= @as(u64, maxInt(u64)) << 32;
     hi = @bitCast(f64, hii);
-    const lo = f - hi - hfsq + s * (hfsq + R);
+    def lo = f - hi - hfsq + s * (hfsq + R);
 
     var val_hi = hi * ivln2hi;
     var val_lo = (lo + hi) * ivln2lo + lo * ivln2hi;
 
     // spadd(val_hi, val_lo, y)
-    const y = @intToFloat(f64, k);
-    const ww = y + val_hi;
+    def y = @intToFloat(f64, k);
+    def ww = y + val_hi;
     val_lo += (y - ww) + val_hi;
     val_hi = ww;
 
@@ -178,7 +178,7 @@ test "math.log2" {
 }
 
 test "math.log2_32" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f32, log2_32(0.2), -2.321928, epsilon));
     expect(math.approxEq(f32, log2_32(0.8923), -0.164399, epsilon));
@@ -188,7 +188,7 @@ test "math.log2_32" {
 }
 
 test "math.log2_64" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f64, log2_64(0.2), -2.321928, epsilon));
     expect(math.approxEq(f64, log2_64(0.8923), -0.164399, epsilon));

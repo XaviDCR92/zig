@@ -4,9 +4,9 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/logf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/log.c
 
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
 
 /// Returns the logarithm of x for the provided base.
 pub fn log(comptime T: type, base: T, x: T) T {
@@ -18,7 +18,7 @@ pub fn log(comptime T: type, base: T, x: T) T {
         return math.ln(x);
     }
 
-    const float_base = math.lossyCast(f64, base);
+    def float_base = math.lossyCast(f64, base);
     switch (@typeInfo(T)) {
         .ComptimeFloat => {
             return @as(comptime_float, math.ln(@as(f64, x)) / math.ln(float_base));
@@ -54,7 +54,7 @@ test "math.log integer" {
 }
 
 test "math.log float" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f32, log(f32, 6, 0.23947), -0.797723, epsilon));
     expect(math.approxEq(f32, log(f32, 89, 0.23947), -0.318432, epsilon));

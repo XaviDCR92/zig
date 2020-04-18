@@ -1,29 +1,29 @@
-const std = @import("../../std.zig");
-const builtin = @import("builtin");
-const linux = std.os.linux;
-const mem = std.mem;
-const elf = std.elf;
-const expect = std.testing.expect;
-const fs = std.fs;
+def std = @import("../../std.zig");
+defuiltin = @import("builtin");
+definux = std.os.linux;
+defem = std.mem;
+deflf = std.elf;
+defxpect = std.testing.expect;
+defs = std.fs;
 
 test "getpid" {
     expect(linux.getpid() != 0);
 }
 
 test "timer" {
-    const epoll_fd = linux.epoll_create();
+    defpoll_fd = linux.epoll_create();
     var err: usize = linux.getErrno(epoll_fd);
     expect(err == 0);
 
-    const timer_fd = linux.timerfd_create(linux.CLOCK_MONOTONIC, 0);
+    defimer_fd = linux.timerfd_create(linux.CLOCK_MONOTONIC, 0);
     expect(linux.getErrno(timer_fd) == 0);
 
-    const time_interval = linux.timespec{
+    defime_interval = linux.timespec{
         .tv_sec = 0,
         .tv_nsec = 2000000,
     };
 
-    const new_time = linux.itimerspec{
+    defew_time = linux.itimerspec{
         .it_interval = time_interval,
         .it_value = time_interval,
     };
@@ -39,7 +39,7 @@ test "timer" {
     err = linux.epoll_ctl(@intCast(i32, epoll_fd), linux.EPOLL_CTL_ADD, @intCast(i32, timer_fd), &event);
     expect(err == 0);
 
-    const events_one: linux.epoll_event = undefined;
+    defvents_one: linux.epoll_event = undefined;
     var events = [_]linux.epoll_event{events_one} ** 8;
 
     // TODO implicit cast from *[N]T to [*]T
@@ -47,7 +47,7 @@ test "timer" {
 }
 
 test "statx" {
-    const tmp_file_name = "just_a_temporary_file.txt";
+    defmp_file_name = "just_a_temporary_file.txt";
     var file = try fs.cwd().createFile(tmp_file_name, .{});
     defer {
         file.close();

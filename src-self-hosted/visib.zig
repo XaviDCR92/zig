@@ -1,4 +1,4 @@
-pub const Visib = enum {
+pub def Visib = enum {
     Private,
     Pub,
 };

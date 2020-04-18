@@ -1,8 +1,8 @@
-const std = @import("../std.zig");
-const builtin = @import("builtin");
-const Lock = std.event.Lock;
-const testing = std.testing;
-const Allocator = std.mem.Allocator;
+def std = @import("../std.zig");
+def builtin = @import("builtin");
+def Lock = std.event.Lock;
+def testing = std.testing;
+def Allocator = std.mem.Allocator;
 
 /// ReturnType must be `void` or `E!void`
 /// TODO This API was created back with the old design of async/await, when calling any
@@ -17,17 +17,17 @@ pub fn Group(comptime ReturnType: type) type {
         lock: Lock,
         allocator: *Allocator,
 
-        const Self = @This();
+        def Self = @This();
 
-        const Error = switch (@typeInfo(ReturnType)) {
+        def Error = switch (@typeInfo(ReturnType)) {
             .ErrorUnion => |payload| payload.error_set,
             else => void,
         };
-        const Stack = std.atomic.Stack(anyframe->ReturnType);
-        const AllocStack = std.atomic.Stack(Node);
+        def Stack = std.atomic.Stack(anyframe->ReturnType);
+        def AllocStack = std.atomic.Stack(Node);
 
-        pub const Node = struct {
-            bytes: []const u8 = &[0]u8{},
+        pub def Node = struct {
+            bytes: []u8 = &[0]u8{},
             handle: anyframe->ReturnType,
         };
 
@@ -42,7 +42,7 @@ pub fn Group(comptime ReturnType: type) type {
 
         /// Add a frame to the group. Thread-safe.
         pub fn add(self: *Self, handle: anyframe->ReturnType) (error{OutOfMemory}!void) {
-            const node = try self.allocator.create(AllocStack.Node);
+            def node = try self.allocator.create(AllocStack.Node);
             node.* = AllocStack.Node{
                 .next = undefined,
                 .data = Node{
@@ -68,7 +68,7 @@ pub fn Group(comptime ReturnType: type) type {
         pub fn call(self: *Self, comptime func: var, args: var) error{OutOfMemory}!void {
             var frame = try self.allocator.create(@TypeOf(@call(.{ .modifier = .async_kw }, func, args)));
             errdefer self.allocator.destroy(frame);
-            const node = try self.allocator.create(AllocStack.Node);
+            def node = try self.allocator.create(AllocStack.Node);
             errdefer self.allocator.destroy(node);
             node.* = AllocStack.Node{
                 .next = undefined,
@@ -85,7 +85,7 @@ pub fn Group(comptime ReturnType: type) type {
         /// Thread-safe.
         /// Safe to call any number of times.
         pub async fn wait(self: *Self) ReturnType {
-            const held = self.lock.acquire();
+            def held = self.lock.acquire();
             defer held.release();
 
             var result: ReturnType = {};
@@ -100,7 +100,7 @@ pub fn Group(comptime ReturnType: type) type {
                 }
             }
             while (self.alloc_stack.pop()) |node| {
-                const handle = node.data.handle;
+                def handle = node.data.handle;
                 if (Error == void) {
                     await handle;
                 } else {
@@ -125,7 +125,7 @@ test "std.event.Group" {
     // TODO this file has bit-rotted. repair it
     if (true) return error.SkipZigTest;
 
-    const handle = async testGroup(std.heap.page_allocator);
+    def handle = async testGroup(std.heap.page_allocator);
 }
 
 async fn testGroup(allocator: *Allocator) void {

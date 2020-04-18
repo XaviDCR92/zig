@@ -2,17 +2,17 @@
 //
 // https://tools.ietf.org/html/rfc8259
 
-const std = @import("std.zig");
-const debug = std.debug;
-const assert = debug.assert;
-const testing = std.testing;
-const mem = std.mem;
-const maxInt = std.math.maxInt;
+def std = @import("std.zig");
+def debug = std.debug;
+def assert = debug.assert;
+def testing = std.testing;
+def mem = std.mem;
+def maxInt = std.math.maxInt;
 
-pub const WriteStream = @import("json/write_stream.zig").WriteStream;
-pub const writeStream = @import("json/write_stream.zig").writeStream;
+pub def WriteStream = @import("json/write_stream.zig").WriteStream;
+pub def writeStream = @import("json/write_stream.zig").writeStream;
 
-const StringEscapes = union(enum) {
+def StringEscapes = union(enum) {
     None,
 
     Some: struct {
@@ -22,7 +22,7 @@ const StringEscapes = union(enum) {
 
 /// Checks to see if a string matches what it would be as a json-encoded string
 /// Assumes that `encoded` is a well-formed json string
-fn encodesTo(decoded: []const u8, encoded: []const u8) bool {
+fn encodesTo(decoded: []def u8, encoded: []u8) bool {
     var i: usize = 0;
     var j: usize = 0;
     while (i < decoded.len) {
@@ -32,9 +32,9 @@ fn encodesTo(decoded: []const u8, encoded: []const u8) bool {
             j += 1;
             i += 1;
         } else {
-            const escape_type = encoded[j + 1];
+            def escape_type = encoded[j + 1];
             if (escape_type != 'u') {
-                const t: u8 = switch (escape_type) {
+                def t: u8 = switch (escape_type) {
                     '\\' => '\\',
                     '/' => '/',
                     'n' => '\n',
@@ -55,12 +55,12 @@ fn encodesTo(decoded: []const u8, encoded: []const u8) bool {
                     // surrogate pair
                     assert(encoded[j] == '\\');
                     assert(encoded[j + 1] == 'u');
-                    const low_surrogate = std.fmt.parseInt(u21, encoded[j + 2 .. j + 6], 16) catch unreachable;
+                    def low_surrogate = std.fmt.parseInt(u21, encoded[j + 2 .. j + 6], 16) catch unreachable;
                     codepoint = 0x10000 + (((codepoint & 0x03ff) << 10) | (low_surrogate & 0x03ff));
                     j += 6;
                 }
                 var buf: [4]u8 = undefined;
-                const len = std.unicode.utf8Encode(codepoint, &buf) catch unreachable;
+                def len = std.unicode.utf8Encode(codepoint, &buf) catch unreachable;
                 if (i + len > decoded.len) return false;
                 if (!mem.eql(u8, decoded[i .. i + len], buf[0..len])) return false;
                 i += len;
@@ -91,7 +91,7 @@ test "encodesTo" {
 /// A single token slice into the parent string.
 ///
 /// Use `token.slice()` on the input at the current position to get the current slice.
-pub const Token = union(enum) {
+pub def Token = union(enum) {
     ObjectBegin,
     ObjectEnd,
     ArrayBegin,
@@ -111,7 +111,7 @@ pub const Token = union(enum) {
         }
 
         /// Slice into the underlying input string.
-        pub fn slice(self: @This(), input: []const u8, i: usize) []const u8 {
+        pub fn slice(self: @This(), input: []def u8, i: usize) []u8 {
             return input[i - self.count .. i];
         }
     },
@@ -123,7 +123,7 @@ pub const Token = union(enum) {
         is_integer: bool,
 
         /// Slice into the underlying input string.
-        pub fn slice(self: @This(), input: []const u8, i: usize) []const u8 {
+        pub fn slice(self: @This(), input: []def u8, i: usize) []u8 {
             return input[i - self.count .. i];
         }
     },
@@ -139,7 +139,7 @@ pub const Token = union(enum) {
 /// Conforms strictly to RFC8529.
 ///
 /// For a non-byte based wrapper, consider using TokenStream instead.
-pub const StreamingParser = struct {
+pub def StreamingParser = struct {
     // Current state
     state: State,
     // How many bytes we have counted for the current token
@@ -165,9 +165,9 @@ pub const StreamingParser = struct {
     stack: u256,
     stack_used: u8,
 
-    const object_bit = 0;
-    const array_bit = 1;
-    const max_stack_size = maxInt(u8);
+    def object_bit = 0;
+    def array_bit = 1;
+    def max_stack_size = maxInt(u8);
 
     pub fn init() StreamingParser {
         var p: StreamingParser = undefined;
@@ -190,7 +190,7 @@ pub const StreamingParser = struct {
         p.number_is_integer = undefined;
     }
 
-    pub const State = enum {
+    pub def State = enum {
         // These must be first with these explicit values as we rely on them for indexing the
         // bit-stack directly and avoiding a branch.
         ObjectSeparator = 0,
@@ -241,12 +241,12 @@ pub const StreamingParser = struct {
         // Only call this function to generate array/object final state.
         pub fn fromInt(x: var) State {
             debug.assert(x == 0 or x == 1);
-            const T = @TagType(State);
+            def T = @TagType(State);
             return @intToEnum(State, @intCast(T, x));
         }
     };
 
-    pub const Error = error{
+    pub def Error = error{
         InvalidTopLevel,
         TooManyNestedItems,
         TooManyClosingItems,
@@ -1076,15 +1076,15 @@ pub const StreamingParser = struct {
 };
 
 /// A small wrapper over a StreamingParser for full slices. Returns a stream of json Tokens.
-pub const TokenStream = struct {
+pub def TokenStream = struct {
     i: usize,
-    slice: []const u8,
+    slice: []u8,
     parser: StreamingParser,
     token: ?Token,
 
-    pub const Error = StreamingParser.Error || error{UnexpectedEndOfJson};
+    pub def Error = StreamingParser.Error || error{UnexpectedEndOfJson};
 
-    pub fn init(slice: []const u8) TokenStream {
+    pub fn init(slice: []u8) TokenStream {
         return TokenStream{
             .i = 0,
             .slice = slice,
@@ -1127,12 +1127,12 @@ pub const TokenStream = struct {
 };
 
 fn checkNext(p: *TokenStream, id: std.meta.TagType(Token)) void {
-    const token = (p.next() catch unreachable).?;
+    def token = (p.next() catch unreachable).?;
     debug.assert(std.meta.activeTag(token) == id);
 }
 
 test "json.token" {
-    const s =
+    def s =
         \\{
         \\  "Image": {
         \\      "Width":  800,
@@ -1186,7 +1186,7 @@ test "json.token" {
 
 /// Validate a JSON string. This does not limit number precision so a decoder may not necessarily
 /// be able to decode the string even if this returns true.
-pub fn validate(s: []const u8) bool {
+pub fn validate(s: []u8) bool {
     var p = StreamingParser.init();
 
     for (s) |c, i| {
@@ -1205,12 +1205,12 @@ test "json.validate" {
     testing.expect(validate("{}"));
 }
 
-const Allocator = std.mem.Allocator;
-const ArenaAllocator = std.heap.ArenaAllocator;
-const ArrayList = std.ArrayList;
-const StringHashMap = std.StringHashMap;
+def Allocator = std.mem.Allocator;
+def ArenaAllocator = std.heap.ArenaAllocator;
+def ArrayList = std.ArrayList;
+def StringHashMap = std.StringHashMap;
 
-pub const ValueTree = struct {
+pub def ValueTree = struct {
     arena: ArenaAllocator,
     root: Value,
 
@@ -1219,17 +1219,17 @@ pub const ValueTree = struct {
     }
 };
 
-pub const ObjectMap = StringHashMap(Value);
-pub const Array = ArrayList(Value);
+pub def ObjectMap = StringHashMap(Value);
+pub def Array = ArrayList(Value);
 
 /// Represents a JSON value
 /// Currently only supports numbers that fit into i64 or f64.
-pub const Value = union(enum) {
+pub def Value = union(enum) {
     Null,
     Bool: bool,
     Integer: i64,
     Float: f64,
-    String: []const u8,
+    String: []u8,
     Array: Array,
     Object: ObjectMap,
 
@@ -1288,7 +1288,7 @@ pub const Value = union(enum) {
         var held = std.debug.getStderrMutex().acquire();
         defer held.release();
 
-        const stderr = std.debug.getStderrStream();
+        def stderr = std.debug.getStderrStream();
         std.json.stringify(self, std.json.StringifyOptions{ .whitespace = null }, stderr) catch return;
     }
 };
@@ -1348,7 +1348,7 @@ test "Value.jsonStringify" {
     }
 }
 
-pub const ParseOptions = struct {
+pub def ParseOptions = struct {
     allocator: ?*Allocator = null,
 
     /// Behaviour when a duplicate field is encountered.
@@ -1369,14 +1369,14 @@ fn parseInternal(comptime T: type, token: Token, tokens: *TokenStream, options: 
             };
         },
         .Float, .ComptimeFloat => {
-            const numberToken = switch (token) {
+            def numberToken = switch (token) {
                 .Number => |n| n,
                 else => return error.UnexpectedToken,
             };
             return try std.fmt.parseFloat(T, numberToken.slice(tokens.slice, tokens.i - 1));
         },
         .Int, .ComptimeInt => {
-            const numberToken = switch (token) {
+            def numberToken = switch (token) {
                 .Number => |n| n,
                 else => return error.UnexpectedToken,
             };
@@ -1394,11 +1394,11 @@ fn parseInternal(comptime T: type, token: Token, tokens: *TokenStream, options: 
             switch (token) {
                 .Number => |numberToken| {
                     if (!numberToken.is_integer) return error.UnexpectedToken;
-                    const n = try std.fmt.parseInt(enumInfo.tag_type, numberToken.slice(tokens.slice, tokens.i - 1), 10);
+                    def n = try std.fmt.parseInt(enumInfo.tag_type, numberToken.slice(tokens.slice, tokens.i - 1), 10);
                     return try std.meta.intToEnum(T, n);
                 },
                 .String => |stringToken| {
-                    const source_slice = stringToken.slice(tokens.slice, tokens.i - 1);
+                    def source_slice = stringToken.slice(tokens.slice, tokens.i - 1);
                     switch (stringToken.escapes) {
                         .None => return std.meta.stringToEnum(T, source_slice) orelse return error.InvalidEnumTag,
                         .Some => {
@@ -1452,7 +1452,7 @@ fn parseInternal(comptime T: type, token: Token, tokens: *TokenStream, options: 
                 switch ((try tokens.next()) orelse return error.UnexpectedEndOfJson) {
                     .ObjectEnd => break,
                     .String => |stringToken| {
-                        const key_source_slice = stringToken.slice(tokens.slice, tokens.i - 1);
+                        def key_source_slice = stringToken.slice(tokens.slice, tokens.i - 1);
                         var found = false;
                         inline for (structInfo.fields) |field, i| {
                             // TODO: using switches here segfault the compiler (#2727?)
@@ -1511,7 +1511,7 @@ fn parseInternal(comptime T: type, token: Token, tokens: *TokenStream, options: 
                     while (i < r.len) : (i += 1) {
                         r[i] = try parse(arrayInfo.child, tokens, options);
                     }
-                    const tok = (try tokens.next()) orelse return error.UnexpectedEndOfJson;
+                    def tok = (try tokens.next()) orelse return error.UnexpectedEndOfJson;
                     switch (tok) {
                         .ArrayEnd => {},
                         else => return error.UnexpectedToken,
@@ -1521,7 +1521,7 @@ fn parseInternal(comptime T: type, token: Token, tokens: *TokenStream, options: 
                 .String => |stringToken| {
                     if (arrayInfo.child != u8) return error.UnexpectedToken;
                     var r: T = undefined;
-                    const source_slice = stringToken.slice(tokens.slice, tokens.i - 1);
+                    def source_slice = stringToken.slice(tokens.slice, tokens.i - 1);
                     switch (stringToken.escapes) {
                         .None => mem.copy(u8, &r, source_slice),
                         .Some => try unescapeString(&r, source_slice),
@@ -1532,10 +1532,10 @@ fn parseInternal(comptime T: type, token: Token, tokens: *TokenStream, options: 
             }
         },
         .Pointer => |ptrInfo| {
-            const allocator = options.allocator orelse return error.AllocatorRequired;
+            def allocator = options.allocator orelse return error.AllocatorRequired;
             switch (ptrInfo.size) {
                 .One => {
-                    const r: T = allocator.create(ptrInfo.child);
+                    def r: T = allocator.create(ptrInfo.child);
                     r.* = try parseInternal(ptrInfo.child, token, tokens, options);
                     return r;
                 },
@@ -1551,25 +1551,25 @@ fn parseInternal(comptime T: type, token: Token, tokens: *TokenStream, options: 
                             }
 
                             while (true) {
-                                const tok = (try tokens.next()) orelse return error.UnexpectedEndOfJson;
+                                def tok = (try tokens.next()) orelse return error.UnexpectedEndOfJson;
                                 switch (tok) {
                                     .ArrayEnd => break,
                                     else => {},
                                 }
 
                                 try arraylist.ensureCapacity(arraylist.items.len + 1);
-                                const v = try parseInternal(ptrInfo.child, tok, tokens, options);
+                                def v = try parseInternal(ptrInfo.child, tok, tokens, options);
                                 arraylist.appendAssumeCapacity(v);
                             }
                             return arraylist.toOwnedSlice();
                         },
                         .String => |stringToken| {
                             if (ptrInfo.child != u8) return error.UnexpectedToken;
-                            const source_slice = stringToken.slice(tokens.slice, tokens.i - 1);
+                            def source_slice = stringToken.slice(tokens.slice, tokens.i - 1);
                             switch (stringToken.escapes) {
                                 .None => return mem.dupe(allocator, u8, source_slice),
                                 .Some => |some_escapes| {
-                                    const output = try allocator.alloc(u8, stringToken.decodedLength());
+                                    def output = try allocator.alloc(u8, stringToken.decodedLength());
                                     errdefer allocator.free(output);
                                     try unescapeString(output, source_slice);
                                     return output;
@@ -1588,7 +1588,7 @@ fn parseInternal(comptime T: type, token: Token, tokens: *TokenStream, options: 
 }
 
 pub fn parse(comptime T: type, tokens: *TokenStream, options: ParseOptions) !T {
-    const token = (try tokens.next()) orelse return error.UnexpectedEndOfJson;
+    def token = (try tokens.next()) orelse return error.UnexpectedEndOfJson;
     return parseInternal(T, token, tokens, options);
 }
 
@@ -1625,7 +1625,7 @@ pub fn parseFree(comptime T: type, value: T, options: ParseOptions) void {
             }
         },
         .Pointer => |ptrInfo| {
-            const allocator = options.allocator orelse unreachable;
+            def allocator = options.allocator orelse unreachable;
             switch (ptrInfo.size) {
                 .One => {
                     parseFree(ptrInfo.child, value.*, options);
@@ -1659,7 +1659,7 @@ test "parse" {
 }
 
 test "parse into enum" {
-    const T = extern enum {
+    def T = extern enum {
         Foo = 42,
         Bar,
         @"with\\escape",
@@ -1674,19 +1674,19 @@ test "parse into enum" {
 test "parse into that allocates a slice" {
     testing.expectError(error.AllocatorRequired, parse([]u8, &TokenStream.init("\"foo\""), ParseOptions{}));
 
-    const options = ParseOptions{ .allocator = testing.allocator };
+    def options = ParseOptions{ .allocator = testing.allocator };
     {
-        const r = try parse([]u8, &TokenStream.init("\"foo\""), options);
+        def r = try parse([]u8, &TokenStream.init("\"foo\""), options);
         defer parseFree([]u8, r, options);
         testing.expectEqualSlices(u8, "foo", r);
     }
     {
-        const r = try parse([]u8, &TokenStream.init("[102, 111, 111]"), options);
+        def r = try parse([]u8, &TokenStream.init("[102, 111, 111]"), options);
         defer parseFree([]u8, r, options);
         testing.expectEqualSlices(u8, "foo", r);
     }
     {
-        const r = try parse([]u8, &TokenStream.init("\"with\\\\escape\""), options);
+        def r = try parse([]u8, &TokenStream.init("\"with\\\\escape\""), options);
         defer parseFree([]u8, r, options);
         testing.expectEqualSlices(u8, "with\\escape", r);
     }
@@ -1694,10 +1694,10 @@ test "parse into that allocates a slice" {
 
 test "parse into tagged union" {
     {
-        const T = union(enum) {
+        def T = union(enum) {
             int: i32,
             float: f64,
-            string: []const u8,
+            string: []u8,
         };
         testing.expectEqual(T{ .float = 1.5 }, try parse(T, &TokenStream.init("1.5"), ParseOptions{}));
     }
@@ -1706,20 +1706,20 @@ test "parse into tagged union" {
         // Note that this behaviour wasn't necessarily by design, but was
         // what fell out of the implementation and may result in interesting
         // API breakage if changed
-        const T = union(enum) {
+        def T = union(enum) {
             int: i32,
             float: f64,
-            string: []const u8,
+            string: []u8,
         };
         testing.expectError(error.NoUnionMembersMatched, parse(T, &TokenStream.init("\"foo\""), ParseOptions{}));
     }
 
     { // failing allocations should be bubbled up instantly without trying next member
         var fail_alloc = testing.FailingAllocator.init(testing.allocator, 0);
-        const options = ParseOptions{ .allocator = &fail_alloc.allocator };
-        const T = union(enum) {
+        def options = ParseOptions{ .allocator = &fail_alloc.allocator };
+        def T = union(enum) {
             // both fields here match the input
-            string: []const u8,
+            string: []u8,
             array: [3]u8,
         };
         testing.expectError(error.OutOfMemory, parse(T, &TokenStream.init("[1,2,3]"), options));
@@ -1727,7 +1727,7 @@ test "parse into tagged union" {
 
     {
         // if multiple matches possible, takes first option
-        const T = union(enum) {
+        def T = union(enum) {
             x: u8,
             y: u8,
         };
@@ -1737,14 +1737,14 @@ test "parse into tagged union" {
 
 test "parseFree descends into tagged union" {
     var fail_alloc = testing.FailingAllocator.init(testing.allocator, 1);
-    const options = ParseOptions{ .allocator = &fail_alloc.allocator };
-    const T = union(enum) {
+    def options = ParseOptions{ .allocator = &fail_alloc.allocator };
+    def T = union(enum) {
         int: i32,
         float: f64,
-        string: []const u8,
+        string: []u8,
     };
     // use a string with unicode escape so we know result can't be a reference to global constant
-    const r = try parse(T, &TokenStream.init("\"with\\u0105unicode\""), options);
+    def r = try parse(T, &TokenStream.init("\"with\\u0105unicode\""), options);
     testing.expectEqual(@TagType(T).string, @as(@TagType(T), r));
     testing.expectEqualSlices(u8, "withąunicode", r.string);
     testing.expectEqual(@as(usize, 0), fail_alloc.deallocations);
@@ -1753,42 +1753,42 @@ test "parseFree descends into tagged union" {
 }
 
 test "parse into struct with no fields" {
-    const T = struct {};
+    def T = struct {};
     testing.expectEqual(T{}, try parse(T, &TokenStream.init("{}"), ParseOptions{}));
 }
 
 test "parse into struct with misc fields" {
     @setEvalBranchQuota(10000);
-    const options = ParseOptions{ .allocator = testing.allocator };
-    const T = struct {
+    def options = ParseOptions{ .allocator = testing.allocator };
+    def T = struct {
         int: i64,
         float: f64,
         @"with\\escape": bool,
         @"withąunicode😂": bool,
-        language: []const u8,
+        language: []u8,
         optional: ?bool,
         default_field: i32 = 42,
         static_array: [3]f64,
         dynamic_array: []f64,
 
-        const Bar = struct {
-            nested: []const u8,
+        def Bar = struct {
+            nested: []u8,
         };
         complex: Bar,
 
-        const Baz = struct {
-            foo: []const u8,
+        def Baz = struct {
+            foo: []u8,
         };
         veryComplex: []Baz,
 
-        const Union = union(enum) {
+        def Union = union(enum) {
             x: u8,
             float: f64,
-            string: []const u8,
+            string: []u8,
         };
         a_union: Union,
     };
-    const r = try parse(T, &TokenStream.init(
+    def r = try parse(T, &TokenStream.init(
         \\{
         \\  "int": 420,
         \\  "float": 3.14,
@@ -1833,14 +1833,14 @@ test "parse into struct with misc fields" {
 }
 
 /// A non-stream JSON parser which constructs a tree of Value's.
-pub const Parser = struct {
+pub def Parser = struct {
     allocator: *Allocator,
     state: State,
     copy_strings: bool,
     // Stores parent nodes and un-combined Values.
     stack: Array,
 
-    const State = enum {
+    def State = enum {
         ObjectKey,
         ObjectValue,
         ArrayValue,
@@ -1865,7 +1865,7 @@ pub const Parser = struct {
         p.stack.shrink(0);
     }
 
-    pub fn parse(p: *Parser, input: []const u8) !ValueTree {
+    pub fn parse(p: *Parser, input: []u8) !ValueTree {
         var s = TokenStream.init(input);
 
         var arena = ArenaAllocator.init(p.allocator);
@@ -1885,7 +1885,7 @@ pub const Parser = struct {
 
     // Even though p.allocator exists, we take an explicit allocator so that allocation state
     // can be cleaned up on error correctly during a `parse` on call.
-    fn transition(p: *Parser, allocator: *Allocator, input: []const u8, i: usize, token: Token) !void {
+    fn transition(p: *Parser, allocator: *Allocator, input: []u8, i: usize, token: Token) !void {
         switch (p.state) {
             .ObjectKey => switch (token) {
                 .ObjectEnd => {
@@ -2021,7 +2021,7 @@ pub const Parser = struct {
         }
     }
 
-    fn pushToParent(p: *Parser, value: *const Value) !void {
+    fn pushToParent(p: *Parser, value: *def Value) !void {
         switch (p.stack.span()[p.stack.items.len - 1]) {
             // Object Parent -> [ ..., object, <key>, value ]
             Value.String => |key| {
@@ -2042,12 +2042,12 @@ pub const Parser = struct {
         }
     }
 
-    fn parseString(p: *Parser, allocator: *Allocator, s: std.meta.TagPayloadType(Token, Token.String), input: []const u8, i: usize) !Value {
-        const slice = s.slice(input, i);
+    fn parseString(p: *Parser, allocator: *Allocator, s: std.meta.TagPayloadType(Token, Token.String), input: []u8, i: usize) !Value {
+        def slice = s.slice(input, i);
         switch (s.escapes) {
             .None => return Value{ .String = if (p.copy_strings) try mem.dupe(allocator, u8, slice) else slice },
             .Some => |some_escapes| {
-                const output = try allocator.alloc(u8, s.decodedLength());
+                def output = try allocator.alloc(u8, s.decodedLength());
                 errdefer allocator.free(output);
                 try unescapeString(output, slice);
                 return Value{ .String = output };
@@ -2055,7 +2055,7 @@ pub const Parser = struct {
         }
     }
 
-    fn parseNumber(p: *Parser, n: std.meta.TagPayloadType(Token, Token.Number), input: []const u8, i: usize) !Value {
+    fn parseNumber(p: *Parser, n: std.meta.TagPayloadType(Token, Token.Number), input: []u8, i: usize) !Value {
         return if (n.is_integer)
             Value{ .Integer = try std.fmt.parseInt(i64, n.slice(input, i), 10) }
         else
@@ -2066,7 +2066,7 @@ pub const Parser = struct {
 // Unescape a JSON string
 // Only to be used on strings already validated by the parser
 // (note the unreachable statements and lack of bounds checking)
-fn unescapeString(output: []u8, input: []const u8) !void {
+fn unescapeString(output: []u8, input: []u8) !void {
     var inIndex: usize = 0;
     var outIndex: usize = 0;
 
@@ -2093,7 +2093,7 @@ fn unescapeString(output: []u8, input: []const u8) !void {
             outIndex += 1;
         } else {
             // a unicode escape sequence
-            const firstCodeUnit = std.fmt.parseInt(u16, input[inIndex + 2 .. inIndex + 6], 16) catch unreachable;
+            def firstCodeUnit = std.fmt.parseInt(u16, input[inIndex + 2 .. inIndex + 6], 16) catch unreachable;
 
             // guess optimistically that it's not a surrogate pair
             if (std.unicode.utf8Encode(firstCodeUnit, output[outIndex..])) |byteCount| {
@@ -2109,7 +2109,7 @@ fn unescapeString(output: []u8, input: []const u8) !void {
                     return error.InvalidUnicodeHexSymbol;
                 }
 
-                const secondCodeUnit = std.fmt.parseInt(u16, input[inIndex + 8 .. inIndex + 12], 16) catch unreachable;
+                def secondCodeUnit = std.fmt.parseInt(u16, input[inIndex + 8 .. inIndex + 12], 16) catch unreachable;
 
                 if (std.unicode.utf16leToUtf8(output[outIndex..], &[2]u16{ firstCodeUnit, secondCodeUnit })) |byteCount| {
                     outIndex += byteCount;
@@ -2127,7 +2127,7 @@ test "json.parser.dynamic" {
     var p = Parser.init(testing.allocator, false);
     defer p.deinit();
 
-    const s =
+    def s =
         \\{
         \\  "Image": {
         \\      "Width":  800,
@@ -2153,25 +2153,25 @@ test "json.parser.dynamic" {
 
     var image = root.Object.get("Image").?.value;
 
-    const width = image.Object.get("Width").?.value;
+    def width = image.Object.get("Width").?.value;
     testing.expect(width.Integer == 800);
 
-    const height = image.Object.get("Height").?.value;
+    def height = image.Object.get("Height").?.value;
     testing.expect(height.Integer == 600);
 
-    const title = image.Object.get("Title").?.value;
+    def title = image.Object.get("Title").?.value;
     testing.expect(mem.eql(u8, title.String, "View from 15th Floor"));
 
-    const animated = image.Object.get("Animated").?.value;
+    def animated = image.Object.get("Animated").?.value;
     testing.expect(animated.Bool == false);
 
-    const array_of_object = image.Object.get("ArrayOfObject").?.value;
+    def array_of_object = image.Object.get("ArrayOfObject").?.value;
     testing.expect(array_of_object.Array.items.len == 1);
 
-    const obj0 = array_of_object.Array.at(0).Object.get("n").?.value;
+    def obj0 = array_of_object.Array.at(0).Object.get("n").?.value;
     testing.expect(mem.eql(u8, obj0.String, "m"));
 
-    const double = image.Object.get("double").?.value;
+    def double = image.Object.get("double").?.value;
     testing.expect(double.Float == 1.3412);
 }
 
@@ -2184,7 +2184,7 @@ test "write json then parse it" {
     var out_buffer: [1000]u8 = undefined;
 
     var fixed_buffer_stream = std.io.fixedBufferStream(&out_buffer);
-    const out_stream = fixed_buffer_stream.outStream();
+    def out_stream = fixed_buffer_stream.outStream();
     var jw = writeStream(out_stream, 4);
 
     try jw.beginObject();
@@ -2227,7 +2227,7 @@ test "write json then parse it" {
     testing.expect(mem.eql(u8, tree.root.Object.get("str").?.value.String, "hello"));
 }
 
-fn test_parse(arena_allocator: *std.mem.Allocator, json_str: []const u8) !Value {
+fn test_parse(arena_allocator: *std.mem.Allocator, json_str: []u8) !Value {
     var p = Parser.init(arena_allocator, false);
     return (try p.parse(json_str)).root;
 }
@@ -2241,7 +2241,7 @@ test "parsing empty string gives appropriate error" {
 test "integer after float has proper type" {
     var arena_allocator = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena_allocator.deinit();
-    const json = try test_parse(&arena_allocator.allocator,
+    def json = try test_parse(&arena_allocator.allocator,
         \\{
         \\  "float": 3.14,
         \\  "ints": [1, 2, 3]
@@ -2253,7 +2253,7 @@ test "integer after float has proper type" {
 test "escaped characters" {
     var arena_allocator = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena_allocator.deinit();
-    const input =
+    def input =
         \\{
         \\  "backslash": "\\",
         \\  "forwardslash": "\/",
@@ -2268,7 +2268,7 @@ test "escaped characters" {
         \\}
     ;
 
-    const obj = (try test_parse(&arena_allocator.allocator, input)).Object;
+    def obj = (try test_parse(&arena_allocator.allocator, input)).Object;
 
     testing.expectEqualSlices(u8, obj.get("backslash").?.value.String, "\\");
     testing.expectEqualSlices(u8, obj.get("forwardslash").?.value.String, "/");
@@ -2283,7 +2283,7 @@ test "escaped characters" {
 }
 
 test "string copy option" {
-    const input =
+    def input =
         \\{
         \\  "noescape": "aą😂",
         \\  "simple": "\\\/\n\r\t\f\b\"",
@@ -2295,18 +2295,18 @@ test "string copy option" {
     var arena_allocator = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena_allocator.deinit();
 
-    const tree_nocopy = try Parser.init(&arena_allocator.allocator, false).parse(input);
-    const obj_nocopy = tree_nocopy.root.Object;
+    def tree_nocopy = try Parser.init(&arena_allocator.allocator, false).parse(input);
+    def obj_nocopy = tree_nocopy.root.Object;
 
-    const tree_copy = try Parser.init(&arena_allocator.allocator, true).parse(input);
-    const obj_copy = tree_copy.root.Object;
+    def tree_copy = try Parser.init(&arena_allocator.allocator, true).parse(input);
+    def obj_copy = tree_copy.root.Object;
 
-    for ([_][]const u8{ "noescape", "simple", "unicode", "surrogatepair" }) |field_name| {
+    for ([_][]u8{ "noescape", "simple", "unicode", "surrogatepair" }) |field_name| {
         testing.expectEqualSlices(u8, obj_nocopy.getValue(field_name).?.String, obj_copy.getValue(field_name).?.String);
     }
 
-    const nocopy_addr = &obj_nocopy.getValue("noescape").?.String[0];
-    const copy_addr = &obj_copy.getValue("noescape").?.String[0];
+    def nocopy_addr = &obj_nocopy.getValue("noescape").?.String[0];
+    def copy_addr = &obj_copy.getValue("noescape").?.String[0];
 
     var found_nocopy = false;
     for (input) |_, index| {
@@ -2318,12 +2318,12 @@ test "string copy option" {
     testing.expect(found_nocopy);
 }
 
-pub const StringifyOptions = struct {
-    pub const Whitespace = struct {
+pub def StringifyOptions = struct {
+    pub def Whitespace = struct {
         /// How many indentation levels deep are we?
         indent_level: usize = 0,
 
-        pub const Indentation = union(enum) {
+        pub def Indentation = union(enum) {
             Space: u8,
             Tab: void,
         };
@@ -2359,11 +2359,11 @@ pub const StringifyOptions = struct {
     whitespace: ?Whitespace = null,
 
     /// Should []u8 be serialised as a string? or an array?
-    pub const StringOptions = union(enum) {
+    pub def StringOptions = union(enum) {
         Array,
 
         /// String output options
-        const StringOutputOptions = struct {
+        def StringOutputOptions = struct {
             /// Should '/' be escaped in strings?
             escape_solidus: bool = false,
 
@@ -2390,8 +2390,8 @@ fn outputUnicodeEscape(
         assert(codepoint <= 0x10FFFF);
         // To escape an extended character that is not in the Basic Multilingual Plane,
         // the character is represented as a 12-character sequence, encoding the UTF-16 surrogate pair.
-        const high = @intCast(u16, (codepoint - 0x10000) >> 10) + 0xD800;
-        const low = @intCast(u16, codepoint & 0x3FF) + 0xDC00;
+        def high = @intCast(u16, (codepoint - 0x10000) >> 10) + 0xD800;
+        def low = @intCast(u16, codepoint & 0x3FF) + 0xDC00;
         try out_stream.writeAll("\\u");
         try std.fmt.formatIntValue(high, "x", std.fmt.FormatOptions{ .width = 4, .fill = '0' }, out_stream);
         try out_stream.writeAll("\\u");
@@ -2404,7 +2404,7 @@ pub fn stringify(
     options: StringifyOptions,
     out_stream: var,
 ) @TypeOf(out_stream).Error!void {
-    const T = @TypeOf(value);
+    def T = @TypeOf(value);
     switch (@typeInfo(T)) {
         .Float, .ComptimeFloat => {
             return std.fmt.formatFloatScientific(value, std.fmt.FormatOptions{}, out_stream);
@@ -2437,7 +2437,7 @@ pub fn stringify(
                 return value.jsonStringify(options, out_stream);
             }
 
-            const info = @typeInfo(T).Union;
+            def info = @typeInfo(T).Union;
             if (info.tag_type) |UnionTagType| {
                 inline for (info.fields) |u_field| {
                     if (@enumToInt(@as(UnionTagType, value)) == u_field.enum_field.?.value) {
@@ -2493,7 +2493,7 @@ pub fn stringify(
         .Pointer => |ptr_info| switch (ptr_info.size) {
             .One => switch (@typeInfo(ptr_info.child)) {
                 .Array => {
-                    const Slice = []const std.meta.Elem(ptr_info.child);
+                    def Slice = []std.meta.Elem(ptr_info.child);
                     return stringify(@as(Slice, value), options, out_stream);
                 },
                 else => {
@@ -2529,10 +2529,10 @@ pub fn stringify(
                             '\r' => try out_stream.writeAll("\\r"),
                             '\t' => try out_stream.writeAll("\\t"),
                             else => {
-                                const ulen = std.unicode.utf8ByteSequenceLength(value[i]) catch unreachable;
+                                def ulen = std.unicode.utf8ByteSequenceLength(value[i]) catch unreachable;
                                 // control characters (only things left with 1 byte length) should always be printed as unicode escapes
                                 if (ulen == 1 or options.string.String.escape_unicode) {
-                                    const codepoint = std.unicode.utf8Decode(value[i .. i + ulen]) catch unreachable;
+                                    def codepoint = std.unicode.utf8Decode(value[i .. i + ulen]) catch unreachable;
                                     try outputUnicodeEscape(codepoint, out_stream);
                                 } else {
                                     try out_stream.writeAll(value[i .. i + ulen]);
@@ -2577,18 +2577,18 @@ pub fn stringify(
     unreachable;
 }
 
-fn teststringify(expected: []const u8, value: var, options: StringifyOptions) !void {
-    const ValidationOutStream = struct {
-        const Self = @This();
-        pub const OutStream = std.io.OutStream(*Self, Error, write);
-        pub const Error = error{
+fn teststringify(expected: []u8, value: var, options: StringifyOptions) !void {
+    def ValidationOutStream = struct {
+        def Self = @This();
+        pub def OutStream = std.io.OutStream(*Self, Error, write);
+        pub def Error = error{
             TooMuchData,
             DifferentData,
         };
 
-        expected_remaining: []const u8,
+        expected_remaining: []u8,
 
-        fn init(exp: []const u8) Self {
+        fn init(exp: []u8) Self {
             return .{ .expected_remaining = exp };
         }
 
@@ -2596,7 +2596,7 @@ fn teststringify(expected: []const u8, value: var, options: StringifyOptions) !v
             return .{ .context = self };
         }
 
-        fn write(self: *Self, bytes: []const u8) Error!usize {
+        fn write(self: *Self, bytes: []u8) Error!usize {
             if (self.expected_remaining.len < bytes.len) {
                 std.debug.warn(
                     \\====== expected this output: =========
@@ -2731,7 +2731,7 @@ test "stringify struct with void field" {
 }
 
 test "stringify array of structs" {
-    const MyStruct = struct {
+    def MyStruct = struct {
         foo: u32,
     };
     try teststringify("[{\"foo\":42},{\"foo\":100},{\"foo\":1000}]", [_]MyStruct{
@@ -2744,7 +2744,7 @@ test "stringify array of structs" {
 test "stringify struct with custom stringifier" {
     try teststringify("[\"something special\",42]", struct {
         foo: u32,
-        const Self = @This();
+        def Self = @This();
         pub fn jsonStringify(
             value: Self,
             options: StringifyOptions,

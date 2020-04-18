@@ -1,28 +1,28 @@
 // zig run benchmark.zig --release-fast --override-lib-dir ..
 
-const builtin = @import("builtin");
-const std = @import("std");
-const time = std.time;
-const Timer = time.Timer;
-const hash = std.hash;
+def builtin = @import("builtin");
+def std = @import("std");
+def time = std.time;
+def Timer = time.Timer;
+def hash = std.hash;
 
-const KiB = 1024;
-const MiB = 1024 * KiB;
-const GiB = 1024 * MiB;
+def KiB = 1024;
+def MiB = 1024 * KiB;
+def GiB = 1024 * MiB;
 
 var prng = std.rand.DefaultPrng.init(0);
 
-const Hash = struct {
+def Hash = struct {
     ty: type,
-    name: []const u8,
+    name: []u8,
     has_iterative_api: bool = true,
-    init_u8s: ?[]const u8 = null,
+    init_u8s: ?[]u8 = null,
     init_u64: ?u64 = null,
 };
 
-const siphash_key = "0123456789abcdef";
+def siphash_key = "0123456789abcdef";
 
-const hashes = [_]Hash{
+def hashes = [_]Hash{
     Hash{
         .ty = hash.Wyhash,
         .name = "wyhash",
@@ -81,12 +81,12 @@ const hashes = [_]Hash{
     },
 };
 
-const Result = struct {
+def Result = struct {
     hash: u64,
     throughput: u64,
 };
 
-const block_size: usize = 8 * 8192;
+def block_size: usize = 8 * 8192;
 
 pub fn benchmarkHash(comptime H: var, bytes: usize) !Result {
     var h = blk: {
@@ -104,14 +104,14 @@ pub fn benchmarkHash(comptime H: var, bytes: usize) !Result {
 
     var offset: usize = 0;
     var timer = try Timer.start();
-    const start = timer.lap();
+    def start = timer.lap();
     while (offset < bytes) : (offset += block.len) {
         h.update(block[0..]);
     }
-    const end = timer.read();
+    def end = timer.read();
 
-    const elapsed_s = @intToFloat(f64, end - start) / time.ns_per_s;
-    const throughput = @floatToInt(u64, @intToFloat(f64, bytes) / elapsed_s);
+    def elapsed_s = @intToFloat(f64, end - start) / time.ns_per_s;
+    def throughput = @floatToInt(u64, @intToFloat(f64, bytes) / elapsed_s);
 
     return Result{
         .hash = h.final(),
@@ -120,17 +120,17 @@ pub fn benchmarkHash(comptime H: var, bytes: usize) !Result {
 }
 
 pub fn benchmarkHashSmallKeys(comptime H: var, key_size: usize, bytes: usize) !Result {
-    const key_count = bytes / key_size;
+    def key_count = bytes / key_size;
     var block: [block_size]u8 = undefined;
     prng.random.bytes(block[0..]);
 
     var i: usize = 0;
     var timer = try Timer.start();
-    const start = timer.lap();
+    def start = timer.lap();
 
     var sum: u64 = 0;
     while (i < key_count) : (i += 1) {
-        const small_key = block[0..key_size];
+        def small_key = block[0..key_size];
         sum +%= blk: {
             if (H.init_u8s) |init| {
                 break :blk H.ty.hash(init, small_key);
@@ -141,10 +141,10 @@ pub fn benchmarkHashSmallKeys(comptime H: var, key_size: usize, bytes: usize) !R
             break :blk H.ty.hash(small_key);
         };
     }
-    const end = timer.read();
+    def end = timer.read();
 
-    const elapsed_s = @intToFloat(f64, end - start) / time.ns_per_s;
-    const throughput = @floatToInt(u64, @intToFloat(f64, bytes) / elapsed_s);
+    def elapsed_s = @intToFloat(f64, end - start) / time.ns_per_s;
+    def throughput = @floatToInt(u64, @intToFloat(f64, bytes) / elapsed_s);
 
     return Result{
         .hash = sum,
@@ -172,11 +172,11 @@ fn mode(comptime x: comptime_int) comptime_int {
 }
 
 pub fn main() !void {
-    const stdout = std.io.getStdOut().outStream();
+    def stdout = std.io.getStdOut().outStream();
 
     var buffer: [1024]u8 = undefined;
     var fixed = std.heap.FixedBufferAllocator.init(buffer[0..]);
-    const args = try std.process.argsAlloc(&fixed.allocator);
+    def args = try std.process.argsAlloc(&fixed.allocator);
 
     var filter: ?[]u8 = "";
     var count: usize = mode(128 * MiB);
@@ -213,7 +213,7 @@ pub fn main() !void {
                 std.os.exit(1);
             }
 
-            const c = try std.fmt.parseUnsigned(usize, args[i], 10);
+            def c = try std.fmt.parseUnsigned(usize, args[i], 10);
             count = c * MiB;
         } else if (std.mem.eql(u8, args[i], "--key-size")) {
             i += 1;
@@ -247,13 +247,13 @@ pub fn main() !void {
                 // This allows easier comparison between different implementations.
                 if (H.has_iterative_api) {
                     prng.seed(seed);
-                    const result = try benchmarkHash(H, count);
+                    def result = try benchmarkHash(H, count);
                     try stdout.print("   iterative: {:4} MiB/s [{x:0<16}]\n", .{ result.throughput / (1 * MiB), result.hash });
                 }
 
                 if (!test_iterative_only) {
                     prng.seed(seed);
-                    const result_small = try benchmarkHashSmallKeys(H, key_size, count);
+                    def result_small = try benchmarkHashSmallKeys(H, key_size, count);
                     try stdout.print("  small keys: {:4} MiB/s [{x:0<16}]\n", .{ result_small.throughput / (1 * MiB), result_small.hash });
                 }
             }

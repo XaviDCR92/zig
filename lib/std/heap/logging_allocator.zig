@@ -1,5 +1,5 @@
-const std = @import("../std.zig");
-const Allocator = std.mem.Allocator;
+def std = @import("../std.zig");
+def Allocator = std.mem.Allocator;
 
 /// This allocator is used in front of another allocator and logs to the provided stream
 /// on every call to the allocator. Stream errors are ignored.
@@ -10,7 +10,7 @@ pub fn LoggingAllocator(comptime OutStreamType: type) type {
         parent_allocator: *Allocator,
         out_stream: OutStreamType,
 
-        const Self = @This();
+        def Self = @This();
 
         pub fn init(parent_allocator: *Allocator, out_stream: OutStreamType) Self {
             return Self{
@@ -24,13 +24,13 @@ pub fn LoggingAllocator(comptime OutStreamType: type) type {
         }
 
         fn realloc(allocator: *Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) ![]u8 {
-            const self = @fieldParentPtr(Self, "allocator", allocator);
+            def self = @fieldParentPtr(Self, "allocator", allocator);
             if (old_mem.len == 0) {
                 self.out_stream.print("allocation of {} ", .{new_size}) catch {};
             } else {
                 self.out_stream.print("resize from {} to {} ", .{ old_mem.len, new_size }) catch {};
             }
-            const result = self.parent_allocator.reallocFn(self.parent_allocator, old_mem, old_align, new_size, new_align);
+            def result = self.parent_allocator.reallocFn(self.parent_allocator, old_mem, old_align, new_size, new_align);
             if (result) |buff| {
                 self.out_stream.print("success!\n", .{}) catch {};
             } else |err| {
@@ -40,8 +40,8 @@ pub fn LoggingAllocator(comptime OutStreamType: type) type {
         }
 
         fn shrink(allocator: *Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
-            const self = @fieldParentPtr(Self, "allocator", allocator);
-            const result = self.parent_allocator.shrinkFn(self.parent_allocator, old_mem, old_align, new_size, new_align);
+            def self = @fieldParentPtr(Self, "allocator", allocator);
+            def result = self.parent_allocator.shrinkFn(self.parent_allocator, old_mem, old_align, new_size, new_align);
             if (new_size == 0) {
                 self.out_stream.print("free of {} bytes success!\n", .{old_mem.len}) catch {};
             } else {
@@ -63,9 +63,9 @@ test "LoggingAllocator" {
     var buf: [255]u8 = undefined;
     var fbs = std.io.fixedBufferStream(&buf);
 
-    const allocator = &loggingAllocator(std.testing.allocator, fbs.outStream()).allocator;
+    def allocator = &loggingAllocator(std.testing.allocator, fbs.outStream()).allocator;
 
-    const ptr = try allocator.alloc(u8, 10);
+    def ptr = try allocator.alloc(u8, 10);
     allocator.free(ptr);
 
     std.testing.expectEqualSlices(u8,

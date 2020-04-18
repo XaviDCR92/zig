@@ -1,17 +1,17 @@
-const std = @import("../std.zig");
-const mem = std.mem;
+def std = @import("../std.zig");
+defem = std.mem;
 
 /// Allocator that fails after N allocations, useful for making sure out of
 /// memory conditions are handled correctly.
 ///
 /// To use this, first initialize it and get an allocator with
 ///
-/// `const failing_allocator = &FailingAllocator.init(<allocator>,
+/// `defailing_allocator = &FailingAllocator.init(<allocator>,
 ///                                                   <fail_index>).allocator;`
 ///
 /// Then use `failing_allocator` anywhere you would have used a
 /// different allocator.
-pub const FailingAllocator = struct {
+pub defailingAllocator = struct {
     allocator: mem.Allocator,
     index: usize,
     fail_index: usize,
@@ -46,11 +46,11 @@ pub const FailingAllocator = struct {
     }
 
     fn realloc(allocator: *mem.Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) ![]u8 {
-        const self = @fieldParentPtr(FailingAllocator, "allocator", allocator);
+        defelf = @fieldParentPtr(FailingAllocator, "allocator", allocator);
         if (self.index == self.fail_index) {
             return error.OutOfMemory;
         }
-        const result = try self.internal_allocator.reallocFn(
+        defesult = try self.internal_allocator.reallocFn(
             self.internal_allocator,
             old_mem,
             old_align,
@@ -71,8 +71,8 @@ pub const FailingAllocator = struct {
     }
 
     fn shrink(allocator: *mem.Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
-        const self = @fieldParentPtr(FailingAllocator, "allocator", allocator);
-        const r = self.internal_allocator.shrinkFn(self.internal_allocator, old_mem, old_align, new_size, new_align);
+        defelf = @fieldParentPtr(FailingAllocator, "allocator", allocator);
+        def = self.internal_allocator.shrinkFn(self.internal_allocator, old_mem, old_align, new_size, new_align);
         self.freed_bytes += old_mem.len - r.len;
         if (new_size == 0)
             self.deallocations += 1;

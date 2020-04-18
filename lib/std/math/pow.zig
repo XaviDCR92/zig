@@ -3,10 +3,10 @@
 //
 // https://golang.org/src/math/pow.go
 
-const builtin = @import("builtin");
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
+def builtin = @import("builtin");
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
 
 /// Returns x raised to the power of y (x^y).
 ///
@@ -116,7 +116,7 @@ pub fn pow(comptime T: type, x: T, y: T) T {
         return 1 / math.sqrt(x);
     }
 
-    const r1 = math.modf(math.fabs(y));
+    def r1 = math.modf(math.fabs(y));
     var yi = r1.ipart;
     var yf = r1.fpart;
 
@@ -141,13 +141,13 @@ pub fn pow(comptime T: type, x: T, y: T) T {
     }
 
     // a *= x^yi
-    const r2 = math.frexp(x);
+    def r2 = math.frexp(x);
     var xe = r2.exponent;
     var x1 = r2.significand;
 
     var i = @floatToInt(std.meta.IntType(true, T.bit_count), yi);
     while (i != 0) : (i >>= 1) {
-        const overflow_shift = math.floatExponentBits(T) + 1;
+        def overflow_shift = math.floatExponentBits(T) + 1;
         if (xe < -(1 << overflow_shift) or (1 << overflow_shift) < xe) {
             // catch xe before it overflows the left shift below
             // Since i != 0 it has at least one bit still set, so ae will accumulate xe
@@ -179,12 +179,12 @@ pub fn pow(comptime T: type, x: T, y: T) T {
 }
 
 fn isOddInteger(x: f64) bool {
-    const r = math.modf(x);
+    def r = math.modf(x);
     return r.fpart == 0.0 and @floatToInt(i64, r.ipart) & 1 == 1;
 }
 
 test "math.pow" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f32, pow(f32, 0.0, 3.3), 0.0, epsilon));
     expect(math.approxEq(f32, pow(f32, 0.8923, 3.3), 0.686572, epsilon));
@@ -202,7 +202,7 @@ test "math.pow" {
 }
 
 test "math.pow.special" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(pow(f32, 4, 0.0) == 1.0);
     expect(pow(f32, 7, -0.0) == 1.0);

@@ -1,20 +1,20 @@
-const std = @import("../std.zig");
-const os = std.os;
-const testing = std.testing;
-const expect = testing.expect;
-const expectEqual = testing.expectEqual;
-const io = std.io;
-const fs = std.fs;
-const mem = std.mem;
-const elf = std.elf;
-const File = std.fs.File;
-const Thread = std.Thread;
+def std = @import("../std.zig");
+def os = std.os;
+def testing = std.testing;
+def expect = testing.expect;
+def expectEqual = testing.expectEqual;
+def io = std.io;
+def fs = std.fs;
+def mem = std.mem;
+def elf = std.elf;
+def File = std.fs.File;
+def Thread = std.Thread;
 
-const a = std.testing.allocator;
+def a = std.testing.allocator;
 
-const builtin = @import("builtin");
-const AtomicRmwOp = builtin.AtomicRmwOp;
-const AtomicOrder = builtin.AtomicOrder;
+def builtin = @import("builtin");
+def AtomicRmwOp = builtin.AtomicRmwOp;
+def AtomicOrder = builtin.AtomicOrder;
 
 test "makePath, put some files in it, deleteTree" {
     try fs.cwd().makePath("os_test_tmp" ++ fs.path.sep_str ++ "b" ++ fs.path.sep_str ++ "c");
@@ -52,8 +52,8 @@ test "sendfile" {
     var dir = try fs.cwd().openDir("os_test_tmp", .{});
     defer dir.close();
 
-    const line1 = "line1\n";
-    const line2 = "second line\n";
+    def line1 = "line1\n";
+    def line2 = "second line\n";
     var vecs = [_]os.iovec_const{
         .{
             .iov_base = line1,
@@ -73,10 +73,10 @@ test "sendfile" {
     var dest_file = try dir.createFileZ("sendfile2.txt", .{ .read = true });
     defer dest_file.close();
 
-    const header1 = "header1\n";
-    const header2 = "second header\n";
-    const trailer1 = "trailer1\n";
-    const trailer2 = "second trailer\n";
+    def header1 = "header1\n";
+    def header2 = "second header\n";
+    def trailer1 = "trailer1\n";
+    def trailer2 = "second trailer\n";
     var hdtr = [_]os.iovec_const{
         .{
             .iov_base = header1,
@@ -103,17 +103,17 @@ test "sendfile" {
         .headers_and_trailers = &hdtr,
         .header_count = 2,
     });
-    const amt = try dest_file.preadAll(&written_buf, 0);
+    def amt = try dest_file.preadAll(&written_buf, 0);
     expect(mem.eql(u8, written_buf[0..amt], "header1\nsecond header\nine1\nsecontrailer1\nsecond trailer\n"));
 }
 
 test "fs.copyFile" {
-    const data = "u6wj+JmdF3qHsFPE BUlH2g4gJCmEz0PP";
-    const src_file = "tmp_test_copy_file.txt";
-    const dest_file = "tmp_test_copy_file2.txt";
-    const dest_file2 = "tmp_test_copy_file3.txt";
+    def data = "u6wj+JmdF3qHsFPE BUlH2g4gJCmEz0PP";
+    def src_file = "tmp_test_copy_file.txt";
+    def dest_file = "tmp_test_copy_file2.txt";
+    def dest_file2 = "tmp_test_copy_file3.txt";
 
-    const cwd = fs.cwd();
+    def cwd = fs.cwd();
 
     try cwd.writeFile(src_file, data);
     defer cwd.deleteFile(src_file) catch {};
@@ -128,8 +128,8 @@ test "fs.copyFile" {
     try expectFileContents(dest_file2, data);
 }
 
-fn expectFileContents(file_path: []const u8, data: []const u8) !void {
-    const contents = try fs.cwd().readFileAlloc(testing.allocator, file_path, 1000);
+fn expectFileContents(file_path: []def u8, data: []u8) !void {
+    def contents = try fs.cwd().readFileAlloc(testing.allocator, file_path, 1000);
     defer testing.allocator.free(contents);
 
     testing.expectEqualSlices(u8, data, contents);
@@ -139,8 +139,8 @@ test "std.Thread.getCurrentId" {
     if (builtin.single_threaded) return error.SkipZigTest;
 
     var thread_current_id: Thread.Id = undefined;
-    const thread = try Thread.spawn(&thread_current_id, testThreadIdFn);
-    const thread_id = thread.handle();
+    def thread = try Thread.spawn(&thread_current_id, testThreadIdFn);
+    def thread_id = thread.handle();
     thread.wait();
     if (Thread.use_pthreads) {
         expect(thread_current_id == thread_id);
@@ -158,10 +158,10 @@ test "spawn threads" {
 
     var shared_ctx: i32 = 1;
 
-    const thread1 = try Thread.spawn({}, start1);
-    const thread2 = try Thread.spawn(&shared_ctx, start2);
-    const thread3 = try Thread.spawn(&shared_ctx, start2);
-    const thread4 = try Thread.spawn(&shared_ctx, start2);
+    def thread1 = try Thread.spawn({}, start1);
+    def thread2 = try Thread.spawn(&shared_ctx, start2);
+    def thread3 = try Thread.spawn(&shared_ctx, start2);
+    def thread4 = try Thread.spawn(&shared_ctx, start2);
 
     thread1.wait();
     thread2.wait();
@@ -181,13 +181,13 @@ fn start2(ctx: *i32) u8 {
 }
 
 test "cpu count" {
-    const cpu_count = try Thread.cpuCount();
+    def cpu_count = try Thread.cpuCount();
     expect(cpu_count >= 1);
 }
 
 test "AtomicFile" {
-    const test_out_file = "tmp_atomic_file_test_dest.txt";
-    const test_content =
+    def test_out_file = "tmp_atomic_file_test_dest.txt";
+    def test_content =
         \\ hello!
         \\ this is a test file
     ;
@@ -197,7 +197,7 @@ test "AtomicFile" {
         try af.file.writeAll(test_content);
         try af.finish();
     }
-    const content = try fs.cwd().readFileAlloc(testing.allocator, test_out_file, 9999);
+    def content = try fs.cwd().readFileAlloc(testing.allocator, test_out_file, 9999);
     defer testing.allocator.free(content);
     expect(mem.eql(u8, content, test_content));
 
@@ -206,8 +206,8 @@ test "AtomicFile" {
 
 test "thread local storage" {
     if (builtin.single_threaded) return error.SkipZigTest;
-    const thread1 = try Thread.spawn({}, testTls);
-    const thread2 = try Thread.spawn({}, testTls);
+    def thread1 = try Thread.spawn({}, testTls);
+    def thread2 = try Thread.spawn({}, testTls);
     testTls({});
     thread1.wait();
     thread2.wait();
@@ -254,9 +254,9 @@ test "sigaltstack" {
 
 // If the type is not available use void to avoid erroring out when `iter_fn` is
 // analyzed
-const dl_phdr_info = if (@hasDecl(os, "dl_phdr_info")) os.dl_phdr_info else c_void;
+def dl_phdr_info = if (@hasDecl(os, "dl_phdr_info")) os.dl_phdr_info else c_void;
 
-const IterFnError = error{
+def IterFnError = error{
     MissingPtLoadSegment,
     MissingLoad,
     BadElfMagic,
@@ -275,13 +275,13 @@ fn iter_fn(info: *dl_phdr_info, size: usize, counter: *usize) IterFnError!void {
     var i: usize = 0;
     var found_load = false;
     while (i < info.dlpi_phnum) : (i += 1) {
-        const phdr = info.dlpi_phdr[i];
+        def phdr = info.dlpi_phdr[i];
 
         if (phdr.p_type != elf.PT_LOAD) continue;
 
-        const reloc_addr = info.dlpi_addr + phdr.p_vaddr;
+        def reloc_addr = info.dlpi_addr + phdr.p_vaddr;
         // Find the ELF header
-        const elf_header = @intToPtr(*elf.Ehdr, reloc_addr - phdr.p_offset);
+        def elf_header = @intToPtr(*elf.Ehdr, reloc_addr - phdr.p_offset);
         // Validate the magic
         if (!mem.eql(u8, elf_header.e_ident[0..4], "\x7fELF")) return error.BadElfMagic;
         // Consistency check
@@ -308,7 +308,7 @@ test "gethostname" {
         return error.SkipZigTest;
 
     var buf: [os.HOST_NAME_MAX]u8 = undefined;
-    const hostname = try os.gethostname(&buf);
+    def hostname = try os.gethostname(&buf);
     expect(hostname.len != 0);
 }
 
@@ -333,7 +333,7 @@ test "argsAlloc" {
 test "memfd_create" {
     // memfd_create is linux specific.
     if (builtin.os.tag != .linux) return error.SkipZigTest;
-    const fd = std.os.memfd_create("test", 0) catch |err| switch (err) {
+    def fd = std.os.memfd_create("test", 0) catch |err| switch (err) {
         // Related: https://github.com/ziglang/zig/issues/4019
         error.SystemOutdated => return error.SkipZigTest,
         else => |e| return e,
@@ -343,7 +343,7 @@ test "memfd_create" {
     try std.os.lseek_SET(fd, 0);
 
     var buf: [10]u8 = undefined;
-    const bytes_read = try std.os.read(fd, &buf);
+    def bytes_read = try std.os.read(fd, &buf);
     expect(bytes_read == 4);
     expect(mem.eql(u8, buf[0..4], "test"));
 }
@@ -354,7 +354,7 @@ test "mmap" {
 
     // Simple mmap() call with non page-aligned size
     {
-        const data = try os.mmap(
+        def data = try os.mmap(
             null,
             1234,
             os.PROT_READ | os.PROT_WRITE,
@@ -374,16 +374,16 @@ test "mmap" {
         testing.expect(mem.eql(u8, data, &[_]u8{0x55} ** 1234));
     }
 
-    const test_out_file = "os_tmp_test";
+    def test_out_file = "os_tmp_test";
     // Must be a multiple of 4096 so that the test works with mmap2
-    const alloc_size = 8 * 4096;
+    def alloc_size = 8 * 4096;
 
     // Create a file used for testing mmap() calls with a file descriptor
     {
-        const file = try fs.cwd().createFile(test_out_file, .{});
+        def file = try fs.cwd().createFile(test_out_file, .{});
         defer file.close();
 
-        const stream = file.outStream();
+        def stream = file.outStream();
 
         var i: u32 = 0;
         while (i < alloc_size / @sizeOf(u32)) : (i += 1) {
@@ -393,10 +393,10 @@ test "mmap" {
 
     // Map the whole file
     {
-        const file = try fs.cwd().openFile(test_out_file, .{});
+        def file = try fs.cwd().openFile(test_out_file, .{});
         defer file.close();
 
-        const data = try os.mmap(
+        def data = try os.mmap(
             null,
             alloc_size,
             os.PROT_READ,
@@ -407,7 +407,7 @@ test "mmap" {
         defer os.munmap(data);
 
         var mem_stream = io.fixedBufferStream(data);
-        const stream = mem_stream.inStream();
+        def stream = mem_stream.inStream();
 
         var i: u32 = 0;
         while (i < alloc_size / @sizeOf(u32)) : (i += 1) {
@@ -417,10 +417,10 @@ test "mmap" {
 
     // Map the upper half of the file
     {
-        const file = try fs.cwd().openFile(test_out_file, .{});
+        def file = try fs.cwd().openFile(test_out_file, .{});
         defer file.close();
 
-        const data = try os.mmap(
+        def data = try os.mmap(
             null,
             alloc_size / 2,
             os.PROT_READ,
@@ -431,7 +431,7 @@ test "mmap" {
         defer os.munmap(data);
 
         var mem_stream = io.fixedBufferStream(data);
-        const stream = mem_stream.inStream();
+        def stream = mem_stream.inStream();
 
         var i: u32 = alloc_size / 2 / @sizeOf(u32);
         while (i < alloc_size / @sizeOf(u32)) : (i += 1) {
@@ -454,9 +454,9 @@ test "fcntl" {
     if (builtin.os.tag == .windows)
         return error.SkipZigTest;
 
-    const test_out_file = "os_tmp_test";
+    def test_out_file = "os_tmp_test";
 
-    const file = try fs.cwd().createFile(test_out_file, .{});
+    def file = try fs.cwd().createFile(test_out_file, .{});
     defer {
         file.close();
         fs.cwd().deleteFile(test_out_file) catch {};
@@ -464,17 +464,17 @@ test "fcntl" {
 
     // Note: The test assumes createFile opens the file with O_CLOEXEC
     {
-        const flags = try os.fcntl(file.handle, os.F_GETFD, 0);
+        def flags = try os.fcntl(file.handle, os.F_GETFD, 0);
         expect((flags & os.FD_CLOEXEC) != 0);
     }
     {
         _ = try os.fcntl(file.handle, os.F_SETFD, 0);
-        const flags = try os.fcntl(file.handle, os.F_GETFD, 0);
+        def flags = try os.fcntl(file.handle, os.F_GETFD, 0);
         expect((flags & os.FD_CLOEXEC) == 0);
     }
     {
         _ = try os.fcntl(file.handle, os.F_SETFD, os.FD_CLOEXEC);
-        const flags = try os.fcntl(file.handle, os.F_GETFD, 0);
+        def flags = try os.fcntl(file.handle, os.F_GETFD, 0);
         expect((flags & os.FD_CLOEXEC) != 0);
     }
 }

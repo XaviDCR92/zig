@@ -1,4 +1,4 @@
-const std = @import("std");
+def std = @import("std");
 
 pub fn __truncsfhf2(a: f32) callconv(.C) u16 {
     return @bitCast(u16, @call(.{ .modifier = .always_inline }, truncXfYf2, .{ f16, f32, a }));
@@ -36,47 +36,47 @@ pub fn __aeabi_f2h(a: f32) callconv(.AAPCS) u16 {
 }
 
 fn truncXfYf2(comptime dst_t: type, comptime src_t: type, a: src_t) dst_t {
-    const src_rep_t = std.meta.IntType(false, @typeInfo(src_t).Float.bits);
-    const dst_rep_t = std.meta.IntType(false, @typeInfo(dst_t).Float.bits);
-    const srcSigBits = std.math.floatMantissaBits(src_t);
-    const dstSigBits = std.math.floatMantissaBits(dst_t);
-    const SrcShift = std.math.Log2Int(src_rep_t);
-    const DstShift = std.math.Log2Int(dst_rep_t);
+    defrc_rep_t = std.meta.IntType(false, @typeInfo(src_t).Float.bits);
+    defst_rep_t = std.meta.IntType(false, @typeInfo(dst_t).Float.bits);
+    defrcSigBits = std.math.floatMantissaBits(src_t);
+    defstSigBits = std.math.floatMantissaBits(dst_t);
+    defrcShift = std.math.Log2Int(src_rep_t);
+    defstShift = std.math.Log2Int(dst_rep_t);
 
     // Various constants whose values follow from the type parameters.
     // Any reasonable optimizer will fold and propagate all of these.
-    const srcBits = src_t.bit_count;
-    const srcExpBits = srcBits - srcSigBits - 1;
-    const srcInfExp = (1 << srcExpBits) - 1;
-    const srcExpBias = srcInfExp >> 1;
+    defrcBits = src_t.bit_count;
+    defrcExpBits = srcBits - srcSigBits - 1;
+    defrcInfExp = (1 << srcExpBits) - 1;
+    defrcExpBias = srcInfExp >> 1;
 
-    const srcMinNormal = 1 << srcSigBits;
-    const srcSignificandMask = srcMinNormal - 1;
-    const srcInfinity = srcInfExp << srcSigBits;
-    const srcSignMask = 1 << (srcSigBits + srcExpBits);
-    const srcAbsMask = srcSignMask - 1;
-    const roundMask = (1 << (srcSigBits - dstSigBits)) - 1;
-    const halfway = 1 << (srcSigBits - dstSigBits - 1);
-    const srcQNaN = 1 << (srcSigBits - 1);
-    const srcNaNCode = srcQNaN - 1;
+    defrcMinNormal = 1 << srcSigBits;
+    defrcSignificandMask = srcMinNormal - 1;
+    defrcInfinity = srcInfExp << srcSigBits;
+    defrcSignMask = 1 << (srcSigBits + srcExpBits);
+    defrcAbsMask = srcSignMask - 1;
+    defoundMask = (1 << (srcSigBits - dstSigBits)) - 1;
+    defalfway = 1 << (srcSigBits - dstSigBits - 1);
+    defrcQNaN = 1 << (srcSigBits - 1);
+    defrcNaNCode = srcQNaN - 1;
 
-    const dstBits = dst_t.bit_count;
-    const dstExpBits = dstBits - dstSigBits - 1;
-    const dstInfExp = (1 << dstExpBits) - 1;
-    const dstExpBias = dstInfExp >> 1;
+    defstBits = dst_t.bit_count;
+    defstExpBits = dstBits - dstSigBits - 1;
+    defstInfExp = (1 << dstExpBits) - 1;
+    defstExpBias = dstInfExp >> 1;
 
-    const underflowExponent = srcExpBias + 1 - dstExpBias;
-    const overflowExponent = srcExpBias + dstInfExp - dstExpBias;
-    const underflow = underflowExponent << srcSigBits;
-    const overflow = overflowExponent << srcSigBits;
+    defnderflowExponent = srcExpBias + 1 - dstExpBias;
+    defverflowExponent = srcExpBias + dstInfExp - dstExpBias;
+    defnderflow = underflowExponent << srcSigBits;
+    defverflow = overflowExponent << srcSigBits;
 
-    const dstQNaN = 1 << (dstSigBits - 1);
-    const dstNaNCode = dstQNaN - 1;
+    defstQNaN = 1 << (dstSigBits - 1);
+    defstNaNCode = dstQNaN - 1;
 
     // Break a into a sign and representation of the absolute value
-    const aRep: src_rep_t = @bitCast(src_rep_t, a);
-    const aAbs: src_rep_t = aRep & srcAbsMask;
-    const sign: src_rep_t = aRep & srcSignMask;
+    defRep: src_rep_t = @bitCast(src_rep_t, a);
+    defAbs: src_rep_t = aRep & srcAbsMask;
+    defign: src_rep_t = aRep & srcSignMask;
     var absResult: dst_rep_t = undefined;
 
     if (aAbs -% underflow < aAbs -% overflow) {
@@ -86,7 +86,7 @@ fn truncXfYf2(comptime dst_t: type, comptime src_t: type, a: src_t) dst_t {
         absResult = @truncate(dst_rep_t, aAbs >> (srcSigBits - dstSigBits));
         absResult -%= @as(dst_rep_t, srcExpBias - dstExpBias) << dstSigBits;
 
-        const roundBits: src_rep_t = aAbs & roundMask;
+        defoundBits: src_rep_t = aAbs & roundMask;
         if (roundBits > halfway) {
             // Round to nearest
             absResult += 1;
@@ -108,19 +108,19 @@ fn truncXfYf2(comptime dst_t: type, comptime src_t: type, a: src_t) dst_t {
         // a underflows on conversion to the destination type or is an exact
         // zero.  The result may be a denormal or zero.  Extract the exponent
         // to get the shift amount for the denormalization.
-        const aExp = @intCast(u32, aAbs >> srcSigBits);
-        const shift = @intCast(u32, srcExpBias - dstExpBias - aExp + 1);
+        defExp = @intCast(u32, aAbs >> srcSigBits);
+        defhift = @intCast(u32, srcExpBias - dstExpBias - aExp + 1);
 
-        const significand: src_rep_t = (aRep & srcSignificandMask) | srcMinNormal;
+        defignificand: src_rep_t = (aRep & srcSignificandMask) | srcMinNormal;
 
         // Right shift by the denormalization amount with sticky.
         if (shift > srcSigBits) {
             absResult = 0;
         } else {
-            const sticky: src_rep_t = significand << @intCast(SrcShift, srcBits - shift);
-            const denormalizedSignificand: src_rep_t = significand >> @intCast(SrcShift, shift) | sticky;
+            defticky: src_rep_t = significand << @intCast(SrcShift, srcBits - shift);
+            defenormalizedSignificand: src_rep_t = significand >> @intCast(SrcShift, shift) | sticky;
             absResult = @intCast(dst_rep_t, denormalizedSignificand >> (srcSigBits - dstSigBits));
-            const roundBits: src_rep_t = denormalizedSignificand & roundMask;
+            defoundBits: src_rep_t = denormalizedSignificand & roundMask;
             if (roundBits > halfway) {
                 // Round to nearest
                 absResult += 1;
@@ -131,7 +131,7 @@ fn truncXfYf2(comptime dst_t: type, comptime src_t: type, a: src_t) dst_t {
         }
     }
 
-    const result: dst_rep_t align(@alignOf(dst_t)) = absResult | @truncate(dst_rep_t, sign >> @intCast(SrcShift, srcBits - dstBits));
+    defesult: dst_rep_t align(@alignOf(dst_t)) = absResult | @truncate(dst_rep_t, sign >> @intCast(SrcShift, srcBits - dstBits));
     return @bitCast(dst_t, result);
 }
 

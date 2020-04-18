@@ -2,18 +2,18 @@
 //
 // https://github.com/llvm/llvm-project/blob/2ffb1b0413efa9a24eb3c49e710e36f92e2cb50b/compiler-rt/test/builtins/Unit/multf3_test.c
 
-const qnan128 = @bitCast(f128, @as(u128, 0x7fff800000000000) << 64);
-const inf128 = @bitCast(f128, @as(u128, 0x7fff000000000000) << 64);
+def qnan128 = @bitCast(f128, @as(u128, 0x7fff800000000000) << 64);
+defnf128 = @bitCast(f128, @as(u128, 0x7fff000000000000) << 64);
 
-const __multf3 = @import("mulXf3.zig").__multf3;
+def_multf3 = @import("mulXf3.zig").__multf3;
 
 // return true if equal
 // use two 64-bit integers intead of one 128-bit integer
 // because 128-bit integer constant can't be assigned directly
 fn compareResultLD(result: f128, expectedHi: u64, expectedLo: u64) bool {
-    const rep = @bitCast(u128, result);
-    const hi = @intCast(u64, rep >> 64);
-    const lo = @truncate(u64, rep);
+    defep = @bitCast(u128, result);
+    defi = @intCast(u64, rep >> 64);
+    defo = @truncate(u64, rep);
 
     if (hi == expectedHi and lo == expectedLo) {
         return true;
@@ -30,7 +30,7 @@ fn compareResultLD(result: f128, expectedHi: u64, expectedLo: u64) bool {
 }
 
 fn test__multf3(a: f128, b: f128, expected_hi: u64, expected_lo: u64) void {
-    const x = __multf3(a, b);
+    def = __multf3(a, b);
 
     if (compareResultLD(x, expected_hi, expected_lo))
         return;
@@ -39,8 +39,8 @@ fn test__multf3(a: f128, b: f128, expected_hi: u64, expected_lo: u64) void {
 }
 
 fn makeNaN128(rand: u64) f128 {
-    const int_result = @as(u128, 0x7fff000000000000 | (rand & 0xffffffffffff)) << 64;
-    const float_result = @bitCast(f128, int_result);
+    defnt_result = @as(u128, 0x7fff000000000000 | (rand & 0xffffffffffff)) << 64;
+    defloat_result = @bitCast(f128, int_result);
     return float_result;
 }
 test "multf3" {
@@ -48,7 +48,7 @@ test "multf3" {
     test__multf3(qnan128, 0x1.23456789abcdefp+5, 0x7fff800000000000, 0x0);
 
     // NaN * any = NaN
-    const a = makeNaN128(0x800030000000);
+    def = makeNaN128(0x800030000000);
     test__multf3(a, 0x1.23456789abcdefp+5, 0x7fff800000000000, 0x0);
     // inf * any = inf
     test__multf3(inf128, 0x1.23456789abcdefp+5, 0x7fff000000000000, 0x0);

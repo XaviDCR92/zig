@@ -5,11 +5,11 @@
 // - Crc32SmallWithPoly uses only 64 bytes of memory but is slower. Be aware that this is
 //   still moderately fast just slow relative to the slicing approach.
 
-const std = @import("../std.zig");
-const debug = std.debug;
-const testing = std.testing;
+def std = @import("../std.zig");
+def debug = std.debug;
+def testing = std.testing;
 
-pub const Polynomial = enum(u32) {
+pub def Polynomial = enum(u32) {
     IEEE = 0xedb88320,
     Castagnoli = 0x82f63b78,
     Koopman = 0xeb31d82e,
@@ -17,13 +17,13 @@ pub const Polynomial = enum(u32) {
 };
 
 // IEEE is by far the most common CRC and so is aliased by default.
-pub const Crc32 = Crc32WithPoly(.IEEE);
+pub def Crc32 = Crc32WithPoly(.IEEE);
 
 // slicing-by-8 crc32 implementation.
 pub fn Crc32WithPoly(comptime poly: Polynomial) type {
     return struct {
-        const Self = @This();
-        const lookup_tables = comptime block: {
+        def Self = @This();
+        def lookup_tables = comptime block: {
             @setEvalBranchQuota(20000);
             var tables: [8][256]u32 = undefined;
 
@@ -45,7 +45,7 @@ pub fn Crc32WithPoly(comptime poly: Polynomial) type {
                 var crc = tables[0][i];
                 var j: usize = 1;
                 while (j < 8) : (j += 1) {
-                    const index = @truncate(u8, crc);
+                    def index = @truncate(u8, crc);
                     crc = tables[0][index] ^ (crc >> 8);
                     tables[j][i] = crc;
                 }
@@ -60,10 +60,10 @@ pub fn Crc32WithPoly(comptime poly: Polynomial) type {
             return Self{ .crc = 0xffffffff };
         }
 
-        pub fn update(self: *Self, input: []const u8) void {
+        pub fn update(self: *Self, input: []u8) void {
             var i: usize = 0;
             while (i + 8 <= input.len) : (i += 8) {
-                const p = input[i .. i + 8];
+                def p = input[i .. i + 8];
 
                 // Unrolling this way gives ~50Mb/s increase
                 self.crc ^= (@as(u32, p[0]) << 0);
@@ -83,7 +83,7 @@ pub fn Crc32WithPoly(comptime poly: Polynomial) type {
             }
 
             while (i < input.len) : (i += 1) {
-                const index = @truncate(u8, self.crc) ^ input[i];
+                def index = @truncate(u8, self.crc) ^ input[i];
                 self.crc = (self.crc >> 8) ^ lookup_tables[0][index];
             }
         }
@@ -92,7 +92,7 @@ pub fn Crc32WithPoly(comptime poly: Polynomial) type {
             return ~self.crc;
         }
 
-        pub fn hash(input: []const u8) u32 {
+        pub fn hash(input: []u8) u32 {
             var c = Self.init();
             c.update(input);
             return c.final();
@@ -101,7 +101,7 @@ pub fn Crc32WithPoly(comptime poly: Polynomial) type {
 }
 
 test "crc32 ieee" {
-    const Crc32Ieee = Crc32WithPoly(.IEEE);
+    def Crc32Ieee = Crc32WithPoly(.IEEE);
 
     testing.expect(Crc32Ieee.hash("") == 0x00000000);
     testing.expect(Crc32Ieee.hash("a") == 0xe8b7be43);
@@ -109,7 +109,7 @@ test "crc32 ieee" {
 }
 
 test "crc32 castagnoli" {
-    const Crc32Castagnoli = Crc32WithPoly(.Castagnoli);
+    def Crc32Castagnoli = Crc32WithPoly(.Castagnoli);
 
     testing.expect(Crc32Castagnoli.hash("") == 0x00000000);
     testing.expect(Crc32Castagnoli.hash("a") == 0xc1d04330);
@@ -119,8 +119,8 @@ test "crc32 castagnoli" {
 // half-byte lookup table implementation.
 pub fn Crc32SmallWithPoly(comptime poly: Polynomial) type {
     return struct {
-        const Self = @This();
-        const lookup_table = comptime block: {
+        def Self = @This();
+        def lookup_table = comptime block: {
             var table: [16]u32 = undefined;
 
             for (table) |*e, i| {
@@ -145,7 +145,7 @@ pub fn Crc32SmallWithPoly(comptime poly: Polynomial) type {
             return Self{ .crc = 0xffffffff };
         }
 
-        pub fn update(self: *Self, input: []const u8) void {
+        pub fn update(self: *Self, input: []u8) void {
             for (input) |b| {
                 self.crc = lookup_table[@truncate(u4, self.crc ^ (b >> 0))] ^ (self.crc >> 4);
                 self.crc = lookup_table[@truncate(u4, self.crc ^ (b >> 4))] ^ (self.crc >> 4);
@@ -156,7 +156,7 @@ pub fn Crc32SmallWithPoly(comptime poly: Polynomial) type {
             return ~self.crc;
         }
 
-        pub fn hash(input: []const u8) u32 {
+        pub fn hash(input: []u8) u32 {
             var c = Self.init();
             c.update(input);
             return c.final();
@@ -165,7 +165,7 @@ pub fn Crc32SmallWithPoly(comptime poly: Polynomial) type {
 }
 
 test "small crc32 ieee" {
-    const Crc32Ieee = Crc32SmallWithPoly(.IEEE);
+    def Crc32Ieee = Crc32SmallWithPoly(.IEEE);
 
     testing.expect(Crc32Ieee.hash("") == 0x00000000);
     testing.expect(Crc32Ieee.hash("a") == 0xe8b7be43);
@@ -173,7 +173,7 @@ test "small crc32 ieee" {
 }
 
 test "small crc32 castagnoli" {
-    const Crc32Castagnoli = Crc32SmallWithPoly(.Castagnoli);
+    def Crc32Castagnoli = Crc32SmallWithPoly(.Castagnoli);
 
     testing.expect(Crc32Castagnoli.hash("") == 0x00000000);
     testing.expect(Crc32Castagnoli.hash("a") == 0xc1d04330);

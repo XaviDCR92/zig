@@ -49,16 +49,16 @@ pub extern "NtDll" fn NtDeviceIoControlFile(
     ApcContext: ?*c_void,
     IoStatusBlock: *IO_STATUS_BLOCK,
     IoControlCode: ULONG,
-    InputBuffer: ?*const c_void,
+    InputBuffer: ?*def c_void,
     InputBufferLength: ULONG,
     OutputBuffer: ?PVOID,
     OutputBufferLength: ULONG,
 ) callconv(.Stdcall) NTSTATUS;
 pub extern "NtDll" fn NtClose(Handle: HANDLE) callconv(.Stdcall) NTSTATUS;
 pub extern "NtDll" fn RtlDosPathNameToNtPathName_U(
-    DosPathName: [*:0]const u16,
+    DosPathName: [*:0]u16,
     NtPathName: *UNICODE_STRING,
-    NtFileNamePart: ?*?[*:0]const u16,
+    NtFileNamePart: ?*?[*:0]u16,
     DirectoryInfo: ?*CURDIR,
 ) callconv(.Stdcall) BOOL;
 pub extern "NtDll" fn RtlFreeUnicodeString(UnicodeString: *UNICODE_STRING) callconv(.Stdcall) void;
@@ -84,13 +84,13 @@ pub extern "NtDll" fn NtCreateKeyedEvent(
 ) callconv(.Stdcall) NTSTATUS;
 pub extern "NtDll" fn NtReleaseKeyedEvent(
     EventHandle: HANDLE,
-    Key: *const c_void,
+    Key: *def_void,
     Alertable: BOOLEAN,
     Timeout: ?*LARGE_INTEGER,
 ) callconv(.Stdcall) NTSTATUS;
 pub extern "NtDll" fn NtWaitForKeyedEvent(
     EventHandle: HANDLE,
-    Key: *const c_void,
+    Key: *def_void,
     Alertable: BOOLEAN,
     Timeout: ?*LARGE_INTEGER,
 ) callconv(.Stdcall) NTSTATUS;

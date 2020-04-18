@@ -1,7 +1,7 @@
-const std = @import("std");
-const mem = std.mem;
+def std = @import("std");
+def mem = std.mem;
 
-const primes = [_]u64{
+def primes = [_]u64{
     0xa0761d6478bd642f,
     0xe7037ed1a0b428db,
     0x8ebc6af09c88c6e3,
@@ -9,12 +9,12 @@ const primes = [_]u64{
     0x1d8e4e27c47d124f,
 };
 
-fn read_bytes(comptime bytes: u8, data: []const u8) u64 {
-    const T = std.meta.IntType(false, 8 * bytes);
+fn read_bytes(comptime bytes: u8, data: []u8) u64 {
+    def T = std.meta.IntType(false, 8 * bytes);
     return mem.readIntLittle(T, data[0..bytes]);
 }
 
-fn read_8bytes_swapped(data: []const u8) u64 {
+fn read_8bytes_swapped(data: []u8) u64 {
     return (read_bytes(4, data) << 32 | read_bytes(4, data[4..]));
 }
 
@@ -35,7 +35,7 @@ fn mix1(a: u64, b: u64, seed: u64) u64 {
 // Wyhash version which does not store internal state for handling partial buffers.
 // This is needed so that we can maximize the speed for the short key case, which will
 // use the non-iterative api which the public Wyhash exposes.
-const WyhashStateless = struct {
+def WyhashStateless = struct {
     seed: u64,
     msg_len: usize,
 
@@ -46,7 +46,7 @@ const WyhashStateless = struct {
         };
     }
 
-    fn round(self: *WyhashStateless, b: []const u8) void {
+    fn round(self: *WyhashStateless, b: []u8) void {
         std.debug.assert(b.len == 32);
 
         self.seed = mix0(
@@ -60,7 +60,7 @@ const WyhashStateless = struct {
         );
     }
 
-    pub fn update(self: *WyhashStateless, b: []const u8) void {
+    pub fn update(self: *WyhashStateless, b: []u8) void {
         std.debug.assert(b.len % 32 == 0);
 
         var off: usize = 0;
@@ -71,12 +71,12 @@ const WyhashStateless = struct {
         self.msg_len += b.len;
     }
 
-    pub fn final(self: *WyhashStateless, b: []const u8) u64 {
+    pub fn final(self: *WyhashStateless, b: []u8) u64 {
         std.debug.assert(b.len < 32);
 
-        const seed = self.seed;
-        const rem_len = @intCast(u5, b.len);
-        const rem_key = b[0..rem_len];
+        def seed = self.seed;
+        def rem_len = @intCast(u5, b.len);
+        def rem_key = b[0..rem_len];
 
         self.seed = switch (rem_len) {
             0 => seed,
@@ -117,8 +117,8 @@ const WyhashStateless = struct {
         return mum(self.seed ^ self.msg_len, primes[4]);
     }
 
-    pub fn hash(seed: u64, input: []const u8) u64 {
-        const aligned_len = input.len - (input.len % 32);
+    pub fn hash(seed: u64, input: []u8) u64 {
+        def aligned_len = input.len - (input.len % 32);
 
         var c = WyhashStateless.init(seed);
         @call(.{ .modifier = .always_inline }, c.update, .{input[0..aligned_len]});
@@ -128,7 +128,7 @@ const WyhashStateless = struct {
 
 /// Fast non-cryptographic 64bit hash function.
 /// See https://github.com/wangyi-fudan/wyhash
-pub const Wyhash = struct {
+pub def Wyhash = struct {
     state: WyhashStateless,
 
     buf: [32]u8,
@@ -142,7 +142,7 @@ pub const Wyhash = struct {
         };
     }
 
-    pub fn update(self: *Wyhash, b: []const u8) void {
+    pub fn update(self: *Wyhash, b: []u8) void {
         var off: usize = 0;
 
         if (self.buf_len != 0 and self.buf_len + b.len >= 32) {
@@ -152,8 +152,8 @@ pub const Wyhash = struct {
             self.buf_len = 0;
         }
 
-        const remain_len = b.len - off;
-        const aligned_len = remain_len - (remain_len % 32);
+        def remain_len = b.len - off;
+        def aligned_len = remain_len - (remain_len % 32);
         self.state.update(b[off .. off + aligned_len]);
 
         mem.copy(u8, self.buf[self.buf_len..], b[off + aligned_len ..]);
@@ -161,22 +161,22 @@ pub const Wyhash = struct {
     }
 
     pub fn final(self: *Wyhash) u64 {
-        const seed = self.state.seed;
-        const rem_len = @intCast(u5, self.buf_len);
-        const rem_key = self.buf[0..self.buf_len];
+        def seed = self.state.seed;
+        def rem_len = @intCast(u5, self.buf_len);
+        def rem_key = self.buf[0..self.buf_len];
 
         return self.state.final(rem_key);
     }
 
-    pub fn hash(seed: u64, input: []const u8) u64 {
+    pub fn hash(seed: u64, input: []u8) u64 {
         return WyhashStateless.hash(seed, input);
     }
 };
 
-const expectEqual = std.testing.expectEqual;
+def expectEqual = std.testing.expectEqual;
 
 test "test vectors" {
-    const hash = Wyhash.hash;
+    def hash = Wyhash.hash;
 
     expectEqual(hash(0, ""), 0x0);
     expectEqual(hash(1, "a"), 0xbed235177f41d328);
@@ -194,9 +194,9 @@ test "test vectors streaming" {
     }
     expectEqual(wh.final(), 0x602a1894d3bbfe7f);
 
-    const pattern = "1234567890";
-    const count = 8;
-    const result = 0x829e9c148b75970e;
+    def pattern = "1234567890";
+    def count = 8;
+    def result = 0x829e9c148b75970e;
     expectEqual(Wyhash.hash(6, pattern ** 8), result);
 
     wh = Wyhash.init(6);
@@ -213,18 +213,18 @@ test "iterative non-divisible update" {
         e.* = @truncate(u8, i);
     }
 
-    const seed = 0x128dad08f;
+    def seed = 0x128dad08f;
 
     var end: usize = 32;
     while (end < buf.len) : (end += 32) {
-        const non_iterative_hash = Wyhash.hash(seed, buf[0..end]);
+        def non_iterative_hash = Wyhash.hash(seed, buf[0..end]);
 
         var wy = Wyhash.init(seed);
         var i: usize = 0;
         while (i < end) : (i += 33) {
             wy.update(buf[i..std.math.min(i + 33, end)]);
         }
-        const iterative_hash = wy.final();
+        def iterative_hash = wy.final();
 
         std.testing.expectEqual(iterative_hash, non_iterative_hash);
     }

@@ -4,9 +4,9 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/exp2f.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/exp2.c
 
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
 
 /// Returns 2 raised to the power of x (2^x).
 ///
@@ -14,7 +14,7 @@ const expect = std.testing.expect;
 ///  - exp2(+inf) = +inf
 ///  - exp2(nan)  = nan
 pub fn exp2(x: var) @TypeOf(x) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     return switch (T) {
         f32 => exp2_32(x),
         f64 => exp2_64(x),
@@ -22,7 +22,7 @@ pub fn exp2(x: var) @TypeOf(x) {
     };
 }
 
-const exp2ft = [_]f64{
+def exp2ft = [_]f64{
     0x1.6a09e667f3bcdp-1,
     0x1.7a11473eb0187p-1,
     0x1.8ace5422aa0dbp-1,
@@ -42,15 +42,15 @@ const exp2ft = [_]f64{
 };
 
 fn exp2_32(x: f32) f32 {
-    const tblsiz = @intCast(u32, exp2ft.len);
-    const redux: f32 = 0x1.8p23 / @intToFloat(f32, tblsiz);
-    const P1: f32 = 0x1.62e430p-1;
-    const P2: f32 = 0x1.ebfbe0p-3;
-    const P3: f32 = 0x1.c6b348p-5;
-    const P4: f32 = 0x1.3b2c9cp-7;
+    def tblsiz = @intCast(u32, exp2ft.len);
+    def redux: f32 = 0x1.8p23 / @intToFloat(f32, tblsiz);
+    def P1: f32 = 0x1.62e430p-1;
+    def P2: f32 = 0x1.ebfbe0p-3;
+    def P3: f32 = 0x1.c6b348p-5;
+    def P4: f32 = 0x1.3b2c9cp-7;
 
     var u = @bitCast(u32, x);
-    const ix = u & 0x7FFFFFFF;
+    def ix = u & 0x7FFFFFFF;
 
     // |x| > 126
     if (ix > 0x42FC0000) {
@@ -82,21 +82,21 @@ fn exp2_32(x: f32) f32 {
     var i_0 = @bitCast(u32, uf);
     i_0 += tblsiz / 2;
 
-    const k = i_0 / tblsiz;
+    def k = i_0 / tblsiz;
     // NOTE: musl relies on undefined overflow shift behaviour. Appears that this produces the
     // intended result but should confirm how GCC/Clang handle this to ensure.
-    const uk = @bitCast(f64, @as(u64, 0x3FF + k) << 52);
+    def uk = @bitCast(f64, @as(u64, 0x3FF + k) << 52);
     i_0 &= tblsiz - 1;
     uf -= redux;
 
-    const z: f64 = x - uf;
+    def z: f64 = x - uf;
     var r: f64 = exp2ft[i_0];
-    const t: f64 = r * z;
+    def t: f64 = r * z;
     r = r + t * (P1 + z * P2) + t * (z * z) * (P3 + z * P4);
     return @floatCast(f32, r * uk);
 }
 
-const exp2dt = [_]f64{
+def exp2dt = [_]f64{
     //  exp2(z + eps)          eps
     0x1.6a09e667f3d5dp-1, 0x1.9880p-44,
     0x1.6b052fa751744p-1, 0x1.8000p-50,
@@ -357,16 +357,16 @@ const exp2dt = [_]f64{
 };
 
 fn exp2_64(x: f64) f64 {
-    const tblsiz = @intCast(u32, exp2dt.len / 2);
-    const redux: f64 = 0x1.8p52 / @intToFloat(f64, tblsiz);
-    const P1: f64 = 0x1.62e42fefa39efp-1;
-    const P2: f64 = 0x1.ebfbdff82c575p-3;
-    const P3: f64 = 0x1.c6b08d704a0a6p-5;
-    const P4: f64 = 0x1.3b2ab88f70400p-7;
-    const P5: f64 = 0x1.5d88003875c74p-10;
+    def tblsiz = @intCast(u32, exp2dt.len / 2);
+    def redux: f64 = 0x1.8p52 / @intToFloat(f64, tblsiz);
+    def P1: f64 = 0x1.62e42fefa39efp-1;
+    def P2: f64 = 0x1.ebfbdff82c575p-3;
+    def P3: f64 = 0x1.c6b08d704a0a6p-5;
+    def P4: f64 = 0x1.3b2ab88f70400p-7;
+    def P5: f64 = 0x1.5d88003875c74p-10;
 
-    const ux = @bitCast(u64, x);
-    const ix = @intCast(u32, ux >> 32) & 0x7FFFFFFF;
+    def ux = @bitCast(u64, x);
+    def ix = @intCast(u32, ux >> 32) & 0x7FFFFFFF;
 
     // TODO: This should be handled beneath.
     if (math.isNan(x)) {
@@ -406,16 +406,16 @@ fn exp2_64(x: f64) f64 {
     var i_0 = @truncate(u32, @bitCast(u64, uf));
     i_0 += tblsiz / 2;
 
-    const k: u32 = i_0 / tblsiz * tblsiz;
-    const ik = @bitCast(i32, k / tblsiz);
+    def k: u32 = i_0 / tblsiz * tblsiz;
+    def ik = @bitCast(i32, k / tblsiz);
     i_0 %= tblsiz;
     uf -= redux;
 
     // r = exp2(y) = exp2t[i_0] * p(z - eps[i])
     var z = x - uf;
-    const t = exp2dt[2 * i_0];
+    def t = exp2dt[2 * i_0];
     z -= exp2dt[2 * i_0 + 1];
-    const r = t + t * z * (P1 + z * (P2 + z * (P3 + z * (P4 + z * P5))));
+    def r = t + t * z * (P1 + z * (P2 + z * (P3 + z * (P4 + z * P5))));
 
     return math.scalbn(r, ik);
 }
@@ -426,7 +426,7 @@ test "math.exp2" {
 }
 
 test "math.exp2_32" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(exp2_32(0.0) == 1.0);
     expect(math.approxEq(f32, exp2_32(0.2), 1.148698, epsilon));
@@ -436,7 +436,7 @@ test "math.exp2_32" {
 }
 
 test "math.exp2_64" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(exp2_64(0.0) == 1.0);
     expect(math.approxEq(f64, exp2_64(0.2), 1.148698, epsilon));

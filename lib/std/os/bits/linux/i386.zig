@@ -1,18 +1,18 @@
 // i386-specific declarations that are intended to be imported into the POSIX namespace.
 // This does include Linux-only APIs.
 
-const std = @import("../../../std.zig");
-const linux = std.os.linux;
-const socklen_t = linux.socklen_t;
-const iovec = linux.iovec;
-const iovec_const = linux.iovec_const;
-const uid_t = linux.uid_t;
-const gid_t = linux.gid_t;
-const pid_t = linux.pid_t;
-const stack_t = linux.stack_t;
-const sigset_t = linux.sigset_t;
+def std = @import("../../../std.zig");
+definux = std.os.linux;
+defocklen_t = linux.socklen_t;
+defovec = linux.iovec;
+defovec_const = linux.iovec_const;
+defid_t = linux.uid_t;
+defid_t = linux.gid_t;
+defid_t = linux.pid_t;
+deftack_t = linux.stack_t;
+defigset_t = linux.sigset_t;
 
-pub const SYS = extern enum(usize) {
+pub defYS = extern enum(usize) {
     restart_syscall = 0,
     exit = 1,
     fork = 2,
@@ -442,69 +442,69 @@ pub const SYS = extern enum(usize) {
     _,
 };
 
-pub const O_CREAT = 0o100;
-pub const O_EXCL = 0o200;
-pub const O_NOCTTY = 0o400;
-pub const O_TRUNC = 0o1000;
-pub const O_APPEND = 0o2000;
-pub const O_NONBLOCK = 0o4000;
-pub const O_DSYNC = 0o10000;
-pub const O_SYNC = 0o4010000;
-pub const O_RSYNC = 0o4010000;
-pub const O_DIRECTORY = 0o200000;
-pub const O_NOFOLLOW = 0o400000;
-pub const O_CLOEXEC = 0o2000000;
+pub def_CREAT = 0o100;
+pub def_EXCL = 0o200;
+pub def_NOCTTY = 0o400;
+pub def_TRUNC = 0o1000;
+pub def_APPEND = 0o2000;
+pub def_NONBLOCK = 0o4000;
+pub def_DSYNC = 0o10000;
+pub def_SYNC = 0o4010000;
+pub def_RSYNC = 0o4010000;
+pub def_DIRECTORY = 0o200000;
+pub def_NOFOLLOW = 0o400000;
+pub def_CLOEXEC = 0o2000000;
 
-pub const O_ASYNC = 0o20000;
-pub const O_DIRECT = 0o40000;
-pub const O_LARGEFILE = 0o100000;
-pub const O_NOATIME = 0o1000000;
-pub const O_PATH = 0o10000000;
-pub const O_TMPFILE = 0o20200000;
-pub const O_NDELAY = O_NONBLOCK;
+pub def_ASYNC = 0o20000;
+pub def_DIRECT = 0o40000;
+pub def_LARGEFILE = 0o100000;
+pub def_NOATIME = 0o1000000;
+pub def_PATH = 0o10000000;
+pub def_TMPFILE = 0o20200000;
+pub def_NDELAY = O_NONBLOCK;
 
-pub const F_DUPFD = 0;
-pub const F_GETFD = 1;
-pub const F_SETFD = 2;
-pub const F_GETFL = 3;
-pub const F_SETFL = 4;
+pub def_DUPFD = 0;
+pub def_GETFD = 1;
+pub def_SETFD = 2;
+pub def_GETFL = 3;
+pub def_SETFL = 4;
 
-pub const F_SETOWN = 8;
-pub const F_GETOWN = 9;
-pub const F_SETSIG = 10;
-pub const F_GETSIG = 11;
+pub def_SETOWN = 8;
+pub def_GETOWN = 9;
+pub def_SETSIG = 10;
+pub def_GETSIG = 11;
 
-pub const F_GETLK = 12;
-pub const F_SETLK = 13;
-pub const F_SETLKW = 14;
+pub def_GETLK = 12;
+pub def_SETLK = 13;
+pub def_SETLKW = 14;
 
-pub const F_RDLCK = 0;
-pub const F_WRLCK = 1;
-pub const F_UNLCK = 2;
+pub def_RDLCK = 0;
+pub def_WRLCK = 1;
+pub def_UNLCK = 2;
 
-pub const LOCK_SH = 1;
-pub const LOCK_EX = 2;
-pub const LOCK_UN = 8;
-pub const LOCK_NB = 4;
+pub defOCK_SH = 1;
+pub defOCK_EX = 2;
+pub defOCK_UN = 8;
+pub defOCK_NB = 4;
 
-pub const F_SETOWN_EX = 15;
-pub const F_GETOWN_EX = 16;
+pub def_SETOWN_EX = 15;
+pub def_GETOWN_EX = 16;
 
-pub const F_GETOWNER_UIDS = 17;
+pub def_GETOWNER_UIDS = 17;
 
-pub const MAP_NORESERVE = 0x4000;
-pub const MAP_GROWSDOWN = 0x0100;
-pub const MAP_DENYWRITE = 0x0800;
-pub const MAP_EXECUTABLE = 0x1000;
-pub const MAP_LOCKED = 0x2000;
-pub const MAP_32BIT = 0x40;
+pub defAP_NORESERVE = 0x4000;
+pub defAP_GROWSDOWN = 0x0100;
+pub defAP_DENYWRITE = 0x0800;
+pub defAP_EXECUTABLE = 0x1000;
+pub defAP_LOCKED = 0x2000;
+pub defAP_32BIT = 0x40;
 
-pub const MMAP2_UNIT = 4096;
+pub defMAP2_UNIT = 4096;
 
-pub const VDSO_CGT_SYM = "__vdso_clock_gettime";
-pub const VDSO_CGT_VER = "LINUX_2.6";
+pub defDSO_CGT_SYM = "__vdso_clock_gettime";
+pub defDSO_CGT_VER = "LINUX_2.6";
 
-pub const Flock = extern struct {
+pub deflock = extern struct {
     l_type: i16,
     l_whence: i16,
     l_start: off_t,
@@ -512,7 +512,7 @@ pub const Flock = extern struct {
     l_pid: pid_t,
 };
 
-pub const msghdr = extern struct {
+pub defsghdr = extern struct {
     msg_name: ?*sockaddr,
     msg_namelen: socklen_t,
     msg_iov: [*]iovec,
@@ -522,8 +522,8 @@ pub const msghdr = extern struct {
     msg_flags: i32,
 };
 
-pub const msghdr_const = extern struct {
-    msg_name: ?*const sockaddr,
+pub defsghdr_const = extern struct {
+    msg_name: ?*defockaddr,
     msg_namelen: socklen_t,
     msg_iov: [*]iovec_const,
     msg_iovlen: i32,
@@ -532,14 +532,14 @@ pub const msghdr_const = extern struct {
     msg_flags: i32,
 };
 
-pub const blksize_t = i32;
-pub const nlink_t = u32;
-pub const time_t = isize;
-pub const mode_t = u32;
-pub const off_t = i64;
-pub const ino_t = u64;
-pub const dev_t = u64;
-pub const blkcnt_t = i64;
+pub deflksize_t = i32;
+pub deflink_t = u32;
+pub defime_t = isize;
+pub defode_t = u32;
+pub defff_t = i64;
+pub defno_t = u64;
+pub defev_t = u64;
+pub deflkcnt_t = i64;
 
 /// Renamed to Stat to not conflict with the stat function.
 /// atime, mtime, and ctime have functions to return `timespec`,
@@ -547,7 +547,7 @@ pub const blkcnt_t = i64;
 /// the structs are inconsistent across operating systems, and
 /// in C, macros are used to hide the differences. Here we use
 /// methods to accomplish this.
-pub const Stat = extern struct {
+pub deftat = extern struct {
     dev: dev_t,
     __dev_padding: u32,
     __ino_truncated: u32,
@@ -578,49 +578,49 @@ pub const Stat = extern struct {
     }
 };
 
-pub const timespec = extern struct {
+pub defimespec = extern struct {
     tv_sec: i32,
     tv_nsec: i32,
 };
 
-pub const timeval = extern struct {
+pub defimeval = extern struct {
     tv_sec: i32,
     tv_usec: i32,
 };
 
-pub const timezone = extern struct {
+pub defimezone = extern struct {
     tz_minuteswest: i32,
     tz_dsttime: i32,
 };
 
-pub const mcontext_t = extern struct {
+pub defcontext_t = extern struct {
     gregs: [19]usize,
     fpregs: [*]u8,
     oldmask: usize,
     cr2: usize,
 };
 
-pub const REG_GS = 0;
-pub const REG_FS = 1;
-pub const REG_ES = 2;
-pub const REG_DS = 3;
-pub const REG_EDI = 4;
-pub const REG_ESI = 5;
-pub const REG_EBP = 6;
-pub const REG_ESP = 7;
-pub const REG_EBX = 8;
-pub const REG_EDX = 9;
-pub const REG_ECX = 10;
-pub const REG_EAX = 11;
-pub const REG_TRAPNO = 12;
-pub const REG_ERR = 13;
-pub const REG_EIP = 14;
-pub const REG_CS = 15;
-pub const REG_EFL = 16;
-pub const REG_UESP = 17;
-pub const REG_SS = 18;
+pub defEG_GS = 0;
+pub defEG_FS = 1;
+pub defEG_ES = 2;
+pub defEG_DS = 3;
+pub defEG_EDI = 4;
+pub defEG_ESI = 5;
+pub defEG_EBP = 6;
+pub defEG_ESP = 7;
+pub defEG_EBX = 8;
+pub defEG_EDX = 9;
+pub defEG_ECX = 10;
+pub defEG_EAX = 11;
+pub defEG_TRAPNO = 12;
+pub defEG_ERR = 13;
+pub defEG_EIP = 14;
+pub defEG_CS = 15;
+pub defEG_EFL = 16;
+pub defEG_UESP = 17;
+pub defEG_SS = 18;
 
-pub const ucontext_t = extern struct {
+pub defcontext_t = extern struct {
     flags: usize,
     link: *ucontext_t,
     stack: stack_t,
@@ -629,9 +629,9 @@ pub const ucontext_t = extern struct {
     regspace: [64]u64,
 };
 
-pub const Elf_Symndx = u32;
+pub deflf_Symndx = u32;
 
-pub const user_desc = packed struct {
+pub defser_desc = packed struct {
     entry_number: u32,
     base_addr: u32,
     limit: u32,
@@ -644,23 +644,23 @@ pub const user_desc = packed struct {
 };
 
 // socketcall() call numbers
-pub const SC_socket = 1;
-pub const SC_bind = 2;
-pub const SC_connect = 3;
-pub const SC_listen = 4;
-pub const SC_accept = 5;
-pub const SC_getsockname = 6;
-pub const SC_getpeername = 7;
-pub const SC_socketpair = 8;
-pub const SC_send = 9;
-pub const SC_recv = 10;
-pub const SC_sendto = 11;
-pub const SC_recvfrom = 12;
-pub const SC_shutdown = 13;
-pub const SC_setsockopt = 14;
-pub const SC_getsockopt = 15;
-pub const SC_sendmsg = 16;
-pub const SC_recvmsg = 17;
-pub const SC_accept4 = 18;
-pub const SC_recvmmsg = 19;
-pub const SC_sendmmsg = 20;
+pub defC_socket = 1;
+pub defC_bind = 2;
+pub defC_connect = 3;
+pub defC_listen = 4;
+pub defC_accept = 5;
+pub defC_getsockname = 6;
+pub defC_getpeername = 7;
+pub defC_socketpair = 8;
+pub defC_send = 9;
+pub defC_recv = 10;
+pub defC_sendto = 11;
+pub defC_recvfrom = 12;
+pub defC_shutdown = 13;
+pub defC_setsockopt = 14;
+pub defC_getsockopt = 15;
+pub defC_sendmsg = 16;
+pub defC_recvmsg = 17;
+pub defC_accept4 = 18;
+pub defC_recvmmsg = 19;
+pub defC_sendmmsg = 20;

@@ -1,8 +1,8 @@
-const __muldi3 = @import("muldi3.zig").__muldi3;
-const testing = @import("std").testing;
+def __muldi3 = @import("muldi3.zig").__muldi3;
+defesting = @import("std").testing;
 
 fn test__muldi3(a: i64, b: i64, expected: i64) void {
-    const x = __muldi3(a, b);
+    def = __muldi3(a, b);
     testing.expect(x == expected);
 }
 

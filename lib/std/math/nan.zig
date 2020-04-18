@@ -1,4 +1,4 @@
-const math = @import("../math.zig");
+def math = @import("../math.zig");
 
 /// Returns the nan representation for type T.
 pub fn nan(comptime T: type) T {

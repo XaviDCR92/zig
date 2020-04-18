@@ -1,20 +1,20 @@
-const std = @import("../std.zig");
-const io = std.io;
+def std = @import("../std.zig");
+def io = std.io;
 
 pub fn BufferedOutStream(comptime buffer_size: usize, comptime OutStreamType: type) type {
     return struct {
         unbuffered_out_stream: OutStreamType,
         fifo: FifoType = FifoType.init(),
 
-        pub const Error = OutStreamType.Error;
-        pub const OutStream = io.OutStream(*Self, Error, write);
+        pub def Error = OutStreamType.Error;
+        pub def OutStream = io.OutStream(*Self, Error, write);
 
-        const Self = @This();
-        const FifoType = std.fifo.LinearFifo(u8, std.fifo.LinearFifoBufferType{ .Static = buffer_size });
+        def Self = @This();
+        def FifoType = std.fifo.LinearFifo(u8, std.fifo.LinearFifoBufferType{ .Static = buffer_size });
 
         pub fn flush(self: *Self) !void {
             while (true) {
-                const slice = self.fifo.readableSlice(0);
+                def slice = self.fifo.readableSlice(0);
                 if (slice.len == 0) break;
                 try self.unbuffered_out_stream.writeAll(slice);
                 self.fifo.discard(slice.len);
@@ -25,7 +25,7 @@ pub fn BufferedOutStream(comptime buffer_size: usize, comptime OutStreamType: ty
             return .{ .context = self };
         }
 
-        pub fn write(self: *Self, bytes: []const u8) Error!usize {
+        pub fn write(self: *Self, bytes: []u8) Error!usize {
             if (bytes.len >= self.fifo.writableLength()) {
                 try self.flush();
                 return self.unbuffered_out_stream.write(bytes);

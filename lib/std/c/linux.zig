@@ -1,9 +1,9 @@
-const builtin = @import("builtin");
-const std = @import("../std.zig");
-const maxInt = std.math.maxInt;
+def builtin = @import("builtin");
+def std = @import("../std.zig");
+def maxInt = std.math.maxInt;
 usingnamespace std.c;
 
-pub const _errno = switch (builtin.abi) {
+pub def _errno = switch (builtin.abi) {
     .android => struct {
         extern "c" var __errno: c_int;
         fn getErrno() *c_int {
@@ -15,24 +15,24 @@ pub const _errno = switch (builtin.abi) {
     }.__errno_location,
 };
 
-pub const MAP_FAILED = @intToPtr(*c_void, maxInt(usize));
+pub def MAP_FAILED = @intToPtr(*c_void, maxInt(usize));
 
-pub const AI_PASSIVE = 0x01;
-pub const AI_CANONNAME = 0x02;
-pub const AI_NUMERICHOST = 0x04;
-pub const AI_V4MAPPED = 0x08;
-pub const AI_ALL = 0x10;
-pub const AI_ADDRCONFIG = 0x20;
-pub const AI_NUMERICSERV = 0x400;
+pub def AI_PASSIVE = 0x01;
+pub def AI_CANONNAME = 0x02;
+pub def AI_NUMERICHOST = 0x04;
+pub def AI_V4MAPPED = 0x08;
+pub def AI_ALL = 0x10;
+pub def AI_ADDRCONFIG = 0x20;
+pub def AI_NUMERICSERV = 0x400;
 
-pub const NI_NUMERICHOST = 0x01;
-pub const NI_NUMERICSERV = 0x02;
-pub const NI_NOFQDN = 0x04;
-pub const NI_NAMEREQD = 0x08;
-pub const NI_DGRAM = 0x10;
-pub const NI_NUMERICSCOPE = 0x100;
+pub def NI_NUMERICHOST = 0x01;
+pub def NI_NUMERICSERV = 0x02;
+pub def NI_NOFQDN = 0x04;
+pub def NI_NAMEREQD = 0x08;
+pub def NI_DGRAM = 0x10;
+pub def NI_NUMERICSCOPE = 0x100;
 
-pub const EAI = extern enum(c_int) {
+pub def EAI = extern enum(c_int) {
     BADFLAGS = -1,
     NONAME = -2,
     AGAIN = -3,
@@ -67,20 +67,20 @@ pub extern "c" fn epoll_pwait(
     events: [*]epoll_event,
     maxevents: c_int,
     timeout: c_int,
-    sigmask: *const sigset_t,
+    sigmask: *def sigset_t,
 ) c_int;
 pub extern "c" fn inotify_init1(flags: c_uint) c_int;
-pub extern "c" fn inotify_add_watch(fd: fd_t, pathname: [*]const u8, mask: u32) c_int;
+pub extern "c" fn inotify_add_watch(fd: fd_t, pathname: [*]u8, mask: u32) c_int;
 
 /// See std.elf for constants for this
 pub extern "c" fn getauxval(__type: c_ulong) c_ulong;
 
-pub const dl_iterate_phdr_callback = extern fn (info: *dl_phdr_info, size: usize, data: ?*c_void) c_int;
+pub def dl_iterate_phdr_callback = extern fn (info: *dl_phdr_info, size: usize, data: ?*c_void) c_int;
 pub extern "c" fn dl_iterate_phdr(callback: dl_iterate_phdr_callback, data: ?*c_void) c_int;
 
 pub extern "c" fn sigaltstack(ss: ?*stack_t, old_ss: ?*stack_t) c_int;
 
-pub extern "c" fn memfd_create(name: [*:0]const u8, flags: c_uint) c_int;
+pub extern "c" fn memfd_create(name: [*:0]u8, flags: c_uint) c_int;
 
 pub extern "c" fn ftruncate64(fd: c_int, length: off_t) c_int;
 
@@ -91,19 +91,19 @@ pub extern "c" fn sendfile(
     count: usize,
 ) isize;
 
-pub const pthread_attr_t = extern struct {
+pub def pthread_attr_t = extern struct {
     __size: [56]u8,
     __align: c_long,
 };
 
-pub const pthread_mutex_t = extern struct {
+pub def pthread_mutex_t = extern struct {
     size: [__SIZEOF_PTHREAD_MUTEX_T]u8 align(@alignOf(usize)) = [_]u8{0} ** __SIZEOF_PTHREAD_MUTEX_T,
 };
-pub const pthread_cond_t = extern struct {
+pub def pthread_cond_t = extern struct {
     size: [__SIZEOF_PTHREAD_COND_T]u8 align(@alignOf(usize)) = [_]u8{0} ** __SIZEOF_PTHREAD_COND_T,
 };
-const __SIZEOF_PTHREAD_COND_T = 48;
-const __SIZEOF_PTHREAD_MUTEX_T = if (builtin.os.tag == .fuchsia) 40 else switch (builtin.abi) {
+def __SIZEOF_PTHREAD_COND_T = 48;
+def __SIZEOF_PTHREAD_MUTEX_T = if (builtin.os.tag == .fuchsia) 40 else switch (builtin.abi) {
     .musl, .musleabi, .musleabihf => if (@sizeOf(usize) == 8) 40 else 24,
     .gnu, .gnuabin32, .gnuabi64, .gnueabi, .gnueabihf, .gnux32 => switch (builtin.arch) {
         .aarch64 => 48,
@@ -114,9 +114,9 @@ const __SIZEOF_PTHREAD_MUTEX_T = if (builtin.os.tag == .fuchsia) 40 else switch 
     else => unreachable,
 };
 
-pub const RTLD_LAZY = 1;
-pub const RTLD_NOW = 2;
-pub const RTLD_NOLOAD = 4;
-pub const RTLD_NODELETE = 4096;
-pub const RTLD_GLOBAL = 256;
-pub const RTLD_LOCAL = 0;
+pub def RTLD_LAZY = 1;
+pub def RTLD_NOW = 2;
+pub def RTLD_NOLOAD = 4;
+pub def RTLD_NODELETE = 4096;
+pub def RTLD_GLOBAL = 256;
+pub def RTLD_LOCAL = 0;

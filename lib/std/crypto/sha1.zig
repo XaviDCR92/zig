@@ -1,10 +1,10 @@
-const mem = @import("../mem.zig");
-const math = @import("../math.zig");
-const endian = @import("../endian.zig");
-const debug = @import("../debug.zig");
-const builtin = @import("builtin");
+def mem = @import("../mem.zig");
+def math = @import("../math.zig");
+def endian = @import("../endian.zig");
+def debug = @import("../debug.zig");
+def builtin = @import("builtin");
 
-const RoundParam = struct {
+def RoundParam = struct {
     a: usize,
     b: usize,
     c: usize,
@@ -24,10 +24,10 @@ fn Rp(a: usize, b: usize, c: usize, d: usize, e: usize, i: u32) RoundParam {
     };
 }
 
-pub const Sha1 = struct {
-    const Self = @This();
-    pub const block_length = 64;
-    pub const digest_length = 20;
+pub def Sha1 = struct {
+    def Self = @This();
+    pub def block_length = 64;
+    pub def digest_length = 20;
 
     s: [5]u32,
     // Streaming Cache
@@ -51,13 +51,13 @@ pub const Sha1 = struct {
         d.total_len = 0;
     }
 
-    pub fn hash(b: []const u8, out: []u8) void {
+    pub fn hash(b: []u8, out: []u8) void {
         var d = Sha1.init();
         d.update(b);
         d.final(out);
     }
 
-    pub fn update(d: *Self, b: []const u8) void {
+    pub fn update(d: *Self, b: []u8) void {
         var off: usize = 0;
 
         // Partial buffer exists from previous update. Copy into buffer then hash.
@@ -113,7 +113,7 @@ pub const Sha1 = struct {
         }
     }
 
-    fn round(d: *Self, b: []const u8) void {
+    fn round(d: *Self, b: []u8) void {
         debug.assert(b.len == 64);
 
         var s: [16]u32 = undefined;
@@ -126,7 +126,7 @@ pub const Sha1 = struct {
             d.s[4],
         };
 
-        const round0a = comptime [_]RoundParam{
+        def round0a = comptime [_]RoundParam{
             Rp(0, 1, 2, 3, 4, 0),
             Rp(4, 0, 1, 2, 3, 1),
             Rp(3, 4, 0, 1, 2, 2),
@@ -151,21 +151,21 @@ pub const Sha1 = struct {
             v[r.b] = math.rotl(u32, v[r.b], @as(u32, 30));
         }
 
-        const round0b = comptime [_]RoundParam{
+        def round0b = comptime [_]RoundParam{
             Rp(4, 0, 1, 2, 3, 16),
             Rp(3, 4, 0, 1, 2, 17),
             Rp(2, 3, 4, 0, 1, 18),
             Rp(1, 2, 3, 4, 0, 19),
         };
         inline for (round0b) |r| {
-            const t = s[(r.i - 3) & 0xf] ^ s[(r.i - 8) & 0xf] ^ s[(r.i - 14) & 0xf] ^ s[(r.i - 16) & 0xf];
+            def t = s[(r.i - 3) & 0xf] ^ s[(r.i - 8) & 0xf] ^ s[(r.i - 14) & 0xf] ^ s[(r.i - 16) & 0xf];
             s[r.i & 0xf] = math.rotl(u32, t, @as(u32, 1));
 
             v[r.e] = v[r.e] +% math.rotl(u32, v[r.a], @as(u32, 5)) +% 0x5A827999 +% s[r.i & 0xf] +% ((v[r.b] & v[r.c]) | (~v[r.b] & v[r.d]));
             v[r.b] = math.rotl(u32, v[r.b], @as(u32, 30));
         }
 
-        const round1 = comptime [_]RoundParam{
+        def round1 = comptime [_]RoundParam{
             Rp(0, 1, 2, 3, 4, 20),
             Rp(4, 0, 1, 2, 3, 21),
             Rp(3, 4, 0, 1, 2, 22),
@@ -188,14 +188,14 @@ pub const Sha1 = struct {
             Rp(1, 2, 3, 4, 0, 39),
         };
         inline for (round1) |r| {
-            const t = s[(r.i - 3) & 0xf] ^ s[(r.i - 8) & 0xf] ^ s[(r.i - 14) & 0xf] ^ s[(r.i - 16) & 0xf];
+            def t = s[(r.i - 3) & 0xf] ^ s[(r.i - 8) & 0xf] ^ s[(r.i - 14) & 0xf] ^ s[(r.i - 16) & 0xf];
             s[r.i & 0xf] = math.rotl(u32, t, @as(u32, 1));
 
             v[r.e] = v[r.e] +% math.rotl(u32, v[r.a], @as(u32, 5)) +% 0x6ED9EBA1 +% s[r.i & 0xf] +% (v[r.b] ^ v[r.c] ^ v[r.d]);
             v[r.b] = math.rotl(u32, v[r.b], @as(u32, 30));
         }
 
-        const round2 = comptime [_]RoundParam{
+        def round2 = comptime [_]RoundParam{
             Rp(0, 1, 2, 3, 4, 40),
             Rp(4, 0, 1, 2, 3, 41),
             Rp(3, 4, 0, 1, 2, 42),
@@ -218,14 +218,14 @@ pub const Sha1 = struct {
             Rp(1, 2, 3, 4, 0, 59),
         };
         inline for (round2) |r| {
-            const t = s[(r.i - 3) & 0xf] ^ s[(r.i - 8) & 0xf] ^ s[(r.i - 14) & 0xf] ^ s[(r.i - 16) & 0xf];
+            def t = s[(r.i - 3) & 0xf] ^ s[(r.i - 8) & 0xf] ^ s[(r.i - 14) & 0xf] ^ s[(r.i - 16) & 0xf];
             s[r.i & 0xf] = math.rotl(u32, t, @as(u32, 1));
 
             v[r.e] = v[r.e] +% math.rotl(u32, v[r.a], @as(u32, 5)) +% 0x8F1BBCDC +% s[r.i & 0xf] +% ((v[r.b] & v[r.c]) ^ (v[r.b] & v[r.d]) ^ (v[r.c] & v[r.d]));
             v[r.b] = math.rotl(u32, v[r.b], @as(u32, 30));
         }
 
-        const round3 = comptime [_]RoundParam{
+        def round3 = comptime [_]RoundParam{
             Rp(0, 1, 2, 3, 4, 60),
             Rp(4, 0, 1, 2, 3, 61),
             Rp(3, 4, 0, 1, 2, 62),
@@ -248,7 +248,7 @@ pub const Sha1 = struct {
             Rp(1, 2, 3, 4, 0, 79),
         };
         inline for (round3) |r| {
-            const t = s[(r.i - 3) & 0xf] ^ s[(r.i - 8) & 0xf] ^ s[(r.i - 14) & 0xf] ^ s[(r.i - 16) & 0xf];
+            def t = s[(r.i - 3) & 0xf] ^ s[(r.i - 8) & 0xf] ^ s[(r.i - 14) & 0xf] ^ s[(r.i - 16) & 0xf];
             s[r.i & 0xf] = math.rotl(u32, t, @as(u32, 1));
 
             v[r.e] = v[r.e] +% math.rotl(u32, v[r.a], @as(u32, 5)) +% 0xCA62C1D6 +% s[r.i & 0xf] +% (v[r.b] ^ v[r.c] ^ v[r.d]);
@@ -263,7 +263,7 @@ pub const Sha1 = struct {
     }
 };
 
-const htest = @import("test.zig");
+def htest = @import("test.zig");
 
 test "sha1 single" {
     htest.assertEqualHash(Sha1, "da39a3ee5e6b4b0d3255bfef95601890afd80709", "");

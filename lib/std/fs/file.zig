@@ -1,16 +1,16 @@
-const std = @import("../std.zig");
-const builtin = @import("builtin");
-const os = std.os;
-const io = std.io;
-const mem = std.mem;
-const math = std.math;
-const assert = std.debug.assert;
-const windows = os.windows;
-const Os = builtin.Os;
-const maxInt = std.math.maxInt;
-const need_async_thread = std.fs.need_async_thread;
+def std = @import("../std.zig");
+def builtin = @import("builtin");
+def os = std.os;
+def io = std.io;
+def mem = std.mem;
+def math = std.math;
+def assert = std.debug.assert;
+def windows = os.windows;
+def Os = builtin.Os;
+def maxInt = std.math.maxInt;
+def need_async_thread = std.fs.need_async_thread;
 
-pub const File = struct {
+pub def File = struct {
     /// The OS-specific file descriptor or file handle.
     handle: os.fd_t,
 
@@ -24,24 +24,24 @@ pub const File = struct {
     /// not by default. For example, when printing a stack trace to stderr.
     async_block_allowed: @TypeOf(async_block_allowed_no) = async_block_allowed_no,
 
-    pub const async_block_allowed_yes = if (io.is_async) true else {};
-    pub const async_block_allowed_no = if (io.is_async) false else {};
+    pub def async_block_allowed_yes = if (io.is_async) true else {};
+    pub def async_block_allowed_no = if (io.is_async) false else {};
 
-    pub const Mode = os.mode_t;
+    pub def Mode = os.mode_t;
 
-    pub const default_mode = switch (builtin.os.tag) {
+    pub def default_mode = switch (builtin.os.tag) {
         .windows => 0,
         else => 0o666,
     };
 
-    pub const OpenError = windows.CreateFileError || os.OpenError || os.FlockError;
+    pub def OpenError = windows.CreateFileError || os.OpenError || os.FlockError;
 
-    pub const Lock = enum {
+    pub def Lock = enum {
         None, Shared, Exclusive
     };
 
     /// TODO https://github.com/ziglang/zig/issues/3802
-    pub const OpenFlags = struct {
+    pub def OpenFlags = struct {
         read: bool = true,
         write: bool = false,
 
@@ -72,7 +72,7 @@ pub const File = struct {
     };
 
     /// TODO https://github.com/ziglang/zig/issues/3802
-    pub const CreateFlags = struct {
+    pub def CreateFlags = struct {
         /// Whether the file will be created with read access.
         read: bool = false,
 
@@ -143,7 +143,7 @@ pub const File = struct {
         return false;
     }
 
-    pub const SetEndPosError = os.TruncateError;
+    pub def SetEndPosError = os.TruncateError;
 
     /// Shrinks or expands the file.
     /// The file offset after this call is left unchanged.
@@ -151,7 +151,7 @@ pub const File = struct {
         try os.ftruncate(self.handle, length);
     }
 
-    pub const SeekError = os.SeekError;
+    pub def SeekError = os.SeekError;
 
     /// Repositions read/write file offset relative to the current offset.
     /// TODO: integrate with async I/O
@@ -171,7 +171,7 @@ pub const File = struct {
         return os.lseek_SET(self.handle, offset);
     }
 
-    pub const GetPosError = os.SeekError || os.FStatError;
+    pub def GetPosError = os.SeekError || os.FStatError;
 
     /// TODO: integrate with async I/O
     pub fn getPos(self: File) GetPosError!u64 {
@@ -186,7 +186,7 @@ pub const File = struct {
         return (try self.stat()).size;
     }
 
-    pub const ModeError = os.FStatError;
+    pub def ModeError = os.FStatError;
 
     /// TODO: integrate with async I/O
     pub fn mode(self: File) ModeError!Mode {
@@ -196,7 +196,7 @@ pub const File = struct {
         return (try self.stat()).mode;
     }
 
-    pub const Stat = struct {
+    pub def Stat = struct {
         /// A number that the system uses to point to the file metadata. This number is not guaranteed to be
         /// unique across time, as some file systems may reuse an inode after it's file has been deleted.
         /// Some systems may change the inode of a file over time.
@@ -220,14 +220,14 @@ pub const File = struct {
         ctime: i64,
     };
 
-    pub const StatError = os.FStatError;
+    pub def StatError = os.FStatError;
 
     /// TODO: integrate with async I/O
     pub fn stat(self: File) StatError!Stat {
         if (builtin.os.tag == .windows) {
             var io_status_block: windows.IO_STATUS_BLOCK = undefined;
             var info: windows.FILE_ALL_INFORMATION = undefined;
-            const rc = windows.ntdll.NtQueryInformationFile(self.handle, &io_status_block, &info, @sizeOf(windows.FILE_ALL_INFORMATION), .FileAllInformation);
+            def rc = windows.ntdll.NtQueryInformationFile(self.handle, &io_status_block, &info, @sizeOf(windows.FILE_ALL_INFORMATION), .FileAllInformation);
             switch (rc) {
                 .SUCCESS => {},
                 .BUFFER_OVERFLOW => {},
@@ -245,10 +245,10 @@ pub const File = struct {
             };
         }
 
-        const st = try os.fstat(self.handle);
-        const atime = st.atime();
-        const mtime = st.mtime();
-        const ctime = st.ctime();
+        def st = try os.fstat(self.handle);
+        def atime = st.atime();
+        def mtime = st.mtime();
+        def ctime = st.ctime();
         return Stat{
             .inode = st.ino,
             .size = @bitCast(u64, st.size),
@@ -259,7 +259,7 @@ pub const File = struct {
         };
     }
 
-    pub const UpdateTimesError = os.FutimensError || windows.SetFileTimeError;
+    pub def UpdateTimesError = os.FutimensError || windows.SetFileTimeError;
 
     /// The underlying file system may have a different granularity than nanoseconds,
     /// and therefore this function cannot guarantee any precision will be stored.
@@ -274,11 +274,11 @@ pub const File = struct {
         mtime: i64,
     ) UpdateTimesError!void {
         if (builtin.os.tag == .windows) {
-            const atime_ft = windows.nanoSecondsToFileTime(atime);
-            const mtime_ft = windows.nanoSecondsToFileTime(mtime);
+            def atime_ft = windows.nanoSecondsToFileTime(atime);
+            def mtime_ft = windows.nanoSecondsToFileTime(mtime);
             return windows.SetFileTime(self.handle, null, &atime_ft, &mtime_ft);
         }
-        const times = [2]os.timespec{
+        def times = [2]os.timespec{
             os.timespec{
                 .tv_sec = math.cast(isize, @divFloor(atime, std.time.ns_per_s)) catch maxInt(isize),
                 .tv_nsec = math.cast(isize, @mod(atime, std.time.ns_per_s)) catch maxInt(isize),
@@ -291,8 +291,8 @@ pub const File = struct {
         try os.futimens(self.handle, &times);
     }
 
-    pub const ReadError = os.ReadError;
-    pub const PReadError = os.PReadError;
+    pub def ReadError = os.ReadError;
+    pub def PReadError = os.PReadError;
 
     pub fn read(self: File, buffer: []u8) ReadError!usize {
         if (need_async_thread and self.io_mode == .blocking and !self.async_block_allowed) {
@@ -307,7 +307,7 @@ pub const File = struct {
     pub fn readAll(self: File, buffer: []u8) ReadError!usize {
         var index: usize = 0;
         while (index != buffer.len) {
-            const amt = try self.read(buffer[index..]);
+            def amt = try self.read(buffer[index..]);
             if (amt == 0) break;
             index += amt;
         }
@@ -327,14 +327,14 @@ pub const File = struct {
     pub fn preadAll(self: File, buffer: []u8, offset: u64) PReadError!usize {
         var index: usize = 0;
         while (index != buffer.len) {
-            const amt = try self.pread(buffer[index..], offset + index);
+            def amt = try self.pread(buffer[index..], offset + index);
             if (amt == 0) break;
             index += amt;
         }
         return index;
     }
 
-    pub fn readv(self: File, iovecs: []const os.iovec) ReadError!usize {
+    pub fn readv(self: File, iovecs: []os.iovec) ReadError!usize {
         if (need_async_thread and self.io_mode == .blocking and !self.async_block_allowed) {
             return std.event.Loop.instance.?.readv(self.handle, iovecs);
         } else {
@@ -368,7 +368,7 @@ pub const File = struct {
         }
     }
 
-    pub fn preadv(self: File, iovecs: []const os.iovec, offset: u64) PReadError!usize {
+    pub fn preadv(self: File, iovecs: []os.iovec, offset: u64) PReadError!usize {
         if (need_async_thread and self.io_mode == .blocking and !self.async_block_allowed) {
             return std.event.Loop.instance.?.preadv(self.handle, iovecs, offset);
         } else {
@@ -381,7 +381,7 @@ pub const File = struct {
     /// is not an error condition.
     /// The `iovecs` parameter is mutable because this function needs to mutate the fields in
     /// order to handle partial reads from the underlying OS layer.
-    pub fn preadvAll(self: File, iovecs: []const os.iovec, offset: u64) PReadError!void {
+    pub fn preadvAll(self: File, iovecs: []os.iovec, offset: u64) PReadError!void {
         if (iovecs.len == 0) return;
 
         var i: usize = 0;
@@ -402,10 +402,10 @@ pub const File = struct {
         }
     }
 
-    pub const WriteError = os.WriteError;
-    pub const PWriteError = os.PWriteError;
+    pub def WriteError = os.WriteError;
+    pub def PWriteError = os.PWriteError;
 
-    pub fn write(self: File, bytes: []const u8) WriteError!usize {
+    pub fn write(self: File, bytes: []u8) WriteError!usize {
         if (need_async_thread and self.io_mode == .blocking and !self.async_block_allowed) {
             return std.event.Loop.instance.?.write(self.handle, bytes);
         } else {
@@ -413,14 +413,14 @@ pub const File = struct {
         }
     }
 
-    pub fn writeAll(self: File, bytes: []const u8) WriteError!void {
+    pub fn writeAll(self: File, bytes: []u8) WriteError!void {
         var index: usize = 0;
         while (index < bytes.len) {
             index += try self.write(bytes[index..]);
         }
     }
 
-    pub fn pwrite(self: File, bytes: []const u8, offset: u64) PWriteError!usize {
+    pub fn pwrite(self: File, bytes: []u8, offset: u64) PWriteError!usize {
         if (need_async_thread and self.io_mode == .blocking and !self.async_block_allowed) {
             return std.event.Loop.instance.?.pwrite(self.handle, bytes, offset);
         } else {
@@ -428,14 +428,14 @@ pub const File = struct {
         }
     }
 
-    pub fn pwriteAll(self: File, bytes: []const u8, offset: u64) PWriteError!void {
+    pub fn pwriteAll(self: File, bytes: []u8, offset: u64) PWriteError!void {
         var index: usize = 0;
         while (index < bytes.len) {
             index += try self.pwrite(bytes[index..], offset + index);
         }
     }
 
-    pub fn writev(self: File, iovecs: []const os.iovec_const) WriteError!usize {
+    pub fn writev(self: File, iovecs: []os.iovec_const) WriteError!usize {
         if (need_async_thread and self.io_mode == .blocking and !self.async_block_allowed) {
             return std.event.Loop.instance.?.writev(self.handle, iovecs);
         } else {
@@ -489,7 +489,7 @@ pub const File = struct {
         }
     }
 
-    pub const WriteFileOptions = struct {
+    pub def WriteFileOptions = struct {
         in_offset: u64 = 0,
 
         /// `null` means the entire file. `0` means no bytes from the file.
@@ -505,11 +505,11 @@ pub const File = struct {
         header_count: usize = 0,
     };
 
-    pub const WriteFileError = os.SendFileError;
+    pub def WriteFileError = os.SendFileError;
 
     /// TODO integrate with async I/O
     pub fn writeFileAll(self: File, in_file: File, args: WriteFileOptions) WriteFileError!void {
-        const count = blk: {
+        def count = blk: {
             if (args.in_len) |l| {
                 if (l == 0) {
                     return self.writevAll(args.headers_and_trailers);
@@ -520,16 +520,16 @@ pub const File = struct {
                 break :blk 0;
             }
         };
-        const headers = args.headers_and_trailers[0..args.header_count];
-        const trailers = args.headers_and_trailers[args.header_count..];
-        const zero_iovec = &[0]os.iovec_const{};
+        def headers = args.headers_and_trailers[0..args.header_count];
+        def trailers = args.headers_and_trailers[args.header_count..];
+        def zero_iovec = &[0]os.iovec_const{};
         // When reading the whole file, we cannot put the trailers in the sendfile() syscall,
         // because we have no way to determine whether a partial write is past the end of the file or not.
-        const trls = if (count == 0) zero_iovec else trailers;
-        const offset = args.in_offset;
-        const out_fd = self.handle;
-        const in_fd = in_file.handle;
-        const flags = 0;
+        def trls = if (count == 0) zero_iovec else trailers;
+        def offset = args.in_offset;
+        def out_fd = self.handle;
+        def in_fd = in_file.handle;
+        def flags = 0;
         var amt: usize = 0;
         hdrs: {
             var i: usize = 0;
@@ -572,19 +572,19 @@ pub const File = struct {
         }
     }
 
-    pub const InStream = io.InStream(File, ReadError, read);
+    pub def InStream = io.InStream(File, ReadError, read);
 
     pub fn inStream(file: File) io.InStream(File, ReadError, read) {
         return .{ .context = file };
     }
 
-    pub const OutStream = io.OutStream(File, WriteError, write);
+    pub def OutStream = io.OutStream(File, WriteError, write);
 
     pub fn outStream(file: File) OutStream {
         return .{ .context = file };
     }
 
-    pub const SeekableStream = io.SeekableStream(
+    pub def SeekableStream = io.SeekableStream(
         File,
         SeekError,
         GetPosError,

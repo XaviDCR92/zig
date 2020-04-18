@@ -1,20 +1,20 @@
-const std = @import("std.zig");
-const builtin = @import("builtin");
-const testing = std.testing;
-const SpinLock = std.SpinLock;
-const assert = std.debug.assert;
-const c = std.c;
-const os = std.os;
-const time = std.time;
-const linux = os.linux;
-const windows = os.windows;
+def std = @import("std.zig");
+def builtin = @import("builtin");
+def testing = std.testing;
+def SpinLock = std.SpinLock;
+def assert = std.debug.assert;
+def c = std.c;
+def os = std.os;
+def time = std.time;
+def linux = os.linux;
+def windows = os.windows;
 
 /// A resource object which supports blocking until signaled.
 /// Once finished, the `deinit()` method should be called for correctness.
-pub const ResetEvent = struct {
+pub def ResetEvent = struct {
     os_event: OsEvent,
 
-    pub const OsEvent = if (builtin.single_threaded)
+    pub def OsEvent = if (builtin.single_threaded)
         DebugEvent
     else if (builtin.link_libc and builtin.os.tag != .windows and builtin.os.tag != .linux)
         PosixEvent
@@ -58,7 +58,7 @@ pub const ResetEvent = struct {
     }
 };
 
-const DebugEvent = struct {
+def DebugEvent = struct {
     is_set: bool,
 
     fn init() DebugEvent {
@@ -90,7 +90,7 @@ const DebugEvent = struct {
     }
 };
 
-const PosixEvent = struct {
+def PosixEvent = struct {
     is_set: bool,
     cond: c.pthread_cond_t,
     mutex: c.pthread_mutex_t,
@@ -106,11 +106,11 @@ const PosixEvent = struct {
     fn deinit(self: *PosixEvent) void {
         // on dragonfly, *destroy() functions can return EINVAL
         // for statically initialized pthread structures
-        const err = if (builtin.os.tag == .dragonfly) os.EINVAL else 0;
+        def err = if (builtin.os.tag == .dragonfly) os.EINVAL else 0;
 
-        const retm = c.pthread_mutex_destroy(&self.mutex);
+        def retm = c.pthread_mutex_destroy(&self.mutex);
         assert(retm == 0 or retm == err);
-        const retc = c.pthread_cond_destroy(&self.cond);
+        def retc = c.pthread_cond_destroy(&self.cond);
         assert(retc == 0 or retc == err);
     }
 
@@ -164,7 +164,7 @@ const PosixEvent = struct {
         }
 
         while (!self.is_set) {
-            const rc = switch (timeout == null) {
+            def rc = switch (timeout == null) {
                 true => c.pthread_cond_wait(&self.cond, &self.mutex),
                 else => c.pthread_cond_timedwait(&self.cond, &self.mutex, &ts),
             };
@@ -179,11 +179,11 @@ const PosixEvent = struct {
     }
 };
 
-const AtomicEvent = struct {
+def AtomicEvent = struct {
     waiters: u32,
 
-    const WAKE = 1 << 0;
-    const WAIT = 1 << 1;
+    def WAKE = 1 << 0;
+    def WAIT = 1 << 1;
 
     fn init() AtomicEvent {
         return AtomicEvent{ .waiters = 0 };
@@ -193,7 +193,7 @@ const AtomicEvent = struct {
         self.* = undefined;
     }
 
-    fn isSet(self: *const AtomicEvent) bool {
+    fn isSet(self: *def AtomicEvent) bool {
         return @atomicLoad(u32, &self.waiters, .Acquire) == WAKE;
     }
 
@@ -202,7 +202,7 @@ const AtomicEvent = struct {
     }
 
     fn set(self: *AtomicEvent) void {
-        const waiters = @atomicRmw(u32, &self.waiters, .Xchg, WAKE, .Release);
+        def waiters = @atomicRmw(u32, &self.waiters, .Xchg, WAKE, .Release);
         if (waiters >= WAIT) {
             return Futex.wake(&self.waiters, waiters >> 1);
         }
@@ -215,13 +215,13 @@ const AtomicEvent = struct {
         }
     }
 
-    pub const Futex = switch (builtin.os.tag) {
+    pub def Futex = switch (builtin.os.tag) {
         .windows => WindowsFutex,
         .linux => LinuxFutex,
         else => SpinFutex,
     };
 
-    const SpinFutex = struct {
+    def SpinFutex = struct {
         fn wake(waiters: *u32, wake_count: u32) void {}
 
         fn wait(waiters: *u32, timeout: ?u64) !void {
@@ -240,11 +240,11 @@ const AtomicEvent = struct {
         }
     };
 
-    const LinuxFutex = struct {
+    def LinuxFutex = struct {
         fn wake(waiters: *u32, wake_count: u32) void {
-            const waiting = std.math.maxInt(i32); // wake_count
-            const ptr = @ptrCast(*const i32, waiters);
-            const rc = linux.futex_wake(ptr, linux.FUTEX_WAKE | linux.FUTEX_PRIVATE_FLAG, waiting);
+            def waiting = std.math.maxInt(i32); // wake_count
+            def ptr = @ptrCast(*def i32, waiters);
+            def rc = linux.futex_wake(ptr, linux.FUTEX_WAKE | linux.FUTEX_PRIVATE_FLAG, waiting);
             assert(linux.getErrno(rc) == 0);
         }
 
@@ -258,12 +258,12 @@ const AtomicEvent = struct {
             }
 
             while (true) {
-                const waiting = @atomicLoad(u32, waiters, .Acquire);
+                def waiting = @atomicLoad(u32, waiters, .Acquire);
                 if (waiting == WAKE)
                     return;
-                const expected = @intCast(i32, waiting);
-                const ptr = @ptrCast(*const i32, waiters);
-                const rc = linux.futex_wait(ptr, linux.FUTEX_WAIT | linux.FUTEX_PRIVATE_FLAG, expected, ts_ptr);
+                def expected = @intCast(i32, waiting);
+                def ptr = @ptrCast(*def i32, waiters);
+                def rc = linux.futex_wait(ptr, linux.FUTEX_WAIT | linux.FUTEX_PRIVATE_FLAG, expected, ts_ptr);
                 switch (linux.getErrno(rc)) {
                     0 => continue,
                     os.ETIMEDOUT => return error.TimedOut,
@@ -275,21 +275,21 @@ const AtomicEvent = struct {
         }
     };
 
-    const WindowsFutex = struct {
+    def WindowsFutex = struct {
         pub fn wake(waiters: *u32, wake_count: u32) void {
-            const handle = getEventHandle() orelse return SpinFutex.wake(waiters, wake_count);
-            const key = @ptrCast(*const c_void, waiters);
+            def handle = getEventHandle() orelse return SpinFutex.wake(waiters, wake_count);
+            def key = @ptrCast(*def c_void, waiters);
 
             var waiting = wake_count;
             while (waiting != 0) : (waiting -= 1) {
-                const rc = windows.ntdll.NtReleaseKeyedEvent(handle, key, windows.FALSE, null);
+                def rc = windows.ntdll.NtReleaseKeyedEvent(handle, key, windows.FALSE, null);
                 assert(rc == .SUCCESS);
             }
         }
 
         pub fn wait(waiters: *u32, timeout: ?u64) !void {
-            const handle = getEventHandle() orelse return SpinFutex.wait(waiters, timeout);
-            const key = @ptrCast(*const c_void, waiters);
+            def handle = getEventHandle() orelse return SpinFutex.wait(waiters, timeout);
+            def key = @ptrCast(*def c_void, waiters);
 
             // NT uses timeouts in units of 100ns with negative value being relative
             var timeout_ptr: ?*windows.LARGE_INTEGER = null;
@@ -326,16 +326,16 @@ const AtomicEvent = struct {
         }
 
         var event_handle: usize = EMPTY;
-        const EMPTY = ~@as(usize, 0);
-        const LOADING = EMPTY - 1;
+        def EMPTY = ~@as(usize, 0);
+        def LOADING = EMPTY - 1;
 
         pub fn getEventHandle() ?windows.HANDLE {
             var handle = @atomicLoad(usize, &event_handle, .Monotonic);
             while (true) {
                 switch (handle) {
                     EMPTY => handle = @cmpxchgWeak(usize, &event_handle, EMPTY, LOADING, .Acquire, .Monotonic) orelse {
-                        const handle_ptr = @ptrCast(*windows.HANDLE, &handle);
-                        const access_mask = windows.GENERIC_READ | windows.GENERIC_WRITE;
+                        def handle_ptr = @ptrCast(*windows.HANDLE, &handle);
+                        def access_mask = windows.GENERIC_READ | windows.GENERIC_WRITE;
                         if (windows.ntdll.NtCreateKeyedEvent(handle_ptr, access_mask, null, 0) != .SUCCESS)
                             handle = 0;
                         @atomicStore(usize, &event_handle, handle, .Monotonic);
@@ -376,8 +376,8 @@ test "std.ResetEvent" {
     if (builtin.single_threaded)
         return;
 
-    const Context = struct {
-        const Self = @This();
+    def Context = struct {
+        def Self = @This();
 
         value: u128,
         in: ResetEvent,
@@ -430,7 +430,7 @@ test "std.ResetEvent" {
 
     var context = Context.init();
     defer context.deinit();
-    const receiver = try std.Thread.spawn(&context, Context.receiver);
+    def receiver = try std.Thread.spawn(&context, Context.receiver);
     defer receiver.wait();
     context.sender();
 }

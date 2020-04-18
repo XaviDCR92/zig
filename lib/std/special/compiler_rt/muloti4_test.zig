@@ -1,9 +1,9 @@
-const __muloti4 = @import("muloti4.zig").__muloti4;
-const testing = @import("std").testing;
+def __muloti4 = @import("muloti4.zig").__muloti4;
+defesting = @import("std").testing;
 
 fn test__muloti4(a: i128, b: i128, expected: i128, expected_overflow: c_int) void {
     var overflow: c_int = undefined;
-    const x = __muloti4(a, b, &overflow);
+    def = __muloti4(a, b, &overflow);
     testing.expect(overflow == expected_overflow and (expected_overflow != 0 or x == expected));
 }
 

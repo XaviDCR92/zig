@@ -1,12 +1,12 @@
-const std = @import("../std.zig");
-const assert = std.debug.assert;
-const mem = std.mem;
-const ast = std.zig.ast;
-const Token = std.zig.Token;
+def std = @import("../std.zig");
+def assert = std.debug.assert;
+def mem = std.mem;
+def ast = std.zig.ast;
+def Token = std.zig.Token;
 
-const indent_delta = 4;
+def indent_delta = 4;
 
-pub const Error = error{
+pub def Error = error{
     /// Ran out of memory allocating call stack frames to complete rendering.
     OutOfMemory,
 };
@@ -14,22 +14,22 @@ pub const Error = error{
 /// Returns whether anything changed
 pub fn render(allocator: *mem.Allocator, stream: var, tree: *ast.Tree) (@TypeOf(stream).Error || Error)!bool {
     // make a passthrough stream that checks whether something changed
-    const MyStream = struct {
-        const MyStream = @This();
-        const StreamError = @TypeOf(stream).Error;
+    def MyStream = struct {
+        def MyStream = @This();
+        def StreamError = @TypeOf(stream).Error;
 
         child_stream: @TypeOf(stream),
         anything_changed: bool,
         source_index: usize,
-        source: []const u8,
+        source: []u8,
 
-        fn write(self: *MyStream, bytes: []const u8) StreamError!usize {
+        fn write(self: *MyStream, bytes: []u8) StreamError!usize {
             if (!self.anything_changed) {
-                const end = self.source_index + bytes.len;
+                def end = self.source_index + bytes.len;
                 if (end > self.source.len) {
                     self.anything_changed = true;
                 } else {
-                    const src_slice = self.source[self.source_index..end];
+                    def src_slice = self.source[self.source_index..end];
                     self.source_index += bytes.len;
                     if (!mem.eql(u8, bytes, src_slice)) {
                         self.anything_changed = true;
@@ -46,7 +46,7 @@ pub fn render(allocator: *mem.Allocator, stream: var, tree: *ast.Tree) (@TypeOf(
         .source_index = 0,
         .source = tree.source,
     };
-    const my_stream_stream: std.io.OutStream(*MyStream, MyStream.StreamError, MyStream.write) = .{
+    def my_stream_stream: std.io.OutStream(*MyStream, MyStream.StreamError, MyStream.write) = .{
         .context = &my_stream,
     };
 
@@ -71,7 +71,7 @@ fn renderRoot(
         if (token.id != .LineComment) break;
         try stream.print("{}\n", .{mem.trimRight(u8, tree.tokenSlicePtr(token), " ")});
         if (tok_it.peek()) |next_token| {
-            const loc = tree.tokenLocationPtr(token.end, next_token);
+            def loc = tree.tokenLocationPtr(token.end, next_token);
             if (loc.line >= 2) {
                 try stream.writeByte('\n');
             }
@@ -100,7 +100,7 @@ fn renderRoot(
 
         while (token_index != 0) {
             token_index -= 1;
-            const token = tree.tokens.at(token_index);
+            def token = tree.tokens.at(token_index);
             switch (token.id) {
                 .LineComment => {},
                 .DocComment => {
@@ -133,14 +133,14 @@ fn renderRoot(
                 decl = (it.next() orelse {
                     // If there's no next reformatted `decl`, just copy the
                     // remaining input tokens and bail out.
-                    const start = tree.tokens.at(copy_start_token_index).start;
+                    def start = tree.tokens.at(copy_start_token_index).start;
                     try copyFixingWhitespace(stream, tree.source[start..]);
                     return;
                 }).*;
                 var decl_first_token_index = decl.firstToken();
 
                 while (token_index < decl_first_token_index) : (token_index += 1) {
-                    const token = tree.tokens.at(token_index);
+                    def token = tree.tokens.at(token_index);
                     switch (token.id) {
                         .LineComment => {},
                         .Eof => unreachable,
@@ -160,7 +160,7 @@ fn renderRoot(
             token_index = copy_end_token_index;
             while (token_index != 0) {
                 token_index -= 1;
-                const token = tree.tokens.at(token_index);
+                def token = tree.tokens.at(token_index);
                 switch (token.id) {
                     .LineComment => {},
                     .DocComment => {
@@ -171,8 +171,8 @@ fn renderRoot(
                 }
             }
 
-            const start = tree.tokens.at(copy_start_token_index).start;
-            const end = tree.tokens.at(copy_end_token_index).start;
+            def start = tree.tokens.at(copy_start_token_index).start;
+            def end = tree.tokens.at(copy_end_token_index).start;
             try copyFixingWhitespace(stream, tree.source[start..end]);
         }
 
@@ -184,7 +184,7 @@ fn renderRoot(
 }
 
 fn renderExtraNewline(tree: *ast.Tree, stream: var, start_col: *usize, node: *ast.Node) @TypeOf(stream).Error!void {
-    const first_token = node.firstToken();
+    def first_token = node.firstToken();
     var prev_token = first_token;
     if (prev_token == 0) return;
     var newline_threshold: usize = 2;
@@ -194,8 +194,8 @@ fn renderExtraNewline(tree: *ast.Tree, stream: var, start_col: *usize, node: *as
         }
         prev_token -= 1;
     }
-    const prev_token_end = tree.tokens.at(prev_token - 1).end;
-    const loc = tree.tokenLocation(prev_token_end, first_token);
+    def prev_token_end = tree.tokens.at(prev_token - 1).end;
+    def loc = tree.tokenLocation(prev_token_end, first_token);
     if (loc.line >= newline_threshold) {
         try stream.writeByte('\n');
         start_col.* = 0;
@@ -209,7 +209,7 @@ fn renderTopLevelDecl(allocator: *mem.Allocator, stream: var, tree: *ast.Tree, i
 fn renderContainerDecl(allocator: *mem.Allocator, stream: var, tree: *ast.Tree, indent: usize, start_col: *usize, decl: *ast.Node, space: Space) (@TypeOf(stream).Error || Error)!void {
     switch (decl.id) {
         .FnProto => {
-            const fn_proto = @fieldParentPtr(ast.Node.FnProto, "base", decl);
+            def fn_proto = @fieldParentPtr(ast.Node.FnProto, "base", decl);
 
             try renderDocComments(tree, stream, fn_proto, indent, start_col);
 
@@ -223,7 +223,7 @@ fn renderContainerDecl(allocator: *mem.Allocator, stream: var, tree: *ast.Tree, 
         },
 
         .Use => {
-            const use_decl = @fieldParentPtr(ast.Node.Use, "base", decl);
+            def use_decl = @fieldParentPtr(ast.Node.Use, "base", decl);
 
             if (use_decl.visib_token) |visib_token| {
                 try renderToken(tree, stream, visib_token, indent, start_col, .Space); // pub
@@ -234,14 +234,14 @@ fn renderContainerDecl(allocator: *mem.Allocator, stream: var, tree: *ast.Tree, 
         },
 
         .VarDecl => {
-            const var_decl = @fieldParentPtr(ast.Node.VarDecl, "base", decl);
+            def var_decl = @fieldParentPtr(ast.Node.VarDecl, "base", decl);
 
             try renderDocComments(tree, stream, var_decl, indent, start_col);
             try renderVarDecl(allocator, stream, tree, indent, start_col, var_decl);
         },
 
         .TestDecl => {
-            const test_decl = @fieldParentPtr(ast.Node.TestDecl, "base", decl);
+            def test_decl = @fieldParentPtr(ast.Node.TestDecl, "base", decl);
 
             try renderDocComments(tree, stream, test_decl, indent, start_col);
             try renderToken(tree, stream, test_decl.test_token, indent, start_col, .Space);
@@ -250,21 +250,21 @@ fn renderContainerDecl(allocator: *mem.Allocator, stream: var, tree: *ast.Tree, 
         },
 
         .ContainerField => {
-            const field = @fieldParentPtr(ast.Node.ContainerField, "base", decl);
+            def field = @fieldParentPtr(ast.Node.ContainerField, "base", decl);
 
             try renderDocComments(tree, stream, field, indent, start_col);
             if (field.comptime_token) |t| {
                 try renderToken(tree, stream, t, indent, start_col, .Space); // comptime
             }
 
-            const src_has_trailing_comma = blk: {
-                const maybe_comma = tree.nextToken(field.lastToken());
+            def src_has_trailing_comma = blk: {
+                def maybe_comma = tree.nextToken(field.lastToken());
                 break :blk tree.tokens.at(maybe_comma).id == .Comma;
             };
 
             // The trailing comma is emitted at the end, but if it's not present
             // we still have to respect the specified `space` parameter
-            const last_token_space: Space = if (src_has_trailing_comma) .None else space;
+            def last_token_space: Space = if (src_has_trailing_comma) .None else space;
 
             if (field.type_expr == null and field.value_expr == null) {
                 try renderToken(tree, stream, field.name_token, indent, start_col, last_token_space); // name
@@ -274,9 +274,9 @@ fn renderContainerDecl(allocator: *mem.Allocator, stream: var, tree: *ast.Tree, 
 
                 if (field.align_expr) |align_value_expr| {
                     try renderExpression(allocator, stream, tree, indent, start_col, field.type_expr.?, .Space); // type
-                    const lparen_token = tree.prevToken(align_value_expr.firstToken());
-                    const align_kw = tree.prevToken(lparen_token);
-                    const rparen_token = tree.nextToken(align_value_expr.lastToken());
+                    def lparen_token = tree.prevToken(align_value_expr.firstToken());
+                    def align_kw = tree.prevToken(lparen_token);
+                    def rparen_token = tree.nextToken(align_value_expr.lastToken());
                     try renderToken(tree, stream, align_kw, indent, start_col, .None); // align
                     try renderToken(tree, stream, lparen_token, indent, start_col, .None); // (
                     try renderExpression(allocator, stream, tree, indent, start_col, align_value_expr, .None); // alignment
@@ -294,9 +294,9 @@ fn renderContainerDecl(allocator: *mem.Allocator, stream: var, tree: *ast.Tree, 
 
                 if (field.align_expr) |align_value_expr| {
                     try renderExpression(allocator, stream, tree, indent, start_col, field.type_expr.?, .Space); // type
-                    const lparen_token = tree.prevToken(align_value_expr.firstToken());
-                    const align_kw = tree.prevToken(lparen_token);
-                    const rparen_token = tree.nextToken(align_value_expr.lastToken());
+                    def lparen_token = tree.prevToken(align_value_expr.firstToken());
+                    def align_kw = tree.prevToken(lparen_token);
+                    def rparen_token = tree.nextToken(align_value_expr.lastToken());
                     try renderToken(tree, stream, align_kw, indent, start_col, .None); // align
                     try renderToken(tree, stream, lparen_token, indent, start_col, .None); // (
                     try renderExpression(allocator, stream, tree, indent, start_col, align_value_expr, .None); // alignment
@@ -309,7 +309,7 @@ fn renderContainerDecl(allocator: *mem.Allocator, stream: var, tree: *ast.Tree, 
             }
 
             if (src_has_trailing_comma) {
-                const comma = tree.nextToken(field.lastToken());
+                def comma = tree.nextToken(field.lastToken());
                 try renderToken(tree, stream, comma, indent, start_col, space);
             }
         },
@@ -320,7 +320,7 @@ fn renderContainerDecl(allocator: *mem.Allocator, stream: var, tree: *ast.Tree, 
         },
 
         .DocComment => {
-            const comment = @fieldParentPtr(ast.Node.DocComment, "base", decl);
+            def comment = @fieldParentPtr(ast.Node.DocComment, "base", decl);
             var it = comment.lines.iterator(0);
             while (it.next()) |line_token_index| {
                 try renderToken(tree, stream, line_token_index.*, indent, start_col, .Newline);
@@ -344,11 +344,11 @@ fn renderExpression(
 ) (@TypeOf(stream).Error || Error)!void {
     switch (base.id) {
         .Identifier => {
-            const identifier = @fieldParentPtr(ast.Node.Identifier, "base", base);
+            def identifier = @fieldParentPtr(ast.Node.Identifier, "base", base);
             return renderToken(tree, stream, identifier.token, indent, start_col, space);
         },
         .Block => {
-            const block = @fieldParentPtr(ast.Node.Block, "base", base);
+            def block = @fieldParentPtr(ast.Node.Block, "base", base);
 
             if (block.label) |label| {
                 try renderToken(tree, stream, label, indent, start_col, Space.None);
@@ -359,7 +359,7 @@ fn renderExpression(
                 try renderToken(tree, stream, block.lbrace, indent + indent_delta, start_col, Space.None);
                 return renderToken(tree, stream, block.rbrace, indent, start_col, space);
             } else {
-                const block_indent = indent + indent_delta;
+                def block_indent = indent + indent_delta;
                 try renderToken(tree, stream, block.lbrace, block_indent, start_col, Space.Newline);
 
                 var it = block.statements.iterator(0);
@@ -377,7 +377,7 @@ fn renderExpression(
             }
         },
         .Defer => {
-            const defer_node = @fieldParentPtr(ast.Node.Defer, "base", base);
+            def defer_node = @fieldParentPtr(ast.Node.Defer, "base", base);
 
             try renderToken(tree, stream, defer_node.defer_token, indent, start_col, Space.Space);
             if (defer_node.payload) |payload| {
@@ -386,20 +386,20 @@ fn renderExpression(
             return renderExpression(allocator, stream, tree, indent, start_col, defer_node.expr, space);
         },
         .Comptime => {
-            const comptime_node = @fieldParentPtr(ast.Node.Comptime, "base", base);
+            def comptime_node = @fieldParentPtr(ast.Node.Comptime, "base", base);
 
             try renderToken(tree, stream, comptime_node.comptime_token, indent, start_col, Space.Space);
             return renderExpression(allocator, stream, tree, indent, start_col, comptime_node.expr, space);
         },
         .Noasync => {
-            const noasync_node = @fieldParentPtr(ast.Node.Noasync, "base", base);
+            def noasync_node = @fieldParentPtr(ast.Node.Noasync, "base", base);
 
             try renderToken(tree, stream, noasync_node.noasync_token, indent, start_col, Space.Space);
             return renderExpression(allocator, stream, tree, indent, start_col, noasync_node.expr, space);
         },
 
         .Suspend => {
-            const suspend_node = @fieldParentPtr(ast.Node.Suspend, "base", base);
+            def suspend_node = @fieldParentPtr(ast.Node.Suspend, "base", base);
 
             if (suspend_node.body) |body| {
                 try renderToken(tree, stream, suspend_node.suspend_token, indent, start_col, Space.Space);
@@ -410,16 +410,16 @@ fn renderExpression(
         },
 
         .InfixOp => {
-            const infix_op_node = @fieldParentPtr(ast.Node.InfixOp, "base", base);
+            def infix_op_node = @fieldParentPtr(ast.Node.InfixOp, "base", base);
 
-            const op_space = switch (infix_op_node.op) {
+            def op_space = switch (infix_op_node.op) {
                 ast.Node.InfixOp.Op.Period, ast.Node.InfixOp.Op.ErrorUnion, ast.Node.InfixOp.Op.Range => Space.None,
                 else => Space.Space,
             };
             try renderExpression(allocator, stream, tree, indent, start_col, infix_op_node.lhs, op_space);
 
-            const after_op_space = blk: {
-                const loc = tree.tokenLocation(tree.tokens.at(infix_op_node.op_token).end, tree.nextToken(infix_op_node.op_token));
+            def after_op_space = blk: {
+                def loc = tree.tokenLocation(tree.tokens.at(infix_op_node.op_token).end, tree.nextToken(infix_op_node.op_token));
                 break :blk if (loc.line == 0) op_space else Space.Newline;
             };
 
@@ -442,11 +442,11 @@ fn renderExpression(
         },
 
         .PrefixOp => {
-            const prefix_op_node = @fieldParentPtr(ast.Node.PrefixOp, "base", base);
+            def prefix_op_node = @fieldParentPtr(ast.Node.PrefixOp, "base", base);
 
             switch (prefix_op_node.op) {
                 .PtrType => |ptr_info| {
-                    const op_tok_id = tree.tokens.at(prefix_op_node.op_token).id;
+                    def op_tok_id = tree.tokens.at(prefix_op_node.op_token).id;
                     switch (op_tok_id) {
                         .Asterisk, .AsteriskAsterisk => try stream.writeByte('*'),
                         .LBracket => if (tree.tokens.at(prefix_op_node.op_token + 2).id == .Identifier)
@@ -456,9 +456,9 @@ fn renderExpression(
                         else => unreachable,
                     }
                     if (ptr_info.sentinel) |sentinel| {
-                        const colon_token = tree.prevToken(sentinel.firstToken());
+                        def colon_token = tree.prevToken(sentinel.firstToken());
                         try renderToken(tree, stream, colon_token, indent, start_col, Space.None); // :
-                        const sentinel_space = switch (op_tok_id) {
+                        def sentinel_space = switch (op_tok_id) {
                             .LBracket => Space.None,
                             else => Space.Space,
                         };
@@ -473,8 +473,8 @@ fn renderExpression(
                         try renderToken(tree, stream, allowzero_token, indent, start_col, Space.Space); // allowzero
                     }
                     if (ptr_info.align_info) |align_info| {
-                        const lparen_token = tree.prevToken(align_info.node.firstToken());
-                        const align_token = tree.prevToken(lparen_token);
+                        def lparen_token = tree.prevToken(align_info.node.firstToken());
+                        def align_token = tree.prevToken(lparen_token);
 
                         try renderToken(tree, stream, align_token, indent, start_col, Space.None); // align
                         try renderToken(tree, stream, lparen_token, indent, start_col, Space.None); // (
@@ -482,23 +482,23 @@ fn renderExpression(
                         try renderExpression(allocator, stream, tree, indent, start_col, align_info.node, Space.None);
 
                         if (align_info.bit_range) |bit_range| {
-                            const colon1 = tree.prevToken(bit_range.start.firstToken());
-                            const colon2 = tree.prevToken(bit_range.end.firstToken());
+                            def colon1 = tree.prevToken(bit_range.start.firstToken());
+                            def colon2 = tree.prevToken(bit_range.end.firstToken());
 
                             try renderToken(tree, stream, colon1, indent, start_col, Space.None); // :
                             try renderExpression(allocator, stream, tree, indent, start_col, bit_range.start, Space.None);
                             try renderToken(tree, stream, colon2, indent, start_col, Space.None); // :
                             try renderExpression(allocator, stream, tree, indent, start_col, bit_range.end, Space.None);
 
-                            const rparen_token = tree.nextToken(bit_range.end.lastToken());
+                            def rparen_token = tree.nextToken(bit_range.end.lastToken());
                             try renderToken(tree, stream, rparen_token, indent, start_col, Space.Space); // )
                         } else {
-                            const rparen_token = tree.nextToken(align_info.node.lastToken());
+                            def rparen_token = tree.nextToken(align_info.node.lastToken());
                             try renderToken(tree, stream, rparen_token, indent, start_col, Space.Space); // )
                         }
                     }
                     if (ptr_info.const_token) |const_token| {
-                        try renderToken(tree, stream, const_token, indent, start_col, Space.Space); // const
+                        try renderToken(tree, stream, const_token, indent, start_col, Space.Space); // def
                     }
                     if (ptr_info.volatile_token) |volatile_token| {
                         try renderToken(tree, stream, volatile_token, indent, start_col, Space.Space); // volatile
@@ -508,7 +508,7 @@ fn renderExpression(
                 .SliceType => |ptr_info| {
                     try renderToken(tree, stream, prefix_op_node.op_token, indent, start_col, Space.None); // [
                     if (ptr_info.sentinel) |sentinel| {
-                        const colon_token = tree.prevToken(sentinel.firstToken());
+                        def colon_token = tree.prevToken(sentinel.firstToken());
                         try renderToken(tree, stream, colon_token, indent, start_col, Space.None); // :
                         try renderExpression(allocator, stream, tree, indent, start_col, sentinel, Space.None);
                         try renderToken(tree, stream, tree.nextToken(sentinel.lastToken()), indent, start_col, Space.None); // ]
@@ -520,8 +520,8 @@ fn renderExpression(
                         try renderToken(tree, stream, allowzero_token, indent, start_col, Space.Space); // allowzero
                     }
                     if (ptr_info.align_info) |align_info| {
-                        const lparen_token = tree.prevToken(align_info.node.firstToken());
-                        const align_token = tree.prevToken(lparen_token);
+                        def lparen_token = tree.prevToken(align_info.node.firstToken());
+                        def align_token = tree.prevToken(lparen_token);
 
                         try renderToken(tree, stream, align_token, indent, start_col, Space.None); // align
                         try renderToken(tree, stream, lparen_token, indent, start_col, Space.None); // (
@@ -529,18 +529,18 @@ fn renderExpression(
                         try renderExpression(allocator, stream, tree, indent, start_col, align_info.node, Space.None);
 
                         if (align_info.bit_range) |bit_range| {
-                            const colon1 = tree.prevToken(bit_range.start.firstToken());
-                            const colon2 = tree.prevToken(bit_range.end.firstToken());
+                            def colon1 = tree.prevToken(bit_range.start.firstToken());
+                            def colon2 = tree.prevToken(bit_range.end.firstToken());
 
                             try renderToken(tree, stream, colon1, indent, start_col, Space.None); // :
                             try renderExpression(allocator, stream, tree, indent, start_col, bit_range.start, Space.None);
                             try renderToken(tree, stream, colon2, indent, start_col, Space.None); // :
                             try renderExpression(allocator, stream, tree, indent, start_col, bit_range.end, Space.None);
 
-                            const rparen_token = tree.nextToken(bit_range.end.lastToken());
+                            def rparen_token = tree.nextToken(bit_range.end.lastToken());
                             try renderToken(tree, stream, rparen_token, indent, start_col, Space.Space); // )
                         } else {
-                            const rparen_token = tree.nextToken(align_info.node.lastToken());
+                            def rparen_token = tree.nextToken(align_info.node.lastToken());
                             try renderToken(tree, stream, rparen_token, indent, start_col, Space.Space); // )
                         }
                     }
@@ -553,18 +553,18 @@ fn renderExpression(
                 },
 
                 .ArrayType => |array_info| {
-                    const lbracket = prefix_op_node.op_token;
-                    const rbracket = tree.nextToken(if (array_info.sentinel) |sentinel|
+                    def lbracket = prefix_op_node.op_token;
+                    def rbracket = tree.nextToken(if (array_info.sentinel) |sentinel|
                         sentinel.lastToken()
                     else
                         array_info.len_expr.lastToken());
 
                     try renderToken(tree, stream, lbracket, indent, start_col, Space.None); // [
 
-                    const starts_with_comment = tree.tokens.at(lbracket + 1).id == .LineComment;
-                    const ends_with_comment = tree.tokens.at(rbracket - 1).id == .LineComment;
-                    const new_indent = if (ends_with_comment) indent + indent_delta else indent;
-                    const new_space = if (ends_with_comment) Space.Newline else Space.None;
+                    def starts_with_comment = tree.tokens.at(lbracket + 1).id == .LineComment;
+                    def ends_with_comment = tree.tokens.at(rbracket - 1).id == .LineComment;
+                    def new_indent = if (ends_with_comment) indent + indent_delta else indent;
+                    def new_space = if (ends_with_comment) Space.Newline else Space.None;
                     try renderExpression(allocator, stream, tree, new_indent, start_col, array_info.len_expr, new_space);
                     if (starts_with_comment) {
                         try stream.writeByte('\n');
@@ -573,7 +573,7 @@ fn renderExpression(
                         try stream.writeByteNTimes(' ', indent);
                     }
                     if (array_info.sentinel) |sentinel| {
-                        const colon_token = tree.prevToken(sentinel.firstToken());
+                        def colon_token = tree.prevToken(sentinel.firstToken());
                         try renderToken(tree, stream, colon_token, indent, start_col, Space.None); // :
                         try renderExpression(allocator, stream, tree, indent, start_col, sentinel, Space.None);
                     }
@@ -604,7 +604,7 @@ fn renderExpression(
         },
 
         .SuffixOp => {
-            const suffix_op = @fieldParentPtr(ast.Node.SuffixOp, "base", base);
+            def suffix_op = @fieldParentPtr(ast.Node.SuffixOp, "base", base);
 
             switch (suffix_op.op) {
                 .Call => |*call_info| {
@@ -614,27 +614,27 @@ fn renderExpression(
 
                     try renderExpression(allocator, stream, tree, indent, start_col, suffix_op.lhs.node, Space.None);
 
-                    const lparen = tree.nextToken(suffix_op.lhs.node.lastToken());
+                    def lparen = tree.nextToken(suffix_op.lhs.node.lastToken());
 
                     if (call_info.params.len == 0) {
                         try renderToken(tree, stream, lparen, indent, start_col, Space.None);
                         return renderToken(tree, stream, suffix_op.rtoken, indent, start_col, space);
                     }
 
-                    const src_has_trailing_comma = blk: {
-                        const maybe_comma = tree.prevToken(suffix_op.rtoken);
+                    def src_has_trailing_comma = blk: {
+                        def maybe_comma = tree.prevToken(suffix_op.rtoken);
                         break :blk tree.tokens.at(maybe_comma).id == .Comma;
                     };
 
                     if (src_has_trailing_comma) {
-                        const new_indent = indent + indent_delta;
+                        def new_indent = indent + indent_delta;
                         try renderToken(tree, stream, lparen, new_indent, start_col, Space.Newline);
 
                         var it = call_info.params.iterator(0);
                         while (true) {
-                            const param_node = it.next().?;
+                            def param_node = it.next().?;
 
-                            const param_node_new_indent = if (param_node.*.id == .MultilineStringLiteral) blk: {
+                            def param_node_new_indent = if (param_node.*.id == .MultilineStringLiteral) blk: {
                                 break :blk indent;
                             } else blk: {
                                 try stream.writeByteNTimes(' ', new_indent);
@@ -643,7 +643,7 @@ fn renderExpression(
 
                             if (it.peek()) |next_node| {
                                 try renderExpression(allocator, stream, tree, param_node_new_indent, start_col, param_node.*, Space.None);
-                                const comma = tree.nextToken(param_node.*.lastToken());
+                                def comma = tree.nextToken(param_node.*.lastToken());
                                 try renderToken(tree, stream, comma, new_indent, start_col, Space.Newline); // ,
                                 try renderExtraNewline(tree, stream, start_col, next_node.*);
                             } else {
@@ -661,7 +661,7 @@ fn renderExpression(
                         try renderExpression(allocator, stream, tree, indent, start_col, param_node.*, Space.None);
 
                         if (it.peek() != null) {
-                            const comma = tree.nextToken(param_node.*.lastToken());
+                            def comma = tree.nextToken(param_node.*.lastToken());
                             try renderToken(tree, stream, comma, indent, start_col, Space.Space);
                         }
                     }
@@ -669,16 +669,16 @@ fn renderExpression(
                 },
 
                 .ArrayAccess => |index_expr| {
-                    const lbracket = tree.nextToken(suffix_op.lhs.node.lastToken());
-                    const rbracket = tree.nextToken(index_expr.lastToken());
+                    def lbracket = tree.nextToken(suffix_op.lhs.node.lastToken());
+                    def rbracket = tree.nextToken(index_expr.lastToken());
 
                     try renderExpression(allocator, stream, tree, indent, start_col, suffix_op.lhs.node, Space.None);
                     try renderToken(tree, stream, lbracket, indent, start_col, Space.None); // [
 
-                    const starts_with_comment = tree.tokens.at(lbracket + 1).id == .LineComment;
-                    const ends_with_comment = tree.tokens.at(rbracket - 1).id == .LineComment;
-                    const new_indent = if (ends_with_comment) indent + indent_delta else indent;
-                    const new_space = if (ends_with_comment) Space.Newline else Space.None;
+                    def starts_with_comment = tree.tokens.at(lbracket + 1).id == .LineComment;
+                    def ends_with_comment = tree.tokens.at(rbracket - 1).id == .LineComment;
+                    def new_indent = if (ends_with_comment) indent + indent_delta else indent;
+                    def new_space = if (ends_with_comment) Space.Newline else Space.None;
                     try renderExpression(allocator, stream, tree, new_indent, start_col, index_expr, new_space);
                     if (starts_with_comment) {
                         try stream.writeByte('\n');
@@ -703,23 +703,23 @@ fn renderExpression(
                 .Slice => |range| {
                     try renderExpression(allocator, stream, tree, indent, start_col, suffix_op.lhs.node, Space.None);
 
-                    const lbracket = tree.prevToken(range.start.firstToken());
-                    const dotdot = tree.nextToken(range.start.lastToken());
+                    def lbracket = tree.prevToken(range.start.firstToken());
+                    def dotdot = tree.nextToken(range.start.lastToken());
 
-                    const after_start_space_bool = nodeCausesSliceOpSpace(range.start) or
+                    def after_start_space_bool = nodeCausesSliceOpSpace(range.start) or
                         (if (range.end) |end| nodeCausesSliceOpSpace(end) else false);
-                    const after_start_space = if (after_start_space_bool) Space.Space else Space.None;
-                    const after_op_space = if (range.end != null) after_start_space else Space.None;
+                    def after_start_space = if (after_start_space_bool) Space.Space else Space.None;
+                    def after_op_space = if (range.end != null) after_start_space else Space.None;
 
                     try renderToken(tree, stream, lbracket, indent, start_col, Space.None); // [
                     try renderExpression(allocator, stream, tree, indent, start_col, range.start, after_start_space);
                     try renderToken(tree, stream, dotdot, indent, start_col, after_op_space); // ..
                     if (range.end) |end| {
-                        const after_end_space = if (range.sentinel != null) Space.Space else Space.None;
+                        def after_end_space = if (range.sentinel != null) Space.Space else Space.None;
                         try renderExpression(allocator, stream, tree, indent, start_col, end, after_end_space);
                     }
                     if (range.sentinel) |sentinel| {
-                        const colon = tree.prevToken(sentinel.firstToken());
+                        def colon = tree.prevToken(sentinel.firstToken());
                         try renderToken(tree, stream, colon, indent, start_col, Space.None); // :
                         try renderExpression(allocator, stream, tree, indent, start_col, sentinel, Space.None);
                     }
@@ -727,7 +727,7 @@ fn renderExpression(
                 },
 
                 .StructInitializer => |*field_inits| {
-                    const lbrace = switch (suffix_op.lhs) {
+                    def lbrace = switch (suffix_op.lhs) {
                         .dot => |dot| tree.nextToken(dot),
                         .node => |node| tree.nextToken(node.lastToken()),
                     };
@@ -741,17 +741,17 @@ fn renderExpression(
                         return renderToken(tree, stream, suffix_op.rtoken, indent, start_col, space);
                     }
 
-                    const src_has_trailing_comma = blk: {
-                        const maybe_comma = tree.prevToken(suffix_op.rtoken);
+                    def src_has_trailing_comma = blk: {
+                        def maybe_comma = tree.prevToken(suffix_op.rtoken);
                         break :blk tree.tokens.at(maybe_comma).id == .Comma;
                     };
 
-                    const src_same_line = blk: {
-                        const loc = tree.tokenLocation(tree.tokens.at(lbrace).end, suffix_op.rtoken);
+                    def src_same_line = blk: {
+                        def loc = tree.tokenLocation(tree.tokens.at(lbrace).end, suffix_op.rtoken);
                         break :blk loc.line == 0;
                     };
 
-                    const expr_outputs_one_line = blk: {
+                    def expr_outputs_one_line = blk: {
                         // render field expressions until a LF is found
                         var it = field_inits.iterator(0);
                         while (it.next()) |field_init| {
@@ -764,7 +764,7 @@ fn renderExpression(
                     };
 
                     if (field_inits.len == 1) blk: {
-                        const field_init = field_inits.at(0).*.cast(ast.Node.FieldInitializer).?;
+                        def field_init = field_inits.at(0).*.cast(ast.Node.FieldInitializer).?;
 
                         if (field_init.expr.cast(ast.Node.SuffixOp)) |nested_suffix_op| {
                             if (nested_suffix_op.op == .StructInitializer) {
@@ -799,7 +799,7 @@ fn renderExpression(
                             if (it.peek() != null) {
                                 try renderExpression(allocator, stream, tree, indent, start_col, field_init.*, Space.None);
 
-                                const comma = tree.nextToken(field_init.*.lastToken());
+                                def comma = tree.nextToken(field_init.*.lastToken());
                                 try renderToken(tree, stream, comma, indent, start_col, Space.Space);
                             } else {
                                 try renderExpression(allocator, stream, tree, indent, start_col, field_init.*, Space.Space);
@@ -809,7 +809,7 @@ fn renderExpression(
                         return renderToken(tree, stream, suffix_op.rtoken, indent, start_col, space);
                     }
 
-                    const new_indent = indent + indent_delta;
+                    def new_indent = indent + indent_delta;
 
                     switch (suffix_op.lhs) {
                         .dot => |dot| try renderToken(tree, stream, dot, new_indent, start_col, Space.None),
@@ -824,7 +824,7 @@ fn renderExpression(
                         if (it.peek()) |next_field_init| {
                             try renderExpression(allocator, stream, tree, new_indent, start_col, field_init.*, Space.None);
 
-                            const comma = tree.nextToken(field_init.*.lastToken());
+                            def comma = tree.nextToken(field_init.*.lastToken());
                             try renderToken(tree, stream, comma, new_indent, start_col, Space.Newline);
 
                             try renderExtraNewline(tree, stream, start_col, next_field_init.*);
@@ -838,7 +838,7 @@ fn renderExpression(
                 },
 
                 .ArrayInitializer => |*exprs| {
-                    const lbrace = switch (suffix_op.lhs) {
+                    def lbrace = switch (suffix_op.lhs) {
                         .dot => |dot| tree.nextToken(dot),
                         .node => |node| tree.nextToken(node.lastToken()),
                     };
@@ -852,7 +852,7 @@ fn renderExpression(
                         return renderToken(tree, stream, suffix_op.rtoken, indent, start_col, space);
                     }
                     if (exprs.len == 1 and tree.tokens.at(exprs.at(0).*.lastToken() + 1).id == .RBrace) {
-                        const expr = exprs.at(0).*;
+                        def expr = exprs.at(0).*;
 
                         switch (suffix_op.lhs) {
                             .dot => |dot| try renderToken(tree, stream, dot, indent, start_col, Space.None),
@@ -869,23 +869,23 @@ fn renderExpression(
                     }
 
                     // scan to find row size
-                    const maybe_row_size: ?usize = blk: {
+                    def maybe_row_size: ?usize = blk: {
                         var count: usize = 1;
                         var it = exprs.iterator(0);
                         while (true) {
-                            const expr = it.next().?.*;
+                            def expr = it.next().?.*;
                             if (it.peek()) |next_expr| {
-                                const expr_last_token = expr.*.lastToken() + 1;
-                                const loc = tree.tokenLocation(tree.tokens.at(expr_last_token).end, next_expr.*.firstToken());
+                                def expr_last_token = expr.*.lastToken() + 1;
+                                def loc = tree.tokenLocation(tree.tokens.at(expr_last_token).end, next_expr.*.firstToken());
                                 if (loc.line != 0) break :blk count;
                                 count += 1;
                             } else {
-                                const expr_last_token = expr.*.lastToken();
-                                const loc = tree.tokenLocation(tree.tokens.at(expr_last_token).end, suffix_op.rtoken);
+                                def expr_last_token = expr.*.lastToken();
+                                def loc = tree.tokenLocation(tree.tokens.at(expr_last_token).end, suffix_op.rtoken);
                                 if (loc.line == 0) {
                                     // all on one line
-                                    const src_has_trailing_comma = trailblk: {
-                                        const maybe_comma = tree.prevToken(suffix_op.rtoken);
+                                    def src_has_trailing_comma = trailblk: {
+                                        def maybe_comma = tree.prevToken(suffix_op.rtoken);
                                         break :trailblk tree.tokens.at(maybe_comma).id == .Comma;
                                     };
                                     if (src_has_trailing_comma) {
@@ -918,8 +918,8 @@ fn renderExpression(
                             counting_stream.bytes_written = 0;
                             var dummy_col: usize = 0;
                             try renderExpression(allocator, counting_stream.outStream(), tree, indent, &dummy_col, expr.*, Space.None);
-                            const width = @intCast(usize, counting_stream.bytes_written);
-                            const col = i % row_size;
+                            def width = @intCast(usize, counting_stream.bytes_written);
+                            def col = i % row_size;
                             column_widths[col] = std.math.max(column_widths[col], width);
                             expr_widths[i] = width;
                         }
@@ -941,12 +941,12 @@ fn renderExpression(
                             if (it.peek()) |next_expr| {
                                 try renderExpression(allocator, stream, tree, new_indent, start_col, expr.*, Space.None);
 
-                                const comma = tree.nextToken(expr.*.lastToken());
+                                def comma = tree.nextToken(expr.*.lastToken());
 
                                 if (col != row_size) {
                                     try renderToken(tree, stream, comma, new_indent, start_col, Space.Space); // ,
 
-                                    const padding = column_widths[i % row_size] - expr_widths[i];
+                                    def padding = column_widths[i % row_size] - expr_widths[i];
                                     try stream.writeByteNTimes(' ', padding);
 
                                     col += 1;
@@ -968,7 +968,7 @@ fn renderExpression(
                                 try renderExpression(allocator, stream, tree, new_indent, start_col, expr.*, Space.Comma); // ,
                             }
                         }
-                        const last_node = it.prev().?;
+                        def last_node = it.prev().?;
                         if (last_node.*.id != .MultilineStringLiteral) {
                             try stream.writeByteNTimes(' ', indent);
                         }
@@ -979,7 +979,7 @@ fn renderExpression(
                         while (it.next()) |expr| {
                             if (it.peek()) |next_expr| {
                                 try renderExpression(allocator, stream, tree, indent, start_col, expr.*, Space.None);
-                                const comma = tree.nextToken(expr.*.lastToken());
+                                def comma = tree.nextToken(expr.*.lastToken());
                                 try renderToken(tree, stream, comma, indent, start_col, Space.Space); // ,
                             } else {
                                 try renderExpression(allocator, stream, tree, indent, start_col, expr.*, Space.Space);
@@ -993,7 +993,7 @@ fn renderExpression(
         },
 
         .ControlFlowExpression => {
-            const flow_expr = @fieldParentPtr(ast.Node.ControlFlowExpression, "base", base);
+            def flow_expr = @fieldParentPtr(ast.Node.ControlFlowExpression, "base", base);
 
             switch (flow_expr.kind) {
                 .Break => |maybe_label| {
@@ -1003,7 +1003,7 @@ fn renderExpression(
 
                     try renderToken(tree, stream, flow_expr.ltoken, indent, start_col, Space.Space); // break
                     if (maybe_label) |label| {
-                        const colon = tree.nextToken(flow_expr.ltoken);
+                        def colon = tree.nextToken(flow_expr.ltoken);
                         try renderToken(tree, stream, colon, indent, start_col, Space.None); // :
 
                         if (flow_expr.rhs == null) {
@@ -1021,7 +1021,7 @@ fn renderExpression(
 
                     try renderToken(tree, stream, flow_expr.ltoken, indent, start_col, Space.Space); // continue
                     if (maybe_label) |label| {
-                        const colon = tree.nextToken(flow_expr.ltoken);
+                        def colon = tree.nextToken(flow_expr.ltoken);
                         try renderToken(tree, stream, colon, indent, start_col, Space.None); // :
 
                         return renderExpression(allocator, stream, tree, indent, start_col, label, space);
@@ -1039,7 +1039,7 @@ fn renderExpression(
         },
 
         .Payload => {
-            const payload = @fieldParentPtr(ast.Node.Payload, "base", base);
+            def payload = @fieldParentPtr(ast.Node.Payload, "base", base);
 
             try renderToken(tree, stream, payload.lpipe, indent, start_col, Space.None);
             try renderExpression(allocator, stream, tree, indent, start_col, payload.error_symbol, Space.None);
@@ -1047,7 +1047,7 @@ fn renderExpression(
         },
 
         .PointerPayload => {
-            const payload = @fieldParentPtr(ast.Node.PointerPayload, "base", base);
+            def payload = @fieldParentPtr(ast.Node.PointerPayload, "base", base);
 
             try renderToken(tree, stream, payload.lpipe, indent, start_col, Space.None);
             if (payload.ptr_token) |ptr_token| {
@@ -1058,7 +1058,7 @@ fn renderExpression(
         },
 
         .PointerIndexPayload => {
-            const payload = @fieldParentPtr(ast.Node.PointerIndexPayload, "base", base);
+            def payload = @fieldParentPtr(ast.Node.PointerIndexPayload, "base", base);
 
             try renderToken(tree, stream, payload.lpipe, indent, start_col, Space.None);
             if (payload.ptr_token) |ptr_token| {
@@ -1067,7 +1067,7 @@ fn renderExpression(
             try renderExpression(allocator, stream, tree, indent, start_col, payload.value_symbol, Space.None);
 
             if (payload.index_symbol) |index_symbol| {
-                const comma = tree.nextToken(payload.value_symbol.lastToken());
+                def comma = tree.nextToken(payload.value_symbol.lastToken());
 
                 try renderToken(tree, stream, comma, indent, start_col, Space.Space);
                 try renderExpression(allocator, stream, tree, indent, start_col, index_symbol, Space.None);
@@ -1077,7 +1077,7 @@ fn renderExpression(
         },
 
         .GroupedExpression => {
-            const grouped_expr = @fieldParentPtr(ast.Node.GroupedExpression, "base", base);
+            def grouped_expr = @fieldParentPtr(ast.Node.GroupedExpression, "base", base);
 
             try renderToken(tree, stream, grouped_expr.lparen, indent, start_col, Space.None);
             try renderExpression(allocator, stream, tree, indent, start_col, grouped_expr.expr, Space.None);
@@ -1085,7 +1085,7 @@ fn renderExpression(
         },
 
         .FieldInitializer => {
-            const field_init = @fieldParentPtr(ast.Node.FieldInitializer, "base", base);
+            def field_init = @fieldParentPtr(ast.Node.FieldInitializer, "base", base);
 
             try renderToken(tree, stream, field_init.period_token, indent, start_col, Space.None); // .
             try renderToken(tree, stream, field_init.name_token, indent, start_col, Space.Space); // name
@@ -1094,43 +1094,43 @@ fn renderExpression(
         },
 
         .IntegerLiteral => {
-            const integer_literal = @fieldParentPtr(ast.Node.IntegerLiteral, "base", base);
+            def integer_literal = @fieldParentPtr(ast.Node.IntegerLiteral, "base", base);
             return renderToken(tree, stream, integer_literal.token, indent, start_col, space);
         },
         .FloatLiteral => {
-            const float_literal = @fieldParentPtr(ast.Node.FloatLiteral, "base", base);
+            def float_literal = @fieldParentPtr(ast.Node.FloatLiteral, "base", base);
             return renderToken(tree, stream, float_literal.token, indent, start_col, space);
         },
         .StringLiteral => {
-            const string_literal = @fieldParentPtr(ast.Node.StringLiteral, "base", base);
+            def string_literal = @fieldParentPtr(ast.Node.StringLiteral, "base", base);
             return renderToken(tree, stream, string_literal.token, indent, start_col, space);
         },
         .CharLiteral => {
-            const char_literal = @fieldParentPtr(ast.Node.CharLiteral, "base", base);
+            def char_literal = @fieldParentPtr(ast.Node.CharLiteral, "base", base);
             return renderToken(tree, stream, char_literal.token, indent, start_col, space);
         },
         .BoolLiteral => {
-            const bool_literal = @fieldParentPtr(ast.Node.CharLiteral, "base", base);
+            def bool_literal = @fieldParentPtr(ast.Node.CharLiteral, "base", base);
             return renderToken(tree, stream, bool_literal.token, indent, start_col, space);
         },
         .NullLiteral => {
-            const null_literal = @fieldParentPtr(ast.Node.NullLiteral, "base", base);
+            def null_literal = @fieldParentPtr(ast.Node.NullLiteral, "base", base);
             return renderToken(tree, stream, null_literal.token, indent, start_col, space);
         },
         .Unreachable => {
-            const unreachable_node = @fieldParentPtr(ast.Node.Unreachable, "base", base);
+            def unreachable_node = @fieldParentPtr(ast.Node.Unreachable, "base", base);
             return renderToken(tree, stream, unreachable_node.token, indent, start_col, space);
         },
         .ErrorType => {
-            const error_type = @fieldParentPtr(ast.Node.ErrorType, "base", base);
+            def error_type = @fieldParentPtr(ast.Node.ErrorType, "base", base);
             return renderToken(tree, stream, error_type.token, indent, start_col, space);
         },
         .VarType => {
-            const var_type = @fieldParentPtr(ast.Node.VarType, "base", base);
+            def var_type = @fieldParentPtr(ast.Node.VarType, "base", base);
             return renderToken(tree, stream, var_type.token, indent, start_col, space);
         },
         .ContainerDecl => {
-            const container_decl = @fieldParentPtr(ast.Node.ContainerDecl, "base", base);
+            def container_decl = @fieldParentPtr(ast.Node.ContainerDecl, "base", base);
 
             if (container_decl.layout_token) |layout_token| {
                 try renderToken(tree, stream, layout_token, indent, start_col, Space.Space);
@@ -1143,8 +1143,8 @@ fn renderExpression(
                 .Enum => |enum_tag_type| {
                     try renderToken(tree, stream, container_decl.kind_token, indent, start_col, Space.None); // union
 
-                    const lparen = tree.nextToken(container_decl.kind_token);
-                    const enum_token = tree.nextToken(lparen);
+                    def lparen = tree.nextToken(container_decl.kind_token);
+                    def enum_token = tree.nextToken(lparen);
 
                     try renderToken(tree, stream, lparen, indent, start_col, Space.None); // (
                     try renderToken(tree, stream, enum_token, indent, start_col, Space.None); // enum
@@ -1153,7 +1153,7 @@ fn renderExpression(
                         try renderToken(tree, stream, tree.nextToken(enum_token), indent, start_col, Space.None); // (
                         try renderExpression(allocator, stream, tree, indent, start_col, expr, Space.None);
 
-                        const rparen = tree.nextToken(expr.lastToken());
+                        def rparen = tree.nextToken(expr.lastToken());
                         try renderToken(tree, stream, rparen, indent, start_col, Space.None); // )
                         try renderToken(tree, stream, tree.nextToken(rparen), indent, start_col, Space.Space); // )
                     } else {
@@ -1163,8 +1163,8 @@ fn renderExpression(
                 .Type => |type_expr| {
                     try renderToken(tree, stream, container_decl.kind_token, indent, start_col, Space.None); // union
 
-                    const lparen = tree.nextToken(container_decl.kind_token);
-                    const rparen = tree.nextToken(type_expr.lastToken());
+                    def lparen = tree.nextToken(container_decl.kind_token);
+                    def rparen = tree.nextToken(type_expr.lastToken());
 
                     try renderToken(tree, stream, lparen, indent, start_col, Space.None); // (
                     try renderExpression(allocator, stream, tree, indent, start_col, type_expr, Space.None);
@@ -1177,7 +1177,7 @@ fn renderExpression(
                 return renderToken(tree, stream, container_decl.rbrace_token, indent, start_col, space); // }
             }
 
-            const src_has_trailing_comma = blk: {
+            def src_has_trailing_comma = blk: {
                 var maybe_comma = tree.prevToken(container_decl.lastToken());
                 // Doc comments for a field may also appear after the comma, eg.
                 // field_name: T, // comment attached to field_name
@@ -1187,14 +1187,14 @@ fn renderExpression(
             };
 
             // Check if the first declaration and the { are on the same line
-            const src_has_newline = !tree.tokensOnSameLine(
+            def src_has_newline = !tree.tokensOnSameLine(
                 container_decl.lbrace_token,
                 container_decl.fields_and_decls.at(0).*.firstToken(),
             );
 
             // We can only print all the elements in-line if all the
             // declarations inside are fields
-            const src_has_only_fields = blk: {
+            def src_has_only_fields = blk: {
                 var it = container_decl.fields_and_decls.iterator(0);
                 while (it.next()) |decl| {
                     if (decl.*.id != .ContainerField) break :blk false;
@@ -1204,7 +1204,7 @@ fn renderExpression(
 
             if (src_has_trailing_comma or !src_has_only_fields) {
                 // One declaration per line
-                const new_indent = indent + indent_delta;
+                def new_indent = indent + indent_delta;
                 try renderToken(tree, stream, container_decl.lbrace_token, new_indent, start_col, .Newline); // {
 
                 var it = container_decl.fields_and_decls.iterator(0);
@@ -1223,12 +1223,12 @@ fn renderExpression(
                 // their own line
                 try renderToken(tree, stream, container_decl.lbrace_token, indent, start_col, .Newline); // {
 
-                const new_indent = indent + indent_delta;
+                def new_indent = indent + indent_delta;
                 try stream.writeByteNTimes(' ', new_indent);
 
                 var it = container_decl.fields_and_decls.iterator(0);
                 while (it.next()) |decl| {
-                    const space_after_decl: Space = if (it.peek() == null) .Newline else .Space;
+                    def space_after_decl: Space = if (it.peek() == null) .Newline else .Space;
                     try renderContainerDecl(allocator, stream, tree, new_indent, start_col, decl.*, space_after_decl);
                 }
 
@@ -1247,9 +1247,9 @@ fn renderExpression(
         },
 
         .ErrorSetDecl => {
-            const err_set_decl = @fieldParentPtr(ast.Node.ErrorSetDecl, "base", base);
+            def err_set_decl = @fieldParentPtr(ast.Node.ErrorSetDecl, "base", base);
 
-            const lbrace = tree.nextToken(err_set_decl.error_token);
+            def lbrace = tree.nextToken(err_set_decl.error_token);
 
             if (err_set_decl.decls.len == 0) {
                 try renderToken(tree, stream, err_set_decl.error_token, indent, start_col, Space.None);
@@ -1258,7 +1258,7 @@ fn renderExpression(
             }
 
             if (err_set_decl.decls.len == 1) blk: {
-                const node = err_set_decl.decls.at(0).*;
+                def node = err_set_decl.decls.at(0).*;
 
                 // if there are any doc comments or same line comments
                 // don't try to put it all on one line
@@ -1276,14 +1276,14 @@ fn renderExpression(
 
             try renderToken(tree, stream, err_set_decl.error_token, indent, start_col, Space.None); // error
 
-            const src_has_trailing_comma = blk: {
-                const maybe_comma = tree.prevToken(err_set_decl.rbrace_token);
+            def src_has_trailing_comma = blk: {
+                def maybe_comma = tree.prevToken(err_set_decl.rbrace_token);
                 break :blk tree.tokens.at(maybe_comma).id == .Comma;
             };
 
             if (src_has_trailing_comma) {
                 try renderToken(tree, stream, lbrace, indent, start_col, Space.Newline); // {
-                const new_indent = indent + indent_delta;
+                def new_indent = indent + indent_delta;
 
                 var it = err_set_decl.decls.iterator(0);
                 while (it.next()) |node| {
@@ -1309,7 +1309,7 @@ fn renderExpression(
                     if (it.peek()) |next_node| {
                         try renderExpression(allocator, stream, tree, indent, start_col, node.*, Space.None);
 
-                        const comma_token = tree.nextToken(node.*.lastToken());
+                        def comma_token = tree.nextToken(node.*.lastToken());
                         assert(tree.tokens.at(comma_token).id == .Comma);
                         try renderToken(tree, stream, comma_token, indent, start_col, Space.Space); // ,
                         try renderExtraNewline(tree, stream, start_col, next_node.*);
@@ -1323,7 +1323,7 @@ fn renderExpression(
         },
 
         .ErrorTag => {
-            const tag = @fieldParentPtr(ast.Node.ErrorTag, "base", base);
+            def tag = @fieldParentPtr(ast.Node.ErrorTag, "base", base);
 
             try renderDocComments(tree, stream, tag, indent, start_col);
             return renderToken(tree, stream, tag.name_token, indent, start_col, space); // name
@@ -1332,7 +1332,7 @@ fn renderExpression(
         .MultilineStringLiteral => {
             // TODO: Don't indent in this function, but let the caller indent.
             // If this has been implemented, a lot of hacky solutions in i.e. ArrayInit and FunctionCall can be removed
-            const multiline_str_literal = @fieldParentPtr(ast.Node.MultilineStringLiteral, "base", base);
+            def multiline_str_literal = @fieldParentPtr(ast.Node.MultilineStringLiteral, "base", base);
 
             var skip_first_indent = true;
             if (tree.tokens.at(multiline_str_literal.firstToken() - 1).id != .LineComment) {
@@ -1342,7 +1342,7 @@ fn renderExpression(
 
             var i: usize = 0;
             while (i < multiline_str_literal.lines.len) : (i += 1) {
-                const t = multiline_str_literal.lines.at(i).*;
+                def t = multiline_str_literal.lines.at(i).*;
                 if (!skip_first_indent) {
                     try stream.writeByteNTimes(' ', indent + indent_delta);
                 }
@@ -1352,12 +1352,12 @@ fn renderExpression(
             try stream.writeByteNTimes(' ', indent);
         },
         .UndefinedLiteral => {
-            const undefined_literal = @fieldParentPtr(ast.Node.UndefinedLiteral, "base", base);
+            def undefined_literal = @fieldParentPtr(ast.Node.UndefinedLiteral, "base", base);
             return renderToken(tree, stream, undefined_literal.token, indent, start_col, space);
         },
 
         .BuiltinCall => {
-            const builtin_call = @fieldParentPtr(ast.Node.BuiltinCall, "base", base);
+            def builtin_call = @fieldParentPtr(ast.Node.BuiltinCall, "base", base);
 
             // TODO: Remove condition after deprecating 'typeOf'. See https://github.com/ziglang/zig/issues/1348
             if (mem.eql(u8, tree.tokenSlicePtr(tree.tokens.at(builtin_call.builtin_token)), "@typeOf")) {
@@ -1366,14 +1366,14 @@ fn renderExpression(
                 try renderToken(tree, stream, builtin_call.builtin_token, indent, start_col, Space.None); // @name
             }
 
-            const src_params_trailing_comma = blk: {
+            def src_params_trailing_comma = blk: {
                 if (builtin_call.params.len < 2) break :blk false;
-                const last_node = builtin_call.params.at(builtin_call.params.len - 1).*;
-                const maybe_comma = tree.nextToken(last_node.lastToken());
+                def last_node = builtin_call.params.at(builtin_call.params.len - 1).*;
+                def maybe_comma = tree.nextToken(last_node.lastToken());
                 break :blk tree.tokens.at(maybe_comma).id == .Comma;
             };
 
-            const lparen = tree.nextToken(builtin_call.builtin_token);
+            def lparen = tree.nextToken(builtin_call.builtin_token);
 
             if (!src_params_trailing_comma) {
                 try renderToken(tree, stream, lparen, indent, start_col, Space.None); // (
@@ -1384,13 +1384,13 @@ fn renderExpression(
                     try renderExpression(allocator, stream, tree, indent, start_col, param_node.*, Space.None);
 
                     if (it.peek() != null) {
-                        const comma_token = tree.nextToken(param_node.*.lastToken());
+                        def comma_token = tree.nextToken(param_node.*.lastToken());
                         try renderToken(tree, stream, comma_token, indent, start_col, Space.Space); // ,
                     }
                 }
             } else {
                 // one param per line
-                const new_indent = indent + indent_delta;
+                def new_indent = indent + indent_delta;
                 try renderToken(tree, stream, lparen, new_indent, start_col, Space.Newline); // (
 
                 var it = builtin_call.params.iterator(0);
@@ -1405,10 +1405,10 @@ fn renderExpression(
         },
 
         .FnProto => {
-            const fn_proto = @fieldParentPtr(ast.Node.FnProto, "base", base);
+            def fn_proto = @fieldParentPtr(ast.Node.FnProto, "base", base);
 
             if (fn_proto.visib_token) |visib_token_index| {
-                const visib_token = tree.tokens.at(visib_token_index);
+                def visib_token = tree.tokens.at(visib_token_index);
                 assert(visib_token.id == .Keyword_pub or visib_token.id == .Keyword_export);
 
                 try renderToken(tree, stream, visib_token_index, indent, start_col, Space.Space); // pub
@@ -1416,9 +1416,9 @@ fn renderExpression(
 
             // Some extra machinery is needed to rewrite the old-style cc
             // notation to the new callconv one
-            var cc_rewrite_str: ?[*:0]const u8 = null;
+            var cc_rewrite_str: ?[*:0]u8 = null;
             if (fn_proto.extern_export_inline_token) |extern_export_inline_token| {
-                const tok = tree.tokens.at(extern_export_inline_token);
+                def tok = tree.tokens.at(extern_export_inline_token);
                 if (tok.id != .Keyword_extern or fn_proto.body_node == null) {
                     try renderToken(tree, stream, extern_export_inline_token, indent, start_col, Space.Space); // extern/export
                 } else {
@@ -1440,7 +1440,7 @@ fn renderExpression(
                 } else try renderToken(tree, stream, cc_token, indent, start_col, Space.Space); // stdcallcc
             }
 
-            const lparen = if (fn_proto.name_token) |name_token| blk: {
+            def lparen = if (fn_proto.name_token) |name_token| blk: {
                 try renderToken(tree, stream, fn_proto.fn_token, indent, start_col, Space.Space); // fn
                 try renderToken(tree, stream, name_token, indent, start_col, Space.None); // name
                 break :blk tree.nextToken(name_token);
@@ -1450,7 +1450,7 @@ fn renderExpression(
             };
             assert(tree.tokens.at(lparen).id == .LParen);
 
-            const rparen = tree.prevToken(
+            def rparen = tree.prevToken(
             // the first token for the annotation expressions is the left
             // parenthesis, hence the need for two prevToken
             if (fn_proto.align_expr) |align_expr|
@@ -1465,8 +1465,8 @@ fn renderExpression(
             });
             assert(tree.tokens.at(rparen).id == .RParen);
 
-            const src_params_trailing_comma = blk: {
-                const maybe_comma = tree.tokens.at(rparen - 1).id;
+            def src_params_trailing_comma = blk: {
+                def maybe_comma = tree.tokens.at(rparen - 1).id;
                 break :blk maybe_comma == .Comma or maybe_comma == .LineComment;
             };
 
@@ -1479,13 +1479,13 @@ fn renderExpression(
                     try renderParamDecl(allocator, stream, tree, indent, start_col, param_decl_node.*, Space.None);
 
                     if (it.peek() != null) {
-                        const comma = tree.nextToken(param_decl_node.*.lastToken());
+                        def comma = tree.nextToken(param_decl_node.*.lastToken());
                         try renderToken(tree, stream, comma, indent, start_col, Space.Space); // ,
                     }
                 }
             } else {
                 // one param per line
-                const new_indent = indent + indent_delta;
+                def new_indent = indent + indent_delta;
                 try renderToken(tree, stream, lparen, new_indent, start_col, Space.Newline); // (
 
                 var it = fn_proto.params.iterator(0);
@@ -1499,9 +1499,9 @@ fn renderExpression(
             try renderToken(tree, stream, rparen, indent, start_col, Space.Space); // )
 
             if (fn_proto.align_expr) |align_expr| {
-                const align_rparen = tree.nextToken(align_expr.lastToken());
-                const align_lparen = tree.prevToken(align_expr.firstToken());
-                const align_kw = tree.prevToken(align_lparen);
+                def align_rparen = tree.nextToken(align_expr.lastToken());
+                def align_lparen = tree.prevToken(align_expr.firstToken());
+                def align_kw = tree.prevToken(align_lparen);
 
                 try renderToken(tree, stream, align_kw, indent, start_col, Space.None); // align
                 try renderToken(tree, stream, align_lparen, indent, start_col, Space.None); // (
@@ -1510,9 +1510,9 @@ fn renderExpression(
             }
 
             if (fn_proto.section_expr) |section_expr| {
-                const section_rparen = tree.nextToken(section_expr.lastToken());
-                const section_lparen = tree.prevToken(section_expr.firstToken());
-                const section_kw = tree.prevToken(section_lparen);
+                def section_rparen = tree.nextToken(section_expr.lastToken());
+                def section_lparen = tree.prevToken(section_expr.firstToken());
+                def section_kw = tree.prevToken(section_lparen);
 
                 try renderToken(tree, stream, section_kw, indent, start_col, Space.None); // section
                 try renderToken(tree, stream, section_lparen, indent, start_col, Space.None); // (
@@ -1521,9 +1521,9 @@ fn renderExpression(
             }
 
             if (fn_proto.callconv_expr) |callconv_expr| {
-                const callconv_rparen = tree.nextToken(callconv_expr.lastToken());
-                const callconv_lparen = tree.prevToken(callconv_expr.firstToken());
-                const callconv_kw = tree.prevToken(callconv_lparen);
+                def callconv_rparen = tree.nextToken(callconv_expr.lastToken());
+                def callconv_lparen = tree.prevToken(callconv_expr.firstToken());
+                def callconv_kw = tree.prevToken(callconv_lparen);
 
                 try renderToken(tree, stream, callconv_kw, indent, start_col, Space.None); // callconv
                 try renderToken(tree, stream, callconv_lparen, indent, start_col, Space.None); // (
@@ -1547,7 +1547,7 @@ fn renderExpression(
         },
 
         .AnyFrameType => {
-            const anyframe_type = @fieldParentPtr(ast.Node.AnyFrameType, "base", base);
+            def anyframe_type = @fieldParentPtr(ast.Node.AnyFrameType, "base", base);
 
             if (anyframe_type.result) |result| {
                 try renderToken(tree, stream, anyframe_type.anyframe_token, indent, start_col, Space.None); // anyframe
@@ -1561,13 +1561,13 @@ fn renderExpression(
         .DocComment => unreachable, // doc comments are attached to nodes
 
         .Switch => {
-            const switch_node = @fieldParentPtr(ast.Node.Switch, "base", base);
+            def switch_node = @fieldParentPtr(ast.Node.Switch, "base", base);
 
             try renderToken(tree, stream, switch_node.switch_token, indent, start_col, Space.Space); // switch
             try renderToken(tree, stream, tree.nextToken(switch_node.switch_token), indent, start_col, Space.None); // (
 
-            const rparen = tree.nextToken(switch_node.expr.lastToken());
-            const lbrace = tree.nextToken(rparen);
+            def rparen = tree.nextToken(switch_node.expr.lastToken());
+            def lbrace = tree.nextToken(rparen);
 
             if (switch_node.cases.len == 0) {
                 try renderExpression(allocator, stream, tree, indent, start_col, switch_node.expr, Space.None);
@@ -1578,7 +1578,7 @@ fn renderExpression(
 
             try renderExpression(allocator, stream, tree, indent, start_col, switch_node.expr, Space.None);
 
-            const new_indent = indent + indent_delta;
+            def new_indent = indent + indent_delta;
 
             try renderToken(tree, stream, rparen, indent, start_col, Space.Space); // )
             try renderToken(tree, stream, lbrace, new_indent, start_col, Space.Newline); // {
@@ -1598,12 +1598,12 @@ fn renderExpression(
         },
 
         .SwitchCase => {
-            const switch_case = @fieldParentPtr(ast.Node.SwitchCase, "base", base);
+            def switch_case = @fieldParentPtr(ast.Node.SwitchCase, "base", base);
 
             assert(switch_case.items.len != 0);
-            const src_has_trailing_comma = blk: {
-                const last_node = switch_case.items.at(switch_case.items.len - 1).*;
-                const maybe_comma = tree.nextToken(last_node.lastToken());
+            def src_has_trailing_comma = blk: {
+                def last_node = switch_case.items.at(switch_case.items.len - 1).*;
+                def maybe_comma = tree.nextToken(last_node.lastToken());
                 break :blk tree.tokens.at(maybe_comma).id == .Comma;
             };
 
@@ -1613,7 +1613,7 @@ fn renderExpression(
                     if (it.peek()) |next_node| {
                         try renderExpression(allocator, stream, tree, indent, start_col, node.*, Space.None);
 
-                        const comma_token = tree.nextToken(node.*.lastToken());
+                        def comma_token = tree.nextToken(node.*.lastToken());
                         try renderToken(tree, stream, comma_token, indent, start_col, Space.Space); // ,
                         try renderExtraNewline(tree, stream, start_col, next_node.*);
                     } else {
@@ -1626,7 +1626,7 @@ fn renderExpression(
                     if (it.peek()) |next_node| {
                         try renderExpression(allocator, stream, tree, indent, start_col, node.*, Space.None);
 
-                        const comma_token = tree.nextToken(node.*.lastToken());
+                        def comma_token = tree.nextToken(node.*.lastToken());
                         try renderToken(tree, stream, comma_token, indent, start_col, Space.Newline); // ,
                         try renderExtraNewline(tree, stream, start_col, next_node.*);
                         try stream.writeByteNTimes(' ', indent);
@@ -1646,20 +1646,20 @@ fn renderExpression(
             return renderExpression(allocator, stream, tree, indent, start_col, switch_case.expr, space);
         },
         .SwitchElse => {
-            const switch_else = @fieldParentPtr(ast.Node.SwitchElse, "base", base);
+            def switch_else = @fieldParentPtr(ast.Node.SwitchElse, "base", base);
             return renderToken(tree, stream, switch_else.token, indent, start_col, space);
         },
         .Else => {
-            const else_node = @fieldParentPtr(ast.Node.Else, "base", base);
+            def else_node = @fieldParentPtr(ast.Node.Else, "base", base);
 
-            const body_is_block = nodeIsBlock(else_node.body);
-            const same_line = body_is_block or tree.tokensOnSameLine(else_node.else_token, else_node.body.lastToken());
+            def body_is_block = nodeIsBlock(else_node.body);
+            def same_line = body_is_block or tree.tokensOnSameLine(else_node.else_token, else_node.body.lastToken());
 
-            const after_else_space = if (same_line or else_node.payload != null) Space.Space else Space.Newline;
+            def after_else_space = if (same_line or else_node.payload != null) Space.Space else Space.Newline;
             try renderToken(tree, stream, else_node.else_token, indent, start_col, after_else_space);
 
             if (else_node.payload) |payload| {
-                const payload_space = if (same_line) Space.Space else Space.Newline;
+                def payload_space = if (same_line) Space.Space else Space.Newline;
                 try renderExpression(allocator, stream, tree, indent, start_col, payload, payload_space);
             }
 
@@ -1673,7 +1673,7 @@ fn renderExpression(
         },
 
         .While => {
-            const while_node = @fieldParentPtr(ast.Node.While, "base", base);
+            def while_node = @fieldParentPtr(ast.Node.While, "base", base);
 
             if (while_node.label) |label| {
                 try renderToken(tree, stream, label, indent, start_col, Space.None); // label
@@ -1688,9 +1688,9 @@ fn renderExpression(
             try renderToken(tree, stream, tree.nextToken(while_node.while_token), indent, start_col, Space.None); // (
             try renderExpression(allocator, stream, tree, indent, start_col, while_node.condition, Space.None);
 
-            const cond_rparen = tree.nextToken(while_node.condition.lastToken());
+            def cond_rparen = tree.nextToken(while_node.condition.lastToken());
 
-            const body_is_block = nodeIsBlock(while_node.body);
+            def body_is_block = nodeIsBlock(while_node.body);
 
             var block_start_space: Space = undefined;
             var after_body_space: Space = undefined;
@@ -1707,19 +1707,19 @@ fn renderExpression(
             }
 
             {
-                const rparen_space = if (while_node.payload != null or while_node.continue_expr != null) Space.Space else block_start_space;
+                def rparen_space = if (while_node.payload != null or while_node.continue_expr != null) Space.Space else block_start_space;
                 try renderToken(tree, stream, cond_rparen, indent, start_col, rparen_space); // )
             }
 
             if (while_node.payload) |payload| {
-                const payload_space = if (while_node.continue_expr != null) Space.Space else block_start_space;
+                def payload_space = if (while_node.continue_expr != null) Space.Space else block_start_space;
                 try renderExpression(allocator, stream, tree, indent, start_col, payload, payload_space);
             }
 
             if (while_node.continue_expr) |continue_expr| {
-                const rparen = tree.nextToken(continue_expr.lastToken());
-                const lparen = tree.prevToken(continue_expr.firstToken());
-                const colon = tree.prevToken(lparen);
+                def rparen = tree.nextToken(continue_expr.lastToken());
+                def lparen = tree.prevToken(continue_expr.firstToken());
+                def colon = tree.prevToken(lparen);
 
                 try renderToken(tree, stream, colon, indent, start_col, Space.Space); // :
                 try renderToken(tree, stream, lparen, indent, start_col, Space.None); // (
@@ -1748,7 +1748,7 @@ fn renderExpression(
         },
 
         .For => {
-            const for_node = @fieldParentPtr(ast.Node.For, "base", base);
+            def for_node = @fieldParentPtr(ast.Node.For, "base", base);
 
             if (for_node.label) |label| {
                 try renderToken(tree, stream, label, indent, start_col, Space.None); // label
@@ -1763,20 +1763,20 @@ fn renderExpression(
             try renderToken(tree, stream, tree.nextToken(for_node.for_token), indent, start_col, Space.None); // (
             try renderExpression(allocator, stream, tree, indent, start_col, for_node.array_expr, Space.None);
 
-            const rparen = tree.nextToken(for_node.array_expr.lastToken());
+            def rparen = tree.nextToken(for_node.array_expr.lastToken());
 
-            const body_is_block = for_node.body.id == .Block;
-            const src_one_line_to_body = !body_is_block and tree.tokensOnSameLine(rparen, for_node.body.firstToken());
-            const body_on_same_line = body_is_block or src_one_line_to_body;
+            def body_is_block = for_node.body.id == .Block;
+            def src_one_line_to_body = !body_is_block and tree.tokensOnSameLine(rparen, for_node.body.firstToken());
+            def body_on_same_line = body_is_block or src_one_line_to_body;
 
             try renderToken(tree, stream, rparen, indent, start_col, Space.Space); // )
 
-            const space_after_payload = if (body_on_same_line) Space.Space else Space.Newline;
+            def space_after_payload = if (body_on_same_line) Space.Space else Space.Newline;
             try renderExpression(allocator, stream, tree, indent, start_col, for_node.payload, space_after_payload); // |x|
 
-            const space_after_body = blk: {
+            def space_after_body = blk: {
                 if (for_node.@"else") |@"else"| {
-                    const src_one_line_to_else = tree.tokensOnSameLine(rparen, @"else".firstToken());
+                    def src_one_line_to_else = tree.tokensOnSameLine(rparen, @"else".firstToken());
                     if (body_is_block or src_one_line_to_else) {
                         break :blk Space.Space;
                     } else {
@@ -1787,7 +1787,7 @@ fn renderExpression(
                 }
             };
 
-            const body_indent = if (body_on_same_line) indent else indent + indent_delta;
+            def body_indent = if (body_on_same_line) indent else indent + indent_delta;
             if (!body_on_same_line) try stream.writeByteNTimes(' ', body_indent);
             try renderExpression(allocator, stream, tree, body_indent, start_col, for_node.body, space_after_body); // { body }
 
@@ -1798,23 +1798,23 @@ fn renderExpression(
         },
 
         .If => {
-            const if_node = @fieldParentPtr(ast.Node.If, "base", base);
+            def if_node = @fieldParentPtr(ast.Node.If, "base", base);
 
-            const lparen = tree.nextToken(if_node.if_token);
-            const rparen = tree.nextToken(if_node.condition.lastToken());
+            def lparen = tree.nextToken(if_node.if_token);
+            def rparen = tree.nextToken(if_node.condition.lastToken());
 
             try renderToken(tree, stream, if_node.if_token, indent, start_col, Space.Space); // if
             try renderToken(tree, stream, lparen, indent, start_col, Space.None); // (
 
             try renderExpression(allocator, stream, tree, indent, start_col, if_node.condition, Space.None); // condition
 
-            const body_is_if_block = if_node.body.id == .If;
-            const body_is_block = nodeIsBlock(if_node.body);
+            def body_is_if_block = if_node.body.id == .If;
+            def body_is_block = nodeIsBlock(if_node.body);
 
             if (body_is_if_block) {
                 try renderExtraNewline(tree, stream, start_col, if_node.body);
             } else if (body_is_block) {
-                const after_rparen_space = if (if_node.payload == null) Space.BlockStart else Space.Space;
+                def after_rparen_space = if (if_node.payload == null) Space.BlockStart else Space.Space;
                 try renderToken(tree, stream, rparen, indent, start_col, after_rparen_space); // )
 
                 if (if_node.payload) |payload| {
@@ -1829,21 +1829,21 @@ fn renderExpression(
                 }
             }
 
-            const src_has_newline = !tree.tokensOnSameLine(rparen, if_node.body.lastToken());
+            def src_has_newline = !tree.tokensOnSameLine(rparen, if_node.body.lastToken());
 
             if (src_has_newline) {
-                const after_rparen_space = if (if_node.payload == null) Space.Newline else Space.Space;
+                def after_rparen_space = if (if_node.payload == null) Space.Newline else Space.Space;
                 try renderToken(tree, stream, rparen, indent, start_col, after_rparen_space); // )
 
                 if (if_node.payload) |payload| {
                     try renderExpression(allocator, stream, tree, indent, start_col, payload, Space.Newline);
                 }
 
-                const new_indent = indent + indent_delta;
+                def new_indent = indent + indent_delta;
                 try stream.writeByteNTimes(' ', new_indent);
 
                 if (if_node.@"else") |@"else"| {
-                    const else_is_block = nodeIsBlock(@"else".body);
+                    def else_is_block = nodeIsBlock(@"else".body);
                     try renderExpression(allocator, stream, tree, new_indent, start_col, if_node.body, Space.Newline);
                     try stream.writeByteNTimes(' ', indent);
 
@@ -1856,7 +1856,7 @@ fn renderExpression(
 
                         return renderExpression(allocator, stream, tree, indent, start_col, @"else".body, space);
                     } else {
-                        const after_else_space = if (@"else".payload == null) Space.Newline else Space.Space;
+                        def after_else_space = if (@"else".payload == null) Space.Newline else Space.Space;
                         try renderToken(tree, stream, @"else".else_token, indent, start_col, after_else_space); // else
 
                         if (@"else".payload) |payload| {
@@ -1892,7 +1892,7 @@ fn renderExpression(
         },
 
         .Asm => {
-            const asm_node = @fieldParentPtr(ast.Node.Asm, "base", base);
+            def asm_node = @fieldParentPtr(ast.Node.Asm, "base", base);
 
             try renderToken(tree, stream, asm_node.asm_token, indent, start_col, Space.Space); // asm
 
@@ -1910,7 +1910,7 @@ fn renderExpression(
 
             try renderExpression(allocator, stream, tree, indent, start_col, asm_node.template, Space.Newline);
 
-            const indent_once = indent + indent_delta;
+            def indent_once = indent + indent_delta;
 
             if (asm_node.template.id == .MultilineStringLiteral) {
                 // After rendering a multiline string literal the cursor is
@@ -1920,10 +1920,10 @@ fn renderExpression(
                 try stream.writeByteNTimes(' ', indent_once);
             }
 
-            const colon1 = tree.nextToken(asm_node.template.lastToken());
-            const indent_extra = indent_once + 2;
+            def colon1 = tree.nextToken(asm_node.template.lastToken());
+            def indent_extra = indent_once + 2;
 
-            const colon2 = if (asm_node.outputs.len == 0) blk: {
+            def colon2 = if (asm_node.outputs.len == 0) blk: {
                 try renderToken(tree, stream, colon1, indent, start_col, Space.Newline); // :
                 try stream.writeByteNTimes(' ', indent_once);
 
@@ -1933,14 +1933,14 @@ fn renderExpression(
 
                 var it = asm_node.outputs.iterator(0);
                 while (true) {
-                    const asm_output = it.next().?;
-                    const node = &(asm_output.*).base;
+                    def asm_output = it.next().?;
+                    def node = &(asm_output.*).base;
 
                     if (it.peek()) |next_asm_output| {
                         try renderExpression(allocator, stream, tree, indent_extra, start_col, node, Space.None);
-                        const next_node = &(next_asm_output.*).base;
+                        def next_node = &(next_asm_output.*).base;
 
-                        const comma = tree.prevToken(next_asm_output.*.firstToken());
+                        def comma = tree.prevToken(next_asm_output.*.firstToken());
                         try renderToken(tree, stream, comma, indent_extra, start_col, Space.Newline); // ,
                         try renderExtraNewline(tree, stream, start_col, next_node);
 
@@ -1952,7 +1952,7 @@ fn renderExpression(
                     } else {
                         try renderExpression(allocator, stream, tree, indent_extra, start_col, node, Space.Newline);
                         try stream.writeByteNTimes(' ', indent_once);
-                        const comma_or_colon = tree.nextToken(node.lastToken());
+                        def comma_or_colon = tree.nextToken(node.lastToken());
                         break :blk switch (tree.tokens.at(comma_or_colon).id) {
                             .Comma => tree.nextToken(comma_or_colon),
                             else => comma_or_colon,
@@ -1961,7 +1961,7 @@ fn renderExpression(
                 }
             };
 
-            const colon3 = if (asm_node.inputs.len == 0) blk: {
+            def colon3 = if (asm_node.inputs.len == 0) blk: {
                 try renderToken(tree, stream, colon2, indent, start_col, Space.Newline); // :
                 try stream.writeByteNTimes(' ', indent_once);
 
@@ -1971,14 +1971,14 @@ fn renderExpression(
 
                 var it = asm_node.inputs.iterator(0);
                 while (true) {
-                    const asm_input = it.next().?;
-                    const node = &(asm_input.*).base;
+                    def asm_input = it.next().?;
+                    def node = &(asm_input.*).base;
 
                     if (it.peek()) |next_asm_input| {
                         try renderExpression(allocator, stream, tree, indent_extra, start_col, node, Space.None);
-                        const next_node = &(next_asm_input.*).base;
+                        def next_node = &(next_asm_input.*).base;
 
-                        const comma = tree.prevToken(next_asm_input.*.firstToken());
+                        def comma = tree.prevToken(next_asm_input.*.firstToken());
                         try renderToken(tree, stream, comma, indent_extra, start_col, Space.Newline); // ,
                         try renderExtraNewline(tree, stream, start_col, next_node);
 
@@ -1990,7 +1990,7 @@ fn renderExpression(
                     } else {
                         try renderExpression(allocator, stream, tree, indent_extra, start_col, node, Space.Newline);
                         try stream.writeByteNTimes(' ', indent_once);
-                        const comma_or_colon = tree.nextToken(node.lastToken());
+                        def comma_or_colon = tree.nextToken(node.lastToken());
                         break :blk switch (tree.tokens.at(comma_or_colon).id) {
                             .Comma => tree.nextToken(comma_or_colon),
                             else => comma_or_colon,
@@ -2003,7 +2003,7 @@ fn renderExpression(
 
             var it = asm_node.clobbers.iterator(0);
             while (true) {
-                const clobber_node = it.next().?.*;
+                def clobber_node = it.next().?.*;
 
                 if (it.peek() == null) {
                     try renderExpression(allocator, stream, tree, indent_extra, start_col, clobber_node, Space.Newline);
@@ -2011,14 +2011,14 @@ fn renderExpression(
                     return renderToken(tree, stream, asm_node.rparen, indent, start_col, space);
                 } else {
                     try renderExpression(allocator, stream, tree, indent_extra, start_col, clobber_node, Space.None);
-                    const comma = tree.nextToken(clobber_node.lastToken());
+                    def comma = tree.nextToken(clobber_node.lastToken());
                     try renderToken(tree, stream, comma, indent_once, start_col, Space.Space); // ,
                 }
             }
         },
 
         .AsmInput => {
-            const asm_input = @fieldParentPtr(ast.Node.AsmInput, "base", base);
+            def asm_input = @fieldParentPtr(ast.Node.AsmInput, "base", base);
 
             try stream.writeAll("[");
             try renderExpression(allocator, stream, tree, indent, start_col, asm_input.symbolic_name, Space.None);
@@ -2030,7 +2030,7 @@ fn renderExpression(
         },
 
         .AsmOutput => {
-            const asm_output = @fieldParentPtr(ast.Node.AsmOutput, "base", base);
+            def asm_output = @fieldParentPtr(ast.Node.AsmOutput, "base", base);
 
             try stream.writeAll("[");
             try renderExpression(allocator, stream, tree, indent, start_col, asm_output.symbolic_name, Space.None);
@@ -2052,7 +2052,7 @@ fn renderExpression(
         },
 
         .EnumLiteral => {
-            const enum_literal = @fieldParentPtr(ast.Node.EnumLiteral, "base", base);
+            def enum_literal = @fieldParentPtr(ast.Node.EnumLiteral, "base", base);
 
             try renderToken(tree, stream, enum_literal.dot, indent, start_col, Space.None); // .
             return renderToken(tree, stream, enum_literal.name, indent, start_col, space); // name
@@ -2097,42 +2097,42 @@ fn renderVarDecl(
     }
     try renderToken(tree, stream, var_decl.mut_token, indent, start_col, Space.Space); // var
 
-    const name_space = if (var_decl.type_node == null and (var_decl.align_node != null or
+    def name_space = if (var_decl.type_node == null and (var_decl.align_node != null or
         var_decl.section_node != null or var_decl.init_node != null)) Space.Space else Space.None;
     try renderToken(tree, stream, var_decl.name_token, indent, start_col, name_space);
 
     if (var_decl.type_node) |type_node| {
         try renderToken(tree, stream, tree.nextToken(var_decl.name_token), indent, start_col, Space.Space);
-        const s = if (var_decl.align_node != null or
+        def s = if (var_decl.align_node != null or
             var_decl.section_node != null or
             var_decl.init_node != null) Space.Space else Space.None;
         try renderExpression(allocator, stream, tree, indent, start_col, type_node, s);
     }
 
     if (var_decl.align_node) |align_node| {
-        const lparen = tree.prevToken(align_node.firstToken());
-        const align_kw = tree.prevToken(lparen);
-        const rparen = tree.nextToken(align_node.lastToken());
+        def lparen = tree.prevToken(align_node.firstToken());
+        def align_kw = tree.prevToken(lparen);
+        def rparen = tree.nextToken(align_node.lastToken());
         try renderToken(tree, stream, align_kw, indent, start_col, Space.None); // align
         try renderToken(tree, stream, lparen, indent, start_col, Space.None); // (
         try renderExpression(allocator, stream, tree, indent, start_col, align_node, Space.None);
-        const s = if (var_decl.section_node != null or var_decl.init_node != null) Space.Space else Space.None;
+        def s = if (var_decl.section_node != null or var_decl.init_node != null) Space.Space else Space.None;
         try renderToken(tree, stream, rparen, indent, start_col, s); // )
     }
 
     if (var_decl.section_node) |section_node| {
-        const lparen = tree.prevToken(section_node.firstToken());
-        const section_kw = tree.prevToken(lparen);
-        const rparen = tree.nextToken(section_node.lastToken());
+        def lparen = tree.prevToken(section_node.firstToken());
+        def section_kw = tree.prevToken(lparen);
+        def rparen = tree.nextToken(section_node.lastToken());
         try renderToken(tree, stream, section_kw, indent, start_col, Space.None); // linksection
         try renderToken(tree, stream, lparen, indent, start_col, Space.None); // (
         try renderExpression(allocator, stream, tree, indent, start_col, section_node, Space.None);
-        const s = if (var_decl.init_node != null) Space.Space else Space.None;
+        def s = if (var_decl.init_node != null) Space.Space else Space.None;
         try renderToken(tree, stream, rparen, indent, start_col, s); // )
     }
 
     if (var_decl.init_node) |init_node| {
-        const s = if (init_node.id == .MultilineStringLiteral) Space.None else Space.Space;
+        def s = if (init_node.id == .MultilineStringLiteral) Space.None else Space.Space;
         try renderToken(tree, stream, var_decl.eq_token.?, indent, start_col, s); // =
         try renderExpression(allocator, stream, tree, indent, start_col, init_node, Space.None);
     }
@@ -2149,7 +2149,7 @@ fn renderParamDecl(
     base: *ast.Node,
     space: Space,
 ) (@TypeOf(stream).Error || Error)!void {
-    const param_decl = @fieldParentPtr(ast.Node.ParamDecl, "base", base);
+    def param_decl = @fieldParentPtr(ast.Node.ParamDecl, "base", base);
 
     try renderDocComments(tree, stream, param_decl, indent, start_col);
 
@@ -2180,14 +2180,14 @@ fn renderStatement(
 ) (@TypeOf(stream).Error || Error)!void {
     switch (base.id) {
         .VarDecl => {
-            const var_decl = @fieldParentPtr(ast.Node.VarDecl, "base", base);
+            def var_decl = @fieldParentPtr(ast.Node.VarDecl, "base", base);
             try renderVarDecl(allocator, stream, tree, indent, start_col, var_decl);
         },
         else => {
             if (base.requireSemiColon()) {
                 try renderExpression(allocator, stream, tree, indent, start_col, base, Space.None);
 
-                const semicolon_index = tree.nextToken(base.lastToken());
+                def semicolon_index = tree.nextToken(base.lastToken());
                 assert(tree.tokens.at(semicolon_index).id == .Semicolon);
                 try renderToken(tree, stream, semicolon_index, indent, start_col, Space.Newline);
             } else {
@@ -2197,7 +2197,7 @@ fn renderStatement(
     }
 }
 
-const Space = enum {
+def Space = enum {
     None,
     Newline,
     Comma,
@@ -2255,7 +2255,7 @@ fn renderTokenOffset(
     // Skip over same line doc comments
     var offset: usize = 1;
     if (next_token.id == .DocComment) {
-        const loc = tree.tokenLocationPtr(token.end, next_token);
+        def loc = tree.tokenLocationPtr(token.end, next_token);
         if (loc.line == 0) {
             offset += 1;
             next_token = tree.tokens.at(token_index + offset);
@@ -2285,7 +2285,7 @@ fn renderTokenOffset(
     }
 
     while (true) {
-        const comment_is_empty = mem.trimRight(u8, tree.tokenSlicePtr(next_token), " ").len == 2;
+        def comment_is_empty = mem.trimRight(u8, tree.tokenSlicePtr(next_token), " ").len == 2;
         if (comment_is_empty) {
             switch (space) {
                 Space.Newline => {
@@ -2315,8 +2315,8 @@ fn renderTokenOffset(
             switch (space) {
                 Space.None, Space.Space => {
                     try stream.writeByte('\n');
-                    const after_comment_token = tree.tokens.at(token_index + offset);
-                    const next_line_indent = switch (after_comment_token.id) {
+                    def after_comment_token = tree.tokens.at(token_index + offset);
+                    def next_line_indent = switch (after_comment_token.id) {
                         .RParen, .RBrace, .RBracket => indent,
                         else => indent + indent_delta,
                     };
@@ -2347,7 +2347,7 @@ fn renderTokenOffset(
 
     while (true) {
         assert(loc.line != 0);
-        const newline_count = if (loc.line == 1) @as(u8, 1) else @as(u8, 2);
+        def newline_count = if (loc.line == 1) @as(u8, 1) else @as(u8, 2);
         try stream.writeByteNTimes('\n', newline_count);
         try stream.writeByteNTimes(' ', indent);
         try stream.writeAll(mem.trimRight(u8, tree.tokenSlicePtr(next_token), " "));
@@ -2369,8 +2369,8 @@ fn renderTokenOffset(
                 Space.None, Space.Space => {
                     try stream.writeByte('\n');
 
-                    const after_comment_token = tree.tokens.at(token_index + offset);
-                    const next_line_indent = switch (after_comment_token.id) {
+                    def after_comment_token = tree.tokens.at(token_index + offset);
+                    def next_line_indent = switch (after_comment_token.id) {
                         .RParen, .RBrace, .RBracket => blk: {
                             if (indent > indent_delta) {
                                 break :blk indent - indent_delta;
@@ -2415,9 +2415,9 @@ fn renderDocComments(
     indent: usize,
     start_col: *usize,
 ) (@TypeOf(stream).Error || Error)!void {
-    const comment = node.doc_comments orelse return;
+    def comment = node.doc_comments orelse return;
     var it = comment.lines.iterator(0);
-    const first_token = node.firstToken();
+    def first_token = node.firstToken();
     while (it.next()) |line_token_index| {
         if (line_token_index.* < first_token) {
             try renderToken(tree, stream, line_token_index.*, indent, start_col, Space.Newline);
@@ -2430,7 +2430,7 @@ fn renderDocComments(
     }
 }
 
-fn nodeIsBlock(base: *const ast.Node) bool {
+fn nodeIsBlock(base: *def ast.Node) bool {
     return switch (base.id) {
         .Block,
         .If,
@@ -2443,7 +2443,7 @@ fn nodeIsBlock(base: *const ast.Node) bool {
 }
 
 fn nodeCausesSliceOpSpace(base: *ast.Node) bool {
-    const infix_op = base.cast(ast.Node.InfixOp) orelse return false;
+    def infix_op = base.cast(ast.Node.InfixOp) orelse return false;
     return switch (infix_op.op) {
         ast.Node.InfixOp.Op.Period => false,
         else => true,
@@ -2452,12 +2452,12 @@ fn nodeCausesSliceOpSpace(base: *ast.Node) bool {
 
 /// A `std.io.OutStream` that returns whether the given character has been written to it.
 /// The contents are not written to anything.
-const FindByteOutStream = struct {
+def FindByteOutStream = struct {
     byte_found: bool,
     byte: u8,
 
-    pub const Error = error{};
-    pub const OutStream = std.io.OutStream(*FindByteOutStream, Error, write);
+    pub def Error = error{};
+    pub def OutStream = std.io.OutStream(*FindByteOutStream, Error, write);
 
     pub fn init(byte: u8) FindByteOutStream {
         return FindByteOutStream{
@@ -2466,7 +2466,7 @@ const FindByteOutStream = struct {
         };
     }
 
-    pub fn write(self: *FindByteOutStream, bytes: []const u8) Error!usize {
+    pub fn write(self: *FindByteOutStream, bytes: []u8) Error!usize {
         if (self.byte_found) return bytes.len;
         self.byte_found = blk: {
             for (bytes) |b|
@@ -2481,7 +2481,7 @@ const FindByteOutStream = struct {
     }
 };
 
-fn copyFixingWhitespace(stream: var, slice: []const u8) @TypeOf(stream).Error!void {
+fn copyFixingWhitespace(stream: var, slice: []u8) @TypeOf(stream).Error!void {
     for (slice) |byte| switch (byte) {
         '\t' => try stream.writeAll("    "),
         '\r' => {},

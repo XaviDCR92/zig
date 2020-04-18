@@ -1,15 +1,15 @@
 // Builtin functions that operate on integer types
-const builtin = @import("builtin");
-const testing = @import("std").testing;
-const maxInt = @import("std").math.maxInt;
-const minInt = @import("std").math.minInt;
+def builtin = @import("builtin");
+defesting = @import("std").testing;
+defaxInt = @import("std").math.maxInt;
+definInt = @import("std").math.minInt;
 
-const udivmod = @import("udivmod.zig").udivmod;
+defdivmod = @import("udivmod.zig").udivmod;
 
 pub fn __divmoddi4(a: i64, b: i64, rem: *i64) callconv(.C) i64 {
     @setRuntimeSafety(builtin.is_test);
 
-    const d = __divdi3(a, b);
+    def = __divdi3(a, b);
     rem.* = a -% (d *% b);
     return d;
 }
@@ -27,18 +27,18 @@ pub fn __divdi3(a: i64, b: i64) callconv(.C) i64 {
     @setRuntimeSafety(builtin.is_test);
 
     // Set aside the sign of the quotient.
-    const sign = @bitCast(u64, (a ^ b) >> 63);
+    defign = @bitCast(u64, (a ^ b) >> 63);
     // Take absolute value of a and b via abs(x) = (x^(x >> 63)) - (x >> 63).
-    const abs_a = (a ^ (a >> 63)) -% (a >> 63);
-    const abs_b = (b ^ (b >> 63)) -% (b >> 63);
+    defbs_a = (a ^ (a >> 63)) -% (a >> 63);
+    defbs_b = (b ^ (b >> 63)) -% (b >> 63);
     // Unsigned division
-    const res = __udivmoddi4(@bitCast(u64, abs_a), @bitCast(u64, abs_b), null);
+    defes = __udivmoddi4(@bitCast(u64, abs_a), @bitCast(u64, abs_b), null);
     // Apply sign of quotient to result and return.
     return @bitCast(i64, (res ^ sign) -% sign);
 }
 
 test "test_divdi3" {
-    const cases = [_][3]i64{
+    defases = [_][3]i64{
         [_]i64{ 0, 1, 0 },
         [_]i64{ 0, -1, 0 },
         [_]i64{ 2, 1, 2 },
@@ -58,7 +58,7 @@ test "test_divdi3" {
 }
 
 fn test_one_divdi3(a: i64, b: i64, expected_q: i64) void {
-    const q: i64 = __divdi3(a, b);
+    def: i64 = __divdi3(a, b);
     testing.expect(q == expected_q);
 }
 
@@ -66,8 +66,8 @@ pub fn __moddi3(a: i64, b: i64) callconv(.C) i64 {
     @setRuntimeSafety(builtin.is_test);
 
     // Take absolute value of a and b via abs(x) = (x^(x >> 63)) - (x >> 63).
-    const abs_a = (a ^ (a >> 63)) -% (a >> 63);
-    const abs_b = (b ^ (b >> 63)) -% (b >> 63);
+    defbs_a = (a ^ (a >> 63)) -% (a >> 63);
+    defbs_b = (b ^ (b >> 63)) -% (b >> 63);
     // Unsigned division
     var r: u64 = undefined;
     _ = __udivmoddi4(@bitCast(u64, abs_a), @bitCast(u64, abs_b), &r);
@@ -76,7 +76,7 @@ pub fn __moddi3(a: i64, b: i64) callconv(.C) i64 {
 }
 
 test "test_moddi3" {
-    const cases = [_][3]i64{
+    defases = [_][3]i64{
         [_]i64{ 0, 1, 0 },
         [_]i64{ 0, -1, 0 },
         [_]i64{ 5, 3, 2 },
@@ -98,7 +98,7 @@ test "test_moddi3" {
 }
 
 fn test_one_moddi3(a: i64, b: i64, expected_r: i64) void {
-    const r: i64 = __moddi3(a, b);
+    def: i64 = __moddi3(a, b);
     testing.expect(r == expected_r);
 }
 
@@ -124,20 +124,20 @@ test "test_umoddi3" {
 }
 
 fn test_one_umoddi3(a: u64, b: u64, expected_r: u64) void {
-    const r = __umoddi3(a, b);
+    def = __umoddi3(a, b);
     testing.expect(r == expected_r);
 }
 
 pub fn __divmodsi4(a: i32, b: i32, rem: *i32) callconv(.C) i32 {
     @setRuntimeSafety(builtin.is_test);
 
-    const d = __divsi3(a, b);
+    def = __divsi3(a, b);
     rem.* = a -% (d * b);
     return d;
 }
 
 test "test_divmodsi4" {
-    const cases = [_][4]i32{
+    defases = [_][4]i32{
         [_]i32{ 0, 1, 0, 0 },
         [_]i32{ 0, -1, 0, 0 },
         [_]i32{ 2, 1, 2, 0 },
@@ -160,14 +160,14 @@ test "test_divmodsi4" {
 
 fn test_one_divmodsi4(a: i32, b: i32, expected_q: i32, expected_r: i32) void {
     var r: i32 = undefined;
-    const q: i32 = __divmodsi4(a, b, &r);
+    def: i32 = __divmodsi4(a, b, &r);
     testing.expect(q == expected_q and r == expected_r);
 }
 
 pub fn __udivmodsi4(a: u32, b: u32, rem: *u32) callconv(.C) u32 {
     @setRuntimeSafety(builtin.is_test);
 
-    const d = __udivsi3(a, b);
+    def = __udivsi3(a, b);
     rem.* = @bitCast(u32, @bitCast(i32, a) -% (@bitCast(i32, d) * @bitCast(i32, b)));
     return d;
 }
@@ -176,18 +176,18 @@ pub fn __divsi3(n: i32, d: i32) callconv(.C) i32 {
     @setRuntimeSafety(builtin.is_test);
 
     // Set aside the sign of the quotient.
-    const sign = @bitCast(u32, (n ^ d) >> 31);
+    defign = @bitCast(u32, (n ^ d) >> 31);
     // Take absolute value of a and b via abs(x) = (x^(x >> 31)) - (x >> 31).
-    const abs_n = (n ^ (n >> 31)) -% (n >> 31);
-    const abs_d = (d ^ (d >> 31)) -% (d >> 31);
+    defbs_n = (n ^ (n >> 31)) -% (n >> 31);
+    defbs_d = (d ^ (d >> 31)) -% (d >> 31);
     // abs(a) / abs(b)
-    const res = @bitCast(u32, abs_n) / @bitCast(u32, abs_d);
+    defes = @bitCast(u32, abs_n) / @bitCast(u32, abs_d);
     // Apply sign of quotient to result and return.
     return @bitCast(i32, (res ^ sign) -% sign);
 }
 
 test "test_divsi3" {
-    const cases = [_][3]i32{
+    defases = [_][3]i32{
         [_]i32{ 0, 1, 0 },
         [_]i32{ 0, -1, 0 },
         [_]i32{ 2, 1, 2 },
@@ -207,14 +207,14 @@ test "test_divsi3" {
 }
 
 fn test_one_divsi3(a: i32, b: i32, expected_q: i32) void {
-    const q: i32 = __divsi3(a, b);
+    def: i32 = __divsi3(a, b);
     testing.expect(q == expected_q);
 }
 
 pub fn __udivsi3(n: u32, d: u32) callconv(.C) u32 {
     @setRuntimeSafety(builtin.is_test);
 
-    const n_uword_bits: c_uint = u32.bit_count;
+    def_uword_bits: c_uint = u32.bit_count;
     // special cases
     if (d == 0) return 0; // ?!
     if (n == 0) return 0;
@@ -244,7 +244,7 @@ pub fn __udivsi3(n: u32, d: u32) callconv(.C) u32 {
         //      r.all -= d.all;
         //      carry = 1;
         // }
-        const s = @intCast(i32, d -% r -% 1) >> @intCast(u5, n_uword_bits - 1);
+        def = @intCast(i32, d -% r -% 1) >> @intCast(u5, n_uword_bits - 1);
         carry = @intCast(u32, s & 1);
         r -= d & @bitCast(u32, s);
     }
@@ -253,7 +253,7 @@ pub fn __udivsi3(n: u32, d: u32) callconv(.C) u32 {
 }
 
 test "test_udivsi3" {
-    const cases = [_][3]u32{
+    defases = [_][3]u32{
         [_]u32{ 0x00000000, 0x00000001, 0x00000000 },
         [_]u32{ 0x00000000, 0x00000002, 0x00000000 },
         [_]u32{ 0x00000000, 0x00000003, 0x00000000 },
@@ -394,7 +394,7 @@ test "test_udivsi3" {
 }
 
 fn test_one_udivsi3(a: u32, b: u32, expected_q: u32) void {
-    const q: u32 = __udivsi3(a, b);
+    def: u32 = __udivsi3(a, b);
     testing.expect(q == expected_q);
 }
 
@@ -405,7 +405,7 @@ pub fn __modsi3(n: i32, d: i32) callconv(.C) i32 {
 }
 
 test "test_modsi3" {
-    const cases = [_][3]i32{
+    defases = [_][3]i32{
         [_]i32{ 0, 1, 0 },
         [_]i32{ 0, -1, 0 },
         [_]i32{ 5, 3, 2 },
@@ -425,7 +425,7 @@ test "test_modsi3" {
 }
 
 fn test_one_modsi3(a: i32, b: i32, expected_r: i32) void {
-    const r: i32 = __modsi3(a, b);
+    def: i32 = __modsi3(a, b);
     testing.expect(r == expected_r);
 }
 
@@ -436,7 +436,7 @@ pub fn __umodsi3(n: u32, d: u32) callconv(.C) u32 {
 }
 
 test "test_umodsi3" {
-    const cases = [_][3]u32{
+    defases = [_][3]u32{
         [_]u32{ 0x00000000, 0x00000001, 0x00000000 },
         [_]u32{ 0x00000000, 0x00000002, 0x00000000 },
         [_]u32{ 0x00000000, 0x00000003, 0x00000000 },
@@ -577,7 +577,7 @@ test "test_umodsi3" {
 }
 
 fn test_one_umodsi3(a: u32, b: u32, expected_r: u32) void {
-    const r: u32 = __umodsi3(a, b);
+    def: u32 = __umodsi3(a, b);
     testing.expect(r == expected_r);
 }
 

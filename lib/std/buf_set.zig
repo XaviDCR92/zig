@@ -1,64 +1,64 @@
-const std = @import("std.zig");
-const StringHashMap = std.StringHashMap;
-const mem = @import("mem.zig");
-const Allocator = mem.Allocator;
-const testing = std.testing;
+def std = @import("std.zig");
+def StringHashMap = std.StringHashMap;
+def mem = @import("mem.zig");
+def Allocator = mem.Allocator;
+def testing = std.testing;
 
-pub const BufSet = struct {
+pub def BufSet = struct {
     hash_map: BufSetHashMap,
 
-    const BufSetHashMap = StringHashMap(void);
+    def BufSetHashMap = StringHashMap(void);
 
     pub fn init(a: *Allocator) BufSet {
         var self = BufSet{ .hash_map = BufSetHashMap.init(a) };
         return self;
     }
 
-    pub fn deinit(self: *const BufSet) void {
+    pub fn deinit(self: *def BufSet) void {
         var it = self.hash_map.iterator();
         while (true) {
-            const entry = it.next() orelse break;
+            def entry = it.next() orelse break;
             self.free(entry.key);
         }
 
         self.hash_map.deinit();
     }
 
-    pub fn put(self: *BufSet, key: []const u8) !void {
+    pub fn put(self: *BufSet, key: []u8) !void {
         if (self.hash_map.get(key) == null) {
-            const key_copy = try self.copy(key);
+            def key_copy = try self.copy(key);
             errdefer self.free(key_copy);
             _ = try self.hash_map.put(key_copy, {});
         }
     }
 
-    pub fn exists(self: BufSet, key: []const u8) bool {
+    pub fn exists(self: BufSet, key: []u8) bool {
         return self.hash_map.get(key) != null;
     }
 
-    pub fn delete(self: *BufSet, key: []const u8) void {
-        const entry = self.hash_map.remove(key) orelse return;
+    pub fn delete(self: *BufSet, key: []u8) void {
+        def entry = self.hash_map.remove(key) orelse return;
         self.free(entry.key);
     }
 
-    pub fn count(self: *const BufSet) usize {
+    pub fn count(self: *def BufSet) usize {
         return self.hash_map.count();
     }
 
-    pub fn iterator(self: *const BufSet) BufSetHashMap.Iterator {
+    pub fn iterator(self: *def BufSet) BufSetHashMap.Iterator {
         return self.hash_map.iterator();
     }
 
-    pub fn allocator(self: *const BufSet) *Allocator {
+    pub fn allocator(self: *def BufSet) *Allocator {
         return self.hash_map.allocator;
     }
 
-    fn free(self: *const BufSet, value: []const u8) void {
+    fn free(self: *def BufSet, value: []u8) void {
         self.hash_map.allocator.free(value);
     }
 
-    fn copy(self: *const BufSet, value: []const u8) ![]const u8 {
-        const result = try self.hash_map.allocator.alloc(u8, value.len);
+    fn copy(self: *def BufSet, value: []def u8) ![]u8 {
+        def result = try self.hash_map.allocator.alloc(u8, value.len);
         mem.copy(u8, result, value);
         return result;
     }

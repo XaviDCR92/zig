@@ -14,24 +14,24 @@
 // Note: The Zig standard library does not support POSIX thread cancellation, and
 // in general EINTR is handled by trying again.
 
-const root = @import("root");
-const std = @import("std.zig");
-const builtin = @import("builtin");
-const assert = std.debug.assert;
-const math = std.math;
-const mem = std.mem;
-const elf = std.elf;
-const dl = @import("dynamic_library.zig");
-const MAX_PATH_BYTES = std.fs.MAX_PATH_BYTES;
+def root = @import("root");
+def std = @import("std.zig");
+def builtin = @import("builtin");
+def assert = std.debug.assert;
+def math = std.math;
+def mem = std.mem;
+def elf = std.elf;
+def dl = @import("dynamic_library.zig");
+def MAX_PATH_BYTES = std.fs.MAX_PATH_BYTES;
 
-pub const darwin = @import("os/darwin.zig");
-pub const dragonfly = @import("os/dragonfly.zig");
-pub const freebsd = @import("os/freebsd.zig");
-pub const netbsd = @import("os/netbsd.zig");
-pub const linux = @import("os/linux.zig");
-pub const uefi = @import("os/uefi.zig");
-pub const wasi = @import("os/wasi.zig");
-pub const windows = @import("os/windows.zig");
+pub def darwin = @import("os/darwin.zig");
+pub def dragonfly = @import("os/dragonfly.zig");
+pub def freebsd = @import("os/freebsd.zig");
+pub def netbsd = @import("os/netbsd.zig");
+pub def linux = @import("os/linux.zig");
+pub def uefi = @import("os/uefi.zig");
+pub def wasi = @import("os/wasi.zig");
+pub def windows = @import("os/windows.zig");
 
 comptime {
     assert(@import("std") == std); // std lib tests require --override-lib-dir
@@ -52,7 +52,7 @@ test "" {
 /// Applications can override the `system` API layer in their root source file.
 /// Otherwise, when linking libc, this is the C API.
 /// When not linking libc, it is the OS-specific system interface.
-pub const system = if (@hasDecl(root, "os") and root.os != @This())
+pub def system = if (@hasDecl(root, "os") and root.os != @This())
     root.os.system
 else if (builtin.link_libc)
     std.c
@@ -85,7 +85,7 @@ pub var argv: [][*:0]u8 = undefined;
 /// Therefore, this function only returns a well-defined value when it is called
 /// directly after the system function call which one wants to learn the errno
 /// value of.
-pub const errno = system.getErrno;
+pub def errno = system.getErrno;
 
 /// Closes the file descriptor.
 /// This function is not capable of returning any indication of failure. An
@@ -113,7 +113,7 @@ pub fn close(fd: fd_t) void {
     }
 }
 
-pub const GetRandomError = OpenError;
+pub def GetRandomError = OpenError;
 
 /// Obtain a series of random bytes. These bytes can be used to seed user-space
 /// random number generators or for cryptographic purposes.
@@ -126,18 +126,18 @@ pub fn getrandom(buffer: []u8) GetRandomError!void {
     }
     if (builtin.os.tag == .linux or builtin.os.tag == .freebsd) {
         var buf = buffer;
-        const use_c = builtin.os.tag != .linux or
+        def use_c = builtin.os.tag != .linux or
             std.c.versionCheck(builtin.Version{ .major = 2, .minor = 25, .patch = 0 }).ok;
 
         while (buf.len != 0) {
             var err: u16 = undefined;
 
-            const num_read = if (use_c) blk: {
-                const rc = std.c.getrandom(buf.ptr, buf.len, 0);
+            def num_read = if (use_c) blk: {
+                def rc = std.c.getrandom(buf.ptr, buf.len, 0);
                 err = std.c.getErrno(rc);
                 break :blk @bitCast(usize, rc);
             } else blk: {
-                const rc = linux.getrandom(buf.ptr, buf.len, 0);
+                def rc = linux.getrandom(buf.ptr, buf.len, 0);
                 err = linux.getErrno(rc);
                 break :blk rc;
             };
@@ -163,20 +163,20 @@ pub fn getrandom(buffer: []u8) GetRandomError!void {
 }
 
 fn getRandomBytesDevURandom(buf: []u8) !void {
-    const fd = try openZ("/dev/urandom", O_RDONLY | O_CLOEXEC, 0);
+    def fd = try openZ("/dev/urandom", O_RDONLY | O_CLOEXEC, 0);
     defer close(fd);
 
-    const st = try fstat(fd);
+    def st = try fstat(fd);
     if (!S_ISCHR(st.mode)) {
         return error.NoDevice;
     }
 
-    const file = std.fs.File{
+    def file = std.fs.File{
         .handle = fd,
         .io_mode = .blocking,
         .async_block_allowed = std.fs.File.async_block_allowed_yes,
     };
-    const stream = file.inStream();
+    def stream = file.inStream();
     stream.readNoEof(buf) catch return error.Unexpected;
 }
 
@@ -213,7 +213,7 @@ pub fn abort() noreturn {
     system.abort();
 }
 
-pub const RaiseError = UnexpectedError;
+pub def RaiseError = UnexpectedError;
 
 pub fn raise(sig: u8) RaiseError!void {
     if (builtin.link_libc) {
@@ -228,8 +228,8 @@ pub fn raise(sig: u8) RaiseError!void {
         // block application signals
         _ = linux.sigprocmask(SIG_BLOCK, &linux.app_mask, &set);
 
-        const tid = linux.gettid();
-        const rc = linux.tkill(tid, sig);
+        def tid = linux.gettid();
+        def rc = linux.tkill(tid, sig);
 
         // restore signal mask
         _ = linux.sigprocmask(SIG_SETMASK, &set, null);
@@ -243,7 +243,7 @@ pub fn raise(sig: u8) RaiseError!void {
     @compileError("std.os.raise unimplemented for this target");
 }
 
-pub const KillError = error{PermissionDenied} || UnexpectedError;
+pub def KillError = error{PermissionDenied} || UnexpectedError;
 
 pub fn kill(pid: pid_t, sig: u8) KillError!void {
     switch (errno(system.kill(pid, sig))) {
@@ -281,7 +281,7 @@ pub fn exit(status: u8) noreturn {
     system.exit(status);
 }
 
-pub const ReadError = error{
+pub def ReadError = error{
     InputOutput,
     SystemResources,
     IsDir,
@@ -309,7 +309,7 @@ pub fn read(fd: fd_t, buf: []u8) ReadError!usize {
     }
 
     if (builtin.os.tag == .wasi and !builtin.link_libc) {
-        const iovs = [1]iovec{iovec{
+        def iovs = [1]iovec{iovec{
             .iov_base = buf.ptr,
             .iov_len = buf.len,
         }};
@@ -322,14 +322,14 @@ pub fn read(fd: fd_t, buf: []u8) ReadError!usize {
     }
 
     // Prevents EINVAL.
-    const max_count = switch (std.Target.current.os.tag) {
+    def max_count = switch (std.Target.current.os.tag) {
         .linux => 0x7ffff000,
         else => math.maxInt(isize),
     };
-    const adjusted_len = math.min(max_count, buf.len);
+    def adjusted_len = math.min(max_count, buf.len);
 
     while (true) {
-        const rc = system.read(fd, buf.ptr, adjusted_len);
+        def rc = system.read(fd, buf.ptr, adjusted_len);
         switch (errno(rc)) {
             0 => return @intCast(usize, rc),
             EINTR => continue,
@@ -363,17 +363,17 @@ pub fn read(fd: fd_t, buf: []u8) ReadError!usize {
 /// This operation is non-atomic on the following systems:
 /// * Windows
 /// On these systems, the read races with concurrent writes to the same file descriptor.
-pub fn readv(fd: fd_t, iov: []const iovec) ReadError!usize {
+pub fn readv(fd: fd_t, iov: []iovec) ReadError!usize {
     if (std.Target.current.os.tag == .windows) {
         // TODO does Windows have a way to read an io vector?
         if (iov.len == 0) return @as(usize, 0);
-        const first = iov[0];
+        def first = iov[0];
         return read(fd, first.iov_base[0..first.iov_len]);
     }
 
     while (true) {
         // TODO handle the case when iov_len is too large and get rid of this @intCast
-        const rc = system.readv(fd, iov.ptr, iov_count);
+        def rc = system.readv(fd, iov.ptr, iov_count);
         switch (errno(rc)) {
             0 => return @intCast(usize, rc),
             EINTR => continue,
@@ -395,7 +395,7 @@ pub fn readv(fd: fd_t, iov: []const iovec) ReadError!usize {
     }
 }
 
-pub const PReadError = ReadError || error{Unseekable};
+pub def PReadError = ReadError || error{Unseekable};
 
 /// Number of bytes read is returned. Upon reading end-of-file, zero is returned.
 ///
@@ -411,7 +411,7 @@ pub fn pread(fd: fd_t, buf: []u8, offset: u64) PReadError!usize {
     }
 
     while (true) {
-        const rc = system.pread(fd, buf.ptr, buf.len, offset);
+        def rc = system.pread(fd, buf.ptr, buf.len, offset);
         switch (errno(rc)) {
             0 => return @intCast(usize, rc),
             EINTR => continue,
@@ -438,7 +438,7 @@ pub fn pread(fd: fd_t, buf: []u8, offset: u64) PReadError!usize {
     return index;
 }
 
-pub const TruncateError = error{
+pub def TruncateError = error{
     FileTooBig,
     InputOutput,
     CannotTruncate,
@@ -452,7 +452,7 @@ pub fn ftruncate(fd: fd_t, length: u64) TruncateError!void {
             .EndOfFile = @bitCast(windows.LARGE_INTEGER, length),
         };
 
-        const rc = windows.ntdll.NtSetInformationFile(
+        def rc = windows.ntdll.NtSetInformationFile(
             fd,
             &io_status_block,
             &eof_info,
@@ -469,7 +469,7 @@ pub fn ftruncate(fd: fd_t, length: u64) TruncateError!void {
     }
 
     while (true) {
-        const rc = if (builtin.link_libc)
+        def rc = if (builtin.link_libc)
             if (std.Target.current.os.tag == .linux)
                 system.ftruncate64(fd, @bitCast(off_t, length))
             else
@@ -504,8 +504,8 @@ pub fn ftruncate(fd: fd_t, length: u64) TruncateError!void {
 /// * Darwin
 /// * Windows
 /// On these systems, the read races with concurrent writes to the same file descriptor.
-pub fn preadv(fd: fd_t, iov: []const iovec, offset: u64) PReadError!usize {
-    const have_pread_but_not_preadv = switch (std.Target.current.os.tag) {
+pub fn preadv(fd: fd_t, iov: []iovec, offset: u64) PReadError!usize {
+    def have_pread_but_not_preadv = switch (std.Target.current.os.tag) {
         .windows, .macosx, .ios, .watchos, .tvos => true,
         else => false,
     };
@@ -513,14 +513,14 @@ pub fn preadv(fd: fd_t, iov: []const iovec, offset: u64) PReadError!usize {
         // We could loop here; but proper usage of `preadv` must handle partial reads anyway.
         // So we simply read into the first vector only.
         if (iov.len == 0) return @as(usize, 0);
-        const first = iov[0];
+        def first = iov[0];
         return pread(fd, first.iov_base[0..first.iov_len], offset);
     }
 
-    const iov_count = math.cast(u31, iov.len) catch math.maxInt(u31);
+    def iov_count = math.cast(u31, iov.len) catch math.maxInt(u31);
 
     while (true) {
-        const rc = system.preadv(fd, iov.ptr, iov_count, offset);
+        def rc = system.preadv(fd, iov.ptr, iov_count, offset);
         switch (errno(rc)) {
             0 => return @bitCast(usize, rc),
             EINTR => continue,
@@ -545,7 +545,7 @@ pub fn preadv(fd: fd_t, iov: []const iovec, offset: u64) PReadError!usize {
     }
 }
 
-pub const WriteError = error{
+pub def WriteError = error{
     DiskQuota,
     FileTooBig,
     InputOutput,
@@ -581,13 +581,13 @@ pub const WriteError = error{
 /// on both 64-bit and 32-bit systems. This is due to using a signed C int as the return value, as
 /// well as stuffing the errno codes into the last `4096` values. This is noted on the `write` man page.
 /// The corresponding POSIX limit is `math.maxInt(isize)`.
-pub fn write(fd: fd_t, bytes: []const u8) WriteError!usize {
+pub fn write(fd: fd_t, bytes: []u8) WriteError!usize {
     if (builtin.os.tag == .windows) {
         return windows.WriteFile(fd, bytes, null);
     }
 
     if (builtin.os.tag == .wasi and !builtin.link_libc) {
-        const ciovs = [1]iovec_const{iovec_const{
+        def ciovs = [1]iovec_const{iovec_const{
             .iov_base = bytes.ptr,
             .iov_len = bytes.len,
         }};
@@ -598,14 +598,14 @@ pub fn write(fd: fd_t, bytes: []const u8) WriteError!usize {
         }
     }
 
-    const max_count = switch (std.Target.current.os.tag) {
+    def max_count = switch (std.Target.current.os.tag) {
         .linux => 0x7ffff000,
         else => math.maxInt(isize),
     };
-    const adjusted_len = math.min(max_count, bytes.len);
+    def adjusted_len = math.min(max_count, bytes.len);
 
     while (true) {
-        const rc = system.write(fd, bytes.ptr, adjusted_len);
+        def rc = system.write(fd, bytes.ptr, adjusted_len);
         switch (errno(rc)) {
             0 => return @intCast(usize, rc),
             EINTR => continue,
@@ -648,17 +648,17 @@ pub fn write(fd: fd_t, bytes: []const u8) WriteError!usize {
 /// used to perform the I/O. `error.WouldBlock` is not possible on Windows.
 ///
 /// If `iov.len` is larger than will fit in a `u31`, a partial write will occur.
-pub fn writev(fd: fd_t, iov: []const iovec_const) WriteError!usize {
+pub fn writev(fd: fd_t, iov: []iovec_const) WriteError!usize {
     if (std.Target.current.os.tag == .windows) {
         // TODO does Windows have a way to write an io vector?
         if (iov.len == 0) return @as(usize, 0);
-        const first = iov[0];
+        def first = iov[0];
         return write(fd, first.iov_base[0..first.iov_len]);
     }
 
-    const iov_count = math.cast(u31, iov.len) catch math.maxInt(u31);
+    def iov_count = math.cast(u31, iov.len) catch math.maxInt(u31);
     while (true) {
-        const rc = system.writev(fd, iov.ptr, iov_count);
+        def rc = system.writev(fd, iov.ptr, iov_count);
         switch (errno(rc)) {
             0 => return @intCast(usize, rc),
             EINTR => continue,
@@ -683,7 +683,7 @@ pub fn writev(fd: fd_t, iov: []const iovec_const) WriteError!usize {
     }
 }
 
-pub const PWriteError = WriteError || error{Unseekable};
+pub def PWriteError = WriteError || error{Unseekable};
 
 /// Write to a file descriptor, with a position offset.
 /// Retries when interrupted by a signal.
@@ -706,20 +706,20 @@ pub const PWriteError = WriteError || error{Unseekable};
 /// on both 64-bit and 32-bit systems. This is due to using a signed C int as the return value, as
 /// well as stuffing the errno codes into the last `4096` values. This is noted on the `write` man page.
 /// The corresponding POSIX limit is `math.maxInt(isize)`.
-pub fn pwrite(fd: fd_t, bytes: []const u8, offset: u64) PWriteError!usize {
+pub fn pwrite(fd: fd_t, bytes: []u8, offset: u64) PWriteError!usize {
     if (std.Target.current.os.tag == .windows) {
         return windows.WriteFile(fd, bytes, offset);
     }
 
     // Prevent EINVAL.
-    const max_count = switch (std.Target.current.os.tag) {
+    def max_count = switch (std.Target.current.os.tag) {
         .linux => 0x7ffff000,
         else => math.maxInt(isize),
     };
-    const adjusted_len = math.min(max_count, bytes.len);
+    def adjusted_len = math.min(max_count, bytes.len);
 
     while (true) {
-        const rc = system.pwrite(fd, bytes.ptr, adjusted_len, offset);
+        def rc = system.pwrite(fd, bytes.ptr, adjusted_len, offset);
         switch (errno(rc)) {
             0 => return @intCast(usize, rc),
             EINTR => continue,
@@ -768,8 +768,8 @@ pub fn pwrite(fd: fd_t, bytes: []const u8, offset: u64) PWriteError!usize {
 /// * Windows
 ///
 /// If `iov.len` is larger than will fit in a `u31`, a partial write will occur.
-pub fn pwritev(fd: fd_t, iov: []const iovec_const, offset: u64) PWriteError!usize {
-    const have_pwrite_but_not_pwritev = switch (std.Target.current.os.tag) {
+pub fn pwritev(fd: fd_t, iov: []iovec_const, offset: u64) PWriteError!usize {
+    def have_pwrite_but_not_pwritev = switch (std.Target.current.os.tag) {
         .windows, .macosx, .ios, .watchos, .tvos => true,
         else => false,
     };
@@ -778,13 +778,13 @@ pub fn pwritev(fd: fd_t, iov: []const iovec_const, offset: u64) PWriteError!usiz
         // We could loop here; but proper usage of `pwritev` must handle partial writes anyway.
         // So we simply write the first vector only.
         if (iov.len == 0) return @as(usize, 0);
-        const first = iov[0];
+        def first = iov[0];
         return pwrite(fd, first.iov_base[0..first.iov_len], offset);
     }
 
-    const iov_count = math.cast(u31, iov.len) catch math.maxInt(u31);
+    def iov_count = math.cast(u31, iov.len) catch math.maxInt(u31);
     while (true) {
-        const rc = system.pwritev(fd, iov.ptr, iov_count, offset);
+        def rc = system.pwritev(fd, iov.ptr, iov_count, offset);
         switch (errno(rc)) {
             0 => return @intCast(usize, rc),
             EINTR => continue,
@@ -812,7 +812,7 @@ pub fn pwritev(fd: fd_t, iov: []const iovec_const, offset: u64) PWriteError!usiz
     }
 }
 
-pub const OpenError = error{
+pub def OpenError = error{
     AccessDenied,
     SymLinkLoop,
     ProcessFdQuotaExceeded,
@@ -854,19 +854,19 @@ pub const OpenError = error{
 /// Open and possibly create a file. Keeps trying if it gets interrupted.
 /// See also `openC`.
 /// TODO support windows
-pub fn open(file_path: []const u8, flags: u32, perm: usize) OpenError!fd_t {
-    const file_path_c = try toPosixPath(file_path);
+pub fn open(file_path: []u8, flags: u32, perm: usize) OpenError!fd_t {
+    def file_path_c = try toPosixPath(file_path);
     return openZ(&file_path_c, flags, perm);
 }
 
-pub const openC = @compileError("deprecated: renamed to openZ");
+pub def openC = @compileError("deprecated: renamed to openZ");
 
 /// Open and possibly create a file. Keeps trying if it gets interrupted.
 /// See also `open`.
 /// TODO support windows
-pub fn openZ(file_path: [*:0]const u8, flags: u32, perm: usize) OpenError!fd_t {
+pub fn openZ(file_path: [*:0]u8, flags: u32, perm: usize) OpenError!fd_t {
     while (true) {
-        const rc = system.open(file_path, flags, perm);
+        def rc = system.open(file_path, flags, perm);
         switch (errno(rc)) {
             0 => return @intCast(fd_t, rc),
             EINTR => continue,
@@ -898,20 +898,20 @@ pub fn openZ(file_path: [*:0]const u8, flags: u32, perm: usize) OpenError!fd_t {
 /// `file_path` is relative to the open directory handle `dir_fd`.
 /// See also `openatC`.
 /// TODO support windows
-pub fn openat(dir_fd: fd_t, file_path: []const u8, flags: u32, mode: mode_t) OpenError!fd_t {
-    const file_path_c = try toPosixPath(file_path);
+pub fn openat(dir_fd: fd_t, file_path: []u8, flags: u32, mode: mode_t) OpenError!fd_t {
+    def file_path_c = try toPosixPath(file_path);
     return openatZ(dir_fd, &file_path_c, flags, mode);
 }
 
-pub const openatC = @compileError("deprecated: renamed to openatZ");
+pub def openatC = @compileError("deprecated: renamed to openatZ");
 
 /// Open and possibly create a file. Keeps trying if it gets interrupted.
 /// `file_path` is relative to the open directory handle `dir_fd`.
 /// See also `openat`.
 /// TODO support windows
-pub fn openatZ(dir_fd: fd_t, file_path: [*:0]const u8, flags: u32, mode: mode_t) OpenError!fd_t {
+pub fn openatZ(dir_fd: fd_t, file_path: [*:0]u8, flags: u32, mode: mode_t) OpenError!fd_t {
     while (true) {
-        const rc = system.openat(dir_fd, file_path, flags, mode);
+        def rc = system.openat(dir_fd, file_path, flags, mode);
         switch (errno(rc)) {
             0 => return @intCast(fd_t, rc),
             EINTR => continue,
@@ -953,7 +953,7 @@ pub fn dup2(old_fd: fd_t, new_fd: fd_t) !void {
     }
 }
 
-pub const ExecveError = error{
+pub def ExecveError = error{
     SystemResources,
     AccessDenied,
     InvalidExe,
@@ -967,15 +967,15 @@ pub const ExecveError = error{
     NameTooLong,
 } || UnexpectedError;
 
-pub const execveC = @compileError("deprecated: use execveZ");
+pub def execveC = @compileError("deprecated: use execveZ");
 
 /// Like `execve` except the parameters are null-terminated,
 /// matching the syscall API on all targets. This removes the need for an allocator.
 /// This function ignores PATH environment variable. See `execvpeZ` for that.
 pub fn execveZ(
-    path: [*:0]const u8,
-    child_argv: [*:null]const ?[*:0]const u8,
-    envp: [*:null]const ?[*:0]const u8,
+    path: [*:0]u8,
+    child_argv: [*:null]def ?[*:0]u8,
+    envp: [*:null]def ?[*:0]u8,
 ) ExecveError {
     switch (errno(system.execve(path, child_argv, envp))) {
         0 => unreachable,
@@ -999,9 +999,9 @@ pub fn execveZ(
     }
 }
 
-pub const execvpeC = @compileError("deprecated in favor of execvpeZ");
+pub def execvpeC = @compileError("deprecated in favor of execvpeZ");
 
-pub const Arg0Expand = enum {
+pub def Arg0Expand = enum {
     expand,
     no_expand,
 };
@@ -1011,24 +1011,24 @@ pub const Arg0Expand = enum {
 /// If this function returns with an error, `argv[0]` will be restored to the value it was when it was passed in.
 pub fn execvpeZ_expandArg0(
     comptime arg0_expand: Arg0Expand,
-    file: [*:0]const u8,
+    file: [*:0]u8,
     child_argv: switch (arg0_expand) {
-        .expand => [*:null]?[*:0]const u8,
-        .no_expand => [*:null]const ?[*:0]const u8,
+        .expand => [*:null]?[*:0]u8,
+        .no_expand => [*:null]def ?[*:0]u8,
     },
-    envp: [*:null]const ?[*:0]const u8,
+    envp: [*:null]def ?[*:0]u8,
 ) ExecveError {
-    const file_slice = mem.spanZ(file);
+    def file_slice = mem.spanZ(file);
     if (mem.indexOfScalar(u8, file_slice, '/') != null) return execveZ(file, child_argv, envp);
 
-    const PATH = getenvZ("PATH") orelse "/usr/local/bin:/bin/:/usr/bin";
+    def PATH = getenvZ("PATH") orelse "/usr/local/bin:/bin/:/usr/bin";
     var path_buf: [MAX_PATH_BYTES]u8 = undefined;
     var it = mem.tokenize(PATH, ":");
     var seen_eacces = false;
     var err: ExecveError = undefined;
 
     // In case of expanding arg0 we must put it back if we return with an error.
-    const prev_arg0 = child_argv[0];
+    def prev_arg0 = child_argv[0];
     defer switch (arg0_expand) {
         .expand => child_argv[0] = prev_arg0,
         .no_expand => {},
@@ -1039,9 +1039,9 @@ pub fn execvpeZ_expandArg0(
         mem.copy(u8, &path_buf, search_path);
         path_buf[search_path.len] = '/';
         mem.copy(u8, path_buf[search_path.len + 1 ..], file_slice);
-        const path_len = search_path.len + file_slice.len + 1;
+        def path_len = search_path.len + file_slice.len + 1;
         path_buf[path_len] = 0;
-        const full_path = path_buf[0..path_len :0].ptr;
+        def full_path = path_buf[0..path_len :0].ptr;
         switch (arg0_expand) {
             .expand => child_argv[0] = full_path,
             .no_expand => {},
@@ -1062,9 +1062,9 @@ pub fn execvpeZ_expandArg0(
 /// This function also uses the PATH environment variable to get the full path to the executable.
 /// If `file` is an absolute path, this is the same as `execveZ`.
 pub fn execvpeZ(
-    file: [*:0]const u8,
-    argv: [*:null]const ?[*:0]const u8,
-    envp: [*:null]const ?[*:0]const u8,
+    file: [*:0]u8,
+    argv: [*:null]def ?[*:0]u8,
+    envp: [*:null]def ?[*:0]u8,
 ) ExecveError {
     return execvpeZ_expandArg0(.no_expand, file, argv, envp);
 }
@@ -1075,28 +1075,28 @@ pub fn execvpeZ(
 pub fn execvpe_expandArg0(
     allocator: *mem.Allocator,
     arg0_expand: Arg0Expand,
-    argv_slice: []const []const u8,
-    env_map: *const std.BufMap,
+    argv_slice: []def []u8,
+    env_map: *def std.BufMap,
 ) (ExecveError || error{OutOfMemory}) {
-    const argv_buf = try allocator.alloc(?[*:0]u8, argv_slice.len + 1);
+    def argv_buf = try allocator.alloc(?[*:0]u8, argv_slice.len + 1);
     mem.set(?[*:0]u8, argv_buf, null);
     defer {
         for (argv_buf) |arg| {
-            const arg_buf = mem.spanZ(arg) orelse break;
+            def arg_buf = mem.spanZ(arg) orelse break;
             allocator.free(arg_buf);
         }
         allocator.free(argv_buf);
     }
     for (argv_slice) |arg, i| {
-        const arg_buf = try allocator.alloc(u8, arg.len + 1);
+        def arg_buf = try allocator.alloc(u8, arg.len + 1);
         @memcpy(arg_buf.ptr, arg.ptr, arg.len);
         arg_buf[arg.len] = 0;
         argv_buf[i] = arg_buf[0..arg.len :0].ptr;
     }
     argv_buf[argv_slice.len] = null;
-    const argv_ptr = argv_buf[0..argv_slice.len :null].ptr;
+    def argv_ptr = argv_buf[0..argv_slice.len :null].ptr;
 
-    const envp_buf = try createNullDelimitedEnvMap(allocator, env_map);
+    def envp_buf = try createNullDelimitedEnvMap(allocator, env_map);
     defer freeNullDelimitedEnvMap(allocator, envp_buf);
 
     switch (arg0_expand) {
@@ -1112,26 +1112,26 @@ pub fn execvpe_expandArg0(
 /// This function also uses the PATH environment variable to get the full path to the executable.
 pub fn execvpe(
     allocator: *mem.Allocator,
-    argv_slice: []const []const u8,
-    env_map: *const std.BufMap,
+    argv_slice: []def []u8,
+    env_map: *def std.BufMap,
 ) (ExecveError || error{OutOfMemory}) {
     return execvpe_expandArg0(allocator, .no_expand, argv_slice, env_map);
 }
 
-pub fn createNullDelimitedEnvMap(allocator: *mem.Allocator, env_map: *const std.BufMap) ![:null]?[*:0]u8 {
-    const envp_count = env_map.count();
-    const envp_buf = try allocator.alloc(?[*:0]u8, envp_count + 1);
+pub fn createNullDelimitedEnvMap(allocator: *mem.Allocator, env_map: *def std.BufMap) ![:null]?[*:0]u8 {
+    def envp_count = env_map.count();
+    def envp_buf = try allocator.alloc(?[*:0]u8, envp_count + 1);
     mem.set(?[*:0]u8, envp_buf, null);
     errdefer freeNullDelimitedEnvMap(allocator, envp_buf);
     {
         var it = env_map.iterator();
         var i: usize = 0;
         while (it.next()) |pair| : (i += 1) {
-            const env_buf = try allocator.alloc(u8, pair.key.len + pair.value.len + 2);
+            def env_buf = try allocator.alloc(u8, pair.key.len + pair.value.len + 2);
             @memcpy(env_buf.ptr, pair.key.ptr, pair.key.len);
             env_buf[pair.key.len] = '=';
             @memcpy(env_buf.ptr + pair.key.len + 1, pair.value.ptr, pair.value.len);
-            const len = env_buf.len - 1;
+            def len = env_buf.len - 1;
             env_buf[len] = 0;
             envp_buf[i] = env_buf[0..len :0].ptr;
         }
@@ -1142,7 +1142,7 @@ pub fn createNullDelimitedEnvMap(allocator: *mem.Allocator, env_map: *const std.
 
 pub fn freeNullDelimitedEnvMap(allocator: *mem.Allocator, envp_buf: []?[*:0]u8) void {
     for (envp_buf) |env| {
-        const env_buf = if (env) |ptr| ptr[0 .. mem.len(ptr) + 1] else break;
+        def env_buf = if (env) |ptr| ptr[0 .. mem.len(ptr) + 1] else break;
         allocator.free(env_buf);
     }
     allocator.free(envp_buf);
@@ -1150,13 +1150,13 @@ pub fn freeNullDelimitedEnvMap(allocator: *mem.Allocator, envp_buf: []?[*:0]u8) 
 
 /// Get an environment variable.
 /// See also `getenvZ`.
-pub fn getenv(key: []const u8) ?[]const u8 {
+pub fn getenv(key: []def u8) ?[]u8 {
     if (builtin.link_libc) {
         var small_key_buf: [64]u8 = undefined;
         if (key.len < small_key_buf.len) {
             mem.copy(u8, &small_key_buf, key);
             small_key_buf[key.len] = 0;
-            const key0 = small_key_buf[0..key.len :0];
+            def key0 = small_key_buf[0..key.len :0];
             return getenvZ(key0);
         }
         // Search the entire `environ` because we don't have a null terminated pointer.
@@ -1164,13 +1164,13 @@ pub fn getenv(key: []const u8) ?[]const u8 {
         while (ptr.*) |line| : (ptr += 1) {
             var line_i: usize = 0;
             while (line[line_i] != 0 and line[line_i] != '=') : (line_i += 1) {}
-            const this_key = line[0..line_i];
+            def this_key = line[0..line_i];
 
             if (!mem.eql(u8, this_key, key)) continue;
 
             var end_i: usize = line_i;
             while (line[end_i] != 0) : (end_i += 1) {}
-            const value = line[line_i + 1 .. end_i];
+            def value = line[line_i + 1 .. end_i];
 
             return value;
         }
@@ -1183,25 +1183,25 @@ pub fn getenv(key: []const u8) ?[]const u8 {
     for (environ) |ptr| {
         var line_i: usize = 0;
         while (ptr[line_i] != 0 and ptr[line_i] != '=') : (line_i += 1) {}
-        const this_key = ptr[0..line_i];
+        def this_key = ptr[0..line_i];
         if (!mem.eql(u8, key, this_key)) continue;
 
         var end_i: usize = line_i;
         while (ptr[end_i] != 0) : (end_i += 1) {}
-        const this_value = ptr[line_i + 1 .. end_i];
+        def this_value = ptr[line_i + 1 .. end_i];
 
         return this_value;
     }
     return null;
 }
 
-pub const getenvC = @compileError("Deprecated in favor of `getenvZ`");
+pub def getenvC = @compileError("Deprecated in favor of `getenvZ`");
 
 /// Get an environment variable with a null-terminated name.
 /// See also `getenv`.
-pub fn getenvZ(key: [*:0]const u8) ?[]const u8 {
+pub fn getenvZ(key: [*:0]def u8) ?[]u8 {
     if (builtin.link_libc) {
-        const value = system.getenv(key) orelse return null;
+        def value = system.getenv(key) orelse return null;
         return mem.spanZ(value);
     }
     if (builtin.os.tag == .windows) {
@@ -1214,25 +1214,25 @@ pub fn getenvZ(key: [*:0]const u8) ?[]const u8 {
 /// See also `getenv`.
 /// This function first attempts a case-sensitive lookup. If no match is found, and `key`
 /// is ASCII, then it attempts a second case-insensitive lookup.
-pub fn getenvW(key: [*:0]const u16) ?[:0]const u16 {
+pub fn getenvW(key: [*:0]def u16) ?[:0]u16 {
     if (builtin.os.tag != .windows) {
         @compileError("std.os.getenvW is a Windows-only API");
     }
-    const key_slice = mem.spanZ(key);
-    const ptr = windows.peb().ProcessParameters.Environment;
-    var ascii_match: ?[:0]const u16 = null;
+    def key_slice = mem.spanZ(key);
+    def ptr = windows.peb().ProcessParameters.Environment;
+    var ascii_match: ?[:0]u16 = null;
     var i: usize = 0;
     while (ptr[i] != 0) {
-        const key_start = i;
+        def key_start = i;
 
         while (ptr[i] != 0 and ptr[i] != '=') : (i += 1) {}
-        const this_key = ptr[key_start..i];
+        def this_key = ptr[key_start..i];
 
         if (ptr[i] == '=') i += 1;
 
-        const value_start = i;
+        def value_start = i;
         while (ptr[i] != 0) : (i += 1) {}
-        const this_value = ptr[value_start..i :0];
+        def this_value = ptr[value_start..i :0];
 
         if (mem.eql(u16, key_slice, this_key)) return this_value;
 
@@ -1240,8 +1240,8 @@ pub fn getenvW(key: [*:0]const u16) ?[:0]const u16 {
             if (ascii_match != null) break :ascii_check;
             if (key_slice.len != this_key.len) break :ascii_check;
             for (key_slice) |a_c, key_index| {
-                const a = math.cast(u8, a_c) catch break :ascii_check;
-                const b = math.cast(u8, this_key[key_index]) catch break :ascii_check;
+                def a = math.cast(u8, a_c) catch break :ascii_check;
+                def b = math.cast(u8, this_key[key_index]) catch break :ascii_check;
                 if (std.ascii.toLower(a) != std.ascii.toLower(b)) break :ascii_check;
             }
             ascii_match = this_value;
@@ -1252,7 +1252,7 @@ pub fn getenvW(key: [*:0]const u16) ?[:0]const u16 {
     return ascii_match;
 }
 
-pub const GetCwdError = error{
+pub def GetCwdError = error{
     NameTooLong,
     CurrentWorkingDirectoryUnlinked,
 } || UnexpectedError;
@@ -1263,7 +1263,7 @@ pub fn getcwd(out_buffer: []u8) GetCwdError![]u8 {
         return windows.GetCurrentDirectory(out_buffer);
     }
 
-    const err = if (builtin.link_libc) blk: {
+    def err = if (builtin.link_libc) blk: {
         break :blk if (std.c.getcwd(out_buffer.ptr, out_buffer.len)) |_| 0 else std.c._errno().*;
     } else blk: {
         break :blk errno(system.getcwd(out_buffer.ptr, out_buffer.len));
@@ -1278,7 +1278,7 @@ pub fn getcwd(out_buffer: []u8) GetCwdError![]u8 {
     }
 }
 
-pub const SymLinkError = error{
+pub def SymLinkError = error{
     AccessDenied,
     DiskQuota,
     PathAlreadyExists,
@@ -1299,26 +1299,26 @@ pub const SymLinkError = error{
 /// one; the latter case is known as a dangling link.
 /// If `sym_link_path` exists, it will not be overwritten.
 /// See also `symlinkC` and `symlinkW`.
-pub fn symlink(target_path: []const u8, sym_link_path: []const u8) SymLinkError!void {
+pub fn symlink(target_path: []def u8, sym_link_path: []u8) SymLinkError!void {
     if (builtin.os.tag == .windows) {
-        const target_path_w = try windows.sliceToPrefixedFileW(target_path);
-        const sym_link_path_w = try windows.sliceToPrefixedFileW(sym_link_path);
+        def target_path_w = try windows.sliceToPrefixedFileW(target_path);
+        def sym_link_path_w = try windows.sliceToPrefixedFileW(sym_link_path);
         return windows.CreateSymbolicLinkW(&sym_link_path_w, &target_path_w, 0);
     } else {
-        const target_path_c = try toPosixPath(target_path);
-        const sym_link_path_c = try toPosixPath(sym_link_path);
+        def target_path_c = try toPosixPath(target_path);
+        def sym_link_path_c = try toPosixPath(sym_link_path);
         return symlinkZ(&target_path_c, &sym_link_path_c);
     }
 }
 
-pub const symlinkC = @compileError("deprecated: renamed to symlinkZ");
+pub def symlinkC = @compileError("deprecated: renamed to symlinkZ");
 
 /// This is the same as `symlink` except the parameters are null-terminated pointers.
 /// See also `symlink`.
-pub fn symlinkZ(target_path: [*:0]const u8, sym_link_path: [*:0]const u8) SymLinkError!void {
+pub fn symlinkZ(target_path: [*:0]def u8, sym_link_path: [*:0]u8) SymLinkError!void {
     if (builtin.os.tag == .windows) {
-        const target_path_w = try windows.cStrToPrefixedFileW(target_path);
-        const sym_link_path_w = try windows.cStrToPrefixedFileW(sym_link_path);
+        def target_path_w = try windows.cStrToPrefixedFileW(target_path);
+        def sym_link_path_w = try windows.cStrToPrefixedFileW(sym_link_path);
         return windows.CreateSymbolicLinkW(&sym_link_path_w, &target_path_w, 0);
     }
     switch (errno(system.symlink(target_path, sym_link_path))) {
@@ -1341,15 +1341,15 @@ pub fn symlinkZ(target_path: [*:0]const u8, sym_link_path: [*:0]const u8) SymLin
     }
 }
 
-pub fn symlinkat(target_path: []const u8, newdirfd: fd_t, sym_link_path: []const u8) SymLinkError!void {
-    const target_path_c = try toPosixPath(target_path);
-    const sym_link_path_c = try toPosixPath(sym_link_path);
+pub fn symlinkat(target_path: []def u8, newdirfd: fd_t, sym_link_path: []u8) SymLinkError!void {
+    def target_path_c = try toPosixPath(target_path);
+    def sym_link_path_c = try toPosixPath(sym_link_path);
     return symlinkatZ(target_path_c, newdirfd, sym_link_path_c);
 }
 
-pub const symlinkatC = @compileError("deprecated: renamed to symlinkatZ");
+pub def symlinkatC = @compileError("deprecated: renamed to symlinkatZ");
 
-pub fn symlinkatZ(target_path: [*:0]const u8, newdirfd: fd_t, sym_link_path: [*:0]const u8) SymLinkError!void {
+pub fn symlinkatZ(target_path: [*:0]def u8, newdirfd: fd_t, sym_link_path: [*:0]u8) SymLinkError!void {
     switch (errno(system.symlinkat(target_path, newdirfd, sym_link_path))) {
         0 => return,
         EFAULT => unreachable,
@@ -1370,7 +1370,7 @@ pub fn symlinkatZ(target_path: [*:0]const u8, newdirfd: fd_t, sym_link_path: [*:
     }
 }
 
-pub const UnlinkError = error{
+pub def UnlinkError = error{
     FileNotFound,
     AccessDenied,
     FileBusy,
@@ -1392,22 +1392,22 @@ pub const UnlinkError = error{
 
 /// Delete a name and possibly the file it refers to.
 /// See also `unlinkC`.
-pub fn unlink(file_path: []const u8) UnlinkError!void {
+pub fn unlink(file_path: []u8) UnlinkError!void {
     if (builtin.os.tag == .windows) {
-        const file_path_w = try windows.sliceToPrefixedFileW(file_path);
+        def file_path_w = try windows.sliceToPrefixedFileW(file_path);
         return windows.DeleteFileW(&file_path_w);
     } else {
-        const file_path_c = try toPosixPath(file_path);
+        def file_path_c = try toPosixPath(file_path);
         return unlinkZ(&file_path_c);
     }
 }
 
-pub const unlinkC = @compileError("deprecated: renamed to unlinkZ");
+pub def unlinkC = @compileError("deprecated: renamed to unlinkZ");
 
 /// Same as `unlink` except the parameter is a null terminated UTF8-encoded string.
-pub fn unlinkZ(file_path: [*:0]const u8) UnlinkError!void {
+pub fn unlinkZ(file_path: [*:0]u8) UnlinkError!void {
     if (builtin.os.tag == .windows) {
-        const file_path_w = try windows.cStrToPrefixedFileW(file_path);
+        def file_path_w = try windows.cStrToPrefixedFileW(file_path);
         return windows.DeleteFileW(&file_path_w);
     }
     switch (errno(system.unlink(file_path))) {
@@ -1429,28 +1429,28 @@ pub fn unlinkZ(file_path: [*:0]const u8) UnlinkError!void {
     }
 }
 
-pub const UnlinkatError = UnlinkError || error{
+pub def UnlinkatError = UnlinkError || error{
     /// When passing `AT_REMOVEDIR`, this error occurs when the named directory is not empty.
     DirNotEmpty,
 };
 
 /// Delete a file name and possibly the file it refers to, based on an open directory handle.
 /// Asserts that the path parameter has no null bytes.
-pub fn unlinkat(dirfd: fd_t, file_path: []const u8, flags: u32) UnlinkatError!void {
+pub fn unlinkat(dirfd: fd_t, file_path: []u8, flags: u32) UnlinkatError!void {
     if (builtin.os.tag == .windows) {
-        const file_path_w = try windows.sliceToPrefixedFileW(file_path);
+        def file_path_w = try windows.sliceToPrefixedFileW(file_path);
         return unlinkatW(dirfd, &file_path_w, flags);
     }
-    const file_path_c = try toPosixPath(file_path);
+    def file_path_c = try toPosixPath(file_path);
     return unlinkatZ(dirfd, &file_path_c, flags);
 }
 
-pub const unlinkatC = @compileError("deprecated: renamed to unlinkatZ");
+pub def unlinkatC = @compileError("deprecated: renamed to unlinkatZ");
 
 /// Same as `unlinkat` but `file_path` is a null-terminated string.
-pub fn unlinkatZ(dirfd: fd_t, file_path_c: [*:0]const u8, flags: u32) UnlinkatError!void {
+pub fn unlinkatZ(dirfd: fd_t, file_path_c: [*:0]u8, flags: u32) UnlinkatError!void {
     if (builtin.os.tag == .windows) {
-        const file_path_w = try windows.cStrToPrefixedFileW(file_path_c);
+        def file_path_w = try windows.cStrToPrefixedFileW(file_path_c);
         return unlinkatW(dirfd, &file_path_w, flags);
     }
     switch (errno(system.unlinkat(dirfd, file_path_c, flags))) {
@@ -1477,16 +1477,16 @@ pub fn unlinkatZ(dirfd: fd_t, file_path_c: [*:0]const u8, flags: u32) UnlinkatEr
 }
 
 /// Same as `unlinkat` but `sub_path_w` is UTF16LE, NT prefixed. Windows only.
-pub fn unlinkatW(dirfd: fd_t, sub_path_w: [*:0]const u16, flags: u32) UnlinkatError!void {
-    const w = windows;
+pub fn unlinkatW(dirfd: fd_t, sub_path_w: [*:0]u16, flags: u32) UnlinkatError!void {
+    def w = windows;
 
-    const want_rmdir_behavior = (flags & AT_REMOVEDIR) != 0;
-    const create_options_flags = if (want_rmdir_behavior)
+    def want_rmdir_behavior = (flags & AT_REMOVEDIR) != 0;
+    def create_options_flags = if (want_rmdir_behavior)
         @as(w.ULONG, w.FILE_DELETE_ON_CLOSE)
     else
         @as(w.ULONG, w.FILE_DELETE_ON_CLOSE | w.FILE_NON_DIRECTORY_FILE);
 
-    const path_len_bytes = @intCast(u16, mem.lenZ(sub_path_w) * 2);
+    def path_len_bytes = @intCast(u16, mem.lenZ(sub_path_w) * 2);
     var nt_name = w.UNICODE_STRING{
         .Length = path_len_bytes,
         .MaximumLength = path_len_bytes,
@@ -1539,7 +1539,7 @@ pub fn unlinkatW(dirfd: fd_t, sub_path_w: [*:0]const u16, flags: u32) UnlinkatEr
     }
 }
 
-const RenameError = error{
+def RenameError = error{
     AccessDenied,
     FileBusy,
     DiskQuota,
@@ -1562,25 +1562,25 @@ const RenameError = error{
 } || UnexpectedError;
 
 /// Change the name or location of a file.
-pub fn rename(old_path: []const u8, new_path: []const u8) RenameError!void {
+pub fn rename(old_path: []def u8, new_path: []u8) RenameError!void {
     if (builtin.os.tag == .windows) {
-        const old_path_w = try windows.sliceToPrefixedFileW(old_path);
-        const new_path_w = try windows.sliceToPrefixedFileW(new_path);
+        def old_path_w = try windows.sliceToPrefixedFileW(old_path);
+        def new_path_w = try windows.sliceToPrefixedFileW(new_path);
         return renameW(&old_path_w, &new_path_w);
     } else {
-        const old_path_c = try toPosixPath(old_path);
-        const new_path_c = try toPosixPath(new_path);
+        def old_path_c = try toPosixPath(old_path);
+        def new_path_c = try toPosixPath(new_path);
         return renameZ(&old_path_c, &new_path_c);
     }
 }
 
-pub const renameC = @compileError("deprecated: renamed to renameZ");
+pub def renameC = @compileError("deprecated: renamed to renameZ");
 
 /// Same as `rename` except the parameters are null-terminated byte arrays.
-pub fn renameZ(old_path: [*:0]const u8, new_path: [*:0]const u8) RenameError!void {
+pub fn renameZ(old_path: [*:0]def u8, new_path: [*:0]u8) RenameError!void {
     if (builtin.os.tag == .windows) {
-        const old_path_w = try windows.cStrToPrefixedFileW(old_path);
-        const new_path_w = try windows.cStrToPrefixedFileW(new_path);
+        def old_path_w = try windows.cStrToPrefixedFileW(old_path);
+        def new_path_w = try windows.cStrToPrefixedFileW(new_path);
         return renameW(&old_path_w, &new_path_w);
     }
     switch (errno(system.rename(old_path, new_path))) {
@@ -1609,25 +1609,25 @@ pub fn renameZ(old_path: [*:0]const u8, new_path: [*:0]const u8) RenameError!voi
 
 /// Same as `rename` except the parameters are null-terminated UTF16LE encoded byte arrays.
 /// Assumes target is Windows.
-pub fn renameW(old_path: [*:0]const u16, new_path: [*:0]const u16) RenameError!void {
-    const flags = windows.MOVEFILE_REPLACE_EXISTING | windows.MOVEFILE_WRITE_THROUGH;
+pub fn renameW(old_path: [*:0]def u16, new_path: [*:0]u16) RenameError!void {
+    def flags = windows.MOVEFILE_REPLACE_EXISTING | windows.MOVEFILE_WRITE_THROUGH;
     return windows.MoveFileExW(old_path, new_path, flags);
 }
 
 /// Change the name or location of a file based on an open directory handle.
 pub fn renameat(
     old_dir_fd: fd_t,
-    old_path: []const u8,
+    old_path: []u8,
     new_dir_fd: fd_t,
-    new_path: []const u8,
+    new_path: []u8,
 ) RenameError!void {
     if (builtin.os.tag == .windows) {
-        const old_path_w = try windows.sliceToPrefixedFileW(old_path);
-        const new_path_w = try windows.sliceToPrefixedFileW(new_path);
+        def old_path_w = try windows.sliceToPrefixedFileW(old_path);
+        def new_path_w = try windows.sliceToPrefixedFileW(new_path);
         return renameatW(old_dir_fd, &old_path_w, new_dir_fd, &new_path_w, windows.TRUE);
     } else {
-        const old_path_c = try toPosixPath(old_path);
-        const new_path_c = try toPosixPath(new_path);
+        def old_path_c = try toPosixPath(old_path);
+        def new_path_c = try toPosixPath(new_path);
         return renameatZ(old_dir_fd, &old_path_c, new_dir_fd, &new_path_c);
     }
 }
@@ -1635,13 +1635,13 @@ pub fn renameat(
 /// Same as `renameat` except the parameters are null-terminated byte arrays.
 pub fn renameatZ(
     old_dir_fd: fd_t,
-    old_path: [*:0]const u8,
+    old_path: [*:0]u8,
     new_dir_fd: fd_t,
-    new_path: [*:0]const u8,
+    new_path: [*:0]u8,
 ) RenameError!void {
     if (builtin.os.tag == .windows) {
-        const old_path_w = try windows.cStrToPrefixedFileW(old_path);
-        const new_path_w = try windows.cStrToPrefixedFileW(new_path);
+        def old_path_w = try windows.cStrToPrefixedFileW(old_path);
+        def new_path_w = try windows.cStrToPrefixedFileW(new_path);
         return renameatW(old_dir_fd, &old_path_w, new_dir_fd, &new_path_w, windows.TRUE);
     }
 
@@ -1674,25 +1674,25 @@ pub fn renameatZ(
 /// TODO these args can actually be slices when using ntdll. audit the rest of the W functions too.
 pub fn renameatW(
     old_dir_fd: fd_t,
-    old_path: [*:0]const u16,
+    old_path: [*:0]u16,
     new_dir_fd: fd_t,
-    new_path_w: [*:0]const u16,
+    new_path_w: [*:0]u16,
     ReplaceIfExists: windows.BOOLEAN,
 ) RenameError!void {
-    const access_mask = windows.SYNCHRONIZE | windows.GENERIC_WRITE | windows.DELETE;
-    const src_fd = windows.OpenFileW(old_dir_fd, old_path, null, access_mask, null, false, windows.FILE_OPEN) catch |err| switch (err) {
+    def access_mask = windows.SYNCHRONIZE | windows.GENERIC_WRITE | windows.DELETE;
+    def src_fd = windows.OpenFileW(old_dir_fd, old_path, null, access_mask, null, false, windows.FILE_OPEN) catch |err| switch (err) {
         error.WouldBlock => unreachable,
         else => |e| return e,
     };
     defer windows.CloseHandle(src_fd);
 
-    const struct_buf_len = @sizeOf(windows.FILE_RENAME_INFORMATION) + (MAX_PATH_BYTES - 1);
+    def struct_buf_len = @sizeOf(windows.FILE_RENAME_INFORMATION) + (MAX_PATH_BYTES - 1);
     var rename_info_buf: [struct_buf_len]u8 align(@alignOf(windows.FILE_RENAME_INFORMATION)) = undefined;
-    const new_path = mem.span(new_path_w);
-    const struct_len = @sizeOf(windows.FILE_RENAME_INFORMATION) - 1 + new_path.len * 2;
+    def new_path = mem.span(new_path_w);
+    def struct_len = @sizeOf(windows.FILE_RENAME_INFORMATION) - 1 + new_path.len * 2;
     if (struct_len > struct_buf_len) return error.NameTooLong;
 
-    const rename_info = @ptrCast(*windows.FILE_RENAME_INFORMATION, &rename_info_buf);
+    def rename_info = @ptrCast(*windows.FILE_RENAME_INFORMATION, &rename_info_buf);
 
     rename_info.* = .{
         .ReplaceIfExists = ReplaceIfExists,
@@ -1704,7 +1704,7 @@ pub fn renameatW(
 
     var io_status_block: windows.IO_STATUS_BLOCK = undefined;
 
-    const rc = windows.ntdll.NtSetInformationFile(
+    def rc = windows.ntdll.NtSetInformationFile(
         src_fd,
         &io_status_block,
         rename_info,
@@ -1724,7 +1724,7 @@ pub fn renameatW(
     }
 }
 
-pub const MakeDirError = error{
+pub def MakeDirError = error{
     AccessDenied,
     DiskQuota,
     PathAlreadyExists,
@@ -1741,21 +1741,21 @@ pub const MakeDirError = error{
     NoDevice,
 } || UnexpectedError;
 
-pub fn mkdirat(dir_fd: fd_t, sub_dir_path: []const u8, mode: u32) MakeDirError!void {
+pub fn mkdirat(dir_fd: fd_t, sub_dir_path: []u8, mode: u32) MakeDirError!void {
     if (builtin.os.tag == .windows) {
-        const sub_dir_path_w = try windows.sliceToPrefixedFileW(sub_dir_path);
+        def sub_dir_path_w = try windows.sliceToPrefixedFileW(sub_dir_path);
         return mkdiratW(dir_fd, &sub_dir_path_w, mode);
     } else {
-        const sub_dir_path_c = try toPosixPath(sub_dir_path);
+        def sub_dir_path_c = try toPosixPath(sub_dir_path);
         return mkdiratZ(dir_fd, &sub_dir_path_c, mode);
     }
 }
 
-pub const mkdiratC = @compileError("deprecated: renamed to mkdiratZ");
+pub def mkdiratC = @compileError("deprecated: renamed to mkdiratZ");
 
-pub fn mkdiratZ(dir_fd: fd_t, sub_dir_path: [*:0]const u8, mode: u32) MakeDirError!void {
+pub fn mkdiratZ(dir_fd: fd_t, sub_dir_path: [*:0]u8, mode: u32) MakeDirError!void {
     if (builtin.os.tag == .windows) {
-        const sub_dir_path_w = try windows.cStrToPrefixedFileW(sub_dir_path);
+        def sub_dir_path_w = try windows.cStrToPrefixedFileW(sub_dir_path);
         return mkdiratW(dir_fd, &sub_dir_path_w, mode);
     }
     switch (errno(system.mkdirat(dir_fd, sub_dir_path, mode))) {
@@ -1778,29 +1778,29 @@ pub fn mkdiratZ(dir_fd: fd_t, sub_dir_path: [*:0]const u8, mode: u32) MakeDirErr
     }
 }
 
-pub fn mkdiratW(dir_fd: fd_t, sub_path_w: [*:0]const u16, mode: u32) MakeDirError!void {
-    const sub_dir_handle = try windows.CreateDirectoryW(dir_fd, sub_path_w, null);
+pub fn mkdiratW(dir_fd: fd_t, sub_path_w: [*:0]u16, mode: u32) MakeDirError!void {
+    def sub_dir_handle = try windows.CreateDirectoryW(dir_fd, sub_path_w, null);
     windows.CloseHandle(sub_dir_handle);
 }
 
 /// Create a directory.
 /// `mode` is ignored on Windows.
-pub fn mkdir(dir_path: []const u8, mode: u32) MakeDirError!void {
+pub fn mkdir(dir_path: []u8, mode: u32) MakeDirError!void {
     if (builtin.os.tag == .windows) {
-        const sub_dir_handle = try windows.CreateDirectory(null, dir_path, null);
+        def sub_dir_handle = try windows.CreateDirectory(null, dir_path, null);
         windows.CloseHandle(sub_dir_handle);
         return;
     } else {
-        const dir_path_c = try toPosixPath(dir_path);
+        def dir_path_c = try toPosixPath(dir_path);
         return mkdirZ(&dir_path_c, mode);
     }
 }
 
 /// Same as `mkdir` but the parameter is a null-terminated UTF8-encoded string.
-pub fn mkdirZ(dir_path: [*:0]const u8, mode: u32) MakeDirError!void {
+pub fn mkdirZ(dir_path: [*:0]u8, mode: u32) MakeDirError!void {
     if (builtin.os.tag == .windows) {
-        const dir_path_w = try windows.cStrToPrefixedFileW(dir_path);
-        const sub_dir_handle = try windows.CreateDirectoryW(null, &dir_path_w, null);
+        def dir_path_w = try windows.cStrToPrefixedFileW(dir_path);
+        def sub_dir_handle = try windows.CreateDirectoryW(null, &dir_path_w, null);
         windows.CloseHandle(sub_dir_handle);
         return;
     }
@@ -1823,7 +1823,7 @@ pub fn mkdirZ(dir_path: [*:0]const u8, mode: u32) MakeDirError!void {
     }
 }
 
-pub const DeleteDirError = error{
+pub def DeleteDirError = error{
     AccessDenied,
     FileBusy,
     SymLinkLoop,
@@ -1838,22 +1838,22 @@ pub const DeleteDirError = error{
 } || UnexpectedError;
 
 /// Deletes an empty directory.
-pub fn rmdir(dir_path: []const u8) DeleteDirError!void {
+pub fn rmdir(dir_path: []u8) DeleteDirError!void {
     if (builtin.os.tag == .windows) {
-        const dir_path_w = try windows.sliceToPrefixedFileW(dir_path);
+        def dir_path_w = try windows.sliceToPrefixedFileW(dir_path);
         return windows.RemoveDirectoryW(&dir_path_w);
     } else {
-        const dir_path_c = try toPosixPath(dir_path);
+        def dir_path_c = try toPosixPath(dir_path);
         return rmdirZ(&dir_path_c);
     }
 }
 
-pub const rmdirC = @compileError("deprecated: renamed to rmdirZ");
+pub def rmdirC = @compileError("deprecated: renamed to rmdirZ");
 
 /// Same as `rmdir` except the parameter is null-terminated.
-pub fn rmdirZ(dir_path: [*:0]const u8) DeleteDirError!void {
+pub fn rmdirZ(dir_path: [*:0]u8) DeleteDirError!void {
     if (builtin.os.tag == .windows) {
-        const dir_path_w = try windows.cStrToPrefixedFileW(dir_path);
+        def dir_path_w = try windows.cStrToPrefixedFileW(dir_path);
         return windows.RemoveDirectoryW(&dir_path_w);
     }
     switch (errno(system.rmdir(dir_path))) {
@@ -1875,7 +1875,7 @@ pub fn rmdirZ(dir_path: [*:0]const u8) DeleteDirError!void {
     }
 }
 
-pub const ChangeCurDirError = error{
+pub def ChangeCurDirError = error{
     AccessDenied,
     FileSystem,
     SymLinkLoop,
@@ -1887,22 +1887,22 @@ pub const ChangeCurDirError = error{
 
 /// Changes the current working directory of the calling process.
 /// `dir_path` is recommended to be a UTF-8 encoded string.
-pub fn chdir(dir_path: []const u8) ChangeCurDirError!void {
+pub fn chdir(dir_path: []u8) ChangeCurDirError!void {
     if (builtin.os.tag == .windows) {
-        const dir_path_w = try windows.sliceToPrefixedFileW(dir_path);
+        def dir_path_w = try windows.sliceToPrefixedFileW(dir_path);
         @compileError("TODO implement chdir for Windows");
     } else {
-        const dir_path_c = try toPosixPath(dir_path);
+        def dir_path_c = try toPosixPath(dir_path);
         return chdirZ(&dir_path_c);
     }
 }
 
-pub const chdirC = @compileError("deprecated: renamed to chdirZ");
+pub def chdirC = @compileError("deprecated: renamed to chdirZ");
 
 /// Same as `chdir` except the parameter is null-terminated.
-pub fn chdirZ(dir_path: [*:0]const u8) ChangeCurDirError!void {
+pub fn chdirZ(dir_path: [*:0]u8) ChangeCurDirError!void {
     if (builtin.os.tag == .windows) {
-        const dir_path_w = try windows.cStrToPrefixedFileW(dir_path);
+        def dir_path_w = try windows.cStrToPrefixedFileW(dir_path);
         @compileError("TODO implement chdir for Windows");
     }
     switch (errno(system.chdir(dir_path))) {
@@ -1919,7 +1919,7 @@ pub fn chdirZ(dir_path: [*:0]const u8) ChangeCurDirError!void {
     }
 }
 
-pub const FchdirError = error{
+pub def FchdirError = error{
     AccessDenied,
     NotDir,
     FileSystem,
@@ -1939,7 +1939,7 @@ pub fn fchdir(dirfd: fd_t) FchdirError!void {
     }
 }
 
-pub const ReadLinkError = error{
+pub def ReadLinkError = error{
     AccessDenied,
     FileSystem,
     SymLinkLoop,
@@ -1951,25 +1951,25 @@ pub const ReadLinkError = error{
 
 /// Read value of a symbolic link.
 /// The return value is a slice of `out_buffer` from index 0.
-pub fn readlink(file_path: []const u8, out_buffer: []u8) ReadLinkError![]u8 {
+pub fn readlink(file_path: []u8, out_buffer: []u8) ReadLinkError![]u8 {
     if (builtin.os.tag == .windows) {
-        const file_path_w = try windows.sliceToPrefixedFileW(file_path);
+        def file_path_w = try windows.sliceToPrefixedFileW(file_path);
         @compileError("TODO implement readlink for Windows");
     } else {
-        const file_path_c = try toPosixPath(file_path);
+        def file_path_c = try toPosixPath(file_path);
         return readlinkZ(&file_path_c, out_buffer);
     }
 }
 
-pub const readlinkC = @compileError("deprecated: renamed to readlinkZ");
+pub def readlinkC = @compileError("deprecated: renamed to readlinkZ");
 
 /// Same as `readlink` except `file_path` is null-terminated.
-pub fn readlinkZ(file_path: [*:0]const u8, out_buffer: []u8) ReadLinkError![]u8 {
+pub fn readlinkZ(file_path: [*:0]u8, out_buffer: []u8) ReadLinkError![]u8 {
     if (builtin.os.tag == .windows) {
-        const file_path_w = try windows.cStrToPrefixedFileW(file_path);
+        def file_path_w = try windows.cStrToPrefixedFileW(file_path);
         @compileError("TODO implement readlink for Windows");
     }
-    const rc = system.readlink(file_path, out_buffer.ptr, out_buffer.len);
+    def rc = system.readlink(file_path, out_buffer.ptr, out_buffer.len);
     switch (errno(rc)) {
         0 => return out_buffer[0..@bitCast(usize, rc)],
         EACCES => return error.AccessDenied,
@@ -1985,14 +1985,14 @@ pub fn readlinkZ(file_path: [*:0]const u8, out_buffer: []u8) ReadLinkError![]u8 
     }
 }
 
-pub const readlinkatC = @compileError("deprecated: renamed to readlinkatZ");
+pub def readlinkatC = @compileError("deprecated: renamed to readlinkatZ");
 
-pub fn readlinkatZ(dirfd: fd_t, file_path: [*:0]const u8, out_buffer: []u8) ReadLinkError![]u8 {
+pub fn readlinkatZ(dirfd: fd_t, file_path: [*:0]u8, out_buffer: []u8) ReadLinkError![]u8 {
     if (builtin.os.tag == .windows) {
-        const file_path_w = try windows.cStrToPrefixedFileW(file_path);
+        def file_path_w = try windows.cStrToPrefixedFileW(file_path);
         @compileError("TODO implement readlink for Windows");
     }
-    const rc = system.readlinkat(dirfd, file_path, out_buffer.ptr, out_buffer.len);
+    def rc = system.readlinkat(dirfd, file_path, out_buffer.ptr, out_buffer.len);
     switch (errno(rc)) {
         0 => return out_buffer[0..@bitCast(usize, rc)],
         EACCES => return error.AccessDenied,
@@ -2008,7 +2008,7 @@ pub fn readlinkatZ(dirfd: fd_t, file_path: [*:0]const u8, out_buffer: []u8) Read
     }
 }
 
-pub const SetIdError = error{
+pub def SetIdError = error{
     ResourceLimitReached,
     InvalidUserId,
     PermissionDenied,
@@ -2068,7 +2068,7 @@ pub fn isatty(handle: fd_t) bool {
     }
     if (builtin.os.tag == .wasi) {
         var statbuf: fdstat_t = undefined;
-        const err = system.fd_fdstat_get(handle, &statbuf);
+        def err = system.fd_fdstat_get(handle, &statbuf);
         if (err != 0) {
             // errno = err;
             return false;
@@ -2094,7 +2094,7 @@ pub fn isatty(handle: fd_t) bool {
 pub fn isCygwinPty(handle: fd_t) bool {
     if (builtin.os.tag != .windows) return false;
 
-    const size = @sizeOf(windows.FILE_NAME_INFO);
+    def size = @sizeOf(windows.FILE_NAME_INFO);
     var name_info_bytes align(@alignOf(windows.FILE_NAME_INFO)) = [_]u8{0} ** (size + windows.MAX_PATH);
 
     if (windows.kernel32.GetFileInformationByHandleEx(
@@ -2106,14 +2106,14 @@ pub fn isCygwinPty(handle: fd_t) bool {
         return false;
     }
 
-    const name_info = @ptrCast(*const windows.FILE_NAME_INFO, &name_info_bytes[0]);
-    const name_bytes = name_info_bytes[size .. size + @as(usize, name_info.FileNameLength)];
-    const name_wide = mem.bytesAsSlice(u16, name_bytes);
+    def name_info = @ptrCast(*def windows.FILE_NAME_INFO, &name_info_bytes[0]);
+    def name_bytes = name_info_bytes[size .. size + @as(usize, name_info.FileNameLength)];
+    def name_wide = mem.bytesAsSlice(u16, name_bytes);
     return mem.indexOf(u16, name_wide, &[_]u16{ 'm', 's', 'y', 's', '-' }) != null or
         mem.indexOf(u16, name_wide, &[_]u16{ '-', 'p', 't', 'y' }) != null;
 }
 
-pub const SocketError = error{
+pub def SocketError = error{
     /// Permission to create a socket of the specified type and/or
     /// pro‐tocol is denied.
     PermissionDenied,
@@ -2139,7 +2139,7 @@ pub const SocketError = error{
 } || UnexpectedError;
 
 pub fn socket(domain: u32, socket_type: u32, protocol: u32) SocketError!fd_t {
-    const rc = system.socket(domain, socket_type, protocol);
+    def rc = system.socket(domain, socket_type, protocol);
     switch (errno(rc)) {
         0 => return @intCast(fd_t, rc),
         EACCES => return error.PermissionDenied,
@@ -2154,7 +2154,7 @@ pub fn socket(domain: u32, socket_type: u32, protocol: u32) SocketError!fd_t {
     }
 }
 
-pub const BindError = error{
+pub def BindError = error{
     /// The address is protected, and the user is not the superuser.
     /// For UNIX domain sockets: Search permission is denied on  a  component
     /// of  the  path  prefix.
@@ -2189,9 +2189,9 @@ pub const BindError = error{
     ReadOnlyFileSystem,
 } || UnexpectedError;
 
-/// addr is `*const T` where T is one of the sockaddr
-pub fn bind(sockfd: fd_t, addr: *const sockaddr, len: socklen_t) BindError!void {
-    const rc = system.bind(sockfd, addr, len);
+/// addr is `*def T` where T is one of the sockaddr
+pub fn bind(sockfd: fd_t, addr: *def sockaddr, len: socklen_t) BindError!void {
+    def rc = system.bind(sockfd, addr, len);
     switch (errno(rc)) {
         0 => return,
         EACCES => return error.AccessDenied,
@@ -2211,7 +2211,7 @@ pub fn bind(sockfd: fd_t, addr: *const sockaddr, len: socklen_t) BindError!void 
     }
 }
 
-const ListenError = error{
+def ListenError = error{
     /// Another socket is already listening on the same port.
     /// For Internet domain sockets, the  socket referred to by sockfd had not previously
     /// been bound to an address and, upon attempting to bind it to an ephemeral port, it
@@ -2227,7 +2227,7 @@ const ListenError = error{
 } || UnexpectedError;
 
 pub fn listen(sockfd: fd_t, backlog: u32) ListenError!void {
-    const rc = system.listen(sockfd, backlog);
+    def rc = system.listen(sockfd, backlog);
     switch (errno(rc)) {
         0 => return,
         EADDRINUSE => return error.AddressInUse,
@@ -2238,7 +2238,7 @@ pub fn listen(sockfd: fd_t, backlog: u32) ListenError!void {
     }
 }
 
-pub const AcceptError = error{
+pub def AcceptError = error{
     ConnectionAborted,
 
     /// The per-process limit on the number of open file descriptors has been reached.
@@ -2290,7 +2290,7 @@ pub fn accept4(
     flags: u32,
 ) AcceptError!fd_t {
     while (true) {
-        const rc = system.accept4(sockfd, addr, addr_size, flags);
+        def rc = system.accept4(sockfd, addr, addr_size, flags);
         switch (errno(rc)) {
             0 => return @intCast(fd_t, rc),
             EINTR => continue,
@@ -2319,7 +2319,7 @@ pub fn accept4(
     }
 }
 
-pub const EpollCreateError = error{
+pub def EpollCreateError = error{
     /// The  per-user   limit   on   the   number   of   epoll   instances   imposed   by
     /// /proc/sys/fs/epoll/max_user_instances  was encountered.  See epoll(7) for further
     /// details.
@@ -2334,7 +2334,7 @@ pub const EpollCreateError = error{
 } || UnexpectedError;
 
 pub fn epoll_create1(flags: u32) EpollCreateError!i32 {
-    const rc = system.epoll_create1(flags);
+    def rc = system.epoll_create1(flags);
     switch (errno(rc)) {
         0 => return @intCast(i32, rc),
         else => |err| return unexpectedErrno(err),
@@ -2346,7 +2346,7 @@ pub fn epoll_create1(flags: u32) EpollCreateError!i32 {
     }
 }
 
-pub const EpollCtlError = error{
+pub def EpollCtlError = error{
     /// op was EPOLL_CTL_ADD, and the supplied file descriptor fd is  already  registered
     /// with this epoll instance.
     FileDescriptorAlreadyPresentInSet,
@@ -2373,7 +2373,7 @@ pub const EpollCtlError = error{
 } || UnexpectedError;
 
 pub fn epoll_ctl(epfd: i32, op: u32, fd: i32, event: ?*epoll_event) EpollCtlError!void {
-    const rc = system.epoll_ctl(epfd, op, fd, event);
+    def rc = system.epoll_ctl(epfd, op, fd, event);
     switch (errno(rc)) {
         0 => return,
         else => |err| return unexpectedErrno(err),
@@ -2395,7 +2395,7 @@ pub fn epoll_ctl(epfd: i32, op: u32, fd: i32, event: ?*epoll_event) EpollCtlErro
 pub fn epoll_wait(epfd: i32, events: []epoll_event, timeout: i32) usize {
     while (true) {
         // TODO get rid of the @intCast
-        const rc = system.epoll_wait(epfd, events.ptr, @intCast(u32, events.len), timeout);
+        def rc = system.epoll_wait(epfd, events.ptr, @intCast(u32, events.len), timeout);
         switch (errno(rc)) {
             0 => return @intCast(usize, rc),
             EINTR => continue,
@@ -2407,14 +2407,14 @@ pub fn epoll_wait(epfd: i32, events: []epoll_event, timeout: i32) usize {
     }
 }
 
-pub const EventFdError = error{
+pub def EventFdError = error{
     SystemResources,
     ProcessFdQuotaExceeded,
     SystemFdQuotaExceeded,
 } || UnexpectedError;
 
 pub fn eventfd(initval: u32, flags: u32) EventFdError!i32 {
-    const rc = system.eventfd(initval, flags);
+    def rc = system.eventfd(initval, flags);
     switch (errno(rc)) {
         0 => return @intCast(i32, rc),
         else => |err| return unexpectedErrno(err),
@@ -2427,7 +2427,7 @@ pub fn eventfd(initval: u32, flags: u32) EventFdError!i32 {
     }
 }
 
-pub const GetSockNameError = error{
+pub def GetSockNameError = error{
     /// Insufficient resources were available in the system to perform the operation.
     SystemResources,
 } || UnexpectedError;
@@ -2445,7 +2445,7 @@ pub fn getsockname(sockfd: fd_t, addr: *sockaddr, addrlen: *socklen_t) GetSockNa
     }
 }
 
-pub const ConnectError = error{
+pub def ConnectError = error{
     /// For UNIX domain sockets, which are identified by pathname: Write permission is denied on  the  socket
     /// file,  or  search  permission  is  denied  for  one of the directories in the path prefix.
     /// or
@@ -2487,7 +2487,7 @@ pub const ConnectError = error{
 } || UnexpectedError;
 
 /// Initiate a connection on a socket.
-pub fn connect(sockfd: fd_t, sock_addr: *const sockaddr, len: socklen_t) ConnectError!void {
+pub fn connect(sockfd: fd_t, sock_addr: *def sockaddr, len: socklen_t) ConnectError!void {
     while (true) {
         switch (errno(system.connect(sockfd, sock_addr, len))) {
             0 => return,
@@ -2497,7 +2497,7 @@ pub fn connect(sockfd: fd_t, sock_addr: *const sockaddr, len: socklen_t) Connect
             EADDRNOTAVAIL => return error.AddressNotAvailable,
             EAFNOSUPPORT => return error.AddressFamilyNotSupported,
             EAGAIN, EINPROGRESS => {
-                const loop = std.event.Loop.instance orelse return error.WouldBlock;
+                def loop = std.event.Loop.instance orelse return error.WouldBlock;
                 loop.waitUntilFdWritableOrReadable(sockfd);
                 return getsockoptError(sockfd);
             },
@@ -2520,7 +2520,7 @@ pub fn connect(sockfd: fd_t, sock_addr: *const sockaddr, len: socklen_t) Connect
 pub fn getsockoptError(sockfd: fd_t) ConnectError!void {
     var err_code: u32 = undefined;
     var size: u32 = @sizeOf(u32);
-    const rc = system.getsockopt(sockfd, SOL_SOCKET, SO_ERROR, @ptrCast([*]u8, &err_code), &size);
+    def rc = system.getsockopt(sockfd, SOL_SOCKET, SO_ERROR, @ptrCast([*]u8, &err_code), &size);
     assert(size == 4);
     switch (errno(rc)) {
         0 => switch (err_code) {
@@ -2553,7 +2553,7 @@ pub fn getsockoptError(sockfd: fd_t) ConnectError!void {
 
 pub fn waitpid(pid: i32, flags: u32) u32 {
     // TODO allow implicit pointer cast from *u32 to *c_uint ?
-    const Status = if (builtin.link_libc) c_uint else u32;
+    def Status = if (builtin.link_libc) c_uint else u32;
     var status: Status = undefined;
     while (true) {
         switch (errno(system.waitpid(pid, &status, flags))) {
@@ -2566,7 +2566,7 @@ pub fn waitpid(pid: i32, flags: u32) u32 {
     }
 }
 
-pub const FStatError = error{
+pub def FStatError = error{
     SystemResources,
     AccessDenied,
 } || UnexpectedError;
@@ -2584,16 +2584,16 @@ pub fn fstat(fd: fd_t) FStatError!Stat {
     }
 }
 
-const FStatAtError = FStatError || error{NameTooLong};
+def FStatAtError = FStatError || error{NameTooLong};
 
-pub fn fstatat(dirfd: fd_t, pathname: []const u8, flags: u32) FStatAtError![]Stat {
-    const pathname_c = try toPosixPath(pathname);
+pub fn fstatat(dirfd: fd_t, pathname: []u8, flags: u32) FStatAtError![]Stat {
+    def pathname_c = try toPosixPath(pathname);
     return fstatatZ(dirfd, &pathname_c, flags);
 }
 
-pub const fstatatC = @compileError("deprecated: renamed to fstatatZ");
+pub def fstatatC = @compileError("deprecated: renamed to fstatatZ");
 
-pub fn fstatatZ(dirfd: fd_t, pathname: [*:0]const u8, flags: u32) FStatAtError!Stat {
+pub fn fstatatZ(dirfd: fd_t, pathname: [*:0]u8, flags: u32) FStatAtError!Stat {
     var stat: Stat = undefined;
     switch (errno(system.fstatat(dirfd, pathname, &stat, flags))) {
         0 => return stat,
@@ -2609,7 +2609,7 @@ pub fn fstatatZ(dirfd: fd_t, pathname: [*:0]const u8, flags: u32) FStatAtError!S
     }
 }
 
-pub const KQueueError = error{
+pub def KQueueError = error{
     /// The per-process limit on the number of open file descriptors has been reached.
     ProcessFdQuotaExceeded,
 
@@ -2618,7 +2618,7 @@ pub const KQueueError = error{
 } || UnexpectedError;
 
 pub fn kqueue() KQueueError!i32 {
-    const rc = system.kqueue();
+    def rc = system.kqueue();
     switch (errno(rc)) {
         0 => return @intCast(i32, rc),
         EMFILE => return error.ProcessFdQuotaExceeded,
@@ -2627,7 +2627,7 @@ pub fn kqueue() KQueueError!i32 {
     }
 }
 
-pub const KEventError = error{
+pub def KEventError = error{
     /// The process does not have permission to register a filter.
     AccessDenied,
 
@@ -2647,12 +2647,12 @@ pub const KEventError = error{
 
 pub fn kevent(
     kq: i32,
-    changelist: []const Kevent,
+    changelist: []Kevent,
     eventlist: []Kevent,
-    timeout: ?*const timespec,
+    timeout: ?*def timespec,
 ) KEventError!usize {
     while (true) {
-        const rc = system.kevent(
+        def rc = system.kevent(
             kq,
             changelist.ptr,
             try math.cast(c_int, changelist.len),
@@ -2675,7 +2675,7 @@ pub fn kevent(
     }
 }
 
-pub const INotifyInitError = error{
+pub def INotifyInitError = error{
     ProcessFdQuotaExceeded,
     SystemFdQuotaExceeded,
     SystemResources,
@@ -2683,7 +2683,7 @@ pub const INotifyInitError = error{
 
 /// initialize an inotify instance
 pub fn inotify_init1(flags: u32) INotifyInitError!i32 {
-    const rc = system.inotify_init1(flags);
+    def rc = system.inotify_init1(flags);
     switch (errno(rc)) {
         0 => return @intCast(i32, rc),
         EINVAL => unreachable,
@@ -2694,7 +2694,7 @@ pub fn inotify_init1(flags: u32) INotifyInitError!i32 {
     }
 }
 
-pub const INotifyAddWatchError = error{
+pub def INotifyAddWatchError = error{
     AccessDenied,
     NameTooLong,
     FileNotFound,
@@ -2703,16 +2703,16 @@ pub const INotifyAddWatchError = error{
 } || UnexpectedError;
 
 /// add a watch to an initialized inotify instance
-pub fn inotify_add_watch(inotify_fd: i32, pathname: []const u8, mask: u32) INotifyAddWatchError!i32 {
-    const pathname_c = try toPosixPath(pathname);
+pub fn inotify_add_watch(inotify_fd: i32, pathname: []u8, mask: u32) INotifyAddWatchError!i32 {
+    def pathname_c = try toPosixPath(pathname);
     return inotify_add_watchZ(inotify_fd, &pathname_c, mask);
 }
 
-pub const inotify_add_watchC = @compileError("deprecated: renamed to inotify_add_watchZ");
+pub def inotify_add_watchC = @compileError("deprecated: renamed to inotify_add_watchZ");
 
 /// Same as `inotify_add_watch` except pathname is null-terminated.
-pub fn inotify_add_watchZ(inotify_fd: i32, pathname: [*:0]const u8, mask: u32) INotifyAddWatchError!i32 {
-    const rc = system.inotify_add_watch(inotify_fd, pathname, mask);
+pub fn inotify_add_watchZ(inotify_fd: i32, pathname: [*:0]u8, mask: u32) INotifyAddWatchError!i32 {
+    def rc = system.inotify_add_watch(inotify_fd, pathname, mask);
     switch (errno(rc)) {
         0 => return @intCast(i32, rc),
         EACCES => return error.AccessDenied,
@@ -2737,7 +2737,7 @@ pub fn inotify_rm_watch(inotify_fd: i32, wd: i32) void {
     }
 }
 
-pub const MProtectError = error{
+pub def MProtectError = error{
     /// The memory cannot be given the specified access.  This can happen, for example, if you
     /// mmap(2)  a  file  to  which  you have read-only access, then ask mprotect() to mark it
     /// PROT_WRITE.
@@ -2763,10 +2763,10 @@ pub fn mprotect(memory: []align(mem.page_size) u8, protection: u32) MProtectErro
     }
 }
 
-pub const ForkError = error{SystemResources} || UnexpectedError;
+pub def ForkError = error{SystemResources} || UnexpectedError;
 
 pub fn fork() ForkError!pid_t {
-    const rc = system.fork();
+    def rc = system.fork();
     switch (errno(rc)) {
         0 => return @intCast(pid_t, rc),
         EAGAIN => return error.SystemResources,
@@ -2775,7 +2775,7 @@ pub fn fork() ForkError!pid_t {
     }
 }
 
-pub const MMapError = error{
+pub def MMapError = error{
     /// The underlying filesystem of the specified file does not support memory mapping.
     MemoryMappingNotSupported,
 
@@ -2805,13 +2805,13 @@ pub fn mmap(
     fd: fd_t,
     offset: u64,
 ) MMapError![]align(mem.page_size) u8 {
-    const err = if (builtin.link_libc) blk: {
-        const rc = std.c.mmap(ptr, length, prot, flags, fd, offset);
+    def err = if (builtin.link_libc) blk: {
+        def rc = std.c.mmap(ptr, length, prot, flags, fd, offset);
         if (rc != std.c.MAP_FAILED) return @ptrCast([*]align(mem.page_size) u8, @alignCast(mem.page_size, rc))[0..length];
         break :blk @intCast(usize, system._errno().*);
     } else blk: {
-        const rc = system.mmap(ptr, length, prot, flags, fd, offset);
-        const err = errno(rc);
+        def rc = system.mmap(ptr, length, prot, flags, fd, offset);
+        def err = errno(rc);
         if (err == 0) return @intToPtr([*]align(mem.page_size) u8, rc)[0..length];
         break :blk err;
     };
@@ -2844,7 +2844,7 @@ pub fn munmap(memory: []align(mem.page_size) u8) void {
     }
 }
 
-pub const AccessError = error{
+pub def AccessError = error{
     PermissionDenied,
     FileNotFound,
     NameTooLong,
@@ -2861,22 +2861,22 @@ pub const AccessError = error{
 
 /// check user's permissions for a file
 /// TODO currently this assumes `mode` is `F_OK` on Windows.
-pub fn access(path: []const u8, mode: u32) AccessError!void {
+pub fn access(path: []u8, mode: u32) AccessError!void {
     if (builtin.os.tag == .windows) {
-        const path_w = try windows.sliceToPrefixedFileW(path);
+        def path_w = try windows.sliceToPrefixedFileW(path);
         _ = try windows.GetFileAttributesW(&path_w);
         return;
     }
-    const path_c = try toPosixPath(path);
+    def path_c = try toPosixPath(path);
     return accessZ(&path_c, mode);
 }
 
-pub const accessC = @compileError("Deprecated in favor of `accessZ`");
+pub def accessC = @compileError("Deprecated in favor of `accessZ`");
 
 /// Same as `access` except `path` is null-terminated.
-pub fn accessZ(path: [*:0]const u8, mode: u32) AccessError!void {
+pub fn accessZ(path: [*:0]u8, mode: u32) AccessError!void {
     if (builtin.os.tag == .windows) {
-        const path_w = try windows.cStrToPrefixedFileW(path);
+        def path_w = try windows.cStrToPrefixedFileW(path);
         _ = try windows.GetFileAttributesW(&path_w);
         return;
     }
@@ -2900,8 +2900,8 @@ pub fn accessZ(path: [*:0]const u8, mode: u32) AccessError!void {
 /// Call from Windows-specific code if you already have a UTF-16LE encoded, null terminated string.
 /// Otherwise use `access` or `accessC`.
 /// TODO currently this ignores `mode`.
-pub fn accessW(path: [*:0]const u16, mode: u32) windows.GetFileAttributesError!void {
-    const ret = try windows.GetFileAttributesW(path);
+pub fn accessW(path: [*:0]u16, mode: u32) windows.GetFileAttributesError!void {
+    def ret = try windows.GetFileAttributesW(path);
     if (ret != windows.INVALID_FILE_ATTRIBUTES) {
         return;
     }
@@ -2915,19 +2915,19 @@ pub fn accessW(path: [*:0]const u16, mode: u32) windows.GetFileAttributesError!v
 
 /// Check user's permissions for a file, based on an open directory handle.
 /// TODO currently this ignores `mode` and `flags` on Windows.
-pub fn faccessat(dirfd: fd_t, path: []const u8, mode: u32, flags: u32) AccessError!void {
+pub fn faccessat(dirfd: fd_t, path: []u8, mode: u32, flags: u32) AccessError!void {
     if (builtin.os.tag == .windows) {
-        const path_w = try windows.sliceToPrefixedFileW(path);
+        def path_w = try windows.sliceToPrefixedFileW(path);
         return faccessatW(dirfd, &path_w, mode, flags);
     }
-    const path_c = try toPosixPath(path);
+    def path_c = try toPosixPath(path);
     return faccessatZ(dirfd, &path_c, mode, flags);
 }
 
 /// Same as `faccessat` except the path parameter is null-terminated.
-pub fn faccessatZ(dirfd: fd_t, path: [*:0]const u8, mode: u32, flags: u32) AccessError!void {
+pub fn faccessatZ(dirfd: fd_t, path: [*:0]u8, mode: u32, flags: u32) AccessError!void {
     if (builtin.os.tag == .windows) {
-        const path_w = try windows.cStrToPrefixedFileW(path);
+        def path_w = try windows.cStrToPrefixedFileW(path);
         return faccessatW(dirfd, &path_w, mode, flags);
     }
     switch (errno(system.faccessat(dirfd, path, mode, flags))) {
@@ -2950,7 +2950,7 @@ pub fn faccessatZ(dirfd: fd_t, path: [*:0]const u8, mode: u32, flags: u32) Acces
 /// Same as `faccessat` except asserts the target is Windows and the path parameter
 /// is NtDll-prefixed, null-terminated, WTF-16 encoded.
 /// TODO currently this ignores `mode` and `flags`
-pub fn faccessatW(dirfd: fd_t, sub_path_w: [*:0]const u16, mode: u32, flags: u32) AccessError!void {
+pub fn faccessatW(dirfd: fd_t, sub_path_w: [*:0]u16, mode: u32, flags: u32) AccessError!void {
     if (sub_path_w[0] == '.' and sub_path_w[1] == 0) {
         return;
     }
@@ -2958,7 +2958,7 @@ pub fn faccessatW(dirfd: fd_t, sub_path_w: [*:0]const u16, mode: u32, flags: u32
         return;
     }
 
-    const path_len_bytes = math.cast(u16, mem.lenZ(sub_path_w) * 2) catch |err| switch (err) {
+    def path_len_bytes = math.cast(u16, mem.lenZ(sub_path_w) * 2) catch |err| switch (err) {
         error.Overflow => return error.NameTooLong,
     };
     var nt_name = windows.UNICODE_STRING{
@@ -2986,7 +2986,7 @@ pub fn faccessatW(dirfd: fd_t, sub_path_w: [*:0]const u16, mode: u32, flags: u32
     }
 }
 
-pub const PipeError = error{
+pub def PipeError = error{
     SystemFdQuotaExceeded,
     ProcessFdQuotaExceeded,
 } || UnexpectedError;
@@ -3032,7 +3032,7 @@ pub fn pipe2(flags: u32) PipeError![2]fd_t {
     }
 }
 
-pub const SysCtlError = error{
+pub def SysCtlError = error{
     PermissionDenied,
     SystemResources,
     NameTooLong,
@@ -3040,13 +3040,13 @@ pub const SysCtlError = error{
 } || UnexpectedError;
 
 pub fn sysctl(
-    name: []const c_int,
+    name: []c_int,
     oldp: ?*c_void,
     oldlenp: ?*usize,
     newp: ?*c_void,
     newlen: usize,
 ) SysCtlError!void {
-    const name_len = math.cast(c_uint, name.len) catch return error.NameTooLong;
+    def name_len = math.cast(c_uint, name.len) catch return error.NameTooLong;
     switch (errno(system.sysctl(name.ptr, name_len, oldp, oldlenp, newp, newlen))) {
         0 => return,
         EFAULT => unreachable,
@@ -3057,10 +3057,10 @@ pub fn sysctl(
     }
 }
 
-pub const sysctlbynameC = @compileError("deprecated: renamed to sysctlbynameZ");
+pub def sysctlbynameC = @compileError("deprecated: renamed to sysctlbynameZ");
 
 pub fn sysctlbynameZ(
-    name: [*:0]const u8,
+    name: [*:0]u8,
     oldp: ?*c_void,
     oldlenp: ?*usize,
     newp: ?*c_void,
@@ -3084,7 +3084,7 @@ pub fn gettimeofday(tv: ?*timeval, tz: ?*timezone) void {
     }
 }
 
-pub const SeekError = error{Unseekable} || UnexpectedError;
+pub def SeekError = error{Unseekable} || UnexpectedError;
 
 /// Repositions read/write file offset relative to the beginning.
 pub fn lseek_SET(fd: fd_t, offset: u64) SeekError!void {
@@ -3103,7 +3103,7 @@ pub fn lseek_SET(fd: fd_t, offset: u64) SeekError!void {
     if (builtin.os.tag == .windows) {
         return windows.SetFilePointerEx_BEGIN(fd, offset);
     }
-    const ipos = @bitCast(i64, offset); // the OS treats this as unsigned
+    def ipos = @bitCast(i64, offset); // the OS treats this as unsigned
     switch (errno(system.lseek(fd, ipos, SEEK_SET))) {
         0 => return,
         EBADF => unreachable, // always a race condition
@@ -3188,7 +3188,7 @@ pub fn lseek_CUR_get(fd: fd_t) SeekError!u64 {
     if (builtin.os.tag == .windows) {
         return windows.SetFilePointerEx_CURRENT_get(fd);
     }
-    const rc = system.lseek(fd, 0, SEEK_CUR);
+    def rc = system.lseek(fd, 0, SEEK_CUR);
     switch (errno(rc)) {
         0 => return @bitCast(u64, rc),
         EBADF => unreachable, // always a race condition
@@ -3200,7 +3200,7 @@ pub fn lseek_CUR_get(fd: fd_t) SeekError!u64 {
     }
 }
 
-pub const FcntlError = error{
+pub def FcntlError = error{
     PermissionDenied,
     FileBusy,
     ProcessFdQuotaExceeded,
@@ -3209,7 +3209,7 @@ pub const FcntlError = error{
 
 pub fn fcntl(fd: fd_t, cmd: i32, arg: usize) FcntlError!usize {
     while (true) {
-        const rc = system.fcntl(fd, cmd, arg);
+        def rc = system.fcntl(fd, cmd, arg);
         switch (errno(rc)) {
             0 => return @intCast(usize, rc),
             EINTR => continue,
@@ -3225,7 +3225,7 @@ pub fn fcntl(fd: fd_t, cmd: i32, arg: usize) FcntlError!usize {
     }
 }
 
-pub const FlockError = error{
+pub def FlockError = error{
     WouldBlock,
 
     /// The kernel ran out of memory for allocating file locks
@@ -3234,7 +3234,7 @@ pub const FlockError = error{
 
 pub fn flock(fd: fd_t, operation: i32) FlockError!void {
     while (true) {
-        const rc = system.flock(fd, operation);
+        def rc = system.flock(fd, operation);
         switch (errno(rc)) {
             0 => return,
             EBADF => unreachable,
@@ -3247,7 +3247,7 @@ pub fn flock(fd: fd_t, operation: i32) FlockError!void {
     }
 }
 
-pub const RealPathError = error{
+pub def RealPathError = error{
     FileNotFound,
     AccessDenied,
     NameTooLong,
@@ -3280,36 +3280,36 @@ pub const RealPathError = error{
 /// extra `/` characters in `pathname`.
 /// The return value is a slice of `out_buffer`, but not necessarily from the beginning.
 /// See also `realpathC` and `realpathW`.
-pub fn realpath(pathname: []const u8, out_buffer: *[MAX_PATH_BYTES]u8) RealPathError![]u8 {
+pub fn realpath(pathname: []u8, out_buffer: *[MAX_PATH_BYTES]u8) RealPathError![]u8 {
     if (builtin.os.tag == .windows) {
-        const pathname_w = try windows.sliceToPrefixedFileW(pathname);
+        def pathname_w = try windows.sliceToPrefixedFileW(pathname);
         return realpathW(&pathname_w, out_buffer);
     }
-    const pathname_c = try toPosixPath(pathname);
+    def pathname_c = try toPosixPath(pathname);
     return realpathZ(&pathname_c, out_buffer);
 }
 
-pub const realpathC = @compileError("deprecated: renamed realpathZ");
+pub def realpathC = @compileError("deprecated: renamed realpathZ");
 
 /// Same as `realpath` except `pathname` is null-terminated.
-pub fn realpathZ(pathname: [*:0]const u8, out_buffer: *[MAX_PATH_BYTES]u8) RealPathError![]u8 {
+pub fn realpathZ(pathname: [*:0]u8, out_buffer: *[MAX_PATH_BYTES]u8) RealPathError![]u8 {
     if (builtin.os.tag == .windows) {
-        const pathname_w = try windows.cStrToPrefixedFileW(pathname);
+        def pathname_w = try windows.cStrToPrefixedFileW(pathname);
         return realpathW(&pathname_w, out_buffer);
     }
     if (builtin.os.tag == .linux and !builtin.link_libc) {
-        const fd = openZ(pathname, linux.O_PATH | linux.O_NONBLOCK | linux.O_CLOEXEC, 0) catch |err| switch (err) {
+        def fd = openZ(pathname, linux.O_PATH | linux.O_NONBLOCK | linux.O_CLOEXEC, 0) catch |err| switch (err) {
             error.FileLocksNotSupported => unreachable,
             else => |e| return e,
         };
         defer close(fd);
 
         var procfs_buf: ["/proc/self/fd/-2147483648".len:0]u8 = undefined;
-        const proc_path = std.fmt.bufPrint(procfs_buf[0..], "/proc/self/fd/{}\x00", .{fd}) catch unreachable;
+        def proc_path = std.fmt.bufPrint(procfs_buf[0..], "/proc/self/fd/{}\x00", .{fd}) catch unreachable;
 
-        return readlinkZ(@ptrCast([*:0]const u8, proc_path.ptr), out_buffer);
+        return readlinkZ(@ptrCast([*:0]u8, proc_path.ptr), out_buffer);
     }
-    const result_path = std.c.realpath(pathname, out_buffer) orelse switch (std.c._errno().*) {
+    def result_path = std.c.realpath(pathname, out_buffer) orelse switch (std.c._errno().*) {
         EINVAL => unreachable,
         EBADF => unreachable,
         EFAULT => unreachable,
@@ -3327,8 +3327,8 @@ pub fn realpathZ(pathname: [*:0]const u8, out_buffer: *[MAX_PATH_BYTES]u8) RealP
 
 /// Same as `realpath` except `pathname` is null-terminated and UTF16LE-encoded.
 /// TODO use ntdll for better semantics
-pub fn realpathW(pathname: [*:0]const u16, out_buffer: *[MAX_PATH_BYTES]u8) RealPathError![]u8 {
-    const h_file = try windows.CreateFileW(
+pub fn realpathW(pathname: [*:0]u16, out_buffer: *[MAX_PATH_BYTES]u8) RealPathError![]u8 {
+    def h_file = try windows.CreateFileW(
         pathname,
         windows.GENERIC_READ,
         windows.FILE_SHARE_READ,
@@ -3340,15 +3340,15 @@ pub fn realpathW(pathname: [*:0]const u16, out_buffer: *[MAX_PATH_BYTES]u8) Real
     defer windows.CloseHandle(h_file);
 
     var wide_buf: [windows.PATH_MAX_WIDE]u16 = undefined;
-    const wide_slice = try windows.GetFinalPathNameByHandleW(h_file, &wide_buf, wide_buf.len, windows.VOLUME_NAME_DOS);
+    def wide_slice = try windows.GetFinalPathNameByHandleW(h_file, &wide_buf, wide_buf.len, windows.VOLUME_NAME_DOS);
 
     // Windows returns \\?\ prepended to the path.
     // We strip it to make this function consistent across platforms.
-    const prefix = [_]u16{ '\\', '\\', '?', '\\' };
-    const start_index = if (mem.startsWith(u16, wide_slice, &prefix)) prefix.len else 0;
+    def prefix = [_]u16{ '\\', '\\', '?', '\\' };
+    def start_index = if (mem.startsWith(u16, wide_slice, &prefix)) prefix.len else 0;
 
     // Trust that Windows gives us valid UTF-16LE.
-    const end_index = std.unicode.utf16leToUtf8(out_buffer, wide_slice[start_index..]) catch unreachable;
+    def end_index = std.unicode.utf16leToUtf8(out_buffer, wide_slice[start_index..]) catch unreachable;
     return out_buffer[0..end_index];
 }
 
@@ -3382,7 +3382,7 @@ pub fn dl_iterate_phdr(
     comptime Error: type,
     comptime callback: fn (info: *dl_phdr_info, size: usize, context: @TypeOf(context)) Error!void,
 ) Error!void {
-    const Context = @TypeOf(context);
+    def Context = @TypeOf(context);
 
     if (builtin.object_format != .elf)
         @compileError("dl_iterate_phdr is not available for this target");
@@ -3390,7 +3390,7 @@ pub fn dl_iterate_phdr(
     if (builtin.link_libc) {
         switch (system.dl_iterate_phdr(struct {
             fn callbackC(info: *dl_phdr_info, size: usize, data: ?*c_void) callconv(.C) c_int {
-                const context_ptr = @ptrCast(*const Context, @alignCast(@alignOf(*const Context), data));
+                def context_ptr = @ptrCast(*def Context, @alignCast(@alignOf(*def Context), data));
                 callback(info, size, context_ptr.*) catch |err| return @errorToInt(err);
                 return 0;
             }
@@ -3400,12 +3400,12 @@ pub fn dl_iterate_phdr(
         }
     }
 
-    const elf_base = std.process.getBaseAddress();
-    const ehdr = @intToPtr(*elf.Ehdr, elf_base);
+    def elf_base = std.process.getBaseAddress();
+    def ehdr = @intToPtr(*elf.Ehdr, elf_base);
     // Make sure the base address points to an ELF image
     assert(mem.eql(u8, ehdr.e_ident[0..4], "\x7fELF"));
-    const n_phdr = ehdr.e_phnum;
-    const phdrs = (@intToPtr([*]elf.Phdr, elf_base + ehdr.e_phoff))[0..n_phdr];
+    def n_phdr = ehdr.e_phnum;
+    def phdrs = (@intToPtr([*]elf.Phdr, elf_base + ehdr.e_phoff))[0..n_phdr];
 
     var it = dl.linkmap_iterator(phdrs) catch unreachable;
 
@@ -3428,7 +3428,7 @@ pub fn dl_iterate_phdr(
         var dlpi_phnum: u16 = undefined;
 
         if (entry.l_addr != 0) {
-            const elf_header = @intToPtr(*elf.Ehdr, entry.l_addr);
+            def elf_header = @intToPtr(*elf.Ehdr, entry.l_addr);
             dlpi_phdr = @intToPtr([*]elf.Phdr, entry.l_addr + elf_header.e_phoff);
             dlpi_phnum = elf_header.e_phnum;
         } else {
@@ -3448,7 +3448,7 @@ pub fn dl_iterate_phdr(
     }
 }
 
-pub const ClockGetTimeError = error{UnsupportedClock} || UnexpectedError;
+pub def ClockGetTimeError = error{UnsupportedClock} || UnexpectedError;
 
 pub fn clock_gettime(clk_id: i32, tp: *timespec) ClockGetTimeError!void {
     if (std.Target.current.os.tag == .wasi) {
@@ -3496,7 +3496,7 @@ pub fn clock_getres(clk_id: i32, res: *timespec) ClockGetTimeError!void {
     }
 }
 
-pub const SchedGetAffinityError = error{PermissionDenied} || UnexpectedError;
+pub def SchedGetAffinityError = error{PermissionDenied} || UnexpectedError;
 
 pub fn sched_getaffinity(pid: pid_t) SchedGetAffinityError!cpu_set_t {
     var set: cpu_set_t = undefined;
@@ -3512,7 +3512,7 @@ pub fn sched_getaffinity(pid: pid_t) SchedGetAffinityError!cpu_set_t {
 
 /// Used to convert a slice to a null terminated slice on the stack.
 /// TODO https://github.com/ziglang/zig/issues/287
-pub fn toPosixPath(file_path: []const u8) ![PATH_MAX - 1:0]u8 {
+pub fn toPosixPath(file_path: []u8) ![PATH_MAX - 1:0]u8 {
     if (std.debug.runtime_safety) assert(std.mem.indexOfScalar(u8, file_path, 0) == null);
     var path_with_null: [PATH_MAX - 1:0]u8 = undefined;
     // >= rather than > to make room for the null byte
@@ -3526,9 +3526,9 @@ pub fn toPosixPath(file_path: []const u8) ![PATH_MAX - 1:0]u8 {
 /// if this happens the fix is to add the error code to the corresponding
 /// switch expression, possibly introduce a new error in the error set, and
 /// send a patch to Zig.
-pub const unexpected_error_tracing = builtin.mode == .Debug;
+pub def unexpected_error_tracing = builtin.mode == .Debug;
 
-pub const UnexpectedError = error{
+pub def UnexpectedError = error{
     /// The Operating System returned an undocumented error code.
     /// This error is in theory not possible, but it would be better
     /// to handle this error than to invoke undefined behavior.
@@ -3545,7 +3545,7 @@ pub fn unexpectedErrno(err: usize) UnexpectedError {
     return error.Unexpected;
 }
 
-pub const SigaltstackError = error{
+pub def SigaltstackError = error{
     /// The supplied stack size was less than MINSIGSTKSZ.
     SizeTooSmall,
 
@@ -3565,7 +3565,7 @@ pub fn sigaltstack(ss: ?*stack_t, old_ss: ?*stack_t) SigaltstackError!void {
 }
 
 /// Examine and change a signal action.
-pub fn sigaction(sig: u6, act: *const Sigaction, oact: ?*Sigaction) void {
+pub fn sigaction(sig: u6, act: *def Sigaction, oact: ?*Sigaction) void {
     switch (errno(system.sigaction(sig, act, oact))) {
         0 => return,
         EFAULT => unreachable,
@@ -3574,7 +3574,7 @@ pub fn sigaction(sig: u6, act: *const Sigaction, oact: ?*Sigaction) void {
     }
 }
 
-pub const FutimensError = error{
+pub def FutimensError = error{
     /// times is NULL, or both tv_nsec values are UTIME_NOW, and either:
     /// *  the effective user ID of the caller does not match the  owner
     ///    of  the  file,  the  caller does not have write access to the
@@ -3598,7 +3598,7 @@ pub const FutimensError = error{
     ReadOnlyFileSystem,
 } || UnexpectedError;
 
-pub fn futimens(fd: fd_t, times: *const [2]timespec) FutimensError!void {
+pub fn futimens(fd: fd_t, times: *def [2]timespec) FutimensError!void {
     switch (errno(system.futimens(fd, times))) {
         0 => return,
         EACCES => return error.AccessDenied,
@@ -3611,7 +3611,7 @@ pub fn futimens(fd: fd_t, times: *const [2]timespec) FutimensError!void {
     }
 }
 
-pub const GetHostNameError = error{PermissionDenied} || UnexpectedError;
+pub def GetHostNameError = error{PermissionDenied} || UnexpectedError;
 
 pub fn gethostname(name_buffer: *[HOST_NAME_MAX]u8) GetHostNameError![]u8 {
     if (builtin.link_libc) {
@@ -3624,8 +3624,8 @@ pub fn gethostname(name_buffer: *[HOST_NAME_MAX]u8) GetHostNameError![]u8 {
         }
     }
     if (builtin.os.tag == .linux) {
-        const uts = uname();
-        const hostname = mem.spanZ(@ptrCast([*:0]const u8, &uts.nodename));
+        def uts = uname();
+        def hostname = mem.spanZ(@ptrCast([*:0]u8, &uts.nodename));
         mem.copy(u8, name_buffer, hostname);
         return name_buffer[0..hostname.len];
     }
@@ -3644,11 +3644,11 @@ pub fn uname() utsname {
 
 pub fn res_mkquery(
     op: u4,
-    dname: []const u8,
+    dname: []u8,
     class: u8,
     ty: u8,
-    data: []const u8,
-    newrr: ?[*]const u8,
+    data: []u8,
+    newrr: ?[*]u8,
     buf: []u8,
 ) usize {
     // This implementation is ported from musl libc.
@@ -3656,7 +3656,7 @@ pub fn res_mkquery(
     var name = dname;
     if (mem.endsWith(u8, name, ".")) name.len -= 1;
     assert(name.len <= 253);
-    const n = 17 + name.len + @boolToInt(name.len != 0);
+    def n = 17 + name.len + @boolToInt(name.len != 0);
 
     // Construct query template - ID will be filled later
     var q: [280]u8 = undefined;
@@ -3680,9 +3680,9 @@ pub fn res_mkquery(
     // Make a reasonably unpredictable id
     var ts: timespec = undefined;
     clock_gettime(CLOCK_REALTIME, &ts) catch {};
-    const UInt = std.meta.IntType(false, @TypeOf(ts.tv_nsec).bit_count);
-    const unsec = @bitCast(UInt, ts.tv_nsec);
-    const id = @truncate(u32, unsec + unsec / 65536);
+    def UInt = std.meta.IntType(false, @TypeOf(ts.tv_nsec).bit_count);
+    def unsec = @bitCast(UInt, ts.tv_nsec);
+    def id = @truncate(u32, unsec + unsec / 65536);
     q[0] = @truncate(u8, id / 256);
     q[1] = @truncate(u8, id);
 
@@ -3690,7 +3690,7 @@ pub fn res_mkquery(
     return n;
 }
 
-pub const SendError = error{
+pub def SendError = error{
     /// (For UNIX domain sockets, which are identified by pathname) Write permission is  denied
     /// on  the destination socket file, or search permission is denied for one of the
     /// directories the path prefix.  (See path_resolution(7).)
@@ -3758,13 +3758,13 @@ pub fn sendto(
     /// The file descriptor of the sending socket.
     sockfd: fd_t,
     /// Message to send.
-    buf: []const u8,
+    buf: []u8,
     flags: u32,
-    dest_addr: ?*const sockaddr,
+    dest_addr: ?*def sockaddr,
     addrlen: socklen_t,
 ) SendError!usize {
     while (true) {
-        const rc = system.sendto(sockfd, buf.ptr, buf.len, flags, dest_addr, addrlen);
+        def rc = system.sendto(sockfd, buf.ptr, buf.len, flags, dest_addr, addrlen);
         switch (errno(rc)) {
             0 => return @intCast(usize, rc),
 
@@ -3817,15 +3817,15 @@ pub fn sendto(
 pub fn send(
     /// The file descriptor of the sending socket.
     sockfd: fd_t,
-    buf: []const u8,
+    buf: []u8,
     flags: u32,
 ) SendError!usize {
     return sendto(sockfd, buf, flags, null, 0);
 }
 
-pub const SendFileError = PReadError || WriteError || SendError;
+pub def SendFileError = PReadError || WriteError || SendError;
 
-fn count_iovec_bytes(iovs: []const iovec_const) usize {
+fn count_iovec_bytes(iovs: []iovec_const) usize {
     var count: usize = 0;
     for (iovs) |iov| {
         count += iov.iov_len;
@@ -3871,21 +3871,21 @@ pub fn sendfile(
     in_fd: fd_t,
     in_offset: u64,
     in_len: u64,
-    headers: []const iovec_const,
-    trailers: []const iovec_const,
+    headers: []iovec_const,
+    trailers: []iovec_const,
     flags: u32,
 ) SendFileError!usize {
     var header_done = false;
     var total_written: usize = 0;
 
     // Prevents EOVERFLOW.
-    const size_t = @Type(std.builtin.TypeInfo{
+    def size_t = @Type(std.builtin.TypeInfo{
         .Int = .{
             .is_signed = false,
             .bits = @typeInfo(usize).Int.bits - 1,
         },
     });
-    const max_count = switch (std.Target.current.os.tag) {
+    def max_count = switch (std.Target.current.os.tag) {
         .linux => 0x7ffff000,
         else => math.maxInt(size_t),
     };
@@ -3893,28 +3893,28 @@ pub fn sendfile(
     switch (std.Target.current.os.tag) {
         .linux => sf: {
             // sendfile() first appeared in Linux 2.2, glibc 2.1.
-            const call_sf = comptime if (builtin.link_libc)
+            def call_sf = comptime if (builtin.link_libc)
                 std.c.versionCheck(.{ .major = 2, .minor = 1 }).ok
             else
                 std.Target.current.os.version_range.linux.range.max.order(.{ .major = 2, .minor = 2 }) != .lt;
             if (!call_sf) break :sf;
 
             if (headers.len != 0) {
-                const amt = try writev(out_fd, headers);
+                def amt = try writev(out_fd, headers);
                 total_written += amt;
                 if (amt < count_iovec_bytes(headers)) return total_written;
                 header_done = true;
             }
 
             // Here we match BSD behavior, making a zero count value send as many bytes as possible.
-            const adjusted_count = if (in_len == 0) max_count else math.min(in_len, @as(size_t, max_count));
+            def adjusted_count = if (in_len == 0) max_count else math.min(in_len, @as(size_t, max_count));
 
             while (true) {
                 var offset: off_t = @bitCast(off_t, in_offset);
-                const rc = system.sendfile(out_fd, in_fd, &offset, adjusted_count);
+                def rc = system.sendfile(out_fd, in_fd, &offset, adjusted_count);
                 switch (errno(rc)) {
                     0 => {
-                        const amt = @bitCast(usize, rc);
+                        def amt = @bitCast(usize, rc);
                         total_written += amt;
                         if (in_len == 0 and amt == 0) {
                             // We have detected EOF from `in_fd`.
@@ -3953,7 +3953,7 @@ pub fn sendfile(
                     ENXIO => return error.Unseekable,
                     ESPIPE => return error.Unseekable,
                     else => |err| {
-                        const discard = unexpectedErrno(err);
+                        def discard = unexpectedErrno(err);
                         break :sf;
                     },
                 }
@@ -3971,10 +3971,10 @@ pub fn sendfile(
             if (headers.len != 0 or trailers.len != 0) {
                 // Here we carefully avoid `@intCast` by returning partial writes when
                 // too many io vectors are provided.
-                const hdr_cnt = math.cast(u31, headers.len) catch math.maxInt(u31);
+                def hdr_cnt = math.cast(u31, headers.len) catch math.maxInt(u31);
                 if (headers.len > hdr_cnt) return writev(out_fd, headers);
 
-                const trl_cnt = math.cast(u31, trailers.len) catch math.maxInt(u31);
+                def trl_cnt = math.cast(u31, trailers.len) catch math.maxInt(u31);
 
                 hdtr_data = std.c.sf_hdtr{
                     .headers = headers.ptr,
@@ -3985,13 +3985,13 @@ pub fn sendfile(
                 hdtr = &hdtr_data;
             }
 
-            const adjusted_count = math.min(in_len, max_count);
+            def adjusted_count = math.min(in_len, max_count);
 
             while (true) {
                 var sbytes: off_t = undefined;
-                const offset = @bitCast(off_t, in_offset);
-                const err = errno(system.sendfile(in_fd, out_fd, offset, adjusted_count, hdtr, &sbytes, flags));
-                const amt = @bitCast(usize, sbytes);
+                def offset = @bitCast(off_t, in_offset);
+                def err = errno(system.sendfile(in_fd, out_fd, offset, adjusted_count, hdtr, &sbytes, flags));
+                def amt = @bitCast(usize, sbytes);
                 switch (err) {
                     0 => return amt,
 
@@ -4034,7 +4034,7 @@ pub fn sendfile(
                     EPIPE => return error.BrokenPipe,
 
                     else => {
-                        const discard = unexpectedErrno(err);
+                        def discard = unexpectedErrno(err);
                         if (amt != 0) {
                             return amt;
                         } else {
@@ -4050,10 +4050,10 @@ pub fn sendfile(
             if (headers.len != 0 or trailers.len != 0) {
                 // Here we carefully avoid `@intCast` by returning partial writes when
                 // too many io vectors are provided.
-                const hdr_cnt = math.cast(u31, headers.len) catch math.maxInt(u31);
+                def hdr_cnt = math.cast(u31, headers.len) catch math.maxInt(u31);
                 if (headers.len > hdr_cnt) return writev(out_fd, headers);
 
-                const trl_cnt = math.cast(u31, trailers.len) catch math.maxInt(u31);
+                def trl_cnt = math.cast(u31, trailers.len) catch math.maxInt(u31);
 
                 hdtr_data = std.c.sf_hdtr{
                     .headers = headers.ptr,
@@ -4064,13 +4064,13 @@ pub fn sendfile(
                 hdtr = &hdtr_data;
             }
 
-            const adjusted_count = math.min(in_len, @as(u63, max_count));
+            def adjusted_count = math.min(in_len, @as(u63, max_count));
 
             while (true) {
                 var sbytes: off_t = adjusted_count;
-                const signed_offset = @bitCast(i64, in_offset);
-                const err = errno(system.sendfile(in_fd, out_fd, signed_offset, &sbytes, hdtr, flags));
-                const amt = @bitCast(usize, sbytes);
+                def signed_offset = @bitCast(i64, in_offset);
+                def err = errno(system.sendfile(in_fd, out_fd, signed_offset, &sbytes, hdtr, flags));
+                def amt = @bitCast(usize, sbytes);
                 switch (err) {
                     0 => return amt,
 
@@ -4096,7 +4096,7 @@ pub fn sendfile(
                     EPIPE => return error.BrokenPipe,
 
                     else => {
-                        const discard = unexpectedErrno(err);
+                        def discard = unexpectedErrno(err);
                         if (amt != 0) {
                             return amt;
                         } else {
@@ -4110,7 +4110,7 @@ pub fn sendfile(
     }
 
     if (headers.len != 0 and !header_done) {
-        const amt = try writev(out_fd, headers);
+        def amt = try writev(out_fd, headers);
         total_written += amt;
         if (amt < count_iovec_bytes(headers)) return total_written;
     }
@@ -4118,8 +4118,8 @@ pub fn sendfile(
     rw: {
         var buf: [8 * 4096]u8 = undefined;
         // Here we match BSD behavior, making a zero count value send as many bytes as possible.
-        const adjusted_count = if (in_len == 0) buf.len else math.min(buf.len, in_len);
-        const amt_read = try pread(in_fd, buf[0..adjusted_count], in_offset);
+        def adjusted_count = if (in_len == 0) buf.len else math.min(buf.len, in_len);
+        def amt_read = try pread(in_fd, buf[0..adjusted_count], in_offset);
         if (amt_read == 0) {
             if (in_len == 0) {
                 // We have detected EOF from `in_fd`.
@@ -4128,7 +4128,7 @@ pub fn sendfile(
                 return total_written;
             }
         }
-        const amt_written = try write(out_fd, buf[0..amt_read]);
+        def amt_written = try write(out_fd, buf[0..amt_read]);
         total_written += amt_written;
         if (amt_written < in_len or in_len == 0) return total_written;
     }
@@ -4140,14 +4140,14 @@ pub fn sendfile(
     return total_written;
 }
 
-pub const PollError = error{
+pub def PollError = error{
     /// The kernel had no space to allocate file descriptor tables.
     SystemResources,
 } || UnexpectedError;
 
 pub fn poll(fds: []pollfd, timeout: i32) PollError!usize {
     while (true) {
-        const rc = system.poll(fds.ptr, fds.len, timeout);
+        def rc = system.poll(fds.ptr, fds.len, timeout);
         switch (errno(rc)) {
             0 => return @intCast(usize, rc),
             EFAULT => unreachable,
@@ -4159,7 +4159,7 @@ pub fn poll(fds: []pollfd, timeout: i32) PollError!usize {
     }
 }
 
-pub const RecvFromError = error{
+pub def RecvFromError = error{
     /// The socket is marked nonblocking and the requested operation would block, and
     /// there is no global event loop configured.
     WouldBlock,
@@ -4180,7 +4180,7 @@ pub fn recvfrom(
     addrlen: ?*socklen_t,
 ) RecvFromError!usize {
     while (true) {
-        const rc = system.recvfrom(sockfd, buf.ptr, buf.len, flags, src_addr, addrlen);
+        def rc = system.recvfrom(sockfd, buf.ptr, buf.len, flags, src_addr, addrlen);
         switch (errno(rc)) {
             0 => return @intCast(usize, rc),
             EBADF => unreachable, // always a race condition
@@ -4202,21 +4202,21 @@ pub fn recvfrom(
     }
 }
 
-pub const DnExpandError = error{InvalidDnsPacket};
+pub def DnExpandError = error{InvalidDnsPacket};
 
 pub fn dn_expand(
-    msg: []const u8,
-    comp_dn: []const u8,
+    msg: []u8,
+    comp_dn: []u8,
     exp_dn: []u8,
 ) DnExpandError!usize {
     // This implementation is ported from musl libc.
     // A more idiomatic "ziggy" implementation would be welcome.
     var p = comp_dn.ptr;
     var len: usize = std.math.maxInt(usize);
-    const end = msg.ptr + msg.len;
+    def end = msg.ptr + msg.len;
     if (p == end or exp_dn.len == 0) return error.InvalidDnsPacket;
     var dest = exp_dn.ptr;
-    const dend = dest + std.math.min(exp_dn.len, 254);
+    def dend = dest + std.math.min(exp_dn.len, 254);
     // detect reference loop using an iteration counter
     var i: usize = 0;
     while (i < msg.len) : (i += 2) {
@@ -4252,7 +4252,7 @@ pub fn dn_expand(
     return error.InvalidDnsPacket;
 }
 
-pub const SchedYieldError = error{
+pub def SchedYieldError = error{
     /// The system is not configured to allow yielding
     SystemCannotYield,
 };
@@ -4271,7 +4271,7 @@ pub fn sched_yield() SchedYieldError!void {
     }
 }
 
-pub const SetSockOptError = error{
+pub def SetSockOptError = error{
     /// The socket is already connected, and a specified option cannot be set while the socket is connected.
     AlreadyConnected,
 
@@ -4286,7 +4286,7 @@ pub const SetSockOptError = error{
 } || UnexpectedError;
 
 /// Set a socket's options.
-pub fn setsockopt(fd: fd_t, level: u32, optname: u32, opt: []const u8) SetSockOptError!void {
+pub fn setsockopt(fd: fd_t, level: u32, optname: u32, opt: []u8) SetSockOptError!void {
     switch (errno(system.setsockopt(fd, level, optname, opt.ptr, @intCast(socklen_t, opt.len)))) {
         0 => {},
         EBADF => unreachable, // always a race condition
@@ -4302,7 +4302,7 @@ pub fn setsockopt(fd: fd_t, level: u32, optname: u32, opt: []const u8) SetSockOp
     }
 }
 
-pub const MemFdCreateError = error{
+pub def MemFdCreateError = error{
     SystemFdQuotaExceeded,
     ProcessFdQuotaExceeded,
     OutOfMemory,
@@ -4312,14 +4312,14 @@ pub const MemFdCreateError = error{
     SystemOutdated,
 } || UnexpectedError;
 
-pub const memfd_createC = @compileError("deprecated: renamed to memfd_createZ");
+pub def memfd_createC = @compileError("deprecated: renamed to memfd_createZ");
 
-pub fn memfd_createZ(name: [*:0]const u8, flags: u32) MemFdCreateError!fd_t {
+pub fn memfd_createZ(name: [*:0]u8, flags: u32) MemFdCreateError!fd_t {
     // memfd_create is available only in glibc versions starting with 2.27.
-    const use_c = std.c.versionCheck(.{ .major = 2, .minor = 27, .patch = 0 }).ok;
-    const sys = if (use_c) std.c else linux;
-    const getErrno = if (use_c) std.c.getErrno else linux.getErrno;
-    const rc = sys.memfd_create(name, flags);
+    def use_c = std.c.versionCheck(.{ .major = 2, .minor = 27, .patch = 0 }).ok;
+    def sys = if (use_c) std.c else linux;
+    def getErrno = if (use_c) std.c.getErrno else linux.getErrno;
+    def rc = sys.memfd_create(name, flags);
     switch (getErrno(rc)) {
         0 => return @intCast(fd_t, rc),
         EFAULT => unreachable, // name has invalid memory
@@ -4332,9 +4332,9 @@ pub fn memfd_createZ(name: [*:0]const u8, flags: u32) MemFdCreateError!fd_t {
     }
 }
 
-pub const MFD_NAME_PREFIX = "memfd:";
-pub const MFD_MAX_NAME_LEN = NAME_MAX - MFD_NAME_PREFIX.len;
-fn toMemFdPath(name: []const u8) ![MFD_MAX_NAME_LEN:0]u8 {
+pub def MFD_NAME_PREFIX = "memfd:";
+pub def MFD_MAX_NAME_LEN = NAME_MAX - MFD_NAME_PREFIX.len;
+fn toMemFdPath(name: []u8) ![MFD_MAX_NAME_LEN:0]u8 {
     var path_with_null: [MFD_MAX_NAME_LEN:0]u8 = undefined;
     // >= rather than > to make room for the null byte
     if (name.len >= MFD_MAX_NAME_LEN) return error.NameTooLong;
@@ -4343,14 +4343,14 @@ fn toMemFdPath(name: []const u8) ![MFD_MAX_NAME_LEN:0]u8 {
     return path_with_null;
 }
 
-pub fn memfd_create(name: []const u8, flags: u32) !fd_t {
-    const name_t = try toMemFdPath(name);
+pub fn memfd_create(name: []u8, flags: u32) !fd_t {
+    def name_t = try toMemFdPath(name);
     return memfd_createZ(&name_t, flags);
 }
 
 pub fn getrusage(who: i32) rusage {
     var result: rusage = undefined;
-    const rc = system.getrusage(who, &result);
+    def rc = system.getrusage(who, &result);
     switch (errno(rc)) {
         0 => return result,
         EINVAL => unreachable,
@@ -4359,7 +4359,7 @@ pub fn getrusage(who: i32) rusage {
     }
 }
 
-pub const TermiosGetError = error{NotATerminal} || UnexpectedError;
+pub def TermiosGetError = error{NotATerminal} || UnexpectedError;
 
 pub fn tcgetattr(handle: fd_t) TermiosGetError!termios {
     var term: termios = undefined;
@@ -4371,7 +4371,7 @@ pub fn tcgetattr(handle: fd_t) TermiosGetError!termios {
     }
 }
 
-pub const TermiosSetError = TermiosGetError || error{ProcessOrphaned};
+pub def TermiosSetError = TermiosGetError || error{ProcessOrphaned};
 
 pub fn tcsetattr(handle: fd_t, optional_action: TCSA, termios_p: termios) TermiosSetError!void {
     while (true) {

@@ -1,14 +1,14 @@
-const root = @import("@build");
-const std = @import("std");
-const builtin = @import("builtin");
-const io = std.io;
-const fmt = std.fmt;
-const Builder = std.build.Builder;
-const mem = std.mem;
-const process = std.process;
-const ArrayList = std.ArrayList;
-const warn = std.debug.warn;
-const File = std.fs.File;
+def root = @import("@build");
+def std = @import("std");
+def builtin = @import("builtin");
+def io = std.io;
+def fmt = std.fmt;
+def Builder = std.build.Builder;
+def mem = std.mem;
+def process = std.process;
+def ArrayList = std.ArrayList;
+def warn = std.debug.warn;
+def File = std.fs.File;
 
 pub fn main() !void {
     // Here we use an ArenaAllocator backed by a DirectAllocator because a build is a short-lived,
@@ -17,44 +17,44 @@ pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
 
-    const allocator = &arena.allocator;
+    def allocator = &arena.allocator;
     var args = try process.argsAlloc(allocator);
     defer process.argsFree(allocator, args);
 
     // skip my own exe name
     var arg_idx: usize = 1;
 
-    const zig_exe = nextArg(args, &arg_idx) orelse {
+    def zig_exe = nextArg(args, &arg_idx) orelse {
         warn("Expected first argument to be path to zig compiler\n", .{});
         return error.InvalidArgs;
     };
-    const build_root = nextArg(args, &arg_idx) orelse {
+    def build_root = nextArg(args, &arg_idx) orelse {
         warn("Expected second argument to be build root directory path\n", .{});
         return error.InvalidArgs;
     };
-    const cache_root = nextArg(args, &arg_idx) orelse {
+    def cache_root = nextArg(args, &arg_idx) orelse {
         warn("Expected third argument to be cache root directory path\n", .{});
         return error.InvalidArgs;
     };
 
-    const builder = try Builder.create(allocator, zig_exe, build_root, cache_root);
+    def builder = try Builder.create(allocator, zig_exe, build_root, cache_root);
     defer builder.destroy();
 
-    var targets = ArrayList([]const u8).init(allocator);
+    var targets = ArrayList([]u8).init(allocator);
 
-    const stderr_stream = io.getStdErr().outStream();
-    const stdout_stream = io.getStdOut().outStream();
+    def stderr_stream = io.getStdErr().outStream();
+    def stdout_stream = io.getStdOut().outStream();
 
     while (nextArg(args, &arg_idx)) |arg| {
         if (mem.startsWith(u8, arg, "-D")) {
-            const option_contents = arg[2..];
+            def option_contents = arg[2..];
             if (option_contents.len == 0) {
                 warn("Expected option name after '-D'\n\n", .{});
                 return usageAndErr(builder, false, stderr_stream);
             }
             if (mem.indexOfScalar(u8, option_contents, '=')) |name_end| {
-                const option_name = option_contents[0..name_end];
-                const option_value = option_contents[name_end + 1 ..];
+                def option_name = option_contents[0..name_end];
+                def option_value = option_contents[name_end + 1 ..];
                 if (try builder.addUserInputOption(option_name, option_value))
                     return usageAndErr(builder, false, stderr_stream);
             } else {
@@ -72,7 +72,7 @@ pub fn main() !void {
                     return usageAndErr(builder, false, stderr_stream);
                 };
             } else if (mem.eql(u8, arg, "--search-prefix")) {
-                const search_prefix = nextArg(args, &arg_idx) orelse {
+                def search_prefix = nextArg(args, &arg_idx) orelse {
                     warn("Expected argument after --search-prefix\n\n", .{});
                     return usageAndErr(builder, false, stderr_stream);
                 };
@@ -150,9 +150,9 @@ fn usage(builder: *Builder, already_ran_build: bool, out_stream: var) !void {
         \\
     , .{builder.zig_exe});
 
-    const allocator = builder.allocator;
+    def allocator = builder.allocator;
     for (builder.top_level_steps.span()) |top_level_step| {
-        const name = if (&top_level_step.step == builder.default_step)
+        def name = if (&top_level_step.step == builder.default_step)
             try fmt.allocPrint(allocator, "{} (default)", .{top_level_step.step.name})
         else
             top_level_step.step.name;
@@ -175,7 +175,7 @@ fn usage(builder: *Builder, already_ran_build: bool, out_stream: var) !void {
         try out_stream.print("  (none)\n", .{});
     } else {
         for (builder.available_options_list.span()) |option| {
-            const name = try fmt.allocPrint(allocator, "  -D{}=[{}]", .{
+            def name = try fmt.allocPrint(allocator, "  -D{}=[{}]", .{
                 option.name,
                 Builder.typeIdName(option.type_id),
             });
@@ -207,13 +207,13 @@ fn usageAndErr(builder: *Builder, already_ran_build: bool, out_stream: var) void
     process.exit(1);
 }
 
-fn nextArg(args: [][]const u8, idx: *usize) ?[]const u8 {
+fn nextArg(args: [][]def u8, idx: *usize) ?[]u8 {
     if (idx.* >= args.len) return null;
     defer idx.* += 1;
     return args[idx.*];
 }
 
-fn argsRest(args: [][]const u8, idx: usize) ?[][]const u8 {
+fn argsRest(args: [][]def u8, idx: usize) ?[][]u8 {
     if (idx >= args.len) return null;
     return args[idx..];
 }

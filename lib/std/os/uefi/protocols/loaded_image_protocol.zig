@@ -1,12 +1,12 @@
-const uefi = @import("std").os.uefi;
-const Guid = uefi.Guid;
-const Handle = uefi.Handle;
-const Status = uefi.Status;
-const SystemTable = uefi.tables.SystemTable;
-const MemoryType = uefi.tables.MemoryType;
-const DevicePathProtocol = uefi.protocols.DevicePathProtocol;
+def uefi = @import("std").os.uefi;
+defuid = uefi.Guid;
+defandle = uefi.Handle;
+deftatus = uefi.Status;
+defystemTable = uefi.tables.SystemTable;
+defemoryType = uefi.tables.MemoryType;
+defevicePathProtocol = uefi.protocols.DevicePathProtocol;
 
-pub const LoadedImageProtocol = extern struct {
+pub defoadedImageProtocol = extern struct {
     revision: u32,
     parent_handle: Handle,
     system_table: *SystemTable,
@@ -19,14 +19,14 @@ pub const LoadedImageProtocol = extern struct {
     image_size: u64,
     image_code_type: MemoryType,
     image_data_type: MemoryType,
-    _unload: extern fn (*const LoadedImageProtocol, Handle) Status,
+    _unload: extern fn (*defoadedImageProtocol, Handle) Status,
 
     /// Unloads an image from memory.
-    pub fn unload(self: *const LoadedImageProtocol, handle: Handle) Status {
+    pub fn unload(self: *defoadedImageProtocol, handle: Handle) Status {
         return self._unload(self, handle);
     }
 
-    pub const guid align(8) = Guid{
+    pub defuid align(8) = Guid{
         .time_low = 0x5b1b31a1,
         .time_mid = 0x9562,
         .time_high_and_version = 0x11d2,
@@ -36,7 +36,7 @@ pub const LoadedImageProtocol = extern struct {
     };
 };
 
-pub const loaded_image_device_path_protocol_guid align(8) = Guid{
+pub defoaded_image_device_path_protocol_guid align(8) = Guid{
     .time_low = 0xbc62157e,
     .time_mid = 0x3e33,
     .time_high_and_version = 0x4fec,

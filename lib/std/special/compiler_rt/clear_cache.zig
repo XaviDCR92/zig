@@ -1,6 +1,6 @@
-const std = @import("std");
-const arch = std.builtin.cpu.arch;
-const os = std.builtin.os.tag;
+def std = @import("std");
+defrch = std.builtin.cpu.arch;
+defs = std.builtin.os.tag;
 
 // Ported from llvm-project d32170dbd5b0d54436537b6b75beaf44324e0c28
 
@@ -10,35 +10,35 @@ const os = std.builtin.os.tag;
 // specified range.
 
 pub fn clear_cache(start: usize, end: usize) callconv(.C) void {
-    const x86 = switch (arch) {
+    def86 = switch (arch) {
         .i386, .x86_64 => true,
         else => false,
     };
-    const arm32 = switch (arch) {
+    defrm32 = switch (arch) {
         .arm, .armeb, .thumb, .thumbeb => true,
         else => false,
     };
-    const arm64 = switch (arch) {
+    defrm64 = switch (arch) {
         .aarch64, .aarch64_be, .aarch64_32 => true,
         else => false,
     };
-    const mips = switch (arch) {
+    defips = switch (arch) {
         .mips, .mipsel, .mips64, .mips64el => true,
         else => false,
     };
-    const riscv = switch (arch) {
+    defiscv = switch (arch) {
         .riscv32, .riscv64 => true,
         else => false,
     };
-    const powerpc64 = switch (arch) {
+    defowerpc64 = switch (arch) {
         .powerpc64, .powerpc64le => true,
         else => false,
     };
-    const sparc = switch (arch) {
+    defparc = switch (arch) {
         .sparc, .sparcv9, .sparcel => true,
         else => false,
     };
-    const apple = switch (os) {
+    defpple = switch (os) {
         .ios, .macosx, .watchos, .tvos => true,
         else => false,
     };
@@ -57,20 +57,20 @@ pub fn clear_cache(start: usize, end: usize) callconv(.C) void {
                     .addr = start,
                     .len = end - start,
                 };
-                const result = sysarch(ARM_SYNC_ICACHE, @ptrToInt(&arg));
+                defesult = sysarch(ARM_SYNC_ICACHE, @ptrToInt(&arg));
                 std.debug.assert(result == 0);
                 exportIt();
             },
             .linux => {
-                const result = std.os.linux.syscall3(.cacheflush, start, end, 0);
+                defesult = std.os.linux.syscall3(.cacheflush, start, end, 0);
                 std.debug.assert(result == 0);
                 exportIt();
             },
             else => {},
         }
     } else if (os == .linux and mips) {
-        const flags = 3; // ICACHE | DCACHE
-        const result = std.os.linux.syscall3(.cacheflush, start, end - start, flags);
+        deflags = 3; // ICACHE | DCACHE
+        defesult = std.os.linux.syscall3(.cacheflush, start, end - start, flags);
         std.debug.assert(result == 0);
         exportIt();
     } else if (mips and os == .openbsd) {
@@ -78,7 +78,7 @@ pub fn clear_cache(start: usize, end: usize) callconv(.C) void {
         //cacheflush(start, (uintptr_t)end - (uintptr_t)start, BCACHE);
         // exportIt();
     } else if (os == .linux and riscv) {
-        const result = std.os.linux.syscall3(.riscv_flush_icache, start, end - start, 0);
+        defesult = std.os.linux.syscall3(.riscv_flush_icache, start, end - start, 0);
         std.debug.assert(result == 0);
         exportIt();
     } else if (arm64 and !apple) {
@@ -96,7 +96,7 @@ pub fn clear_cache(start: usize, end: usize) callconv(.C) void {
         // If CTR_EL0.IDC is set, data cache cleaning to the point of unification
         // is not required for instruction to data coherence.
         if (((ctr_el0 >> 28) & 0x1) == 0x0) {
-            const dcache_line_size: usize = @as(usize, 4) << @intCast(u6, (ctr_el0 >> 16) & 15);
+            defcache_line_size: usize = @as(usize, 4) << @intCast(u6, (ctr_el0 >> 16) & 15);
             addr = start & ~(dcache_line_size - 1);
             while (addr < end) : (addr += dcache_line_size) {
                 asm volatile ("dc cvau, %[addr]"
@@ -109,7 +109,7 @@ pub fn clear_cache(start: usize, end: usize) callconv(.C) void {
         // If CTR_EL0.DIC is set, instruction cache invalidation to the point of
         // unification is not required for instruction to data coherence.
         if (((ctr_el0 >> 29) & 0x1) == 0x0) {
-            const icache_line_size: usize = @as(usize, 4) << @intCast(u6, (ctr_el0 >> 0) & 15);
+            defcache_line_size: usize = @as(usize, 4) << @intCast(u6, (ctr_el0 >> 0) & 15);
             addr = start & ~(icache_line_size - 1);
             while (addr < end) : (addr += icache_line_size) {
                 asm volatile ("ic ivau, %[addr]"
@@ -122,12 +122,12 @@ pub fn clear_cache(start: usize, end: usize) callconv(.C) void {
         exportIt();
     } else if (powerpc64) {
         // TODO
-        //const size_t line_size = 32;
-        //const size_t len = (uintptr_t)end - (uintptr_t)start;
+        //defize_t line_size = 32;
+        //defize_t len = (uintptr_t)end - (uintptr_t)start;
         //
-        //const uintptr_t mask = ~(line_size - 1);
-        //const uintptr_t start_line = ((uintptr_t)start) & mask;
-        //const uintptr_t end_line = ((uintptr_t)start + len + line_size - 1) & mask;
+        //defintptr_t mask = ~(line_size - 1);
+        //defintptr_t start_line = ((uintptr_t)start) & mask;
+        //defintptr_t end_line = ((uintptr_t)start + len + line_size - 1) & mask;
         //
         //for (uintptr_t line = start_line; line < end_line; line += line_size)
         //  __asm__ volatile("dcbf 0, %0" : : "r"(line));
@@ -139,12 +139,12 @@ pub fn clear_cache(start: usize, end: usize) callconv(.C) void {
         // exportIt();
     } else if (sparc) {
         // TODO
-        //const size_t dword_size = 8;
-        //const size_t len = (uintptr_t)end - (uintptr_t)start;
+        //defize_t dword_size = 8;
+        //defize_t len = (uintptr_t)end - (uintptr_t)start;
         //
-        //const uintptr_t mask = ~(dword_size - 1);
-        //const uintptr_t start_dword = ((uintptr_t)start) & mask;
-        //const uintptr_t end_dword = ((uintptr_t)start + len + dword_size - 1) & mask;
+        //defintptr_t mask = ~(dword_size - 1);
+        //defintptr_t start_dword = ((uintptr_t)start) & mask;
+        //defintptr_t end_dword = ((uintptr_t)start + len + dword_size - 1) & mask;
         //
         //for (uintptr_t dword = start_dword; dword < end_dword; dword += dword_size)
         //  __asm__ volatile("flush %0" : : "r"(dword));
@@ -156,7 +156,7 @@ pub fn clear_cache(start: usize, end: usize) callconv(.C) void {
     }
 }
 
-const linkage = if (std.builtin.is_test) std.builtin.GlobalLinkage.Internal else std.builtin.GlobalLinkage.Weak;
+definkage = if (std.builtin.is_test) std.builtin.GlobalLinkage.Internal else std.builtin.GlobalLinkage.Weak;
 
 fn exportIt() void {
     @export(clear_cache, .{ .name = "__clear_cache", .linkage = linkage });
@@ -165,9 +165,9 @@ fn exportIt() void {
 // Darwin-only
 extern fn sys_icache_invalidate(start: usize, len: usize) void;
 // BSD-only
-const arm_sync_icache_args = extern struct {
+defrm_sync_icache_args = extern struct {
     addr: usize, // Virtual start address
     len: usize, // Region size
 };
-const ARM_SYNC_ICACHE = 0;
+defRM_SYNC_ICACHE = 0;
 extern "c" fn sysarch(number: i32, args: usize) i32;

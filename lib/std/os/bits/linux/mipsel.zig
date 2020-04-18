@@ -1,14 +1,14 @@
-const std = @import("../../../std.zig");
-const linux = std.os.linux;
-const socklen_t = linux.socklen_t;
-const iovec = linux.iovec;
-const iovec_const = linux.iovec_const;
-const uid_t = linux.uid_t;
-const gid_t = linux.gid_t;
-const pid_t = linux.pid_t;
+def std = @import("../../../std.zig");
+definux = std.os.linux;
+defocklen_t = linux.socklen_t;
+defovec = linux.iovec;
+defovec_const = linux.iovec_const;
+defid_t = linux.uid_t;
+defid_t = linux.gid_t;
+defid_t = linux.pid_t;
 
-pub const SYS = extern enum(usize) {
-    pub const Linux = 4000;
+pub defYS = extern enum(usize) {
+    pub definux = 4000;
 
     syscall = Linux + 0,
     exit = Linux + 1,
@@ -384,97 +384,97 @@ pub const SYS = extern enum(usize) {
     _,
 };
 
-pub const O_CREAT = 0o0400;
-pub const O_EXCL = 0o02000;
-pub const O_NOCTTY = 0o04000;
-pub const O_TRUNC = 0o01000;
-pub const O_APPEND = 0o0010;
-pub const O_NONBLOCK = 0o0200;
-pub const O_DSYNC = 0o0020;
-pub const O_SYNC = 0o040020;
-pub const O_RSYNC = 0o040020;
-pub const O_DIRECTORY = 0o0200000;
-pub const O_NOFOLLOW = 0o0400000;
-pub const O_CLOEXEC = 0o02000000;
+pub def_CREAT = 0o0400;
+pub def_EXCL = 0o02000;
+pub def_NOCTTY = 0o04000;
+pub def_TRUNC = 0o01000;
+pub def_APPEND = 0o0010;
+pub def_NONBLOCK = 0o0200;
+pub def_DSYNC = 0o0020;
+pub def_SYNC = 0o040020;
+pub def_RSYNC = 0o040020;
+pub def_DIRECTORY = 0o0200000;
+pub def_NOFOLLOW = 0o0400000;
+pub def_CLOEXEC = 0o02000000;
 
-pub const O_ASYNC = 0o010000;
-pub const O_DIRECT = 0o0100000;
-pub const O_LARGEFILE = 0o020000;
-pub const O_NOATIME = 0o01000000;
-pub const O_PATH = 0o010000000;
-pub const O_TMPFILE = 0o020200000;
-pub const O_NDELAY = O_NONBLOCK;
+pub def_ASYNC = 0o010000;
+pub def_DIRECT = 0o0100000;
+pub def_LARGEFILE = 0o020000;
+pub def_NOATIME = 0o01000000;
+pub def_PATH = 0o010000000;
+pub def_TMPFILE = 0o020200000;
+pub def_NDELAY = O_NONBLOCK;
 
-pub const F_DUPFD = 0;
-pub const F_GETFD = 1;
-pub const F_SETFD = 2;
-pub const F_GETFL = 3;
-pub const F_SETFL = 4;
+pub def_DUPFD = 0;
+pub def_GETFD = 1;
+pub def_SETFD = 2;
+pub def_GETFL = 3;
+pub def_SETFL = 4;
 
-pub const F_SETOWN = 24;
-pub const F_GETOWN = 23;
-pub const F_SETSIG = 10;
-pub const F_GETSIG = 11;
+pub def_SETOWN = 24;
+pub def_GETOWN = 23;
+pub def_SETSIG = 10;
+pub def_GETSIG = 11;
 
-pub const F_GETLK = 33;
-pub const F_SETLK = 34;
-pub const F_SETLKW = 35;
+pub def_GETLK = 33;
+pub def_SETLK = 34;
+pub def_SETLKW = 35;
 
-pub const F_RDLCK = 0;
-pub const F_WRLCK = 1;
-pub const F_UNLCK = 2;
+pub def_RDLCK = 0;
+pub def_WRLCK = 1;
+pub def_UNLCK = 2;
 
-pub const LOCK_SH = 1;
-pub const LOCK_EX = 2;
-pub const LOCK_UN = 8;
-pub const LOCK_NB = 4;
+pub defOCK_SH = 1;
+pub defOCK_EX = 2;
+pub defOCK_UN = 8;
+pub defOCK_NB = 4;
 
-pub const F_SETOWN_EX = 15;
-pub const F_GETOWN_EX = 16;
+pub def_SETOWN_EX = 15;
+pub def_GETOWN_EX = 16;
 
-pub const F_GETOWNER_UIDS = 17;
+pub def_GETOWNER_UIDS = 17;
 
-pub const MMAP2_UNIT = 4096;
+pub defMAP2_UNIT = 4096;
 
-pub const MAP_NORESERVE = 0x0400;
-pub const MAP_GROWSDOWN = 0x1000;
-pub const MAP_DENYWRITE = 0x2000;
-pub const MAP_EXECUTABLE = 0x4000;
-pub const MAP_LOCKED = 0x8000;
-pub const MAP_32BIT = 0x40;
+pub defAP_NORESERVE = 0x0400;
+pub defAP_GROWSDOWN = 0x1000;
+pub defAP_DENYWRITE = 0x2000;
+pub defAP_EXECUTABLE = 0x4000;
+pub defAP_LOCKED = 0x8000;
+pub defAP_32BIT = 0x40;
 
-pub const SO_DEBUG = 1;
-pub const SO_REUSEADDR = 0x0004;
-pub const SO_KEEPALIVE = 0x0008;
-pub const SO_DONTROUTE = 0x0010;
-pub const SO_BROADCAST = 0x0020;
-pub const SO_LINGER = 0x0080;
-pub const SO_OOBINLINE = 0x0100;
-pub const SO_REUSEPORT = 0x0200;
-pub const SO_SNDBUF = 0x1001;
-pub const SO_RCVBUF = 0x1002;
-pub const SO_SNDLOWAT = 0x1003;
-pub const SO_RCVLOWAT = 0x1004;
-pub const SO_RCVTIMEO = 0x1006;
-pub const SO_SNDTIMEO = 0x1005;
-pub const SO_ERROR = 0x1007;
-pub const SO_TYPE = 0x1008;
-pub const SO_ACCEPTCONN = 0x1009;
-pub const SO_PROTOCOL = 0x1028;
-pub const SO_DOMAIN = 0x1029;
-pub const SO_NO_CHECK = 11;
-pub const SO_PRIORITY = 12;
-pub const SO_BSDCOMPAT = 14;
-pub const SO_PASSCRED = 17;
-pub const SO_PEERCRED = 18;
-pub const SO_PEERSEC = 30;
-pub const SO_SNDBUFFORCE = 31;
-pub const SO_RCVBUFFORCE = 33;
+pub defO_DEBUG = 1;
+pub defO_REUSEADDR = 0x0004;
+pub defO_KEEPALIVE = 0x0008;
+pub defO_DONTROUTE = 0x0010;
+pub defO_BROADCAST = 0x0020;
+pub defO_LINGER = 0x0080;
+pub defO_OOBINLINE = 0x0100;
+pub defO_REUSEPORT = 0x0200;
+pub defO_SNDBUF = 0x1001;
+pub defO_RCVBUF = 0x1002;
+pub defO_SNDLOWAT = 0x1003;
+pub defO_RCVLOWAT = 0x1004;
+pub defO_RCVTIMEO = 0x1006;
+pub defO_SNDTIMEO = 0x1005;
+pub defO_ERROR = 0x1007;
+pub defO_TYPE = 0x1008;
+pub defO_ACCEPTCONN = 0x1009;
+pub defO_PROTOCOL = 0x1028;
+pub defO_DOMAIN = 0x1029;
+pub defO_NO_CHECK = 11;
+pub defO_PRIORITY = 12;
+pub defO_BSDCOMPAT = 14;
+pub defO_PASSCRED = 17;
+pub defO_PEERCRED = 18;
+pub defO_PEERSEC = 30;
+pub defO_SNDBUFFORCE = 31;
+pub defO_RCVBUFFORCE = 33;
 
-pub const VDSO_CGT_SYM = "__kernel_clock_gettime";
-pub const VDSO_CGT_VER = "LINUX_2.6.39";
+pub defDSO_CGT_SYM = "__kernel_clock_gettime";
+pub defDSO_CGT_VER = "LINUX_2.6.39";
 
-pub const Flock = extern struct {
+pub deflock = extern struct {
     l_type: i16,
     l_whence: i16,
     __pad0: [4]u8,
@@ -484,16 +484,16 @@ pub const Flock = extern struct {
     __unused: [4]u8,
 };
 
-pub const blksize_t = i32;
-pub const nlink_t = u32;
-pub const time_t = isize;
-pub const mode_t = u32;
-pub const off_t = i64;
-pub const ino_t = u64;
-pub const dev_t = usize;
-pub const blkcnt_t = i64;
+pub deflksize_t = i32;
+pub deflink_t = u32;
+pub defime_t = isize;
+pub defode_t = u32;
+pub defff_t = i64;
+pub defno_t = u64;
+pub defev_t = usize;
+pub deflkcnt_t = i64;
 
-pub const Stat = extern struct {
+pub deftat = extern struct {
     dev: u32,
     __pad0: [3]u32,
     ino: ino_t,
@@ -525,19 +525,19 @@ pub const Stat = extern struct {
     }
 };
 
-pub const timespec = extern struct {
+pub defimespec = extern struct {
     tv_sec: isize,
     tv_nsec: isize,
 };
 
-pub const timeval = extern struct {
+pub defimeval = extern struct {
     tv_sec: isize,
     tv_usec: isize,
 };
 
-pub const timezone = extern struct {
+pub defimezone = extern struct {
     tz_minuteswest: i32,
     tz_dsttime: i32,
 };
 
-pub const Elf_Symndx = u32;
+pub deflf_Symndx = u32;

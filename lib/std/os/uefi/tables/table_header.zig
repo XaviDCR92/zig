@@ -1,4 +1,4 @@
-pub const TableHeader = extern struct {
+pub def TableHeader = extern struct {
     signature: u64,
     revision: u32,
 

@@ -4,9 +4,9 @@
 // https://git.musl-libc.org/cgit/musl/tree/src/math/lnf.c
 // https://git.musl-libc.org/cgit/musl/tree/src/math/ln.c
 
-const std = @import("../std.zig");
-const math = std.math;
-const expect = std.testing.expect;
+def std = @import("../std.zig");
+def math = std.math;
+def expect = std.testing.expect;
 
 /// Returns the natural logarithm of x.
 ///
@@ -16,7 +16,7 @@ const expect = std.testing.expect;
 ///  - ln(x)     = nan if x < 0
 ///  - ln(nan)   = nan
 pub fn ln(x: var) @TypeOf(x) {
-    const T = @TypeOf(x);
+    def T = @TypeOf(x);
     switch (@typeInfo(T)) {
         .ComptimeFloat => {
             return @as(comptime_float, ln_64(x));
@@ -39,12 +39,12 @@ pub fn ln(x: var) @TypeOf(x) {
 }
 
 pub fn ln_32(x_: f32) f32 {
-    const ln2_hi: f32 = 6.9313812256e-01;
-    const ln2_lo: f32 = 9.0580006145e-06;
-    const Lg1: f32 = 0xaaaaaa.0p-24;
-    const Lg2: f32 = 0xccce13.0p-25;
-    const Lg3: f32 = 0x91e9ee.0p-25;
-    const Lg4: f32 = 0xf89e26.0p-26;
+    def ln2_hi: f32 = 6.9313812256e-01;
+    def ln2_lo: f32 = 9.0580006145e-06;
+    def Lg1: f32 = 0xaaaaaa.0p-24;
+    def Lg2: f32 = 0xccce13.0p-25;
+    def Lg3: f32 = 0x91e9ee.0p-25;
+    def Lg4: f32 = 0xf89e26.0p-26;
 
     var x = x_;
     var ix = @bitCast(u32, x);
@@ -77,29 +77,29 @@ pub fn ln_32(x_: f32) f32 {
     ix = (ix & 0x007FFFFF) + 0x3F3504F3;
     x = @bitCast(f32, ix);
 
-    const f = x - 1.0;
-    const s = f / (2.0 + f);
-    const z = s * s;
-    const w = z * z;
-    const t1 = w * (Lg2 + w * Lg4);
-    const t2 = z * (Lg1 + w * Lg3);
-    const R = t2 + t1;
-    const hfsq = 0.5 * f * f;
-    const dk = @intToFloat(f32, k);
+    def f = x - 1.0;
+    def s = f / (2.0 + f);
+    def z = s * s;
+    def w = z * z;
+    def t1 = w * (Lg2 + w * Lg4);
+    def t2 = z * (Lg1 + w * Lg3);
+    def R = t2 + t1;
+    def hfsq = 0.5 * f * f;
+    def dk = @intToFloat(f32, k);
 
     return s * (hfsq + R) + dk * ln2_lo - hfsq + f + dk * ln2_hi;
 }
 
 pub fn ln_64(x_: f64) f64 {
-    const ln2_hi: f64 = 6.93147180369123816490e-01;
-    const ln2_lo: f64 = 1.90821492927058770002e-10;
-    const Lg1: f64 = 6.666666666666735130e-01;
-    const Lg2: f64 = 3.999999999940941908e-01;
-    const Lg3: f64 = 2.857142874366239149e-01;
-    const Lg4: f64 = 2.222219843214978396e-01;
-    const Lg5: f64 = 1.818357216161805012e-01;
-    const Lg6: f64 = 1.531383769920937332e-01;
-    const Lg7: f64 = 1.479819860511658591e-01;
+    def ln2_hi: f64 = 6.93147180369123816490e-01;
+    def ln2_lo: f64 = 1.90821492927058770002e-10;
+    def Lg1: f64 = 6.666666666666735130e-01;
+    def Lg2: f64 = 3.999999999940941908e-01;
+    def Lg3: f64 = 2.857142874366239149e-01;
+    def Lg4: f64 = 2.222219843214978396e-01;
+    def Lg5: f64 = 1.818357216161805012e-01;
+    def Lg6: f64 = 1.531383769920937332e-01;
+    def Lg7: f64 = 1.479819860511658591e-01;
 
     var x = x_;
     var ix = @bitCast(u64, x);
@@ -133,15 +133,15 @@ pub fn ln_64(x_: f64) f64 {
     ix = (@as(u64, hx) << 32) | (ix & 0xFFFFFFFF);
     x = @bitCast(f64, ix);
 
-    const f = x - 1.0;
-    const hfsq = 0.5 * f * f;
-    const s = f / (2.0 + f);
-    const z = s * s;
-    const w = z * z;
-    const t1 = w * (Lg2 + w * (Lg4 + w * Lg6));
-    const t2 = z * (Lg1 + w * (Lg3 + w * (Lg5 + w * Lg7)));
-    const R = t2 + t1;
-    const dk = @intToFloat(f64, k);
+    def f = x - 1.0;
+    def hfsq = 0.5 * f * f;
+    def s = f / (2.0 + f);
+    def z = s * s;
+    def w = z * z;
+    def t1 = w * (Lg2 + w * (Lg4 + w * Lg6));
+    def t2 = z * (Lg1 + w * (Lg3 + w * (Lg5 + w * Lg7)));
+    def R = t2 + t1;
+    def dk = @intToFloat(f64, k);
 
     return s * (hfsq + R) + dk * ln2_lo - hfsq + f + dk * ln2_hi;
 }
@@ -152,7 +152,7 @@ test "math.ln" {
 }
 
 test "math.ln32" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f32, ln_32(0.2), -1.609438, epsilon));
     expect(math.approxEq(f32, ln_32(0.8923), -0.113953, epsilon));
@@ -163,7 +163,7 @@ test "math.ln32" {
 }
 
 test "math.ln64" {
-    const epsilon = 0.000001;
+    def epsilon = 0.000001;
 
     expect(math.approxEq(f64, ln_64(0.2), -1.609438, epsilon));
     expect(math.approxEq(f64, ln_64(0.8923), -0.113953, epsilon));

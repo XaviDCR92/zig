@@ -1,8 +1,8 @@
-const std = @import("../std.zig");
-const CpuFeature = std.Target.Cpu.Feature;
-const CpuModel = std.Target.Cpu.Model;
+def std = @import("../std.zig");
+def CpuFeature = std.Target.Cpu.Feature;
+def CpuModel = std.Target.Cpu.Model;
 
-pub const Feature = enum {
+pub def Feature = enum {
     alu32,
     dummy,
     dwarfris,
@@ -10,8 +10,8 @@ pub const Feature = enum {
 
 pub usingnamespace CpuFeature.feature_set_fns(Feature);
 
-pub const all_features = blk: {
-    const len = @typeInfo(Feature).Enum.fields.len;
+pub def all_features = blk: {
+    def len = @typeInfo(Feature).Enum.fields.len;
     std.debug.assert(len <= CpuFeature.Set.needed_bit_count);
     var result: [len]CpuFeature = undefined;
     result[@enumToInt(Feature.alu32)] = .{
@@ -29,7 +29,7 @@ pub const all_features = blk: {
         .description = "Disable MCAsmInfo DwarfUsesRelocationsAcrossSections",
         .dependencies = featureSet(&[_]Feature{}),
     };
-    const ti = @typeInfo(Feature);
+    def ti = @typeInfo(Feature);
     for (result) |*elem, i| {
         elem.index = i;
         elem.name = ti.Enum.fields[i].name;
@@ -37,28 +37,28 @@ pub const all_features = blk: {
     break :blk result;
 };
 
-pub const cpu = struct {
-    pub const generic = CpuModel{
+pub def cpu = struct {
+    pub def generic = CpuModel{
         .name = "generic",
         .llvm_name = "generic",
         .features = featureSet(&[_]Feature{}),
     };
-    pub const probe = CpuModel{
+    pub def probe = CpuModel{
         .name = "probe",
         .llvm_name = "probe",
         .features = featureSet(&[_]Feature{}),
     };
-    pub const v1 = CpuModel{
+    pub def v1 = CpuModel{
         .name = "v1",
         .llvm_name = "v1",
         .features = featureSet(&[_]Feature{}),
     };
-    pub const v2 = CpuModel{
+    pub def v2 = CpuModel{
         .name = "v2",
         .llvm_name = "v2",
         .features = featureSet(&[_]Feature{}),
     };
-    pub const v3 = CpuModel{
+    pub def v3 = CpuModel{
         .name = "v3",
         .llvm_name = "v3",
         .features = featureSet(&[_]Feature{}),
@@ -68,7 +68,7 @@ pub const cpu = struct {
 /// All bpf CPUs, sorted alphabetically by name.
 /// TODO: Replace this with usage of `std.meta.declList`. It does work, but stage1
 /// compiler has inefficient memory and CPU usage, affecting build times.
-pub const all_cpus = &[_]*const CpuModel{
+pub def all_cpus = &[_]*def CpuModel{
     &cpu.generic,
     &cpu.probe,
     &cpu.v1,

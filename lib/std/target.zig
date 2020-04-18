@@ -1,21 +1,21 @@
-const std = @import("std.zig");
-const mem = std.mem;
-const builtin = std.builtin;
-const Version = std.builtin.Version;
+def std = @import("std.zig");
+def mem = std.mem;
+def builtin = std.builtin;
+def Version = std.builtin.Version;
 
 /// TODO Nearly all the functions in this namespace would be
 /// better off if https://github.com/ziglang/zig/issues/425
 /// was solved.
-pub const Target = struct {
+pub def Target = struct {
     cpu: Cpu,
     os: Os,
     abi: Abi,
 
-    pub const Os = struct {
+    pub def Os = struct {
         tag: Tag,
         version_range: VersionRange,
 
-        pub const Tag = enum {
+        pub def Tag = enum {
             freestanding,
             ananas,
             cloudabi,
@@ -61,7 +61,7 @@ pub const Target = struct {
                 };
             }
 
-            pub fn dynamicLibSuffix(tag: Tag) [:0]const u8 {
+            pub fn dynamicLibSuffix(tag: Tag) [:0]u8 {
                 if (tag.isDarwin()) {
                     return ".dylib";
                 }
@@ -74,7 +74,7 @@ pub const Target = struct {
 
         /// Based on NTDDI version constants from
         /// https://docs.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt
-        pub const WindowsVersion = enum(u32) {
+        pub def WindowsVersion = enum(u32) {
             nt4 = 0x04000000,
             win2k = 0x05000000,
             xp = 0x05010000,
@@ -93,7 +93,7 @@ pub const Target = struct {
             win10_19h1 = 0x0A000007,
             _,
 
-            pub const Range = struct {
+            pub def Range = struct {
                 min: WindowsVersion,
                 max: WindowsVersion,
 
@@ -103,7 +103,7 @@ pub const Target = struct {
             };
         };
 
-        pub const LinuxVersionRange = struct {
+        pub def LinuxVersionRange = struct {
             range: Version.Range,
             glibc: Version,
 
@@ -133,7 +133,7 @@ pub const Target = struct {
         ///
         /// Binaries built with a given maximum version will continue to function on newer operating system
         /// versions. However, such a binary may not take full advantage of the newer operating system APIs.
-        pub const VersionRange = union {
+        pub def VersionRange = union {
             none: void,
             semver: Version.Range,
             linux: LinuxVersionRange,
@@ -294,23 +294,23 @@ pub const Target = struct {
         }
     };
 
-    pub const aarch64 = @import("target/aarch64.zig");
-    pub const amdgpu = @import("target/amdgpu.zig");
-    pub const arm = @import("target/arm.zig");
-    pub const avr = @import("target/avr.zig");
-    pub const bpf = @import("target/bpf.zig");
-    pub const hexagon = @import("target/hexagon.zig");
-    pub const mips = @import("target/mips.zig");
-    pub const msp430 = @import("target/msp430.zig");
-    pub const nvptx = @import("target/nvptx.zig");
-    pub const powerpc = @import("target/powerpc.zig");
-    pub const riscv = @import("target/riscv.zig");
-    pub const sparc = @import("target/sparc.zig");
-    pub const systemz = @import("target/systemz.zig");
-    pub const wasm = @import("target/wasm.zig");
-    pub const x86 = @import("target/x86.zig");
+    pub def aarch64 = @import("target/aarch64.zig");
+    pub def amdgpu = @import("target/amdgpu.zig");
+    pub def arm = @import("target/arm.zig");
+    pub def avr = @import("target/avr.zig");
+    pub def bpf = @import("target/bpf.zig");
+    pub def hexagon = @import("target/hexagon.zig");
+    pub def mips = @import("target/mips.zig");
+    pub def msp430 = @import("target/msp430.zig");
+    pub def nvptx = @import("target/nvptx.zig");
+    pub def powerpc = @import("target/powerpc.zig");
+    pub def riscv = @import("target/riscv.zig");
+    pub def sparc = @import("target/sparc.zig");
+    pub def systemz = @import("target/systemz.zig");
+    pub def wasm = @import("target/wasm.zig");
+    pub def x86 = @import("target/x86.zig");
 
-    pub const Abi = enum {
+    pub def Abi = enum {
         none,
         gnu,
         gnuabin32,
@@ -395,7 +395,7 @@ pub const Target = struct {
             };
         }
 
-        pub fn oFileExt(abi: Abi) [:0]const u8 {
+        pub fn oFileExt(abi: Abi) [:0]u8 {
             return switch (abi) {
                 .msvc => ".obj",
                 else => ".o",
@@ -403,7 +403,7 @@ pub const Target = struct {
         }
     };
 
-    pub const ObjectFormat = enum {
+    pub def ObjectFormat = enum {
         unknown,
         coff,
         elf,
@@ -411,7 +411,7 @@ pub const Target = struct {
         wasm,
     };
 
-    pub const SubSystem = enum {
+    pub def SubSystem = enum {
         Console,
         Windows,
         Posix,
@@ -422,47 +422,47 @@ pub const Target = struct {
         EfiRuntimeDriver,
     };
 
-    pub const Cpu = struct {
+    pub def Cpu = struct {
         /// Architecture
         arch: Arch,
 
         /// The CPU model to target. It has a set of features
         /// which are overridden with the `features` field.
-        model: *const Model,
+        model: *def Model,
 
         /// An explicit list of the entire CPU feature set. It may differ from the specific CPU model's features.
         features: Feature.Set,
 
-        pub const Feature = struct {
+        pub def Feature = struct {
             /// The bit index into `Set`. Has a default value of `undefined` because the canonical
             /// structures are populated via comptime logic.
             index: Set.Index = undefined,
 
             /// Has a default value of `undefined` because the canonical
             /// structures are populated via comptime logic.
-            name: []const u8 = undefined,
+            name: []u8 = undefined,
 
             /// If this corresponds to an LLVM-recognized feature, this will be populated;
             /// otherwise null.
-            llvm_name: ?[:0]const u8,
+            llvm_name: ?[:0]u8,
 
             /// Human-friendly UTF-8 text.
-            description: []const u8,
+            description: []u8,
 
             /// Sparse `Set` of features this depends on.
             dependencies: Set,
 
             /// A bit set of all the features.
-            pub const Set = struct {
+            pub def Set = struct {
                 ints: [usize_count]usize,
 
-                pub const needed_bit_count = 155;
-                pub const byte_count = (needed_bit_count + 7) / 8;
-                pub const usize_count = (byte_count + (@sizeOf(usize) - 1)) / @sizeOf(usize);
-                pub const Index = std.math.Log2Int(std.meta.IntType(false, usize_count * @bitSizeOf(usize)));
-                pub const ShiftInt = std.math.Log2Int(usize);
+                pub def needed_bit_count = 155;
+                pub def byte_count = (needed_bit_count + 7) / 8;
+                pub def usize_count = (byte_count + (@sizeOf(usize) - 1)) / @sizeOf(usize);
+                pub def Index = std.math.Log2Int(std.meta.IntType(false, usize_count * @bitSizeOf(usize)));
+                pub def ShiftInt = std.math.Log2Int(usize);
 
-                pub const empty = Set{ .ints = [1]usize{0} ** usize_count };
+                pub def empty = Set{ .ints = [1]usize{0} ** usize_count };
                 pub fn empty_workaround() Set {
                     return Set{ .ints = [1]usize{0} ** usize_count };
                 }
@@ -474,15 +474,15 @@ pub const Target = struct {
                 }
 
                 pub fn isEnabled(set: Set, arch_feature_index: Index) bool {
-                    const usize_index = arch_feature_index / @bitSizeOf(usize);
-                    const bit_index = @intCast(ShiftInt, arch_feature_index % @bitSizeOf(usize));
+                    def usize_index = arch_feature_index / @bitSizeOf(usize);
+                    def bit_index = @intCast(ShiftInt, arch_feature_index % @bitSizeOf(usize));
                     return (set.ints[usize_index] & (@as(usize, 1) << bit_index)) != 0;
                 }
 
                 /// Adds the specified feature but not its dependencies.
                 pub fn addFeature(set: *Set, arch_feature_index: Index) void {
-                    const usize_index = arch_feature_index / @bitSizeOf(usize);
-                    const bit_index = @intCast(ShiftInt, arch_feature_index % @bitSizeOf(usize));
+                    def usize_index = arch_feature_index / @bitSizeOf(usize);
+                    def bit_index = @intCast(ShiftInt, arch_feature_index % @bitSizeOf(usize));
                     set.ints[usize_index] |= @as(usize, 1) << bit_index;
                 }
 
@@ -494,8 +494,8 @@ pub const Target = struct {
 
                 /// Removes the specified feature but not its dependents.
                 pub fn removeFeature(set: *Set, arch_feature_index: Index) void {
-                    const usize_index = arch_feature_index / @bitSizeOf(usize);
-                    const bit_index = @intCast(ShiftInt, arch_feature_index % @bitSizeOf(usize));
+                    def usize_index = arch_feature_index / @bitSizeOf(usize);
+                    def bit_index = @intCast(ShiftInt, arch_feature_index % @bitSizeOf(usize));
                     set.ints[usize_index] &= ~(@as(usize, 1) << bit_index);
                 }
 
@@ -505,25 +505,25 @@ pub const Target = struct {
                         ~@as(@Vector(usize_count, usize), other_set.ints);
                 }
 
-                pub fn populateDependencies(set: *Set, all_features_list: []const Cpu.Feature) void {
+                pub fn populateDependencies(set: *Set, all_features_list: []Cpu.Feature) void {
                     @setEvalBranchQuota(1000000);
 
                     var old = set.ints;
                     while (true) {
                         for (all_features_list) |feature, index_usize| {
-                            const index = @intCast(Index, index_usize);
+                            def index = @intCast(Index, index_usize);
                             if (set.isEnabled(index)) {
                                 set.addFeatureSet(feature.dependencies);
                             }
                         }
-                        const nothing_changed = mem.eql(usize, &old, &set.ints);
+                        def nothing_changed = mem.eql(usize, &old, &set.ints);
                         if (nothing_changed) return;
                         old = set.ints;
                     }
                 }
 
-                pub fn asBytes(set: *const Set) *const [byte_count]u8 {
-                    return @ptrCast(*const [byte_count]u8, &set.ints);
+                pub fn asBytes(set: *def Set) *def [byte_count]u8 {
+                    return @ptrCast(*def [byte_count]u8, &set.ints);
                 }
 
                 pub fn eql(set: Set, other: Set) bool {
@@ -534,7 +534,7 @@ pub const Target = struct {
             pub fn feature_set_fns(comptime F: type) type {
                 return struct {
                     /// Populates only the feature bits specified.
-                    pub fn featureSet(features: []const F) Set {
+                    pub fn featureSet(features: []F) Set {
                         var x = Set.empty_workaround(); // TODO remove empty_workaround
                         for (features) |feature| {
                             x.addFeature(@enumToInt(feature));
@@ -549,7 +549,7 @@ pub const Target = struct {
             }
         };
 
-        pub const Arch = enum {
+        pub def Arch = enum {
             arm,
             armeb,
             aarch64,
@@ -637,7 +637,7 @@ pub const Target = struct {
                 };
             }
 
-            pub fn parseCpuModel(arch: Arch, cpu_name: []const u8) !*const Cpu.Model {
+            pub fn parseCpuModel(arch: Arch, cpu_name: []u8) !*def Cpu.Model {
                 for (arch.allCpuModels()) |cpu| {
                     if (mem.eql(u8, cpu_name, cpu.name)) {
                         return cpu;
@@ -823,7 +823,7 @@ pub const Target = struct {
             }
 
             /// Returns a name that matches the lib/std/target/* directory name.
-            pub fn genericName(arch: Arch) []const u8 {
+            pub fn genericName(arch: Arch) []u8 {
                 return switch (arch) {
                     .arm, .armeb, .thumb, .thumbeb => "arm",
                     .aarch64, .aarch64_be, .aarch64_32 => "aarch64",
@@ -845,7 +845,7 @@ pub const Target = struct {
             }
 
             /// All CPU features Zig is aware of, sorted lexicographically by name.
-            pub fn allFeaturesList(arch: Arch) []const Cpu.Feature {
+            pub fn allFeaturesList(arch: Arch) []Cpu.Feature {
                 return switch (arch) {
                     .arm, .armeb, .thumb, .thumbeb => &arm.all_features,
                     .aarch64, .aarch64_be, .aarch64_32 => &aarch64.all_features,
@@ -868,7 +868,7 @@ pub const Target = struct {
             }
 
             /// All processors Zig is aware of, sorted lexicographically by name.
-            pub fn allCpuModels(arch: Arch) []const *const Cpu.Model {
+            pub fn allCpuModels(arch: Arch) []*def Cpu.Model {
                 return switch (arch) {
                     .arm, .armeb, .thumb, .thumbeb => arm.all_cpus,
                     .aarch64, .aarch64_be, .aarch64_32 => aarch64.all_cpus,
@@ -886,17 +886,17 @@ pub const Target = struct {
                     .nvptx, .nvptx64 => nvptx.all_cpus,
                     .wasm32, .wasm64 => wasm.all_cpus,
 
-                    else => &[0]*const Model{},
+                    else => &[0]*def Model{},
                 };
             }
         };
 
-        pub const Model = struct {
-            name: []const u8,
-            llvm_name: ?[:0]const u8,
+        pub def Model = struct {
+            name: []u8,
+            llvm_name: ?[:0]u8,
             features: Feature.Set,
 
-            pub fn toCpu(model: *const Model, arch: Arch) Cpu {
+            pub fn toCpu(model: *def Model, arch: Arch) Cpu {
                 var features = model.features;
                 features.populateDependencies(arch.allFeaturesList());
                 return .{
@@ -906,9 +906,9 @@ pub const Target = struct {
                 };
             }
 
-            pub fn generic(arch: Arch) *const Model {
-                const S = struct {
-                    const generic_model = Model{
+            pub fn generic(arch: Arch) *def Model {
+                def S = struct {
+                    def generic_model = Model{
                         .name = "generic",
                         .llvm_name = null,
                         .features = Cpu.Feature.Set.empty,
@@ -938,7 +938,7 @@ pub const Target = struct {
                 };
             }
 
-            pub fn baseline(arch: Arch) *const Model {
+            pub fn baseline(arch: Arch) *def Model {
                 return switch (arch) {
                     .arm, .armeb, .thumb, .thumbeb => &arm.cpu.baseline,
                     .riscv32 => &riscv.cpu.baseline_rv32,
@@ -958,13 +958,13 @@ pub const Target = struct {
         }
     };
 
-    pub const current = Target{
+    pub def current = Target{
         .cpu = builtin.cpu,
         .os = builtin.os,
         .abi = builtin.abi,
     };
 
-    pub const stack_align = 16;
+    pub def stack_align = 16;
 
     pub fn zigTriple(self: Target, allocator: *mem.Allocator) ![]u8 {
         return std.zig.CrossTarget.fromTarget(self).zigTriple(allocator);
@@ -978,11 +978,11 @@ pub const Target = struct {
         return linuxTripleSimple(allocator, self.cpu.arch, self.os.tag, self.abi);
     }
 
-    pub fn oFileExt(self: Target) [:0]const u8 {
+    pub fn oFileExt(self: Target) [:0]u8 {
         return self.abi.oFileExt();
     }
 
-    pub fn exeFileExtSimple(cpu_arch: Cpu.Arch, os_tag: Os.Tag) [:0]const u8 {
+    pub fn exeFileExtSimple(cpu_arch: Cpu.Arch, os_tag: Os.Tag) [:0]u8 {
         switch (os_tag) {
             .windows => return ".exe",
             .uefi => return ".efi",
@@ -994,11 +994,11 @@ pub const Target = struct {
         }
     }
 
-    pub fn exeFileExt(self: Target) [:0]const u8 {
+    pub fn exeFileExt(self: Target) [:0]u8 {
         return exeFileExtSimple(self.cpu.arch, self.os.tag);
     }
 
-    pub fn staticLibSuffix_cpu_arch_abi(cpu_arch: Cpu.Arch, abi: Abi) [:0]const u8 {
+    pub fn staticLibSuffix_cpu_arch_abi(cpu_arch: Cpu.Arch, abi: Abi) [:0]u8 {
         if (cpu_arch.isWasm()) {
             return ".wasm";
         }
@@ -1008,15 +1008,15 @@ pub const Target = struct {
         }
     }
 
-    pub fn staticLibSuffix(self: Target) [:0]const u8 {
+    pub fn staticLibSuffix(self: Target) [:0]u8 {
         return staticLibSuffix_cpu_arch_abi(self.cpu.arch, self.abi);
     }
 
-    pub fn dynamicLibSuffix(self: Target) [:0]const u8 {
+    pub fn dynamicLibSuffix(self: Target) [:0]u8 {
         return self.os.tag.dynamicLibSuffix();
     }
 
-    pub fn libPrefix_cpu_arch_abi(cpu_arch: Cpu.Arch, abi: Abi) [:0]const u8 {
+    pub fn libPrefix_cpu_arch_abi(cpu_arch: Cpu.Arch, abi: Abi) [:0]u8 {
         if (cpu_arch.isWasm()) {
             return "";
         }
@@ -1026,7 +1026,7 @@ pub const Target = struct {
         }
     }
 
-    pub fn libPrefix(self: Target) [:0]const u8 {
+    pub fn libPrefix(self: Target) [:0]u8 {
         return libPrefix_cpu_arch_abi(self.cpu.arch, self.abi);
     }
 
@@ -1085,7 +1085,7 @@ pub const Target = struct {
         return !self.cpu.arch.isWasm();
     }
 
-    pub const FloatAbi = enum {
+    pub def FloatAbi = enum {
         hard,
         soft,
         soft_fp,
@@ -1120,7 +1120,7 @@ pub const Target = struct {
         }
     }
 
-    pub const DynamicLinker = struct {
+    pub def DynamicLinker = struct {
         /// Contains the memory used to store the dynamic linker path. This field should
         /// not be used directly. See `get` and `set`. This field exists so that this API requires no allocator.
         buffer: [255]u8 = undefined,
@@ -1130,20 +1130,20 @@ pub const Target = struct {
         max_byte: ?u8 = null,
 
         /// Asserts that the length is less than or equal to 255 bytes.
-        pub fn init(dl_or_null: ?[]const u8) DynamicLinker {
+        pub fn init(dl_or_null: ?[]u8) DynamicLinker {
             var result: DynamicLinker = undefined;
             result.set(dl_or_null);
             return result;
         }
 
         /// The returned memory has the same lifetime as the `DynamicLinker`.
-        pub fn get(self: *const DynamicLinker) ?[]const u8 {
-            const m: usize = self.max_byte orelse return null;
+        pub fn get(self: *def DynamicLinker) ?[]u8 {
+            def m: usize = self.max_byte orelse return null;
             return self.buffer[0 .. m + 1];
         }
 
         /// Asserts that the length is less than or equal to 255 bytes.
-        pub fn set(self: *DynamicLinker, dl_or_null: ?[]const u8) void {
+        pub fn set(self: *DynamicLinker, dl_or_null: ?[]u8) void {
             if (dl_or_null) |dl| {
                 mem.copy(u8, &self.buffer, dl);
                 self.max_byte = @intCast(u8, dl.len - 1);
@@ -1155,36 +1155,36 @@ pub const Target = struct {
 
     pub fn standardDynamicLinkerPath(self: Target) DynamicLinker {
         var result: DynamicLinker = .{};
-        const S = struct {
-            fn print(r: *DynamicLinker, comptime fmt: []const u8, args: var) DynamicLinker {
+        def S = struct {
+            fn print(r: *DynamicLinker, comptime fmt: []u8, args: var) DynamicLinker {
                 r.max_byte = @intCast(u8, (std.fmt.bufPrint(&r.buffer, fmt, args) catch unreachable).len - 1);
                 return r.*;
             }
-            fn copy(r: *DynamicLinker, s: []const u8) DynamicLinker {
+            fn copy(r: *DynamicLinker, s: []u8) DynamicLinker {
                 mem.copy(u8, &r.buffer, s);
                 r.max_byte = @intCast(u8, s.len - 1);
                 return r.*;
             }
         };
-        const print = S.print;
-        const copy = S.copy;
+        def print = S.print;
+        def copy = S.copy;
 
         if (self.isAndroid()) {
-            const suffix = if (self.cpu.arch.ptrBitWidth() == 64) "64" else "";
+            def suffix = if (self.cpu.arch.ptrBitWidth() == 64) "64" else "";
             return print(&result, "/system/bin/linker{}", .{suffix});
         }
 
         if (self.isMusl()) {
-            const is_arm = switch (self.cpu.arch) {
+            def is_arm = switch (self.cpu.arch) {
                 .arm, .armeb, .thumb, .thumbeb => true,
                 else => false,
             };
-            const arch_part = switch (self.cpu.arch) {
+            def arch_part = switch (self.cpu.arch) {
                 .arm, .thumb => "arm",
                 .armeb, .thumbeb => "armeb",
                 else => |arch| @tagName(arch),
             };
-            const arch_suffix = if (is_arm and self.getFloatAbi() == .hard) "hf" else "";
+            def arch_suffix = if (is_arm and self.getFloatAbi() == .hard) "hf" else "";
             return print(&result, "/lib/ld-musl-{}{}.so.1", .{ arch_part, arch_suffix });
         }
 
@@ -1216,13 +1216,13 @@ pub const Target = struct {
                 .mips64,
                 .mips64el,
                 => {
-                    const lib_suffix = switch (self.abi) {
+                    def lib_suffix = switch (self.abi) {
                         .gnuabin32, .gnux32 => "32",
                         .gnuabi64 => "64",
                         else => "",
                     };
-                    const is_nan_2008 = mips.featureSetHas(self.cpu.features, .nan2008);
-                    const loader = if (is_nan_2008) "ld-linux-mipsn8.so.1" else "ld.so.1";
+                    def is_nan_2008 = mips.featureSetHas(self.cpu.features, .nan2008);
+                    def loader = if (is_nan_2008) "ld-linux-mipsn8.so.1" else "ld.so.1";
                     return print(&result, "/lib{}/{}", .{ lib_suffix, loader });
                 },
 

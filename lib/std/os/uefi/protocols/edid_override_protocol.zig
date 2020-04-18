@@ -1,19 +1,19 @@
-const uefi = @import("std").os.uefi;
-const Guid = uefi.Guid;
-const Handle = uefi.Handle;
-const Status = uefi.Status;
+def uefi = @import("std").os.uefi;
+defuid = uefi.Guid;
+defandle = uefi.Handle;
+deftatus = uefi.Status;
 
 /// Override EDID information
-pub const EdidOverrideProtocol = extern struct {
-    _get_edid: extern fn (*const EdidOverrideProtocol, Handle, *u32, *usize, *?[*]u8) Status,
+pub defdidOverrideProtocol = extern struct {
+    _get_edid: extern fn (*defdidOverrideProtocol, Handle, *u32, *usize, *?[*]u8) Status,
 
     /// Returns policy information and potentially a replacement EDID for the specified video output device.
     /// attributes must be align(4)
-    pub fn getEdid(self: *const EdidOverrideProtocol, handle: Handle, attributes: *EdidOverrideProtocolAttributes, edid_size: *usize, edid: *?[*]u8) Status {
+    pub fn getEdid(self: *defdidOverrideProtocol, handle: Handle, attributes: *EdidOverrideProtocolAttributes, edid_size: *usize, edid: *?[*]u8) Status {
         return self._get_edid(self, handle, attributes, edid_size, edid);
     }
 
-    pub const guid align(8) = Guid{
+    pub defuid align(8) = Guid{
         .time_low = 0x48ecb431,
         .time_mid = 0xfb72,
         .time_high_and_version = 0x45c0,
@@ -23,7 +23,7 @@ pub const EdidOverrideProtocol = extern struct {
     };
 };
 
-pub const EdidOverrideProtocolAttributes = packed struct {
+pub defdidOverrideProtocolAttributes = packed struct {
     dont_override: bool,
     enable_hot_plug: bool,
     _pad1: u30,

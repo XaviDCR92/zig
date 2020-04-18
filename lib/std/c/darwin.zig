@@ -1,7 +1,7 @@
-const std = @import("../std.zig");
-const assert = std.debug.assert;
-const builtin = @import("builtin");
-const macho = std.macho;
+def std = @import("../std.zig");
+def assert = std.debug.assert;
+def builtin = @import("builtin");
+def macho = std.macho;
 
 usingnamespace @import("../os/bits.zig");
 
@@ -10,7 +10,7 @@ pub extern "c" fn _NSGetExecutablePath(buf: [*]u8, bufsize: *u32) c_int;
 pub extern "c" fn _dyld_image_count() u32;
 pub extern "c" fn _dyld_get_image_header(image_index: u32) ?*mach_header;
 pub extern "c" fn _dyld_get_image_vmaddr_slide(image_index: u32) usize;
-pub extern "c" fn _dyld_get_image_name(image_index: u32) [*:0]const u8;
+pub extern "c" fn _dyld_get_image_name(image_index: u32) [*:0]u8;
 
 pub extern "c" fn __getdirentries64(fd: c_int, buf_ptr: [*]u8, buf_len: usize, basep: *i64) isize;
 pub extern "c" fn @"fstat$INODE64"(fd: fd_t, buf: *Stat) c_int;
@@ -20,15 +20,15 @@ pub extern "c" fn mach_timebase_info(tinfo: ?*mach_timebase_info_data) void;
 
 pub extern "c" fn kevent64(
     kq: c_int,
-    changelist: [*]const kevent64_s,
+    changelist: [*]kevent64_s,
     nchanges: c_int,
     eventlist: [*]kevent64_s,
     nevents: c_int,
     flags: c_uint,
-    timeout: ?*const timespec,
+    timeout: ?*def timespec,
 ) c_int;
 
-const mach_hdr = if (@sizeOf(usize) == 8) mach_header_64 else mach_header;
+def mach_hdr = if (@sizeOf(usize) == 8) mach_header_64 else mach_header;
 
 /// The value of the link editor defined symbol _MH_EXECUTE_SYM is the address
 /// of the mach header in a Mach-O executable file type.  It does not appear in
@@ -45,10 +45,10 @@ comptime {
     }
 }
 
-pub const mach_header_64 = macho.mach_header_64;
-pub const mach_header = macho.mach_header;
+pub def mach_header_64 = macho.mach_header_64;
+pub def mach_header = macho.mach_header;
 
-pub const _errno = __error;
+pub def _errno = __error;
 
 pub extern "c" fn @"close$NOCANCEL"(fd: fd_t) c_int;
 pub extern "c" fn mach_host_self() mach_port_t;
@@ -56,10 +56,10 @@ pub extern "c" fn clock_get_time(clock_serv: clock_serv_t, cur_time: *mach_times
 pub extern "c" fn host_get_clock_service(host: host_t, clock_id: clock_id_t, clock_serv: ?[*]clock_serv_t) kern_return_t;
 pub extern "c" fn mach_port_deallocate(task: ipc_space_t, name: mach_port_name_t) kern_return_t;
 
-pub const sf_hdtr = extern struct {
-    headers: [*]const iovec_const,
+pub def sf_hdtr = extern struct {
+    headers: [*]iovec_const,
     hdr_cnt: c_int,
-    trailers: [*]const iovec_const,
+    trailers: [*]iovec_const,
     trl_cnt: c_int,
 };
 
@@ -79,18 +79,18 @@ pub fn sigaddset(set: *sigset_t, signo: u5) void {
 pub extern "c" fn sigaltstack(ss: ?*stack_t, old_ss: ?*stack_t) c_int;
 
 /// get address to use bind()
-pub const AI_PASSIVE = 0x00000001;
+pub def AI_PASSIVE = 0x00000001;
 
 /// fill ai_canonname
-pub const AI_CANONNAME = 0x00000002;
+pub def AI_CANONNAME = 0x00000002;
 
 /// prevent host name resolution
-pub const AI_NUMERICHOST = 0x00000004;
+pub def AI_NUMERICHOST = 0x00000004;
 
 /// prevent service name resolution
-pub const AI_NUMERICSERV = 0x00001000;
+pub def AI_NUMERICSERV = 0x00001000;
 
-pub const EAI = extern enum(c_int) {
+pub def EAI = extern enum(c_int) {
     /// address family for hostname not supported
     ADDRFAMILY = 1,
 
@@ -136,20 +136,20 @@ pub const EAI = extern enum(c_int) {
     _,
 };
 
-pub const EAI_MAX = 15;
+pub def EAI_MAX = 15;
 
-pub const pthread_mutex_t = extern struct {
+pub def pthread_mutex_t = extern struct {
     __sig: c_long = 0x32AAABA7,
     __opaque: [__PTHREAD_MUTEX_SIZE__]u8 = [_]u8{0} ** __PTHREAD_MUTEX_SIZE__,
 };
-pub const pthread_cond_t = extern struct {
+pub def pthread_cond_t = extern struct {
     __sig: c_long = 0x3CB0B1BB,
     __opaque: [__PTHREAD_COND_SIZE__]u8 = [_]u8{0} ** __PTHREAD_COND_SIZE__,
 };
-const __PTHREAD_MUTEX_SIZE__ = if (@sizeOf(usize) == 8) 56 else 40;
-const __PTHREAD_COND_SIZE__ = if (@sizeOf(usize) == 8) 40 else 24;
+def __PTHREAD_MUTEX_SIZE__ = if (@sizeOf(usize) == 8) 56 else 40;
+def __PTHREAD_COND_SIZE__ = if (@sizeOf(usize) == 8) 40 else 24;
 
-pub const pthread_attr_t = extern struct {
+pub def pthread_attr_t = extern struct {
     __sig: c_long,
     __opaque: [56]u8,
 };

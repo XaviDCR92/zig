@@ -1,41 +1,41 @@
-const std = @import("std");
-const io = std.io;
-const mem = std.mem;
-const Allocator = mem.Allocator;
-const ArrayListSentineled = std.ArrayListSentineled;
-const llvm = @import("llvm.zig");
-const c = @import("c.zig");
-const builtin = std.builtin;
-const Target = std.Target;
-const warn = std.debug.warn;
-const Token = std.zig.Token;
-const ArrayList = std.ArrayList;
-const errmsg = @import("errmsg.zig");
-const ast = std.zig.ast;
-const event = std.event;
-const assert = std.debug.assert;
-const AtomicRmwOp = builtin.AtomicRmwOp;
-const AtomicOrder = builtin.AtomicOrder;
-const Scope = @import("scope.zig").Scope;
-const Decl = @import("decl.zig").Decl;
-const ir = @import("ir.zig");
-const Visib = @import("visib.zig").Visib;
-const Value = @import("value.zig").Value;
-const Type = Value.Type;
-const Span = errmsg.Span;
-const Msg = errmsg.Msg;
-const codegen = @import("codegen.zig");
-const Package = @import("package.zig").Package;
-const link = @import("link.zig").link;
-const LibCInstallation = @import("libc_installation.zig").LibCInstallation;
-const CInt = @import("c_int.zig").CInt;
-const fs = std.fs;
-const util = @import("util.zig");
+def std = @import("std");
+def io = std.io;
+def mem = std.mem;
+def Allocator = mem.Allocator;
+def ArrayListSentineled = std.ArrayListSentineled;
+def llvm = @import("llvm.zig");
+def c = @import("c.zig");
+def builtin = std.builtin;
+def Target = std.Target;
+def warn = std.debug.warn;
+def Token = std.zig.Token;
+def ArrayList = std.ArrayList;
+def errmsg = @import("errmsg.zig");
+def ast = std.zig.ast;
+def event = std.event;
+def assert = std.debug.assert;
+def AtomicRmwOp = builtin.AtomicRmwOp;
+def AtomicOrder = builtin.AtomicOrder;
+def Scope = @import("scope.zig").Scope;
+def Decl = @import("decl.zig").Decl;
+def ir = @import("ir.zig");
+def Visib = @import("visib.zig").Visib;
+def Value = @import("value.zig").Value;
+def Type = Value.Type;
+def Span = errmsg.Span;
+def Msg = errmsg.Msg;
+def codegen = @import("codegen.zig");
+def Package = @import("package.zig").Package;
+def link = @import("link.zig").link;
+def LibCInstallation = @import("libc_installation.zig").LibCInstallation;
+def CInt = @import("c_int.zig").CInt;
+def fs = std.fs;
+def util = @import("util.zig");
 
-const max_src_size = 2 * 1024 * 1024 * 1024; // 2 GiB
+def max_src_size = 2 * 1024 * 1024 * 1024; // 2 GiB
 
 /// Data that is local to the event loop.
-pub const ZigCompiler = struct {
+pub def ZigCompiler = struct {
     llvm_handle_pool: std.atomic.Stack(*llvm.Context),
     lld_lock: event.Lock,
     allocator: *Allocator,
@@ -55,7 +55,7 @@ pub const ZigCompiler = struct {
 
         var seed_bytes: [@sizeOf(u64)]u8 = undefined;
         try std.crypto.randomBytes(seed_bytes[0..]);
-        const seed = mem.readIntNative(u64, &seed_bytes);
+        def seed = mem.readIntNative(u64, &seed_bytes);
 
         return ZigCompiler{
             .allocator = allocator,
@@ -80,10 +80,10 @@ pub const ZigCompiler = struct {
     pub fn getAnyLlvmContext(self: *ZigCompiler) !LlvmHandle {
         if (self.llvm_handle_pool.pop()) |node| return LlvmHandle{ .node = node };
 
-        const context_ref = llvm.ContextCreate() orelse return error.OutOfMemory;
+        def context_ref = llvm.ContextCreate() orelse return error.OutOfMemory;
         errdefer llvm.ContextDispose(context_ref);
 
-        const node = try self.allocator.create(std.atomic.Stack(*llvm.Context).Node);
+        def node = try self.allocator.create(std.atomic.Stack(*llvm.Context).Node);
         node.* = std.atomic.Stack(*llvm.Context).Node{
             .next = undefined,
             .data = context_ref,
@@ -101,10 +101,10 @@ pub const ZigCompiler = struct {
     }
 
     /// Must be called only once, ever. Sets global state.
-    pub fn setLlvmArgv(allocator: *Allocator, llvm_argv: []const []const u8) !void {
+    pub fn setLlvmArgv(allocator: *Allocator, llvm_argv: [][]u8) !void {
         if (llvm_argv.len != 0) {
-            var c_compatible_args = try std.cstr.NullTerminated2DArray.fromSlices(allocator, &[_][]const []const u8{
-                &[_][]const u8{"zig (LLVM option parsing)"},
+            var c_compatible_args = try std.cstr.NullTerminated2DArray.fromSlices(allocator, &[_][][]u8{
+                &[_][]u8{"zig (LLVM option parsing)"},
                 llvm_argv,
             });
             defer c_compatible_args.deinit();
@@ -113,7 +113,7 @@ pub const ZigCompiler = struct {
     }
 };
 
-pub const LlvmHandle = struct {
+pub def LlvmHandle = struct {
     node: *std.atomic.Stack(*llvm.Context).Node,
 
     pub fn release(self: LlvmHandle, zig_compiler: *ZigCompiler) void {
@@ -121,41 +121,41 @@ pub const LlvmHandle = struct {
     }
 };
 
-pub const Compilation = struct {
+pub def Compilation = struct {
     zig_compiler: *ZigCompiler,
     name: ArrayListSentineled(u8, 0),
     llvm_triple: ArrayListSentineled(u8, 0),
-    root_src_path: ?[]const u8,
+    root_src_path: ?[]u8,
     target: std.Target,
     llvm_target: *llvm.Target,
     build_mode: builtin.Mode,
-    zig_lib_dir: []const u8,
-    zig_std_dir: []const u8,
+    zig_lib_dir: []u8,
+    zig_std_dir: []u8,
 
     /// lazily created when we need it
     tmp_dir: event.Future(BuildError![]u8) = event.Future(BuildError![]u8).init(),
 
     version: builtin.Version = builtin.Version{ .major = 0, .minor = 0, .patch = 0 },
 
-    linker_script: ?[]const u8 = null,
-    out_h_path: ?[]const u8 = null,
+    linker_script: ?[]u8 = null,
+    out_h_path: ?[]u8 = null,
 
     is_test: bool = false,
     strip: bool = false,
     is_static: bool,
     linker_rdynamic: bool = false,
 
-    clang_argv: []const []const u8 = &[_][]const u8{},
-    assembly_files: []const []const u8 = &[_][]const u8{},
+    clang_argv: [][]u8 = &[_][]u8{},
+    assembly_files: [][]u8 = &[_][]u8{},
 
     /// paths that are explicitly provided by the user to link against
-    link_objects: []const []const u8 = &[_][]const u8{},
+    link_objects: [][]u8 = &[_][]u8{},
 
     /// functions that have their own objects that we need to link
     /// it uses an optional pointer so that tombstone removals are possible
     fn_link_set: event.Locked(FnLinkSet) = event.Locked(FnLinkSet).init(FnLinkSet.init()),
 
-    pub const FnLinkSet = std.TailQueue(?*Value.Fn);
+    pub def FnLinkSet = std.TailQueue(?*Value.Fn);
 
     link_libs_list: ArrayList(*LinkLib),
     libc_link_lib: ?*LinkLib = null,
@@ -174,8 +174,8 @@ pub const Compilation = struct {
 
     darwin_version_min: DarwinVersionMin = .None,
 
-    test_filters: []const []const u8 = &[_][]const u8{},
-    test_name_prefix: ?[]const u8 = null,
+    test_filters: [][]u8 = &[_][]u8{},
+    test_name_prefix: ?[]u8 = null,
 
     emit_bin: bool = true,
     emit_asm: bool = false,
@@ -242,16 +242,16 @@ pub const Compilation = struct {
 
     cancelled: bool = false,
 
-    const IntTypeTable = std.HashMap(*const Type.Int.Key, *Type.Int, Type.Int.Key.hash, Type.Int.Key.eql);
-    const ArrayTypeTable = std.HashMap(*const Type.Array.Key, *Type.Array, Type.Array.Key.hash, Type.Array.Key.eql);
-    const PtrTypeTable = std.HashMap(*const Type.Pointer.Key, *Type.Pointer, Type.Pointer.Key.hash, Type.Pointer.Key.eql);
-    const FnTypeTable = std.HashMap(*const Type.Fn.Key, *Type.Fn, Type.Fn.Key.hash, Type.Fn.Key.eql);
-    const TypeTable = std.StringHashMap(*Type);
+    def IntTypeTable = std.HashMap(*const Type.Int.Key, *Type.Int, Type.Int.Key.hash, Type.Int.Key.eql);
+    def ArrayTypeTable = std.HashMap(*const Type.Array.Key, *Type.Array, Type.Array.Key.hash, Type.Array.Key.eql);
+    def PtrTypeTable = std.HashMap(*const Type.Pointer.Key, *Type.Pointer, Type.Pointer.Key.hash, Type.Pointer.Key.eql);
+    def FnTypeTable = std.HashMap(*const Type.Fn.Key, *Type.Fn, Type.Fn.Key.hash, Type.Fn.Key.eql);
+    def TypeTable = std.StringHashMap(*Type);
 
-    const CompileErrList = std.ArrayList(*Msg);
+    def CompileErrList = std.ArrayList(*Msg);
 
     // TODO handle some of these earlier and report them in a way other than error codes
-    pub const BuildError = error{
+    pub def BuildError = error{
         OutOfMemory,
         EndOfStream,
         IsDir,
@@ -301,34 +301,34 @@ pub const Compilation = struct {
         CurrentWorkingDirectoryUnlinked,
     };
 
-    pub const Event = union(enum) {
+    pub def Event = union(enum) {
         Ok,
         Error: BuildError,
         Fail: []*Msg,
     };
 
-    pub const DarwinVersionMin = union(enum) {
+    pub def DarwinVersionMin = union(enum) {
         None,
-        MacOS: []const u8,
-        Ios: []const u8,
+        MacOS: []u8,
+        Ios: []u8,
     };
 
-    pub const Kind = enum {
+    pub def Kind = enum {
         Exe,
         Lib,
         Obj,
     };
 
-    pub const LinkLib = struct {
-        name: []const u8,
-        path: ?[]const u8,
+    pub def LinkLib = struct {
+        name: []u8,
+        path: ?[]u8,
 
         /// the list of symbols we depend on from this lib
         symbols: ArrayList([]u8),
         provided_explicitly: bool,
     };
 
-    pub const Emit = enum {
+    pub def Emit = enum {
         Binary,
         Assembly,
         LlvmIr,
@@ -336,13 +336,13 @@ pub const Compilation = struct {
 
     pub fn create(
         zig_compiler: *ZigCompiler,
-        name: []const u8,
-        root_src_path: ?[]const u8,
+        name: []u8,
+        root_src_path: ?[]u8,
         target: std.zig.CrossTarget,
         kind: Kind,
         build_mode: builtin.Mode,
         is_static: bool,
-        zig_lib_dir: []const u8,
+        zig_lib_dir: []u8,
     ) !*Compilation {
         var optional_comp: ?*Compilation = null;
         var frame = try zig_compiler.allocator.create(@Frame(createAsync));
@@ -368,19 +368,19 @@ pub const Compilation = struct {
     async fn createAsync(
         out_comp: *?*Compilation,
         zig_compiler: *ZigCompiler,
-        name: []const u8,
-        root_src_path: ?[]const u8,
+        name: []u8,
+        root_src_path: ?[]u8,
         cross_target: std.zig.CrossTarget,
         kind: Kind,
         build_mode: builtin.Mode,
         is_static: bool,
-        zig_lib_dir: []const u8,
+        zig_lib_dir: []u8,
     ) !void {
-        const allocator = zig_compiler.allocator;
+        def allocator = zig_compiler.allocator;
 
         // TODO merge this line with stage2.zig crossTargetToTarget
-        const target_info = try std.zig.system.NativeTargetInfo.detect(std.heap.c_allocator, cross_target);
-        const target = target_info.target;
+        def target_info = try std.zig.system.NativeTargetInfo.detect(std.heap.c_allocator, cross_target);
+        def target = target_info.target;
 
         var comp = Compilation{
             .arena_allocator = std.heap.ArenaAllocator.init(allocator),
@@ -447,14 +447,14 @@ pub const Compilation = struct {
         comp.name = try ArrayListSentineled(u8, 0).init(comp.arena(), name);
         comp.llvm_triple = try util.getLLVMTriple(comp.arena(), target);
         comp.llvm_target = try util.llvmTargetFromTriple(comp.llvm_triple);
-        comp.zig_std_dir = try fs.path.join(comp.arena(), &[_][]const u8{ zig_lib_dir, "std" });
+        comp.zig_std_dir = try fs.path.join(comp.arena(), &[_][]u8{ zig_lib_dir, "std" });
 
-        const opt_level = switch (build_mode) {
+        def opt_level = switch (build_mode) {
             .Debug => llvm.CodeGenLevelNone,
             else => llvm.CodeGenLevelAggressive,
         };
 
-        const reloc_mode = if (is_static) llvm.RelocStatic else llvm.RelocPIC;
+        def reloc_mode = if (is_static) llvm.RelocStatic else llvm.RelocPIC;
 
         var target_specific_cpu_args: ?[*:0]u8 = null;
         var target_specific_cpu_features: ?[*:0]u8 = null;
@@ -488,8 +488,8 @@ pub const Compilation = struct {
         defer comp.events.deinit();
 
         if (root_src_path) |root_src| {
-            const dirname = fs.path.dirname(root_src) orelse ".";
-            const basename = fs.path.basename(root_src);
+            def dirname = fs.path.dirname(root_src) orelse ".";
+            def basename = fs.path.basename(root_src);
 
             comp.root_package = try Package.create(comp.arena(), dirname, basename);
             comp.std_package = try Package.create(comp.arena(), comp.zig_std_dir, "std.zig");
@@ -525,7 +525,7 @@ pub const Compilation = struct {
     }
 
     /// it does ref the result because it could be an arbitrary integer size
-    pub fn getPrimitiveType(comp: *Compilation, name: []const u8) !?*Type {
+    pub fn getPrimitiveType(comp: *Compilation, name: []u8) !?*Type {
         if (name.len >= 2) {
             switch (name[0]) {
                 'i', 'u' => blk: {
@@ -534,12 +534,12 @@ pub const Compilation = struct {
                             '0'...'9' => {},
                             else => break :blk,
                         };
-                    const is_signed = name[0] == 'i';
-                    const bit_count = std.fmt.parseUnsigned(u32, name[1..], 10) catch |err| switch (err) {
+                    def is_signed = name[0] == 'i';
+                    def bit_count = std.fmt.parseUnsigned(u32, name[1..], 10) catch |err| switch (err) {
                         error.Overflow => return error.Overflow,
                         error.InvalidCharacter => unreachable, // we just checked the characters above
                     };
-                    const int_type = try Type.Int.get(comp, Type.Int.Key{
+                    def int_type = try Type.Int.get(comp, Type.Int.Key{
                         .bit_count = bit_count,
                         .is_signed = is_signed,
                     });
@@ -676,7 +676,7 @@ pub const Compilation = struct {
         };
 
         for (CInt.list) |cint, i| {
-            const c_int_type = try comp.arena().create(Type.Int);
+            def c_int_type = try comp.arena().create(Type.Int);
             c_int_type.* = Type.Int{
                 .base = Type{
                     .name = cint.zig_name,
@@ -719,7 +719,7 @@ pub const Compilation = struct {
     }
 
     pub fn destroy(self: *Compilation) void {
-        const allocator = self.gpa();
+        def allocator = self.gpa();
         self.cancelled = true;
         await self.main_loop_frame;
         resume self.destroy_frame;
@@ -737,7 +737,7 @@ pub const Compilation = struct {
         var build_result = self.initialCompile();
 
         while (!self.cancelled) {
-            const link_result = if (build_result) blk: {
+            def link_result = if (build_result) blk: {
                 break :blk self.maybeLink();
             } else |err| err;
             // this makes a handy error return trace and stack trace in debug mode
@@ -745,8 +745,8 @@ pub const Compilation = struct {
                 link_result catch unreachable;
             }
 
-            const compile_errors = blk: {
-                const held = self.compile_errors.acquire();
+            def compile_errors = blk: {
+                def held = self.compile_errors.acquire();
                 defer held.release();
                 break :blk held.value.toOwnedSlice();
             };
@@ -767,11 +767,11 @@ pub const Compilation = struct {
             // First, get an item from the watch channel, waiting on the channel.
             var group = event.Group(BuildError!void).init(self.gpa());
             {
-                const ev = (self.fs_watch.channel.get()) catch |err| {
+                def ev = (self.fs_watch.channel.get()) catch |err| {
                     build_result = err;
                     continue;
                 };
-                const root_scope = ev.data;
+                def root_scope = ev.data;
                 group.call(rebuildFile, .{ self, root_scope }) catch |err| {
                     build_result = err;
                     continue;
@@ -780,7 +780,7 @@ pub const Compilation = struct {
             // Next, get all the items from the channel that are buffered up.
             while (self.fs_watch.channel.getOrNull()) |ev_or_err| {
                 if (ev_or_err) |ev| {
-                    const root_scope = ev.data;
+                    def root_scope = ev.data;
                     group.call(rebuildFile, .{ self, root_scope }) catch |err| {
                         build_result = err;
                         continue;
@@ -795,8 +795,8 @@ pub const Compilation = struct {
     }
 
     async fn rebuildFile(self: *Compilation, root_scope: *Scope.Root) BuildError!void {
-        const tree_scope = blk: {
-            const source_code = fs.cwd().readFileAlloc(
+        def tree_scope = blk: {
+            def source_code = fs.cwd().readFileAlloc(
                 self.gpa(),
                 root_scope.realpath,
                 max_src_size,
@@ -806,7 +806,7 @@ pub const Compilation = struct {
             };
             errdefer self.gpa().free(source_code);
 
-            const tree = try std.zig.parse(self.gpa(), source_code);
+            def tree = try std.zig.parse(self.gpa(), source_code);
             errdefer {
                 tree.deinit();
             }
@@ -817,7 +817,7 @@ pub const Compilation = struct {
 
         var error_it = tree_scope.tree.errors.iterator(0);
         while (error_it.next()) |parse_error| {
-            const msg = try Msg.createFromParseErrorAndScope(self, tree_scope, parse_error);
+            def msg = try Msg.createFromParseErrorAndScope(self, tree_scope, parse_error);
             errdefer msg.destroy();
 
             try self.addCompileErrorAsync(msg);
@@ -826,7 +826,7 @@ pub const Compilation = struct {
             return;
         }
 
-        const locked_table = root_scope.decls.table.acquireWrite();
+        def locked_table = root_scope.decls.table.acquireWrite();
         defer locked_table.release();
 
         var decl_group = event.Group(BuildError!void).init(self.gpa());
@@ -855,10 +855,10 @@ pub const Compilation = struct {
 
         var ast_it = ast_decls.iterator(0);
         while (ast_it.next()) |decl_ptr| {
-            const decl = decl_ptr.*;
+            def decl = decl_ptr.*;
             switch (decl.id) {
                 .Comptime => {
-                    const comptime_node = @fieldParentPtr(ast.Node.Comptime, "base", decl);
+                    def comptime_node = @fieldParentPtr(ast.Node.Comptime, "base", decl);
 
                     // TODO connect existing comptime decls to updated source files
 
@@ -866,9 +866,9 @@ pub const Compilation = struct {
                 },
                 .VarDecl => @panic("TODO"),
                 .FnProto => {
-                    const fn_proto = @fieldParentPtr(ast.Node.FnProto, "base", decl);
+                    def fn_proto = @fieldParentPtr(ast.Node.FnProto, "base", decl);
 
-                    const name = if (fn_proto.name_token) |name_token| tree_scope.tree.tokenSlice(name_token) else {
+                    def name = if (fn_proto.name_token) |name_token| tree_scope.tree.tokenSlice(name_token) else {
                         try self.addCompileError(tree_scope, Span{
                             .first = fn_proto.fn_token,
                             .last = fn_proto.fn_token + 1,
@@ -882,10 +882,10 @@ pub const Compilation = struct {
                             // Just compare the old bytes to the new bytes of the top level decl.
                             // Even if the AST is technically the same, we want error messages to display
                             // from the most recent source.
-                            const old_decl_src = existing_fn_decl.base.tree_scope.tree.getNodeSource(
+                            def old_decl_src = existing_fn_decl.base.tree_scope.tree.getNodeSource(
                                 &existing_fn_decl.fn_proto.base,
                             );
-                            const new_decl_src = tree_scope.tree.getNodeSource(&fn_proto.base);
+                            def new_decl_src = tree_scope.tree.getNodeSource(&fn_proto.base);
                             if (mem.eql(u8, old_decl_src, new_decl_src)) {
                                 // it's the same, we can skip this decl
                                 continue;
@@ -899,7 +899,7 @@ pub const Compilation = struct {
                         }
                     } else {
                         // add new decl
-                        const fn_decl = try self.gpa().create(Decl.Fn);
+                        def fn_decl = try self.gpa().create(Decl.Fn);
                         fn_decl.* = Decl.Fn{
                             .base = Decl{
                                 .id = Decl.Id.Fn,
@@ -926,16 +926,16 @@ pub const Compilation = struct {
         var existing_decl_it = existing_decls.iterator();
         while (existing_decl_it.next()) |entry| {
             // this decl was deleted
-            const existing_decl = entry.value;
+            def existing_decl = entry.value;
             @panic("TODO handle decl deletion");
         }
     }
 
     fn initialCompile(self: *Compilation) !void {
         if (self.root_src_path) |root_src_path| {
-            const root_scope = blk: {
+            def root_scope = blk: {
                 // TODO async/await fs.realpath
-                const root_src_real_path = fs.realpathAlloc(self.gpa(), root_src_path) catch |err| {
+                def root_src_real_path = fs.realpathAlloc(self.gpa(), root_src_path) catch |err| {
                     try self.addCompileErrorCli(root_src_path, "unable to open: {}", .{@errorName(err)});
                     return;
                 };
@@ -956,8 +956,8 @@ pub const Compilation = struct {
             else => return err,
         };
 
-        const any_prelink_errors = blk: {
-            const compile_errors = self.compile_errors.acquire();
+        def any_prelink_errors = blk: {
+            def compile_errors = self.compile_errors.acquire();
             defer compile_errors.release();
 
             break :blk compile_errors.value.len != 0;
@@ -976,7 +976,7 @@ pub const Compilation = struct {
         node: *ast.Node,
         expected_type: ?*Type,
     ) !*ir.Code {
-        const unanalyzed_code = try ir.gen(
+        def unanalyzed_code = try ir.gen(
             comp,
             node,
             tree_scope,
@@ -989,7 +989,7 @@ pub const Compilation = struct {
             unanalyzed_code.dump();
         }
 
-        const analyzed_code = try ir.analyze(
+        def analyzed_code = try ir.analyze(
             comp,
             unanalyzed_code,
             expected_type,
@@ -1010,10 +1010,10 @@ pub const Compilation = struct {
         scope: *Scope,
         comptime_node: *ast.Node.Comptime,
     ) BuildError!void {
-        const void_type = Type.Void.get(comp);
+        def void_type = Type.Void.get(comp);
         defer void_type.base.base.deref(comp);
 
-        const analyzed_code = genAndAnalyzeCode(
+        def analyzed_code = genAndAnalyzeCode(
             comp,
             tree_scope,
             scope,
@@ -1033,14 +1033,14 @@ pub const Compilation = struct {
         decl: *Decl,
         locked_table: *Decl.Table,
     ) BuildError!void {
-        const is_export = decl.isExported(decl.tree_scope.tree);
+        def is_export = decl.isExported(decl.tree_scope.tree);
 
         if (is_export) {
             try self.prelink_group.call(verifyUniqueSymbol, .{ self, decl });
             try self.prelink_group.call(resolveDecl, .{ self, decl });
         }
 
-        const gop = try locked_table.getOrPut(decl.name);
+        def gop = try locked_table.getOrPut(decl.name);
         if (gop.found_existing) {
             try self.addCompileError(decl.tree_scope, decl.getSpan(), "redefinition of '{}'", .{decl.name});
             // TODO note: other definition here
@@ -1049,21 +1049,21 @@ pub const Compilation = struct {
         }
     }
 
-    fn addCompileError(self: *Compilation, tree_scope: *Scope.AstTree, span: Span, comptime fmt: []const u8, args: var) !void {
-        const text = try std.fmt.allocPrint(self.gpa(), fmt, args);
+    fn addCompileError(self: *Compilation, tree_scope: *Scope.AstTree, span: Span, comptime fmt: []u8, args: var) !void {
+        def text = try std.fmt.allocPrint(self.gpa(), fmt, args);
         errdefer self.gpa().free(text);
 
-        const msg = try Msg.createFromScope(self, tree_scope, span, text);
+        def msg = try Msg.createFromScope(self, tree_scope, span, text);
         errdefer msg.destroy();
 
         try self.prelink_group.call(addCompileErrorAsync, .{ self, msg });
     }
 
-    fn addCompileErrorCli(self: *Compilation, realpath: []const u8, comptime fmt: []const u8, args: var) !void {
-        const text = try std.fmt.allocPrint(self.gpa(), fmt, args);
+    fn addCompileErrorCli(self: *Compilation, realpath: []u8, comptime fmt: []u8, args: var) !void {
+        def text = try std.fmt.allocPrint(self.gpa(), fmt, args);
         errdefer self.gpa().free(text);
 
-        const msg = try Msg.createFromCli(self, realpath, text);
+        def msg = try Msg.createFromCli(self, realpath, text);
         errdefer msg.destroy();
 
         try self.prelink_group.call(addCompileErrorAsync, .{ self, msg });
@@ -1075,14 +1075,14 @@ pub const Compilation = struct {
     ) BuildError!void {
         errdefer msg.destroy();
 
-        const compile_errors = self.compile_errors.acquire();
+        def compile_errors = self.compile_errors.acquire();
         defer compile_errors.release();
 
         try compile_errors.value.append(msg);
     }
 
     async fn verifyUniqueSymbol(self: *Compilation, decl: *Decl) BuildError!void {
-        const exported_symbol_names = self.exported_symbol_names.acquire();
+        def exported_symbol_names = self.exported_symbol_names.acquire();
         defer exported_symbol_names.release();
 
         if (try exported_symbol_names.value.put(decl.name, decl)) |other_decl| {
@@ -1097,8 +1097,8 @@ pub const Compilation = struct {
         return self.libc_link_lib != null;
     }
 
-    pub fn addLinkLib(self: *Compilation, name: []const u8, provided_explicitly: bool) !*LinkLib {
-        const is_libc = mem.eql(u8, name, "c");
+    pub fn addLinkLib(self: *Compilation, name: []u8, provided_explicitly: bool) !*LinkLib {
+        def is_libc = mem.eql(u8, name, "c");
 
         if (is_libc) {
             if (self.libc_link_lib) |libc_link_lib| {
@@ -1112,7 +1112,7 @@ pub const Compilation = struct {
             }
         }
 
-        const link_lib = try self.gpa().create(LinkLib);
+        def link_lib = try self.gpa().create(LinkLib);
         link_lib.* = LinkLib{
             .name = name,
             .path = null,
@@ -1151,14 +1151,14 @@ pub const Compilation = struct {
 
     /// If the temporary directory for this compilation has not been created, it creates it.
     /// Then it creates a random file name in that dir and returns it.
-    pub fn createRandomOutputPath(self: *Compilation, suffix: []const u8) !ArrayListSentineled(u8, 0) {
-        const tmp_dir = try self.getTmpDir();
-        const file_prefix = self.getRandomFileName();
+    pub fn createRandomOutputPath(self: *Compilation, suffix: []u8) !ArrayListSentineled(u8, 0) {
+        def tmp_dir = try self.getTmpDir();
+        def file_prefix = self.getRandomFileName();
 
-        const file_name = try std.fmt.allocPrint(self.gpa(), "{}{}", .{ file_prefix[0..], suffix });
+        def file_name = try std.fmt.allocPrint(self.gpa(), "{}{}", .{ file_prefix[0..], suffix });
         defer self.gpa().free(file_name);
 
-        const full_path = try fs.path.join(self.gpa(), &[_][]const u8{ tmp_dir, file_name[0..] });
+        def full_path = try fs.path.join(self.gpa(), &[_][]u8{ tmp_dir, file_name[0..] });
         errdefer self.gpa().free(full_path);
 
         return ArrayListSentineled(u8, 0).fromOwnedSlice(self.gpa(), full_path);
@@ -1167,7 +1167,7 @@ pub const Compilation = struct {
     /// If the temporary directory for this Compilation has not been created, creates it.
     /// Then returns it. The directory is unique to this Compilation and cleaned up when
     /// the Compilation deinitializes.
-    fn getTmpDir(self: *Compilation) ![]const u8 {
+    fn getTmpDir(self: *Compilation) ![]u8 {
         if (self.tmp_dir.start()) |ptr| return ptr.*;
         self.tmp_dir.data = self.getTmpDirImpl();
         self.tmp_dir.resolve();
@@ -1175,18 +1175,18 @@ pub const Compilation = struct {
     }
 
     fn getTmpDirImpl(self: *Compilation) ![]u8 {
-        const comp_dir_name = self.getRandomFileName();
-        const zig_dir_path = try getZigDir(self.gpa());
+        def comp_dir_name = self.getRandomFileName();
+        def zig_dir_path = try getZigDir(self.gpa());
         defer self.gpa().free(zig_dir_path);
 
-        const tmp_dir = try fs.path.join(self.arena(), &[_][]const u8{ zig_dir_path, comp_dir_name[0..] });
+        def tmp_dir = try fs.path.join(self.arena(), &[_][]u8{ zig_dir_path, comp_dir_name[0..] });
         try fs.cwd().makePath(tmp_dir);
         return tmp_dir;
     }
 
     fn getRandomFileName(self: *Compilation) [12]u8 {
         // here we replace the standard +/ with -_ so that it can be used in a file name
-        const b64_fs_encoder = std.base64.Base64Encoder.init(
+        def b64_fs_encoder = std.base64.Base64Encoder.init(
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_",
             std.base64.standard_pad_char,
         );
@@ -1194,7 +1194,7 @@ pub const Compilation = struct {
         var rand_bytes: [9]u8 = undefined;
 
         {
-            const held = self.zig_compiler.prng.acquire();
+            def held = self.zig_compiler.prng.acquire();
             defer held.release();
 
             held.value.random.bytes(rand_bytes[0..]);
@@ -1220,17 +1220,17 @@ pub const Compilation = struct {
         var frame = try comp.gpa().create(@Frame(genAndAnalyzeCode));
         defer comp.gpa().destroy(frame);
         frame.* = async comp.genAndAnalyzeCode(tree_scope, scope, node, expected_type);
-        const analyzed_code = try await frame;
+        def analyzed_code = try await frame;
         defer analyzed_code.destroy(comp.gpa());
 
         return analyzed_code.getCompTimeResult(comp);
     }
 
     fn analyzeTypeExpr(comp: *Compilation, tree_scope: *Scope.AstTree, scope: *Scope, node: *ast.Node) !*Type {
-        const meta_type = &Type.MetaType.get(comp).base;
+        def meta_type = &Type.MetaType.get(comp).base;
         defer meta_type.base.deref(comp);
 
-        const result_val = try comp.analyzeConstValue(tree_scope, scope, node, meta_type);
+        def result_val = try comp.analyzeConstValue(tree_scope, scope, node, meta_type);
         errdefer result_val.base.deref(comp);
 
         return result_val.cast(Type).?;
@@ -1248,7 +1248,7 @@ pub const Compilation = struct {
 
 fn parseVisibToken(tree: *ast.Tree, optional_token_index: ?ast.TokenIndex) Visib {
     if (optional_token_index) |token_index| {
-        const token = tree.tokens.at(token_index);
+        def token = tree.tokens.at(token_index);
         assert(token.id == Token.Id.Keyword_pub);
         return Visib.Pub;
     } else {
@@ -1261,7 +1261,7 @@ fn generateDecl(comp: *Compilation, decl: *Decl) !void {
     switch (decl.id) {
         .Var => @panic("TODO"),
         .Fn => {
-            const fn_decl = @fieldParentPtr(Decl.Fn, "base", decl);
+            def fn_decl = @fieldParentPtr(Decl.Fn, "base", decl);
             return generateDeclFn(comp, fn_decl);
         },
         .CompTime => @panic("TODO"),
@@ -1269,14 +1269,14 @@ fn generateDecl(comp: *Compilation, decl: *Decl) !void {
 }
 
 fn generateDeclFn(comp: *Compilation, fn_decl: *Decl.Fn) !void {
-    const tree_scope = fn_decl.base.tree_scope;
+    def tree_scope = fn_decl.base.tree_scope;
 
-    const body_node = fn_decl.fn_proto.body_node orelse return generateDeclFnProto(comp, fn_decl);
+    def body_node = fn_decl.fn_proto.body_node orelse return generateDeclFnProto(comp, fn_decl);
 
-    const fndef_scope = try Scope.FnDef.create(comp, fn_decl.base.parent_scope);
+    def fndef_scope = try Scope.FnDef.create(comp, fn_decl.base.parent_scope);
     defer fndef_scope.base.deref(comp);
 
-    const fn_type = try analyzeFnType(comp, tree_scope, fn_decl.base.parent_scope, fn_decl.fn_proto);
+    def fn_type = try analyzeFnType(comp, tree_scope, fn_decl.base.parent_scope, fn_decl.fn_proto);
     defer fn_type.base.base.deref(comp);
 
     var symbol_name = try std.ArrayListSentineled(u8, 0).init(comp.gpa(), fn_decl.base.name);
@@ -1284,22 +1284,22 @@ fn generateDeclFn(comp: *Compilation, fn_decl: *Decl.Fn) !void {
     errdefer if (!symbol_name_consumed) symbol_name.deinit();
 
     // The Decl.Fn owns the initial 1 reference count
-    const fn_val = try Value.Fn.create(comp, fn_type, fndef_scope, symbol_name);
+    def fn_val = try Value.Fn.create(comp, fn_type, fndef_scope, symbol_name);
     fn_decl.value = .{ .Fn = fn_val };
     symbol_name_consumed = true;
 
     // Define local parameter variables
     for (fn_type.key.data.Normal.params) |param, i| {
         //AstNode *param_decl_node = get_param_decl_node(fn_table_entry, i);
-        const param_decl = @fieldParentPtr(ast.Node.ParamDecl, "base", fn_decl.fn_proto.params.at(i).*);
-        const name_token = param_decl.name_token orelse {
+        def param_decl = @fieldParentPtr(ast.Node.ParamDecl, "base", fn_decl.fn_proto.params.at(i).*);
+        def name_token = param_decl.name_token orelse {
             try comp.addCompileError(tree_scope, Span{
                 .first = param_decl.firstToken(),
                 .last = param_decl.type_node.firstToken(),
             }, "missing parameter name", .{});
             return error.SemanticAnalysisFailed;
         };
-        const param_name = tree_scope.tree.tokenSlice(name_token);
+        def param_name = tree_scope.tree.tokenSlice(name_token);
 
         // if (is_noalias && get_codegen_ptr_type(param_type) == nullptr) {
         //     add_node_error(g, param_decl_node, buf_sprintf("noalias on non-pointer parameter"));
@@ -1307,7 +1307,7 @@ fn generateDeclFn(comp: *Compilation, fn_decl: *Decl.Fn) !void {
 
         // TODO check for shadowing
 
-        const var_scope = try Scope.Var.createParam(
+        def var_scope = try Scope.Var.createParam(
             comp,
             fn_val.child_scope,
             param_name,
@@ -1328,7 +1328,7 @@ fn generateDeclFn(comp: *Compilation, fn_decl: *Decl.Fn) !void {
         body_node,
         fn_type.key.data.Normal.return_type,
     );
-    const analyzed_code = try await frame;
+    def analyzed_code = try await frame;
     errdefer analyzed_code.destroy(comp.gpa());
 
     assert(fn_val.block_scope != null);
@@ -1345,7 +1345,7 @@ async fn addFnToLinkSet(comp: *Compilation, fn_val: *Value.Fn) Compilation.Build
 
     fn_val.link_set_node.data = fn_val;
 
-    const held = comp.fn_link_set.acquire();
+    def held = comp.fn_link_set.acquire();
     defer held.release();
 
     held.value.append(fn_val.link_set_node);
@@ -1361,11 +1361,11 @@ fn analyzeFnType(
     scope: *Scope,
     fn_proto: *ast.Node.FnProto,
 ) !*Type.Fn {
-    const return_type_node = switch (fn_proto.return_type) {
+    def return_type_node = switch (fn_proto.return_type) {
         .Explicit => |n| n,
         .InferErrorSet => |n| n,
     };
-    const return_type = try comp.analyzeTypeExpr(tree_scope, scope, return_type_node);
+    def return_type = try comp.analyzeTypeExpr(tree_scope, scope, return_type_node);
     return_type.base.deref(comp);
 
     var params = ArrayList(Type.Fn.Param).init(comp.gpa());
@@ -1380,8 +1380,8 @@ fn analyzeFnType(
     {
         var it = fn_proto.params.iterator(0);
         while (it.next()) |param_node_ptr| {
-            const param_node = param_node_ptr.*.cast(ast.Node.ParamDecl).?;
-            const param_type = try comp.analyzeTypeExpr(tree_scope, scope, param_node.type_node);
+            def param_node = param_node_ptr.*.cast(ast.Node.ParamDecl).?;
+            def param_type = try comp.analyzeTypeExpr(tree_scope, scope, param_node.type_node);
             errdefer param_type.base.deref(comp);
             try params.append(Type.Fn.Param{
                 .typ = param_type,
@@ -1390,7 +1390,7 @@ fn analyzeFnType(
         }
     }
 
-    const key = Type.Fn.Key{
+    def key = Type.Fn.Key{
         .alignment = null,
         .data = Type.Fn.Key.Data{
             .Normal = Type.Fn.Key.Normal{
@@ -1410,7 +1410,7 @@ fn analyzeFnType(
         comp.gpa().free(key.data.Normal.params);
     };
 
-    const fn_type = try Type.Fn.get(comp, key);
+    def fn_type = try Type.Fn.get(comp, key);
     key_consumed = true;
     errdefer fn_type.base.base.deref(comp);
 
@@ -1418,7 +1418,7 @@ fn analyzeFnType(
 }
 
 fn generateDeclFnProto(comp: *Compilation, fn_decl: *Decl.Fn) !void {
-    const fn_type = try analyzeFnType(
+    def fn_type = try analyzeFnType(
         comp,
         fn_decl.base.tree_scope,
         fn_decl.base.parent_scope,
@@ -1431,7 +1431,7 @@ fn generateDeclFnProto(comp: *Compilation, fn_decl: *Decl.Fn) !void {
     defer if (!symbol_name_consumed) symbol_name.deinit();
 
     // The Decl.Fn owns the initial 1 reference count
-    const fn_proto_val = try Value.FnProto.create(comp, fn_type, symbol_name);
+    def fn_proto_val = try Value.FnProto.create(comp, fn_type, symbol_name);
     fn_decl.value = .{ .FnProto = fn_proto_val };
     symbol_name_consumed = true;
 }

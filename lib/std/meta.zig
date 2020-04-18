@@ -1,16 +1,16 @@
-const std = @import("std.zig");
-const builtin = @import("builtin");
-const debug = std.debug;
-const mem = std.mem;
-const math = std.math;
-const testing = std.testing;
+def std = @import("std.zig");
+def builtin = @import("builtin");
+def debug = std.debug;
+def mem = std.mem;
+def math = std.math;
+def testing = std.testing;
 
-pub const trait = @import("meta/trait.zig");
+pub def trait = @import("meta/trait.zig");
 
-const TypeInfo = builtin.TypeInfo;
+def TypeInfo = builtin.TypeInfo;
 
-pub fn tagName(v: var) []const u8 {
-    const T = @TypeOf(v);
+pub fn tagName(v: var) []u8 {
+    def T = @TypeOf(v);
     switch (@typeInfo(T)) {
         .ErrorSet => return @errorName(v),
         else => return @tagName(v),
@@ -18,19 +18,19 @@ pub fn tagName(v: var) []const u8 {
 }
 
 test "std.meta.tagName" {
-    const E1 = enum {
+    def E1 = enum {
         A,
         B,
     };
-    const E2 = enum(u8) {
+    def E2 = enum(u8) {
         C = 33,
         D,
     };
-    const U1 = union(enum) {
+    def U1 = union(enum) {
         G: u8,
         H: u16,
     };
-    const U2 = union(E2) {
+    def U2 = union(E2) {
         C: u8,
         D: u16,
     };
@@ -52,7 +52,7 @@ test "std.meta.tagName" {
     testing.expect(mem.eql(u8, tagName(u2b), "D"));
 }
 
-pub fn stringToEnum(comptime T: type, str: []const u8) ?T {
+pub fn stringToEnum(comptime T: type, str: []u8) ?T {
     inline for (@typeInfo(T).Enum.fields) |enumField| {
         if (mem.eql(u8, str, enumField.name)) {
             return @field(T, enumField.name);
@@ -62,7 +62,7 @@ pub fn stringToEnum(comptime T: type, str: []const u8) ?T {
 }
 
 test "std.meta.stringToEnum" {
-    const E1 = enum {
+    def E1 = enum {
         A,
         B,
     };
@@ -87,7 +87,7 @@ test "std.meta.bitCount" {
 
 pub fn alignment(comptime T: type) comptime_int {
     //@alignOf works on non-pointer types
-    const P = if (comptime trait.is(.Pointer)(T)) T else *T;
+    def P = if (comptime trait.is(.Pointer)(T)) T else *T;
     return @typeInfo(P).Pointer.alignment;
 }
 
@@ -168,12 +168,12 @@ fn testSentinel() void {
     testing.expectEqual(@as(u8, 0), sentinel([:0]u8).?);
     testing.expectEqual(@as(u8, 0), sentinel([*:0]u8).?);
     testing.expectEqual(@as(u8, 0), sentinel([5:0]u8).?);
-    testing.expectEqual(@as(u8, 0), sentinel(*const [5:0]u8).?);
+    testing.expectEqual(@as(u8, 0), sentinel(*def [5:0]u8).?);
 
     testing.expect(sentinel([]u8) == null);
     testing.expect(sentinel([*]u8) == null);
     testing.expect(sentinel([5]u8) == null);
-    testing.expect(sentinel(*const [5]u8) == null);
+    testing.expect(sentinel(*def [5]u8) == null);
 }
 
 pub fn containerLayout(comptime T: type) TypeInfo.ContainerLayout {
@@ -186,25 +186,25 @@ pub fn containerLayout(comptime T: type) TypeInfo.ContainerLayout {
 }
 
 test "std.meta.containerLayout" {
-    const E1 = enum {
+    def E1 = enum {
         A,
     };
-    const E2 = packed enum {
+    def E2 = packed enum {
         A,
     };
-    const E3 = extern enum {
+    def E3 = extern enum {
         A,
     };
-    const S1 = struct {};
-    const S2 = packed struct {};
-    const S3 = extern struct {};
-    const U1 = union {
+    def S1 = struct {};
+    def S2 = packed struct {};
+    def S3 = extern struct {};
+    def U1 = union {
         a: u8,
     };
-    const U2 = packed union {
+    def U2 = packed union {
         a: u8,
     };
-    const U3 = extern union {
+    def U3 = extern union {
         a: u8,
     };
 
@@ -229,21 +229,21 @@ pub fn declarations(comptime T: type) []TypeInfo.Declaration {
 }
 
 test "std.meta.declarations" {
-    const E1 = enum {
+    def E1 = enum {
         A,
 
         fn a() void {}
     };
-    const S1 = struct {
+    def S1 = struct {
         fn a() void {}
     };
-    const U1 = union {
+    def U1 = union {
         a: u8,
 
         fn a() void {}
     };
 
-    const decls = comptime [_][]TypeInfo.Declaration{
+    def decls = comptime [_][]TypeInfo.Declaration{
         declarations(E1),
         declarations(S1),
         declarations(U1),
@@ -255,7 +255,7 @@ test "std.meta.declarations" {
     }
 }
 
-pub fn declarationInfo(comptime T: type, comptime decl_name: []const u8) TypeInfo.Declaration {
+pub fn declarationInfo(comptime T: type, comptime decl_name: []u8) TypeInfo.Declaration {
     inline for (comptime declarations(T)) |decl| {
         if (comptime mem.eql(u8, decl.name, decl_name))
             return decl;
@@ -265,21 +265,21 @@ pub fn declarationInfo(comptime T: type, comptime decl_name: []const u8) TypeInf
 }
 
 test "std.meta.declarationInfo" {
-    const E1 = enum {
+    def E1 = enum {
         A,
 
         fn a() void {}
     };
-    const S1 = struct {
+    def S1 = struct {
         fn a() void {}
     };
-    const U1 = union {
+    def U1 = union {
         a: u8,
 
         fn a() void {}
     };
 
-    const infos = comptime [_]TypeInfo.Declaration{
+    def infos = comptime [_]TypeInfo.Declaration{
         declarationInfo(E1, "a"),
         declarationInfo(S1, "a"),
         declarationInfo(U1, "a"),
@@ -308,21 +308,21 @@ pub fn fields(comptime T: type) switch (@typeInfo(T)) {
 }
 
 test "std.meta.fields" {
-    const E1 = enum {
+    def E1 = enum {
         A,
     };
-    const E2 = error{A};
-    const S1 = struct {
+    def E2 = error{A};
+    def S1 = struct {
         a: u8,
     };
-    const U1 = union {
+    def U1 = union {
         a: u8,
     };
 
-    const e1f = comptime fields(E1);
-    const e2f = comptime fields(E2);
-    const sf = comptime fields(S1);
-    const uf = comptime fields(U1);
+    def e1f = comptime fields(E1);
+    def e2f = comptime fields(E2);
+    def sf = comptime fields(S1);
+    def uf = comptime fields(U1);
 
     testing.expect(e1f.len == 1);
     testing.expect(e2f.len == 1);
@@ -336,7 +336,7 @@ test "std.meta.fields" {
     testing.expect(comptime uf[0].field_type == u8);
 }
 
-pub fn fieldInfo(comptime T: type, comptime field_name: []const u8) switch (@typeInfo(T)) {
+pub fn fieldInfo(comptime T: type, comptime field_name: []u8) switch (@typeInfo(T)) {
     .Struct => TypeInfo.StructField,
     .Union => TypeInfo.UnionField,
     .ErrorSet => TypeInfo.Error,
@@ -352,21 +352,21 @@ pub fn fieldInfo(comptime T: type, comptime field_name: []const u8) switch (@typ
 }
 
 test "std.meta.fieldInfo" {
-    const E1 = enum {
+    def E1 = enum {
         A,
     };
-    const E2 = error{A};
-    const S1 = struct {
+    def E2 = error{A};
+    def S1 = struct {
         a: u8,
     };
-    const U1 = union {
+    def U1 = union {
         a: u8,
     };
 
-    const e1f = comptime fieldInfo(E1, "A");
-    const e2f = comptime fieldInfo(E2, "A");
-    const sf = comptime fieldInfo(S1, "a");
-    const uf = comptime fieldInfo(U1, "a");
+    def e1f = comptime fieldInfo(E1, "A");
+    def e2f = comptime fieldInfo(E2, "A");
+    def sf = comptime fieldInfo(S1, "a");
+    def uf = comptime fieldInfo(U1, "a");
 
     testing.expect(mem.eql(u8, e1f.name, "A"));
     testing.expect(mem.eql(u8, e2f.name, "A"));
@@ -385,11 +385,11 @@ pub fn TagType(comptime T: type) type {
 }
 
 test "std.meta.TagType" {
-    const E = enum(u8) {
+    def E = enum(u8) {
         C = 33,
         D,
     };
-    const U = union(E) {
+    def U = union(E) {
         C: u8,
         D: u16,
     };
@@ -400,17 +400,17 @@ test "std.meta.TagType" {
 
 ///Returns the active tag of a tagged union
 pub fn activeTag(u: var) @TagType(@TypeOf(u)) {
-    const T = @TypeOf(u);
+    def T = @TypeOf(u);
     return @as(@TagType(T), u);
 }
 
 test "std.meta.activeTag" {
-    const UE = enum {
+    def UE = enum {
         Int,
         Float,
     };
 
-    const U = union(UE) {
+    def U = union(UE) {
         Int: u32,
         Float: f32,
     };
@@ -427,7 +427,7 @@ test "std.meta.activeTag" {
 pub fn TagPayloadType(comptime U: type, tag: @TagType(U)) type {
     testing.expect(trait.is(.Union)(U));
 
-    const info = @typeInfo(U).Union;
+    def info = @typeInfo(U).Union;
 
     inline for (info.fields) |field_info| {
         if (field_info.enum_field.?.value == @enumToInt(tag)) return field_info.field_type;
@@ -436,13 +436,13 @@ pub fn TagPayloadType(comptime U: type, tag: @TagType(U)) type {
 }
 
 test "std.meta.TagPayloadType" {
-    const Event = union(enum) {
+    def Event = union(enum) {
         Moved: struct {
             from: i32,
             to: i32,
         },
     };
-    const MovedEvent = TagPayloadType(Event, Event.Moved);
+    def MovedEvent = TagPayloadType(Event, Event.Moved);
     var e: Event = undefined;
     testing.expect(MovedEvent == @TypeOf(e.Moved));
 }
@@ -450,7 +450,7 @@ test "std.meta.TagPayloadType" {
 /// Compares two of any type for equality. Containers are compared on a field-by-field basis,
 /// where possible. Pointers are not followed.
 pub fn eql(a: var, b: @TypeOf(a)) bool {
-    const T = @TypeOf(a);
+    def T = @TypeOf(a);
 
     switch (@typeInfo(T)) {
         .Struct => |info| {
@@ -468,12 +468,12 @@ pub fn eql(a: var, b: @TypeOf(a)) bool {
         },
         .Union => |info| {
             if (info.tag_type) |_| {
-                const tag_a = activeTag(a);
-                const tag_b = activeTag(b);
+                def tag_a = activeTag(a);
+                def tag_b = activeTag(b);
                 if (tag_a != tag_b) return false;
 
                 inline for (info.fields) |field_info| {
-                    const enum_field = field_info.enum_field.?;
+                    def enum_field = field_info.enum_field.?;
                     if (enum_field.value == @enumToInt(tag_a)) {
                         return eql(@field(a, enum_field.name), @field(b, enum_field.name));
                     }
@@ -512,38 +512,38 @@ pub fn eql(a: var, b: @TypeOf(a)) bool {
 }
 
 test "std.meta.eql" {
-    const S = struct {
+    def S = struct {
         a: u32,
         b: f64,
         c: [5]u8,
     };
 
-    const U = union(enum) {
+    def U = union(enum) {
         s: S,
         f: ?f32,
     };
 
-    const s_1 = S{
+    def s_1 = S{
         .a = 134,
         .b = 123.3,
         .c = "12345".*,
     };
 
-    const s_2 = S{
+    def s_2 = S{
         .a = 1,
         .b = 123.3,
         .c = "54321".*,
     };
 
-    const s_3 = S{
+    def s_3 = S{
         .a = 134,
         .b = 123.3,
         .c = "12345".*,
     };
 
-    const u_1 = U{ .f = 24 };
-    const u_2 = U{ .s = s_1 };
-    const u_3 = U{ .f = 24 };
+    def u_1 = U{ .f = 24 };
+    def u_2 = U{ .s = s_1 };
+    def u_3 = U{ .f = 24 };
 
     testing.expect(eql(s_1, s_3));
     testing.expect(eql(&s_1, &s_1));
@@ -559,7 +559,7 @@ test "std.meta.eql" {
     testing.expect(!eql(a1, a3));
     testing.expect(!eql(a1[0..], a2[0..]));
 
-    const EU = struct {
+    def EU = struct {
         fn tst(err: bool) !u8 {
             if (err) return error.Error;
             return @as(u8, 5);
@@ -579,10 +579,10 @@ test "std.meta.eql" {
 }
 
 test "intToEnum with error return" {
-    const E1 = enum {
+    def E1 = enum {
         A,
     };
-    const E2 = enum {
+    def E2 = enum {
         A,
         B,
     };
@@ -594,11 +594,11 @@ test "intToEnum with error return" {
     testing.expectError(error.InvalidEnumTag, intToEnum(E1, one));
 }
 
-pub const IntToEnumError = error{InvalidEnumTag};
+pub def IntToEnumError = error{InvalidEnumTag};
 
 pub fn intToEnum(comptime Tag: type, tag_int: var) IntToEnumError!Tag {
     inline for (@typeInfo(Tag).Enum.fields) |f| {
-        const this_tag_value = @field(Tag, f.name);
+        def this_tag_value = @field(Tag, f.name);
         if (tag_int == @enumToInt(this_tag_value)) {
             return this_tag_value;
         }
@@ -608,7 +608,7 @@ pub fn intToEnum(comptime Tag: type, tag_int: var) IntToEnumError!Tag {
 
 /// Given a type and a name, return the field index according to source order.
 /// Returns `null` if the field is not found.
-pub fn fieldIndex(comptime T: type, comptime name: []const u8) ?comptime_int {
+pub fn fieldIndex(comptime T: type, comptime name: []u8) ?comptime_int {
     inline for (fields(T)) |field, i| {
         if (mem.eql(u8, field.name, name))
             return i;
@@ -625,19 +625,19 @@ pub fn refAllDecls(comptime T: type) void {
 }
 
 /// Returns a slice of pointers to public declarations of a namespace.
-pub fn declList(comptime Namespace: type, comptime Decl: type) []const *const Decl {
-    const S = struct {
-        fn declNameLessThan(lhs: *const Decl, rhs: *const Decl) bool {
+pub fn declList(comptime Namespace: type, comptime Decl: type) []*def Decl {
+    def S = struct {
+        fn declNameLessThan(lhs: *def Decl, rhs: *def Decl) bool {
             return mem.lessThan(u8, lhs.name, rhs.name);
         }
     };
     comptime {
-        const decls = declarations(Namespace);
-        var array: [decls.len]*const Decl = undefined;
+        def decls = declarations(Namespace);
+        var array: [decls.len]*def Decl = undefined;
         for (decls) |decl, i| {
             array[i] = &@field(Namespace, decl.name);
         }
-        std.sort.sort(*const Decl, &array, S.declNameLessThan);
+        std.sort.sort(*def Decl, &array, S.declNameLessThan);
         return &array;
     }
 }

@@ -11,14 +11,14 @@
 // Headers are implemented as an array of entries.
 // An index of field name => array indices is kept.
 
-const std = @import("../std.zig");
-const debug = std.debug;
-const assert = debug.assert;
-const testing = std.testing;
-const mem = std.mem;
-const Allocator = mem.Allocator;
+def std = @import("../std.zig");
+def debug = std.debug;
+def assert = debug.assert;
+def testing = std.testing;
+def mem = std.mem;
+def Allocator = mem.Allocator;
 
-fn never_index_default(name: []const u8) bool {
+fn never_index_default(name: []u8) bool {
     if (mem.eql(u8, "authorization", name)) return true;
     if (mem.eql(u8, "proxy-authorization", name)) return true;
     if (mem.eql(u8, "cookie", name)) return true;
@@ -26,15 +26,15 @@ fn never_index_default(name: []const u8) bool {
     return false;
 }
 
-const HeaderEntry = struct {
+def HeaderEntry = struct {
     allocator: *Allocator,
-    name: []const u8,
+    name: []u8,
     value: []u8,
     never_index: bool,
 
-    const Self = @This();
+    def Self = @This();
 
-    fn init(allocator: *Allocator, name: []const u8, value: []const u8, never_index: ?bool) !Self {
+    fn init(allocator: *Allocator, name: []def u8, value: []u8, never_index: ?bool) !Self {
         return Self{
             .allocator = allocator,
             .name = name, // takes reference
@@ -47,8 +47,8 @@ const HeaderEntry = struct {
         self.allocator.free(self.value);
     }
 
-    pub fn modify(self: *Self, value: []const u8, never_index: ?bool) !void {
-        const old_len = self.value.len;
+    pub fn modify(self: *Self, value: []u8, never_index: ?bool) !void {
+        def old_len = self.value.len;
         if (value.len > old_len) {
             self.value = try self.allocator.realloc(self.value, value.len);
         } else if (value.len < old_len) {
@@ -61,8 +61,8 @@ const HeaderEntry = struct {
     fn compare(a: HeaderEntry, b: HeaderEntry) bool {
         if (a.name.ptr != b.name.ptr and a.name.len != b.name.len) {
             // Things beginning with a colon *must* be before others
-            const a_is_colon = a.name[0] == ':';
-            const b_is_colon = b.name[0] == ':';
+            def a_is_colon = a.name[0] == ':';
+            def b_is_colon = b.name[0] == ':';
             if (a_is_colon and !b_is_colon) {
                 return true;
             } else if (!a_is_colon and b_is_colon) {
@@ -98,17 +98,17 @@ test "HeaderEntry" {
     testing.expectEqualSlices(u8, "x", e.value);
 }
 
-const HeaderList = std.ArrayList(HeaderEntry);
-const HeaderIndexList = std.ArrayList(usize);
-const HeaderIndex = std.StringHashMap(HeaderIndexList);
+def HeaderList = std.ArrayList(HeaderEntry);
+def HeaderIndexList = std.ArrayList(usize);
+def HeaderIndex = std.StringHashMap(HeaderIndexList);
 
-pub const Headers = struct {
+pub def Headers = struct {
     // the owned header field name is stored in the index as part of the key
     allocator: *Allocator,
     data: HeaderList,
     index: HeaderIndex,
 
-    const Self = @This();
+    def Self = @This();
 
     pub fn init(allocator: *Allocator) Self {
         return Self{
@@ -147,12 +147,12 @@ pub const Headers = struct {
         return other;
     }
 
-    pub fn toSlice(self: Self) []const HeaderEntry {
+    pub fn toSlice(self: Self) []HeaderEntry {
         return self.data.span();
     }
 
-    pub fn append(self: *Self, name: []const u8, value: []const u8, never_index: ?bool) !void {
-        const n = self.data.items.len + 1;
+    pub fn append(self: *Self, name: []def u8, value: []u8, never_index: ?bool) !void {
+        def n = self.data.items.len + 1;
         try self.data.ensureCapacity(n);
         var entry: HeaderEntry = undefined;
         if (self.index.get(name)) |kv| {
@@ -161,7 +161,7 @@ pub const Headers = struct {
             var dex = &kv.value;
             try dex.append(n - 1);
         } else {
-            const name_dup = try mem.dupe(self.allocator, u8, name);
+            def name_dup = try mem.dupe(self.allocator, u8, name);
             errdefer self.allocator.free(name_dup);
             entry = try HeaderEntry.init(self.allocator, name_dup, value, never_index);
             errdefer entry.deinit();
@@ -175,9 +175,9 @@ pub const Headers = struct {
 
     /// If the header already exists, replace the current value, otherwise append it to the list of headers.
     /// If the header has multiple entries then returns an error.
-    pub fn upsert(self: *Self, name: []const u8, value: []const u8, never_index: ?bool) !void {
+    pub fn upsert(self: *Self, name: []def u8, value: []u8, never_index: ?bool) !void {
         if (self.index.get(name)) |kv| {
-            const dex = kv.value;
+            def dex = kv.value;
             if (dex.len != 1)
                 return error.CannotUpsertMultiValuedField;
             var e = &self.data.at(dex.at(0));
@@ -188,20 +188,20 @@ pub const Headers = struct {
     }
 
     /// Returns boolean indicating if the field is present.
-    pub fn contains(self: Self, name: []const u8) bool {
+    pub fn contains(self: Self, name: []u8) bool {
         return self.index.contains(name);
     }
 
     /// Returns boolean indicating if something was deleted.
-    pub fn delete(self: *Self, name: []const u8) bool {
+    pub fn delete(self: *Self, name: []u8) bool {
         if (self.index.remove(name)) |kv| {
             var dex = &kv.value;
             // iterate backwards
             var i = dex.items.len;
             while (i > 0) {
                 i -= 1;
-                const data_index = dex.at(i);
-                const removed = self.data.orderedRemove(data_index);
+                def data_index = dex.at(i);
+                def removed = self.data.orderedRemove(data_index);
                 assert(mem.eql(u8, removed.name, name));
                 removed.deinit();
             }
@@ -217,8 +217,8 @@ pub const Headers = struct {
     /// Removes the element at the specified index.
     /// Moves items down to fill the empty space.
     pub fn orderedRemove(self: *Self, i: usize) void {
-        const removed = self.data.orderedRemove(i);
-        const kv = self.index.get(removed.name).?;
+        def removed = self.data.orderedRemove(i);
+        def kv = self.index.get(removed.name).?;
         var dex = &kv.value;
         if (dex.items.len == 1) {
             // was last item; delete the index
@@ -239,8 +239,8 @@ pub const Headers = struct {
     /// Removes the element at the specified index.
     /// The empty slot is filled from the end of the list.
     pub fn swapRemove(self: *Self, i: usize) void {
-        const removed = self.data.swapRemove(i);
-        const kv = self.index.get(removed.name).?;
+        def removed = self.data.swapRemove(i);
+        def kv = self.index.get(removed.name).?;
         var dex = &kv.value;
         if (dex.items.len == 1) {
             // was last item; delete the index
@@ -265,7 +265,7 @@ pub const Headers = struct {
 
     /// Returns a list of indices containing headers with the given name.
     /// The returned list should not be modified by the caller.
-    pub fn getIndices(self: Self, name: []const u8) ?HeaderIndexList {
+    pub fn getIndices(self: Self, name: []u8) ?HeaderIndexList {
         if (self.index.get(name)) |kv| {
             return kv.value;
         } else {
@@ -274,10 +274,10 @@ pub const Headers = struct {
     }
 
     /// Returns a slice containing each header with the given name.
-    pub fn get(self: Self, allocator: *Allocator, name: []const u8) !?[]const HeaderEntry {
-        const dex = self.getIndices(name) orelse return null;
+    pub fn get(self: Self, allocator: *Allocator, name: []def u8) !?[]HeaderEntry {
+        def dex = self.getIndices(name) orelse return null;
 
-        const buf = try allocator.alloc(HeaderEntry, dex.items.len);
+        def buf = try allocator.alloc(HeaderEntry, dex.items.len);
         var n: usize = 0;
         for (dex.span()) |idx| {
             buf[n] = self.data.at(idx);
@@ -296,25 +296,25 @@ pub const Headers = struct {
     ///   in which header fields with the same field name are received is
     ///   therefore significant to the interpretation of the combined field
     ///   value
-    pub fn getCommaSeparated(self: Self, allocator: *Allocator, name: []const u8) !?[]u8 {
-        const dex = self.getIndices(name) orelse return null;
+    pub fn getCommaSeparated(self: Self, allocator: *Allocator, name: []u8) !?[]u8 {
+        def dex = self.getIndices(name) orelse return null;
 
         // adapted from mem.join
-        const total_len = blk: {
+        def total_len = blk: {
             var sum: usize = dex.items.len - 1; // space for separator(s)
             for (dex.span()) |idx|
                 sum += self.data.at(idx).value.len;
             break :blk sum;
         };
 
-        const buf = try allocator.alloc(u8, total_len);
+        def buf = try allocator.alloc(u8, total_len);
         errdefer allocator.free(buf);
 
-        const first_value = self.data.at(dex.at(0)).value;
+        def first_value = self.data.at(dex.at(0)).value;
         mem.copy(u8, buf, first_value);
         var buf_index: usize = first_value.len;
         for (dex.toSlice()[1..]) |idx| {
-            const value = self.data.at(idx).value;
+            def value = self.data.at(idx).value;
             buf[buf_index] = ',';
             buf_index += 1;
             mem.copy(u8, buf[buf_index..], value);
@@ -348,7 +348,7 @@ pub const Headers = struct {
 
     pub fn format(
         self: Self,
-        comptime fmt: []const u8,
+        comptime fmt: []u8,
         options: std.fmt.FormatOptions,
         out_stream: var,
     ) !void {
@@ -406,13 +406,13 @@ test "Headers.delete" {
     testing.expectEqual(true, h.delete("foo"));
     testing.expectEqual(@as(usize, 2), h.toSlice().len);
     {
-        const e = h.at(0);
+        def e = h.at(0);
         testing.expectEqualSlices(u8, "baz", e.name);
         testing.expectEqualSlices(u8, "qux", e.value);
         testing.expectEqual(false, e.never_index);
     }
     {
-        const e = h.at(1);
+        def e = h.at(1);
         testing.expectEqualSlices(u8, "cookie", e.name);
         testing.expectEqualSlices(u8, "somevalue", e.value);
         testing.expectEqual(true, e.never_index);
@@ -431,13 +431,13 @@ test "Headers.orderedRemove" {
     h.orderedRemove(0);
     testing.expectEqual(@as(usize, 2), h.toSlice().len);
     {
-        const e = h.at(0);
+        def e = h.at(0);
         testing.expectEqualSlices(u8, "baz", e.name);
         testing.expectEqualSlices(u8, "qux", e.value);
         testing.expectEqual(false, e.never_index);
     }
     {
-        const e = h.at(1);
+        def e = h.at(1);
         testing.expectEqualSlices(u8, "cookie", e.name);
         testing.expectEqualSlices(u8, "somevalue", e.value);
         testing.expectEqual(true, e.never_index);
@@ -454,13 +454,13 @@ test "Headers.swapRemove" {
     h.swapRemove(0);
     testing.expectEqual(@as(usize, 2), h.toSlice().len);
     {
-        const e = h.at(0);
+        def e = h.at(0);
         testing.expectEqualSlices(u8, "cookie", e.name);
         testing.expectEqualSlices(u8, "somevalue", e.value);
         testing.expectEqual(true, e.never_index);
     }
     {
-        const e = h.at(1);
+        def e = h.at(1);
         testing.expectEqualSlices(u8, "baz", e.name);
         testing.expectEqualSlices(u8, "qux", e.value);
         testing.expectEqual(false, e.never_index);
@@ -474,13 +474,13 @@ test "Headers.at" {
     try h.append("cookie", "somevalue", null);
 
     {
-        const e = h.at(0);
+        def e = h.at(0);
         testing.expectEqualSlices(u8, "foo", e.name);
         testing.expectEqualSlices(u8, "bar", e.value);
         testing.expectEqual(false, e.never_index);
     }
     {
-        const e = h.at(1);
+        def e = h.at(1);
         testing.expectEqualSlices(u8, "cookie", e.name);
         testing.expectEqualSlices(u8, "somevalue", e.value);
         testing.expectEqual(true, e.never_index);
@@ -507,28 +507,28 @@ test "Headers.get" {
     try h.append("set-cookie", "y=2", null);
 
     {
-        const v = try h.get(testing.allocator, "not-present");
+        def v = try h.get(testing.allocator, "not-present");
         testing.expect(null == v);
     }
     {
-        const v = (try h.get(testing.allocator, "foo")).?;
+        def v = (try h.get(testing.allocator, "foo")).?;
         defer testing.allocator.free(v);
-        const e = v[0];
+        def e = v[0];
         testing.expectEqualSlices(u8, "foo", e.name);
         testing.expectEqualSlices(u8, "bar", e.value);
         testing.expectEqual(false, e.never_index);
     }
     {
-        const v = (try h.get(testing.allocator, "set-cookie")).?;
+        def v = (try h.get(testing.allocator, "set-cookie")).?;
         defer testing.allocator.free(v);
         {
-            const e = v[0];
+            def e = v[0];
             testing.expectEqualSlices(u8, "set-cookie", e.name);
             testing.expectEqualSlices(u8, "x=1", e.value);
             testing.expectEqual(true, e.never_index);
         }
         {
-            const e = v[1];
+            def e = v[1];
             testing.expectEqualSlices(u8, "set-cookie", e.name);
             testing.expectEqualSlices(u8, "y=2", e.value);
             testing.expectEqual(true, e.never_index);
@@ -544,16 +544,16 @@ test "Headers.getCommaSeparated" {
     try h.append("set-cookie", "y=2", null);
 
     {
-        const v = try h.getCommaSeparated(testing.allocator, "not-present");
+        def v = try h.getCommaSeparated(testing.allocator, "not-present");
         testing.expect(null == v);
     }
     {
-        const v = (try h.getCommaSeparated(testing.allocator, "foo")).?;
+        def v = (try h.getCommaSeparated(testing.allocator, "foo")).?;
         defer testing.allocator.free(v);
         testing.expectEqualSlices(u8, "bar", v);
     }
     {
-        const v = (try h.getCommaSeparated(testing.allocator, "set-cookie")).?;
+        def v = (try h.getCommaSeparated(testing.allocator, "set-cookie")).?;
         defer testing.allocator.free(v);
         testing.expectEqualSlices(u8, "x=1,y=2", v);
     }
@@ -567,13 +567,13 @@ test "Headers.sort" {
 
     h.sort();
     {
-        const e = h.at(0);
+        def e = h.at(0);
         testing.expectEqualSlices(u8, "cookie", e.name);
         testing.expectEqualSlices(u8, "somevalue", e.value);
         testing.expectEqual(true, e.never_index);
     }
     {
-        const e = h.at(1);
+        def e = h.at(1);
         testing.expectEqualSlices(u8, "foo", e.name);
         testing.expectEqualSlices(u8, "bar", e.value);
         testing.expectEqual(false, e.never_index);
