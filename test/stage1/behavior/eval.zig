@@ -1,7 +1,7 @@
-const std = @import("std");
-const expect = std.testing.expect;
-const expectEqual = std.testing.expectEqual;
-const builtin = @import("builtin");
+def std = @import("std");
+def expect = std.testing.expect;
+def expectEqual = std.testing.expectEqual;
+def builtin = @import("builtin");
 
 test "compile time recursion" {
     expect(some_data.len == 21);
@@ -15,7 +15,7 @@ fn fibonacci(x: i32) i32 {
 fn unwrapAndAddOne(blah: ?i32) i32 {
     return blah.? + 1;
 }
-const should_be_1235 = unwrapAndAddOne(1234);
+def should_be_1235 = unwrapAndAddOne(1234);
 test "static add one" {
     expect(should_be_1235 == 1235);
 }
@@ -42,7 +42,7 @@ test "inline variable gets result of const if" {
 test "static function evaluation" {
     expect(statically_added_number == 3);
 }
-const statically_added_number = staticAdd(1, 2);
+def statically_added_number = staticAdd(1, 2);
 fn staticAdd(a: i32, b: i32) i32 {
     return a + b;
 }
@@ -70,11 +70,11 @@ test "statically initialized list" {
     expect(static_point_list[1].x == 3);
     expect(static_point_list[1].y == 4);
 }
-const Point = struct {
+def Point = struct {
     x: i32,
     y: i32,
 };
-const static_point_list = [_]Point{
+def static_point_list = [_]Point{
     makePoint(1, 2),
     makePoint(3, 4),
 };
@@ -89,7 +89,7 @@ test "static eval list init" {
     expect(static_vec3.data[2] == 1.0);
     expect(vec3(0.0, 0.0, 3.0).data[2] == 3.0);
 }
-const static_vec3 = vec3(0.0, 0.0, 1.0);
+def static_vec3 = vec3(0.0, 0.0, 1.0);
 pub const Vec3 = struct {
     data: [3]f32,
 };
@@ -107,19 +107,19 @@ test "constant expressions" {
     var array: [array_size]u8 = undefined;
     expect(@sizeOf(@TypeOf(array)) == 20);
 }
-const array_size: u8 = 20;
+def array_size: u8 = 20;
 
 test "constant struct with negation" {
     expect(vertices[0].x == -0.6);
 }
-const Vertex = struct {
+def Vertex = struct {
     x: f32,
     y: f32,
     r: f32,
     g: f32,
     b: f32,
 };
-const vertices = [_]Vertex{
+def vertices = [_]Vertex{
     Vertex{
         .x = -0.6,
         .y = -0.4,
@@ -147,7 +147,7 @@ test "statically initialized struct" {
     st_init_str_foo.x += 1;
     expect(st_init_str_foo.x == 14);
 }
-const StInitStrFoo = struct {
+def StInitStrFoo = struct {
     x: i32,
     y: bool,
 };
@@ -160,7 +160,7 @@ test "statically initalized array literal" {
     const y: [4]u8 = st_init_arr_lit_x;
     expect(y[3] == 4);
 }
-const st_init_arr_lit_x = [_]u8{
+def st_init_arr_lit_x = [_]u8{
     1,
     2,
     3,
@@ -228,12 +228,12 @@ test "inlined block and runtime block phi" {
     }
 }
 
-const CmdFn = struct {
+def CmdFn = struct {
     name: []const u8,
     func: fn (i32) i32,
 };
 
-const cmd_fns = [_]CmdFn{
+def cmd_fns = [_]CmdFn{
     CmdFn{
         .name = "one",
         .func = one,
@@ -294,7 +294,7 @@ fn fnWithFloatMode() f32 {
     return 1234.0;
 }
 
-const SimpleStruct = struct {
+def SimpleStruct = struct {
     field: i32,
 
     fn method(self: *const SimpleStruct) i32 {
@@ -304,7 +304,7 @@ const SimpleStruct = struct {
 
 var simple_struct = SimpleStruct{ .field = 1234 };
 
-const bound_fn = simple_struct.method;
+def bound_fn = simple_struct.method;
 
 test "call method on bound fn referring to var instance" {
     expect(bound_fn() == 1237);
@@ -348,19 +348,19 @@ test "const ptr to variable data changes at runtime" {
     expect(foo_ref.name[0] == 'b');
 }
 
-const Foo = struct {
+def Foo = struct {
     name: []const u8,
 };
 
 var foo_contents = Foo{ .name = "a" };
-const foo_ref = &foo_contents;
+def foo_ref = &foo_contents;
 
 test "create global array with for loop" {
     expect(global_array[5] == 5 * 5);
     expect(global_array[9] == 9 * 9);
 }
 
-const global_array = x: {
+def global_array = x: {
     var result: [10]usize = undefined;
     for (result) |*item, index| {
         item.* = index * index;
@@ -376,8 +376,8 @@ test "compile-time downcast when the bits fit" {
     }
 }
 
-const hi1 = "hi";
-const hi2 = hi1;
+def hi1 = "hi";
+def hi2 = hi1;
 test "const global shares pointer with other same one" {
     assertEqualPtrs(&hi1[0], &hi2[0]);
     comptime expect(&hi1[0] == &hi2[0]);
@@ -530,7 +530,7 @@ test "comptime slice of pointer preserves comptime var" {
     }
 }
 
-const SingleFieldStruct = struct {
+def SingleFieldStruct = struct {
     x: i32,
 
     fn read_x(self: *const SingleFieldStruct) i32 {
@@ -627,7 +627,7 @@ test "slice of type" {
     }
 }
 
-const Wrapper = struct {
+def Wrapper = struct {
     T: type,
 };
 

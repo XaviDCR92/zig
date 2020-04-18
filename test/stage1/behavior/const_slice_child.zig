@@ -1,12 +1,12 @@
-const std = @import("std");
-const debug = std.debug;
-const testing = std.testing;
-const expect = testing.expect;
+def std = @import("std");
+def debug = std.debug;
+def testing = std.testing;
+def expect = testing.expect;
 
-var argv: [*]const [*]const u8 = undefined;
+var argv: [*][*]u8 = undefined;
 
 test "const slice child" {
-    const strs = [_][*]const u8{
+    const strs = [_][*]u8{
         "one",
         "two",
         "three",
@@ -15,7 +15,7 @@ test "const slice child" {
     bar(strs.len);
 }
 
-fn foo(args: [][]const u8) void {
+fn foo(args: [][]u8) void {
     expect(args.len == 3);
     expect(streql(args[0], "one"));
     expect(streql(args[1], "two"));
@@ -23,7 +23,7 @@ fn foo(args: [][]const u8) void {
 }
 
 fn bar(argc: usize) void {
-    const args = testing.allocator.alloc([]const u8, argc) catch unreachable;
+    const args = testing.allocator.alloc([]var u8, argc) catch unreachable;
     defer testing.allocator.free(args);
     for (args) |_, i| {
         const ptr = argv[i];
@@ -32,13 +32,13 @@ fn bar(argc: usize) void {
     foo(args);
 }
 
-fn strlen(ptr: [*]const u8) usize {
+fn strlen(ptr: [*] u8) usize {
     var count: usize = 0;
     while (ptr[count] != 0) : (count += 1) {}
     return count;
 }
 
-fn streql(a: []const u8, b: []const u8) bool {
+fn streql(a: []u8, b: []u8) bool {
     if (a.len != b.len) return false;
     for (a) |item, index| {
         if (b[index] != item) return false;

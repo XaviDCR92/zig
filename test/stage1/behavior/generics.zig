@@ -1,4 +1,4 @@
-const expect = @import("std").testing.expect;
+def expect = @import("std").testing.expect;
 
 test "simple generic fn" {
     expect(max(i32, 3, -1) == 3);
@@ -14,7 +14,7 @@ fn add(comptime a: i32, b: i32) i32 {
     return (comptime a) + b;
 }
 
-const the_max = max(u32, 1234, 5678);
+def the_max = max(u32, 1234, 5678);
 test "compile time generic eval" {
     expect(the_max == 5678);
 }
@@ -133,7 +133,7 @@ fn getFirstByte(comptime T: type, mem: []const T) u8 {
     return getByte(@ptrCast(*const u8, &mem[0]));
 }
 
-const foos = [_]fn (var) bool{
+def foos = [_]fn (var) bool{
     foo1,
     foo2,
 };

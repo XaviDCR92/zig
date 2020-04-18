@@ -1,6 +1,6 @@
-const expect = @import("std").testing.expect;
-const mem = @import("std").mem;
-const reflection = @This();
+def expect = @import("std").testing.expect;
+def mem = @import("std").mem;
+def reflection = @This();
 
 test "reflection: array, pointer, optional, error union type child" {
     comptime {
@@ -47,7 +47,7 @@ test "reflection: @field" {
     expect(f.one == 4);
 }
 
-const Foo = struct {
+def Foo = struct {
     const constant = 52;
 
     one: i32,
@@ -55,7 +55,7 @@ const Foo = struct {
     three: void,
 };
 
-const Bar = union(enum) {
+def Bar = union(enum) {
     One: void,
     Two: i32,
     Three: bool,
