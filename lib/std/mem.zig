@@ -105,6 +105,31 @@ pub const Allocator = struct {
         return self.alignedAlloc(T, null, n);
     }
 
+    pub fn allocWithOptions(
+        self: *Allocator,
+        comptime Elem: type,
+        n: usize,
+        /// null means naturally aligned
+        comptime optional_alignment: ?u29,
+        comptime optional_sentinel: ?Elem,
+    ) Error!AllocWithOptionsPayload(Elem, optional_alignment, optional_sentinel) {
+        if (optional_sentinel) |sentinel| {
+            const ptr = try self.alignedAlloc(Elem, optional_alignment, n + 1);
+            ptr[n] = sentinel;
+            return ptr[0..n :sentinel];
+        } else {
+            return self.alignedAlloc(Elem, optional_alignment, n);
+        }
+    }
+
+    fn AllocWithOptionsPayload(comptime Elem: type, comptime alignment: ?u29, comptime sentinel: ?Elem) type {
+        if (sentinel) |s| {
+            return [:s]align(alignment orelse @alignOf(Elem)) Elem;
+        } else {
+            return []align(alignment orelse @alignOf(Elem)) Elem;
+        }
+    }
+
     /// Allocates an array of `n + 1` items of type `T` and sets the first `n`
     /// items to `undefined` and the last item to `sentinel`. Depending on the
     /// Allocator implementation, it may be required to call `free` once the
@@ -113,10 +138,10 @@ pub const Allocator = struct {
     /// call `free` when done.
     ///
     /// For allocating a single item, see `create`.
+    ///
+    /// Deprecated; use `allocWithOptions`.
     pub fn allocSentinel(self: *Allocator, comptime Elem: type, n: usize, comptime sentinel: Elem) Error![:sentinel]Elem {
-        var ptr = try self.alloc(Elem, n + 1);
-        ptr[n] = sentinel;
-        return ptr[0..n :sentinel];
+        return self.allocWithOptions(Elem, n, null, sentinel);
     }
 
     pub fn alignedAlloc(
@@ -254,7 +279,38 @@ pub const Allocator = struct {
         const shrink_result = self.shrinkFn(self, non_const_ptr[0..bytes_len], Slice.alignment, 0, 1);
         assert(shrink_result.len == 0);
     }
+
+    /// Copies `m` to newly allocated memory. Caller owns the memory.
+    pub fn dupe(allocator: *Allocator, comptime T: type, m: []const T) ![]T {
+        const new_buf = try allocator.alloc(T, m.len);
+        copy(T, new_buf, m);
+        return new_buf;
+    }
+
+    /// Copies `m` to newly allocated memory, with a null-terminated element. Caller owns the memory.
+    pub fn dupeZ(allocator: *Allocator, comptime T: type, m: []const T) ![:0]T {
+        const new_buf = try allocator.alloc(T, m.len + 1);
+        copy(T, new_buf, m);
+        new_buf[m.len] = 0;
+        return new_buf[0..m.len :0];
+    }
 };
+
+var failAllocator = Allocator{
+    .reallocFn = failAllocatorRealloc,
+    .shrinkFn = failAllocatorShrink,
+};
+fn failAllocatorRealloc(self: *Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) ![]u8 {
+    return error.OutOfMemory;
+}
+fn failAllocatorShrink(self: *Allocator, old_mem: []u8, old_align: u29, new_size: usize, new_align: u29) []u8 {
+    @panic("failAllocatorShrink should never be called because it cannot allocate");
+}
+
+test "mem.Allocator basics" {
+    testing.expectError(error.OutOfMemory, failAllocator.alloc(u8, 1));
+    testing.expectError(error.OutOfMemory, failAllocator.allocSentinel(u8, 1, 0));
+}
 
 /// Copy all of source into dest at position 0.
 /// dest.len must be >= source.len.
@@ -341,9 +397,14 @@ pub fn zeroes(comptime T: type) T {
             }
         },
         .Array => |info| {
+            if (info.sentinel) |sentinel| {
+                return [_:sentinel]info.child{zeroes(info.child)} ** info.len;
+            }
             return [_]info.child{zeroes(info.child)} ** info.len;
         },
-        .Vector,
+        .Vector => |info| {
+            return @splat(info.len, zeroes(info.child));
+        },
         .ErrorUnion,
         .ErrorSet,
         .Union,
@@ -374,7 +435,7 @@ test "mem.zeroes" {
     testing.expect(a.y == 10);
 
     const ZigStruct = struct {
-        const IntegralTypes = struct {
+        integral_types: struct {
             integer_0: i0,
             integer_8: i8,
             integer_16: i16,
@@ -390,20 +451,21 @@ test "mem.zeroes" {
 
             float_32: f32,
             float_64: f64,
-        };
+        },
 
-        integral_types: IntegralTypes,
-
-        const Pointers = struct {
+        pointers: struct {
             optional: ?*u8,
             c_pointer: [*c]u8,
             slice: []u8,
-        };
-        pointers: Pointers,
+        },
 
         array: [2]u32,
+        vector_u32: meta.Vector(2, u32),
+        vector_f32: meta.Vector(2, f32),
+        vector_bool: meta.Vector(2, bool),
         optional_int: ?u8,
         empty: void,
+        sentinel: [3:0]u8,
     };
 
     const b = zeroes(ZigStruct);
@@ -427,7 +489,13 @@ test "mem.zeroes" {
     for (b.array) |e| {
         testing.expectEqual(@as(u32, 0), e);
     }
+    testing.expectEqual(@splat(2, @as(u32, 0)), b.vector_u32);
+    testing.expectEqual(@splat(2, @as(f32, 0.0)), b.vector_f32);
+    testing.expectEqual(@splat(2, @as(bool, false)), b.vector_bool);
     testing.expectEqual(@as(?u8, null), b.optional_int);
+    for (b.sentinel) |e| {
+        testing.expectEqual(@as(u8, 0), e);
+    }
 }
 
 pub fn secureZero(comptime T: type, s: []T) void {
@@ -446,6 +514,80 @@ test "mem.secureZero" {
     secureZero(u8, b[0..]);
 
     testing.expectEqualSlices(u8, a[0..], b[0..]);
+}
+
+/// Initializes all fields of the struct with their default value, or zero values if no default value is present.
+/// If the field is present in the provided initial values, it will have that value instead.
+/// Structs are initialized recursively.
+pub fn zeroInit(comptime T: type, init: var) T {
+    comptime const Init = @TypeOf(init);
+
+    switch (@typeInfo(T)) {
+        .Struct => |struct_info| {
+            switch (@typeInfo(Init)) {
+                .Struct => |init_info| {
+                    var value = std.mem.zeroes(T);
+
+                    inline for (init_info.fields) |field| {
+                        if (!@hasField(T, field.name)) {
+                            @compileError("Encountered an initializer for `" ++ field.name ++ "`, but it is not a field of " ++ @typeName(T));
+                        }
+                    }
+
+                    inline for (struct_info.fields) |field| {
+                        if (@hasField(Init, field.name)) {
+                            switch (@typeInfo(field.field_type)) {
+                                .Struct => {
+                                    @field(value, field.name) = zeroInit(field.field_type, @field(init, field.name));
+                                },
+                                else => {
+                                    @field(value, field.name) = @field(init, field.name);
+                                },
+                            }
+                        } else if (field.default_value != null) {
+                            @field(value, field.name) = field.default_value;
+                        }
+                    }
+
+                    return value;
+                },
+                else => {
+                    @compileError("The initializer must be a struct");
+                },
+            }
+        },
+        else => {
+            @compileError("Can't default init a " ++ @typeName(T));
+        },
+    }
+}
+
+test "zeroInit" {
+    const I = struct {
+        d: f64,
+    };
+
+    const S = struct {
+        a: u32,
+        b: ?bool,
+        c: I,
+        e: [3]u8,
+        f: i64,
+    };
+
+    const s = zeroInit(S, .{
+        .a = 42,
+    });
+
+    testing.expectEqual(s, S{
+        .a = 42,
+        .b = null,
+        .c = .{
+            .d = 0,
+        },
+        .e = [3]u8{ 0, 0, 0 },
+        .f = 0,
+    });
 }
 
 pub fn order(comptime T: type, lhs: []const T, rhs: []const T) math.Order {
@@ -490,6 +632,25 @@ pub fn eql(comptime T: type, a: []const T, b: []const T) bool {
         if (b[index] != item) return false;
     }
     return true;
+}
+
+/// Compares two slices and returns the index of the first inequality.
+/// Returns null if the slices are equal.
+pub fn indexOfDiff(comptime T: type, a: []const T, b: []const T) ?usize {
+    const shortest = math.min(a.len, b.len);
+    if (a.ptr == b.ptr)
+        return if (a.len == b.len) null else shortest;
+    var index: usize = 0;
+    while (index < shortest) : (index += 1) if (a[index] != b[index]) return index;
+    return if (a.len == b.len) null else shortest;
+}
+
+test "indexOfDiff" {
+    testing.expectEqual(indexOfDiff(u8, "one", "one"), null);
+    testing.expectEqual(indexOfDiff(u8, "one two", "one"), 3);
+    testing.expectEqual(indexOfDiff(u8, "one", "one two"), 3);
+    testing.expectEqual(indexOfDiff(u8, "one twx", "one two"), 6);
+    testing.expectEqual(indexOfDiff(u8, "xne", "one"), 0);
 }
 
 pub const toSliceConst = @compileError("deprecated; use std.mem.spanZ");
@@ -611,24 +772,25 @@ test "spanZ" {
     testing.expectEqual(@as(?[:0]u16, null), spanZ(@as(?[*:0]u16, null)));
 }
 
-/// Takes a pointer to an array, an array, a sentinel-terminated pointer,
+/// Takes a pointer to an array, an array, a vector, a sentinel-terminated pointer,
 /// or a slice, and returns the length.
 /// In the case of a sentinel-terminated array, it uses the array length.
 /// For C pointers it assumes it is a pointer-to-many with a 0 sentinel.
-pub fn len(ptr: var) usize {
-    return switch (@typeInfo(@TypeOf(ptr))) {
+pub fn len(value: var) usize {
+    return switch (@typeInfo(@TypeOf(value))) {
         .Array => |info| info.len,
+        .Vector => |info| info.len,
         .Pointer => |info| switch (info.size) {
             .One => switch (@typeInfo(info.child)) {
-                .Array => ptr.len,
+                .Array => value.len,
                 else => @compileError("invalid type given to std.mem.len"),
             },
             .Many => if (info.sentinel) |sentinel|
-                indexOfSentinel(info.child, sentinel, ptr)
+                indexOfSentinel(info.child, sentinel, value)
             else
                 @compileError("length of pointer with no sentinel"),
-            .C => indexOfSentinel(info.child, 0, ptr),
-            .Slice => ptr.len,
+            .C => indexOfSentinel(info.child, 0, value),
+            .Slice => value.len,
         },
         else => @compileError("invalid type given to std.mem.len"),
     };
@@ -650,6 +812,10 @@ test "len" {
         testing.expect(len(&array) == 5);
         array[2] = 0;
         testing.expect(len(&array) == 5);
+    }
+    {
+        const vector: meta.Vector(2, u32) = [2]u32{ 1, 2 };
+        testing.expect(len(vector) == 2);
     }
 }
 
@@ -721,19 +887,14 @@ pub fn allEqual(comptime T: type, slice: []const T, scalar: T) bool {
     return true;
 }
 
-/// Copies `m` to newly allocated memory. Caller owns the memory.
+/// Deprecated, use `Allocator.dupe`.
 pub fn dupe(allocator: *Allocator, comptime T: type, m: []const T) ![]T {
-    const new_buf = try allocator.alloc(T, m.len);
-    copy(T, new_buf, m);
-    return new_buf;
+    return allocator.dupe(T, m);
 }
 
-/// Copies `m` to newly allocated memory, with a null-terminated element. Caller owns the memory.
+/// Deprecated, use `Allocator.dupeZ`.
 pub fn dupeZ(allocator: *Allocator, comptime T: type, m: []const T) ![:0]T {
-    const new_buf = try allocator.alloc(T, m.len + 1);
-    copy(T, new_buf, m);
-    new_buf[m.len] = 0;
-    return new_buf[0..m.len :0];
+    return allocator.dupeZ(T, m);
 }
 
 /// Remove values from the beginning of a slice.
@@ -1043,7 +1204,7 @@ pub fn writeIntSliceLittle(comptime T: type, buffer: []u8, value: T) void {
         return set(u8, buffer, 0);
 
     // TODO I want to call writeIntLittle here but comptime eval facilities aren't good enough
-    const uint = std.meta.IntType(false, T.bit_count);
+    const uint = std.meta.Int(false, T.bit_count);
     var bits = @truncate(uint, value);
     for (buffer) |*b| {
         b.* = @truncate(u8, bits);
@@ -1063,7 +1224,7 @@ pub fn writeIntSliceBig(comptime T: type, buffer: []u8, value: T) void {
         return set(u8, buffer, 0);
 
     // TODO I want to call writeIntBig here but comptime eval facilities aren't good enough
-    const uint = std.meta.IntType(false, T.bit_count);
+    const uint = std.meta.Int(false, T.bit_count);
     var bits = @truncate(uint, value);
     var index: usize = buffer.len;
     while (index != 0) {
@@ -2005,7 +2166,13 @@ test "sliceAsBytes and bytesAsSlice back" {
 /// Round an address up to the nearest aligned address
 /// The alignment must be a power of 2 and greater than 0.
 pub fn alignForward(addr: usize, alignment: usize) usize {
-    return alignBackward(addr + (alignment - 1), alignment);
+    return alignForwardGeneric(usize, addr, alignment);
+}
+
+/// Round an address up to the nearest aligned address
+/// The alignment must be a power of 2 and greater than 0.
+pub fn alignForwardGeneric(comptime T: type, addr: T, alignment: T) T {
+    return alignBackwardGeneric(T, addr + (alignment - 1), alignment);
 }
 
 test "alignForward" {
@@ -2026,8 +2193,14 @@ test "alignForward" {
 /// Round an address up to the previous aligned address
 /// The alignment must be a power of 2 and greater than 0.
 pub fn alignBackward(addr: usize, alignment: usize) usize {
-    assert(@popCount(usize, alignment) == 1);
-    // 000010000 // example addr
+    return alignBackwardGeneric(usize, addr, alignment);
+}
+
+/// Round an address up to the previous aligned address
+/// The alignment must be a power of 2 and greater than 0.
+pub fn alignBackwardGeneric(comptime T: type, addr: T, alignment: T) T {
+    assert(@popCount(T, alignment) == 1);
+    // 000010000 // example alignment
     // 000001111 // subtract 1
     // 111110000 // binary not
     return addr & ~(alignment - 1);
@@ -2036,7 +2209,11 @@ pub fn alignBackward(addr: usize, alignment: usize) usize {
 /// Given an address and an alignment, return true if the address is a multiple of the alignment
 /// The alignment must be a power of 2 and greater than 0.
 pub fn isAligned(addr: usize, alignment: usize) bool {
-    return alignBackward(addr, alignment) == addr;
+    return isAlignedGeneric(u64, addr, alignment);
+}
+
+pub fn isAlignedGeneric(comptime T: type, addr: T, alignment: T) bool {
+    return alignBackwardGeneric(T, addr, alignment) == addr;
 }
 
 test "isAligned" {

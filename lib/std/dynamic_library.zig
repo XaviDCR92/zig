@@ -33,11 +33,11 @@ const LinkMap = extern struct {
     pub const Iterator = struct {
         current: ?*LinkMap,
 
-        fn end(self: *Iterator) bool {
+        pub fn end(self: *Iterator) bool {
             return self.current == null;
         }
 
-        fn next(self: *Iterator) ?*LinkMap {
+        pub fn next(self: *Iterator) ?*LinkMap {
             if (self.current) |it| {
                 self.current = it.l_next;
                 return it;
@@ -328,14 +328,14 @@ pub const WindowsDynLib = struct {
 
     pub fn open(path: []const u8) !WindowsDynLib {
         const path_w = try windows.sliceToPrefixedFileW(path);
-        return openW(&path_w);
+        return openW(path_w.span().ptr);
     }
 
     pub const openC = @compileError("deprecated: renamed to openZ");
 
     pub fn openZ(path_c: [*:0]const u8) !WindowsDynLib {
         const path_w = try windows.cStrToPrefixedFileW(path_c);
-        return openW(&path_w);
+        return openW(path_w.span().ptr);
     }
 
     pub fn openW(path_w: [*:0]const u16) !WindowsDynLib {

@@ -125,7 +125,7 @@ ScopeLoop *create_loop_scope(CodeGen *g, AstNode *node, Scope *parent);
 ScopeSuspend *create_suspend_scope(CodeGen *g, AstNode *node, Scope *parent);
 ScopeFnDef *create_fndef_scope(CodeGen *g, AstNode *node, Scope *parent, ZigFn *fn_entry);
 Scope *create_comptime_scope(CodeGen *g, AstNode *node, Scope *parent);
-Scope *create_noasync_scope(CodeGen *g, AstNode *node, Scope *parent);
+Scope *create_nosuspend_scope(CodeGen *g, AstNode *node, Scope *parent);
 Scope *create_runtime_scope(CodeGen *g, AstNode *node, Scope *parent, IrInstSrc *is_comptime);
 Scope *create_typeof_scope(CodeGen *g, AstNode *node, Scope *parent);
 ScopeExpr *create_expr_scope(CodeGen *g, AstNode *node, Scope *parent);
@@ -260,7 +260,7 @@ ZigLLVMDIType *get_llvm_di_type(CodeGen *g, ZigType *type);
 void add_cc_args(CodeGen *g, ZigList<const char *> &args, const char *out_dep_path, bool translate_c,
         FileExt source_kind);
 
-void src_assert(bool ok, AstNode *source_node);
+void src_assert_impl(bool ok, AstNode *source_node, const char *file, unsigned int line);
 bool is_container(ZigType *type_entry);
 ZigValue *analyze_const_value(CodeGen *g, Scope *scope, AstNode *node, ZigType *type_entry,
         Buf *type_name, UndefAllowed undef);
@@ -269,6 +269,7 @@ void resolve_llvm_types_fn(CodeGen *g, ZigFn *fn);
 bool fn_is_async(ZigFn *fn);
 CallingConvention cc_from_fn_proto(AstNodeFnProto *fn_proto);
 bool is_valid_return_type(ZigType* type);
+bool is_valid_param_type(ZigType* type);
 
 Error type_val_resolve_abi_align(CodeGen *g, AstNode *source_node, ZigValue *type_val, uint32_t *abi_align);
 Error type_val_resolve_abi_size(CodeGen *g, AstNode *source_node, ZigValue *type_val,
@@ -289,4 +290,7 @@ bool type_has_optional_repr(ZigType *ty);
 bool is_opt_err_set(ZigType *ty);
 bool type_is_numeric(ZigType *ty);
 const char *float_op_to_name(BuiltinFnId op);
+
+#define src_assert(OK, SOURCE_NODE) src_assert_impl((OK), (SOURCE_NODE), __FILE__, __LINE__)
+
 #endif

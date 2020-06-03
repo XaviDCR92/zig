@@ -1,9 +1,13 @@
+const builtin = @import("builtin");
+
 comptime {
     _ = @import("behavior/align.zig");
     _ = @import("behavior/alignof.zig");
     _ = @import("behavior/array.zig");
-    _ = @import("behavior/asm.zig");
-    _ = @import("behavior/async_fn.zig");
+    if (builtin.os.tag != .wasi) {
+        _ = @import("behavior/asm.zig");
+        _ = @import("behavior/async_fn.zig");
+    }
     _ = @import("behavior/atomics.zig");
     _ = @import("behavior/await_struct.zig");
     _ = @import("behavior/bit_shifting.zig");
@@ -40,11 +44,13 @@ comptime {
     _ = @import("behavior/bugs/3384.zig");
     _ = @import("behavior/bugs/3586.zig");
     _ = @import("behavior/bugs/3742.zig");
+    _ = @import("behavior/bugs/4328.zig");
     _ = @import("behavior/bugs/4560.zig");
     _ = @import("behavior/bugs/4769_a.zig");
     _ = @import("behavior/bugs/4769_b.zig");
     _ = @import("behavior/bugs/4769_c.zig");
     _ = @import("behavior/bugs/4954.zig");
+    _ = @import("behavior/bugs/5487.zig");
     _ = @import("behavior/bugs/394.zig");
     _ = @import("behavior/bugs/421.zig");
     _ = @import("behavior/bugs/529.zig");

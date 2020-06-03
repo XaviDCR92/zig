@@ -182,11 +182,12 @@
   <body>
     <div id="main-wrapper">
       <div id="index">
-        <a href="https://ziglang.org/documentation/0.1.1">0.1.1</a> |
-        <a href="https://ziglang.org/documentation/0.2.0">0.2.0</a> |
-        <a href="https://ziglang.org/documentation/0.3.0">0.3.0</a> |
-        <a href="https://ziglang.org/documentation/0.4.0">0.4.0</a> |
-        <a href="https://ziglang.org/documentation/0.5.0">0.5.0</a> |
+        <a href="https://ziglang.org/documentation/0.1.1/">0.1.1</a> |
+        <a href="https://ziglang.org/documentation/0.2.0/">0.2.0</a> |
+        <a href="https://ziglang.org/documentation/0.3.0/">0.3.0</a> |
+        <a href="https://ziglang.org/documentation/0.4.0/">0.4.0</a> |
+        <a href="https://ziglang.org/documentation/0.5.0/">0.5.0</a> |
+        <a href="https://ziglang.org/documentation/0.6.0/">0.6.0</a> |
         master
         <h1>Index</h1>
         {#nav#}
@@ -1564,7 +1565,7 @@ value == null{#endsyntax#}</pre>
 const array1 = [_]u32{1,2};
 const array2 = [_]u32{3,4};
 const together = array1 ++ array2;
-mem.eql(u32, together, &[_]u32{1,2,3,4}){#endsyntax#}</pre>
+mem.eql(u32, &together, &[_]u32{1,2,3,4}){#endsyntax#}</pre>
           </td>
         </tr>
         <tr>
@@ -1849,8 +1850,8 @@ test "null terminated array" {
       {#header_open|Vectors#}
       <p>
       A vector is a group of {#link|Integers#}, {#link|Floats#}, or {#link|Pointers#} which are operated on
-      in parallel using a single instruction ({#link|SIMD#}). Vector types are created with the builtin
-      function {#link|@Vector#}.
+      in parallel using a single instruction ({#link|SIMD#}). Vector types are created with the builtin function {#link|@Type#},
+      or using the shorthand as {#syntax#}std.meta.Vector{#endsyntax#}.
       </p>
       <p>
       TODO talk about C ABI interop
@@ -1884,7 +1885,7 @@ test "null terminated array" {
               <li>Supports slice syntax: {#syntax#}ptr[start..end]{#endsyntax#}</li>
               <li>Supports pointer arithmetic: {#syntax#}ptr + x{#endsyntax#}, {#syntax#}ptr - x{#endsyntax#}</li>
               <li>{#syntax#}T{#endsyntax#} must have a known size, which means that it cannot be
-              {#syntax#}c_void{#endsyntax#} or any other {#link|@OpaqueType#}.</li>
+              {#syntax#}c_void{#endsyntax#} or any other {#link|opaque type|Opaque Types#}.</li>
             </ul>
           </li>
       </ul>
@@ -5391,7 +5392,7 @@ fn eql_i32(a: i32, b: i32) bool {
       </p>
       <p>
       {#syntax#}void{#endsyntax#} is distinct from {#syntax#}c_void{#endsyntax#}, which is defined like this:
-              {#syntax#}pub const c_void = @OpaqueType();{#endsyntax#}.
+              {#syntax#}pub const c_void = @Type(.Opaque);{#endsyntax#}.
                   {#syntax#}void{#endsyntax#} has a known size of 0 bytes, and {#syntax#}c_void{#endsyntax#} has an unknown, but non-zero, size.
       </p>
       <p>
@@ -6712,7 +6713,7 @@ const assert = std.debug.assert;
 test "async fn pointer in a struct field" {
     var data: i32 = 1;
     const Foo = struct {
-        bar: async fn (*i32) void,
+        bar: fn (*i32) callconv(.Async) void,
     };
     var foo = Foo{ .bar = func };
     var bytes: [64]u8 align(@alignOf(@Frame(func))) = undefined;
@@ -6722,7 +6723,7 @@ test "async fn pointer in a struct field" {
     assert(data == 4);
 }
 
-async fn func(y: *i32) void {
+fn func(y: *i32) void {
     defer y.* += 2;
     y.* += 1;
     suspend;
@@ -7665,36 +7666,13 @@ mem.set(u8, dest, c);{#endsyntax#}</pre>
       </p>
       {#header_close#}
 
-      {#header_open|@OpaqueType#}
-      <pre>{#syntax#}@OpaqueType() type{#endsyntax#}</pre>
-      <p>
-      Creates a new type with an unknown (but non-zero) size and alignment.
-      </p>
-      <p>
-      This is typically used for type safety when interacting with C code that does not expose struct details.
-      Example:
-      </p>
-      {#code_begin|test_err|expected type '*Derp', found '*Wat'#}
-const Derp = @OpaqueType();
-const Wat = @OpaqueType();
-
-extern fn bar(d: *Derp) void;
-fn foo(w: *Wat) callconv(.C) void {
-    bar(w);
-}
-
-test "call foo" {
-    foo(undefined);
-}
-      {#code_end#}
-      {#header_close#}
-
       {#header_open|@panic#}
       <pre>{#syntax#}@panic(message: []const u8) noreturn{#endsyntax#}</pre>
       <p>
       Invokes the panic handler function. By default the panic handler function
       calls the public {#syntax#}panic{#endsyntax#} function exposed in the root source file, or
-          if there is not one specified, invokes the one provided in {#syntax#}std/special/panic.zig{#endsyntax#}.
+      if there is not one specified, the {#syntax#}std.builtin.default_panic{#endsyntax#}
+      function from {#syntax#}std/builtin.zig{#endsyntax#}.
       </p>
       <p>Generally it is better to use {#syntax#}@import("std").debug.panic{#endsyntax#}.
           However, {#syntax#}@panic{#endsyntax#} can be useful for 2 scenarios:
@@ -7932,7 +7910,7 @@ test "@setRuntimeSafety" {
       {#header_close#}
 
       {#header_open|@shuffle#}
-      <pre>{#syntax#}@shuffle(comptime E: type, a: @Vector(a_len, E), b: @Vector(b_len, E), comptime mask: @Vector(mask_len, i32)) @Vector(mask_len, E){#endsyntax#}</pre>
+      <pre>{#syntax#}@shuffle(comptime E: type, a: std.meta.Vector(a_len, E), b: std.meta.Vector(b_len, E), comptime mask: std.meta.Vector(mask_len, i32)) std.meta.Vector(mask_len, E){#endsyntax#}</pre>
       <p>
       Constructs a new {#link|vector|Vectors#} by selecting elements from {#syntax#}a{#endsyntax#} and
       {#syntax#}b{#endsyntax#} based on {#syntax#}mask{#endsyntax#}.
@@ -7988,7 +7966,7 @@ test "@setRuntimeSafety" {
       {#header_close#}
 
       {#header_open|@splat#}
-      <pre>{#syntax#}@splat(comptime len: u32, scalar: var) @Vector(len, @TypeOf(scalar)){#endsyntax#}</pre>
+      <pre>{#syntax#}@splat(comptime len: u32, scalar: var) std.meta.Vector(len, @TypeOf(scalar)){#endsyntax#}</pre>
       <p>
       Produces a vector of length {#syntax#}len{#endsyntax#} where each element is the value
       {#syntax#}scalar{#endsyntax#}:
@@ -8000,7 +7978,7 @@ const assert = std.debug.assert;
 test "vector @splat" {
     const scalar: u32 = 5;
     const result = @splat(4, scalar);
-    comptime assert(@TypeOf(result) == @Vector(4, u32));
+    comptime assert(@TypeOf(result) == std.meta.Vector(4, u32));
     assert(std.mem.eql(u32, &@as([4]u32, result), &[_]u32{ 5, 5, 5, 5 }));
 }
       {#code_end#}
@@ -8211,9 +8189,7 @@ fn List(comptime T: type) type {
       {#code_end#}
       <p>
       When {#syntax#}@This(){#endsyntax#} is used at global scope, it returns a reference to the
-      current import. There is a proposal to remove the import type and use an empty struct
-      type instead. See
-      <a href="https://github.com/ziglang/zig/issues/1047">#1047</a> for details.
+      struct that corresponds to the current file.
       </p>
       {#header_close#}
 
@@ -8272,21 +8248,21 @@ test "integer truncation" {
           <li>{#syntax#}comptime_float{#endsyntax#}</li>
           <li>{#syntax#}@TypeOf(undefined){#endsyntax#}</li>
           <li>{#syntax#}@TypeOf(null){#endsyntax#}</li>
+          <li>{#link|Arrays#}</li>
+          <li>{#link|Optionals#}</li>
+          <li>{#link|Error Union Type#}</li>
+          <li>{#link|Vectors#}</li>
+          <li>{#link|Opaque Types#}</li>
+          <li>AnyFrame</li>
       </ul>
       <p>
       For these types it is a
       <a href="https://github.com/ziglang/zig/issues/2907">TODO in the compiler to implement</a>:
       </p>
       <ul>
-          <li>Array</li>
-          <li>Optional</li>
-          <li>ErrorUnion</li>
           <li>ErrorSet</li>
           <li>Enum</li>
-          <li>Opaque</li>
           <li>FnFrame</li>
-          <li>AnyFrame</li>
-          <li>Vector</li>
           <li>EnumLiteral</li>
       </ul>
       <p>
@@ -8358,17 +8334,28 @@ fn foo(comptime T: type, ptr: *T) T {
       {#syntax#}@unionInit{#endsyntax#} forwards its {#link|result location|Result Location Semantics#} to {#syntax#}init_expr{#endsyntax#}.
       </p>
       {#header_close#}
-
-      {#header_open|@Vector#}
-      <pre>{#syntax#}@Vector(comptime len: u32, comptime ElemType: type) type{#endsyntax#}</pre>
-      <p>
-      This function returns a vector type for {#link|SIMD#}.
-      </p>
-      <p>
-      {#syntax#}ElemType{#endsyntax#} must be an {#link|integer|Integers#}, a {#link|float|Floats#}, or a
-      {#link|pointer|Pointers#}.
-      </p>
       {#header_close#}
+
+      {#header_open|Opaque Types#}
+      {#syntax#}@Type(.Opaque){#endsyntax#} creates a new type with an unknown (but non-zero) size and alignment.
+      </p>
+      <p>
+      This is typically used for type safety when interacting with C code that does not expose struct details.
+      Example:
+      </p>
+      {#code_begin|test_err|expected type '*Derp', found '*Wat'#}
+const Derp = @Type(.Opaque);
+const Wat = @Type(.Opaque);
+
+extern fn bar(d: *Derp) void;
+fn foo(w: *Wat) callconv(.C) void {
+    bar(w);
+}
+
+test "call foo" {
+    foo(undefined);
+}
+      {#code_end#}
       {#header_close#}
 
       {#header_open|Build Mode#}
@@ -10001,6 +9988,13 @@ coding style.
       conventions.
       </p>
       <p>
+      File names fall into two categories: types and namespaces. If the file
+      (implicity a struct) has top level fields, it should be named like any
+      other struct with fields using {#syntax#}TitleCase{#endsyntax#}. Otherwise,
+      it should use {#syntax#}snake_case{#endsyntax#}. Directory names should be
+      {#syntax#}snake_case{#endsyntax#}.
+      </p>
+      <p>
       These are general rules of thumb; if it makes sense to do something different,
       do what makes sense. For example, if there is an established convention such as
       {#syntax#}ENOENT{#endsyntax#}, follow the established convention.
@@ -10009,6 +10003,7 @@ coding style.
       {#header_open|Examples#}
       {#code_begin|syntax#}
 const namespace_name = @import("dir_name/file_name.zig");
+const TypeName = @import("dir_name/TypeName.zig");
 var global_var: i32 = undefined;
 const const_name = 42;
 const primitive_type_alias = f32;
@@ -10099,16 +10094,17 @@ TopLevelDecl
      / (KEYWORD_export / KEYWORD_extern STRINGLITERALSINGLE?)? KEYWORD_threadlocal? VarDecl
      / KEYWORD_usingnamespace Expr SEMICOLON
 
-FnProto &lt;- FnCC? KEYWORD_fn IDENTIFIER? LPAREN ParamDeclList RPAREN ByteAlign? LinkSection? EXCLAMATIONMARK? (KEYWORD_var / TypeExpr)
+FnProto &lt;- KEYWORD_fn IDENTIFIER? LPAREN ParamDeclList RPAREN ByteAlign? LinkSection? EXCLAMATIONMARK? (KEYWORD_var / TypeExpr)
 
 VarDecl &lt;- (KEYWORD_const / KEYWORD_var) IDENTIFIER (COLON TypeExpr)? ByteAlign? LinkSection? (EQUAL Expr)? SEMICOLON
 
-ContainerField &lt;- IDENTIFIER (COLON TypeExpr)? (EQUAL Expr)?
+ContainerField &lt;- KEYWORD_comptime? IDENTIFIER (COLON TypeExpr)? (EQUAL Expr)?
 
 # *** Block Level ***
 Statement
     &lt;- KEYWORD_comptime? VarDecl
      / KEYWORD_comptime BlockExprStatement
+     / KEYWORD_nosuspend BlockExprStatement
      / KEYWORD_suspend (SEMICOLON / BlockExprStatement)
      / KEYWORD_defer BlockExprStatement
      / KEYWORD_errdefer BlockExprStatement
@@ -10165,6 +10161,7 @@ PrimaryExpr
      / IfExpr
      / KEYWORD_break BreakLabel? Expr?
      / KEYWORD_comptime Expr
+     / KEYWORD_nosuspend Expr
      / KEYWORD_continue BreakLabel?
      / KEYWORD_resume Expr
      / KEYWORD_return Expr?
@@ -10215,7 +10212,7 @@ PrimaryTypeExpr
      / KEYWORD_error DOT IDENTIFIER
      / KEYWORD_false
      / KEYWORD_null
-     / KEYWORD_promise
+     / KEYWORD_anyframe
      / KEYWORD_true
      / KEYWORD_undefined
      / KEYWORD_unreachable
@@ -10265,11 +10262,6 @@ FieldInit &lt;- DOT IDENTIFIER EQUAL Expr
 WhileContinueExpr &lt;- COLON LPAREN AssignExpr RPAREN
 
 LinkSection &lt;- KEYWORD_linksection LPAREN Expr RPAREN
-
-# Fn specific
-FnCC
-    &lt;- KEYWORD_extern
-     / KEYWORD_async
 
 ParamDecl &lt;- (KEYWORD_noalias / KEYWORD_comptime)? (IDENTIFIER COLON)? ParamType
 
@@ -10364,7 +10356,7 @@ PrefixOp
 
 PrefixTypeOp
     &lt;- QUESTIONMARK
-     / KEYWORD_promise MINUSRARROW
+     / KEYWORD_anyframe MINUSRARROW
      / ArrayTypeStart (ByteAlign / KEYWORD_const / KEYWORD_volatile / KEYWORD_allowzero)*
      / PtrTypeStart (KEYWORD_align LPAREN Expr (COLON INTEGER COLON INTEGER)? RPAREN / KEYWORD_const / KEYWORD_volatile / KEYWORD_allowzero)*
 
@@ -10511,6 +10503,7 @@ end_of_word &lt;- ![a-zA-Z0-9_] skip
 KEYWORD_align       &lt;- 'align'       end_of_word
 KEYWORD_allowzero   &lt;- 'allowzero'   end_of_word
 KEYWORD_and         &lt;- 'and'         end_of_word
+KEYWORD_anyframe    &lt;- 'anyframe'    end_of_word
 KEYWORD_asm         &lt;- 'asm'         end_of_word
 KEYWORD_async       &lt;- 'async'       end_of_word
 KEYWORD_await       &lt;- 'await'       end_of_word
@@ -10532,11 +10525,11 @@ KEYWORD_for         &lt;- 'for'         end_of_word
 KEYWORD_if          &lt;- 'if'          end_of_word
 KEYWORD_inline      &lt;- 'inline'      end_of_word
 KEYWORD_noalias     &lt;- 'noalias'     end_of_word
+KEYWORD_nosuspend   &lt;- 'nosuspend'   end_of_word
 KEYWORD_null        &lt;- 'null'        end_of_word
 KEYWORD_or          &lt;- 'or'          end_of_word
 KEYWORD_orelse      &lt;- 'orelse'      end_of_word
 KEYWORD_packed      &lt;- 'packed'      end_of_word
-KEYWORD_promise     &lt;- 'promise'     end_of_word
 KEYWORD_pub         &lt;- 'pub'         end_of_word
 KEYWORD_resume      &lt;- 'resume'      end_of_word
 KEYWORD_return      &lt;- 'return'      end_of_word
@@ -10563,7 +10556,7 @@ keyword &lt;- KEYWORD_align / KEYWORD_and / KEYWORD_allowzero / KEYWORD_asm
          / KEYWORD_error / KEYWORD_export / KEYWORD_extern / KEYWORD_false
          / KEYWORD_fn / KEYWORD_for / KEYWORD_if / KEYWORD_inline
          / KEYWORD_noalias / KEYWORD_null / KEYWORD_or
-         / KEYWORD_orelse / KEYWORD_packed / KEYWORD_promise / KEYWORD_pub
+         / KEYWORD_orelse / KEYWORD_packed / KEYWORD_anyframe / KEYWORD_pub
          / KEYWORD_resume / KEYWORD_return / KEYWORD_linksection
          / KEYWORD_struct / KEYWORD_suspend
          / KEYWORD_switch / KEYWORD_test / KEYWORD_threadlocal / KEYWORD_true / KEYWORD_try

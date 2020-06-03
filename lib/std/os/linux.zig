@@ -19,7 +19,7 @@ pub usingnamespace switch (builtin.arch) {
     .aarch64 => @import("linux/arm64.zig"),
     .arm => @import("linux/arm-eabi.zig"),
     .riscv64 => @import("linux/riscv64.zig"),
-    .mipsel => @import("linux/mipsel.zig"),
+    .mips, .mipsel => @import("linux/mips.zig"),
     else => struct {},
 };
 pub usingnamespace @import("bits.zig");
@@ -417,7 +417,7 @@ pub fn ftruncate(fd: i32, length: u64) usize {
     }
 }
 
-pub fn pwrite(fd: i32, buf: [*]const u8, count: usize, offset: usize) usize {
+pub fn pwrite(fd: i32, buf: [*]const u8, count: usize, offset: u64) usize {
     if (@hasField(SYS, "pwrite64")) {
         if (require_aligned_register_pair) {
             return syscall6(
@@ -492,7 +492,7 @@ pub fn renameat2(oldfd: i32, oldpath: [*:0]const u8, newfd: i32, newpath: [*:0]c
     );
 }
 
-pub fn open(path: [*:0]const u8, flags: u32, perm: usize) usize {
+pub fn open(path: [*:0]const u8, flags: u32, perm: mode_t) usize {
     if (@hasField(SYS, "open")) {
         return syscall3(.open, @ptrToInt(path), flags, perm);
     } else {
@@ -506,11 +506,11 @@ pub fn open(path: [*:0]const u8, flags: u32, perm: usize) usize {
     }
 }
 
-pub fn create(path: [*:0]const u8, perm: usize) usize {
+pub fn create(path: [*:0]const u8, perm: mode_t) usize {
     return syscall2(.creat, @ptrToInt(path), perm);
 }
 
-pub fn openat(dirfd: i32, path: [*:0]const u8, flags: u32, mode: usize) usize {
+pub fn openat(dirfd: i32, path: [*:0]const u8, flags: u32, mode: mode_t) usize {
     // dirfd could be negative, for example AT_FDCWD is -100
     return syscall4(.openat, @bitCast(usize, @as(isize, dirfd)), @ptrToInt(path), flags, mode);
 }
@@ -599,7 +599,7 @@ pub fn flock(fd: fd_t, operation: i32) usize {
 var vdso_clock_gettime = @ptrCast(?*const c_void, init_vdso_clock_gettime);
 
 // We must follow the C calling convention when we call into the VDSO
-const vdso_clock_gettime_ty = extern fn (i32, *timespec) usize;
+const vdso_clock_gettime_ty = fn (i32, *timespec) callconv(.C) usize;
 
 pub fn clock_gettime(clk_id: i32, tp: *timespec) usize {
     if (@hasDecl(@This(), "VDSO_CGT_SYM")) {
@@ -791,7 +791,7 @@ pub fn sigaction(sig: u6, noalias act: *const Sigaction, noalias oact: ?*Sigacti
         .sigaction = act.sigaction,
         .flags = act.flags | SA_RESTORER,
         .mask = undefined,
-        .restorer = @ptrCast(extern fn () void, restorer_fn),
+        .restorer = @ptrCast(fn () callconv(.C) void, restorer_fn),
     };
     var ksa_old: k_sigaction = undefined;
     const ksa_mask_size = @sizeOf(@TypeOf(ksa_old.mask));
@@ -1191,6 +1191,10 @@ pub fn tcgetattr(fd: fd_t, termios_p: *termios) usize {
 
 pub fn tcsetattr(fd: fd_t, optional_action: TCSA, termios_p: *const termios) usize {
     return syscall3(.ioctl, @bitCast(usize, @as(isize, fd)), TCSETS + @enumToInt(optional_action), @ptrToInt(termios_p));
+}
+
+pub fn ioctl(fd: fd_t, request: u32, arg: usize) usize {
+    return syscall3(.ioctl, @bitCast(usize, @as(isize, fd)), request, arg);
 }
 
 test "" {

@@ -14,7 +14,7 @@ pub usingnamespace switch (builtin.arch) {
     .aarch64 => @import("linux/arm64.zig"),
     .arm => @import("linux/arm-eabi.zig"),
     .riscv64 => @import("linux/riscv64.zig"),
-    .mipsel => @import("linux/mipsel.zig"),
+    .mips, .mipsel => @import("linux/mips.zig"),
     else => struct {},
 };
 
@@ -813,15 +813,15 @@ pub const app_mask: sigset_t = [2]u32{ 0xfffffffc, 0x7fffffff } ++ [_]u32{0xffff
 pub const k_sigaction = if (is_mips)
     extern struct {
         flags: usize,
-        sigaction: ?extern fn (i32, *siginfo_t, ?*c_void) void,
+        sigaction: ?fn (i32, *siginfo_t, ?*c_void) callconv(.C) void,
         mask: [4]u32,
-        restorer: extern fn () void,
+        restorer: fn () callconv(.C) void,
     }
 else
     extern struct {
-        sigaction: ?extern fn (i32, *siginfo_t, ?*c_void) void,
+        sigaction: ?fn (i32, *siginfo_t, ?*c_void) callconv(.C) void,
         flags: usize,
-        restorer: extern fn () void,
+        restorer: fn () callconv(.C) void,
         mask: [2]u32,
     };
 
@@ -831,7 +831,7 @@ pub const Sigaction = extern struct {
     sigaction: ?sigaction_fn,
     mask: sigset_t,
     flags: u32,
-    restorer: ?extern fn () void = null,
+    restorer: ?fn () callconv(.C) void = null,
 };
 
 pub const SIG_ERR = @intToPtr(?Sigaction.sigaction_fn, maxInt(usize));
@@ -1037,7 +1037,7 @@ pub const dl_phdr_info = extern struct {
 
 pub const CPU_SETSIZE = 128;
 pub const cpu_set_t = [CPU_SETSIZE / @sizeOf(usize)]usize;
-pub const cpu_count_t = std.meta.IntType(false, std.math.log2(CPU_SETSIZE * 8));
+pub const cpu_count_t = std.meta.Int(false, std.math.log2(CPU_SETSIZE * 8));
 
 pub fn CPU_COUNT(set: cpu_set_t) cpu_count_t {
     var sum: cpu_count_t = 0;
@@ -1226,17 +1226,11 @@ pub const io_cqring_offsets = extern struct {
 };
 
 pub const io_uring_sqe = extern struct {
-    opcode: IORING_OP,
-    flags: u8,
-    ioprio: u16,
-    fd: i32,
     pub const union1 = extern union {
         off: u64,
         addr2: u64,
     };
-    union1: union1,
-    addr: u64,
-    len: u32,
+
     pub const union2 = extern union {
         rw_flags: kernel_rwf,
         fsync_flags: u32,
@@ -1250,8 +1244,7 @@ pub const io_uring_sqe = extern struct {
         statx_flags: u32,
         fadvise_flags: u32,
     };
-    union2: union2,
-    user_data: u64,
+
     pub const union3 = extern union {
         struct1: extern struct {
             /// index into fixed buffers, if used
@@ -1262,10 +1255,22 @@ pub const io_uring_sqe = extern struct {
         },
         __pad2: [3]u64,
     };
+    opcode: IORING_OP,
+    flags: u8,
+    ioprio: u16,
+    fd: i32,
+
+    union1: union1,
+    addr: u64,
+    len: u32,
+
+    union2: union2,
+    user_data: u64,
+
     union3: union3,
 };
 
-pub const IOSQE_BIT = extern enum {
+pub const IOSQE_BIT = extern enum(u8) {
     FIXED_FILE,
     IO_DRAIN,
     IO_LINK,
@@ -1278,16 +1283,16 @@ pub const IOSQE_BIT = extern enum {
 // io_uring_sqe.flags
 
 /// use fixed fileset
-pub const IOSQE_FIXED_FILE = 1 << IOSQE_BIT.FIXED_FILE;
+pub const IOSQE_FIXED_FILE = 1 << @enumToInt(IOSQE_BIT.FIXED_FILE);
 
 /// issue after inflight IO
-pub const IOSQE_IO_DRAIN = 1 << IOSQE_BIT.IO_DRAIN;
+pub const IOSQE_IO_DRAIN = 1 << @enumToInt(IOSQE_BIT.IO_DRAIN);
 
 /// links next sqe
-pub const IOSQE_IO_LINK = 1 << IOSQE_BIT.IO_LINK;
+pub const IOSQE_IO_LINK = 1 << @enumToInt(IOSQE_BIT.IO_LINK);
 
 /// like LINK, but stronger
-pub const IOSQE_IO_HARDLINK = 1 << IOSQE_BIT.IO_HARDLINK;
+pub const IOSQE_IO_HARDLINK = 1 << @enumToInt(IOSQE_BIT.IO_HARDLINK);
 
 /// always go async
 pub const IOSQE_ASYNC = 1 << IOSQE_BIT.ASYNC;
@@ -1699,4 +1704,36 @@ pub const termios = extern struct {
     cc: [NCCS]cc_t,
     ispeed: speed_t,
     ospeed: speed_t,
+};
+
+pub const SIOCGIFINDEX = 0x8933;
+pub const IFNAMESIZE = 16;
+
+pub const ifmap = extern struct {
+    mem_start: u32,
+    mem_end: u32,
+    base_addr: u16,
+    irq: u8,
+    dma: u8,
+    port: u8,
+};
+
+pub const ifreq = extern struct {
+    ifrn: extern union {
+        name: [IFNAMESIZE]u8,
+    },
+    ifru: extern union {
+        addr: sockaddr,
+        dstaddr: sockaddr,
+        broadaddr: sockaddr,
+        netmask: sockaddr,
+        hwaddr: sockaddr,
+        flags: i16,
+        ivalue: i32,
+        mtu: i32,
+        map: ifmap,
+        slave: [IFNAMESIZE - 1:0]u8,
+        newname: [IFNAMESIZE - 1:0]u8,
+        data: ?[*]u8,
+    },
 };

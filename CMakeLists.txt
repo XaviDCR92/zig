@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 2.8.5)
 
+# Use ccache if possible
+FIND_PROGRAM(CCACHE_PROGRAM ccache)
+IF(CCACHE_PROGRAM)
+    MESSAGE(STATUS "Found ccache ${CCACHE_PROGRAM}")
+ENDIF()
+
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING
         "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
@@ -19,7 +25,7 @@ project(zig C CXX)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 set(ZIG_VERSION_MAJOR 0)
-set(ZIG_VERSION_MINOR 5)
+set(ZIG_VERSION_MINOR 6)
 set(ZIG_VERSION_PATCH 0)
 set(ZIG_VERSION "${ZIG_VERSION_MAJOR}.${ZIG_VERSION_MINOR}.${ZIG_VERSION_PATCH}")
 
@@ -47,6 +53,11 @@ set(ZIG_STATIC off CACHE BOOL "Attempt to build a static zig executable (not com
 set(ZIG_STATIC_LLVM off CACHE BOOL "Prefer linking against static LLVM libraries")
 set(ZIG_ENABLE_MEM_PROFILE off CACHE BOOL "Activate memory usage instrumentation")
 set(ZIG_PREFER_CLANG_CPP_DYLIB off CACHE BOOL "Try to link against -lclang-cpp")
+set(ZIG_USE_CCACHE off CACHE BOOL "Use ccache if available")
+
+if(CCACHE_PROGRAM AND ZIG_USE_CCACHE)
+    SET_PROPERTY(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
+endif()
 
 if(ZIG_STATIC)
     set(ZIG_STATIC_LLVM "on")
@@ -239,6 +250,7 @@ target_include_directories(embedded_softfloat PUBLIC
 )
 include_directories("${CMAKE_SOURCE_DIR}/deps/SoftFloat-3e/source/include")
 set(SOFTFLOAT_LIBRARIES embedded_softfloat)
+include_directories("${CMAKE_SOURCE_DIR}/deps/dbg-macro")
 
 find_package(Threads)
 
@@ -328,7 +340,11 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     if(MSVC)
         set(EXE_CFLAGS "${EXE_CFLAGS} /w")
     else()
-        set(EXE_CFLAGS "${EXE_CFLAGS} -Werror -Wall -Werror=implicit-fallthrough")
+        set(EXE_CFLAGS "${EXE_CFLAGS} -Werror -Wall")
+        # fallthrough support was added in GCC 7.0
+        if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 7.0)
+            set(EXE_CFLAGS "${EXE_CFLAGS} -Werror=implicit-fallthrough")
+        endif()
     endif()
 endif()
 
