@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2015-2020 Zig Contributors
+// This file is part of [zig](https://ziglang.org/), which is MIT licensed.
+// The MIT license requires this copyright notice to be included in all copies
+// and substantial portions of the software.
 usingnamespace @import("bits.zig");
 
 pub const SOCKET = *@Type(.Opaque);
@@ -7,7 +12,7 @@ pub const SOCKET_ERROR = -1;
 pub const WSADESCRIPTION_LEN = 256;
 pub const WSASYS_STATUS_LEN = 128;
 
-pub const WSADATA = if (usize.bit_count == u64.bit_count)
+pub const WSADATA = if (@sizeOf(usize) == @sizeOf(u64))
     extern struct {
         wVersion: WORD,
         wHighVersion: WORD,
@@ -163,16 +168,16 @@ pub const IPPROTO_UDP = 17;
 pub const IPPROTO_ICMPV6 = 58;
 pub const IPPROTO_RM = 113;
 
-pub const AI_PASSIVE                = 0x00001;
-pub const AI_CANONNAME              = 0x00002;
-pub const AI_NUMERICHOST            = 0x00004;
-pub const AI_NUMERICSERV            = 0x00008;
-pub const AI_ADDRCONFIG             = 0x00400;
-pub const AI_V4MAPPED               = 0x00800;
-pub const AI_NON_AUTHORITATIVE      = 0x04000;
-pub const AI_SECURE                 = 0x08000;
+pub const AI_PASSIVE = 0x00001;
+pub const AI_CANONNAME = 0x00002;
+pub const AI_NUMERICHOST = 0x00004;
+pub const AI_NUMERICSERV = 0x00008;
+pub const AI_ADDRCONFIG = 0x00400;
+pub const AI_V4MAPPED = 0x00800;
+pub const AI_NON_AUTHORITATIVE = 0x04000;
+pub const AI_SECURE = 0x08000;
 pub const AI_RETURN_PREFERRED_NAMES = 0x10000;
-pub const AI_DISABLE_IDN_ENCODING   = 0x80000;
+pub const AI_DISABLE_IDN_ENCODING = 0x80000;
 
 pub const FIONBIO = -2147195266;
 

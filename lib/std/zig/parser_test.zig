@@ -1,4 +1,37 @@
-const builtin = @import("builtin");
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2015-2020 Zig Contributors
+// This file is part of [zig](https://ziglang.org/), which is MIT licensed.
+// The MIT license requires this copyright notice to be included in all copies
+// and substantial portions of the software.
+test "zig fmt: convert var to anytype" {
+    // TODO remove in next release cycle
+    try testTransform(
+        \\pub fn main(
+        \\    a: var,
+        \\    bar: var,
+        \\) void {}
+    ,
+        \\pub fn main(
+        \\    a: anytype,
+        \\    bar: anytype,
+        \\) void {}
+        \\
+    );
+}
+
+test "zig fmt: noasync to nosuspend" {
+    // TODO: remove this
+    try testTransform(
+        \\pub fn main() void {
+        \\    noasync call();
+        \\}
+    ,
+        \\pub fn main() void {
+        \\    nosuspend call();
+        \\}
+        \\
+    );
+}
 
 test "recovery: top level" {
     try testError(
@@ -265,6 +298,14 @@ test "zig fmt: decl between fields" {
     });
 }
 
+test "zig fmt: eof after missing comma" {
+    try testError(
+        \\foo()
+    , &[_]Error{
+        .ExpectedToken,
+    });
+}
+
 test "zig fmt: errdefer with payload" {
     try testCanonical(
         \\pub fn main() anyerror!void {
@@ -422,10 +463,10 @@ test "zig fmt: asm expression with comptime content" {
     );
 }
 
-test "zig fmt: var struct field" {
+test "zig fmt: anytype struct field" {
     try testCanonical(
         \\pub const Pointer = struct {
-        \\    sentinel: var,
+        \\    sentinel: anytype,
         \\};
         \\
     );
@@ -569,6 +610,17 @@ test "zig fmt: infix operator and then multiline string literal" {
     try testCanonical(
         \\const x = "" ++
         \\    \\ hi
+        \\;
+        \\
+    );
+}
+
+test "zig fmt: infix operator and then multiline string literal" {
+    try testCanonical(
+        \\const x = "" ++
+        \\    \\ hi0
+        \\    \\ hi1
+        \\    \\ hi2
         \\;
         \\
     );
@@ -844,6 +896,28 @@ test "zig fmt: 2nd arg multiline string" {
     );
 }
 
+test "zig fmt: 2nd arg multiline string many args" {
+    try testCanonical(
+        \\comptime {
+        \\    cases.addAsm("hello world linux x86_64",
+        \\        \\.text
+        \\    , "Hello, world!\n", "Hello, world!\n");
+        \\}
+        \\
+    );
+}
+
+test "zig fmt: final arg multiline string" {
+    try testCanonical(
+        \\comptime {
+        \\    cases.addAsm("hello world linux x86_64", "Hello, world!\n",
+        \\        \\.text
+        \\    );
+        \\}
+        \\
+    );
+}
+
 test "zig fmt: if condition wraps" {
     try testTransform(
         \\comptime {
@@ -872,6 +946,11 @@ test "zig fmt: if condition wraps" {
         \\        return x;
         \\    }
         \\    var a = if (a) |*f| x: {
+        \\        break :x &a.b;
+        \\    } else |err| err;
+        \\    var a = if (cond and
+        \\                cond) |*f|
+        \\    x: {
         \\        break :x &a.b;
         \\    } else |err| err;
         \\}
@@ -910,6 +989,35 @@ test "zig fmt: if condition wraps" {
         \\    var a = if (a) |*f| x: {
         \\        break :x &a.b;
         \\    } else |err| err;
+        \\    var a = if (cond and
+        \\        cond) |*f|
+        \\    x: {
+        \\        break :x &a.b;
+        \\    } else |err| err;
+        \\}
+        \\
+    );
+}
+
+test "zig fmt: if condition has line break but must not wrap" {
+    try testCanonical(
+        \\comptime {
+        \\    if (self.user_input_options.put(
+        \\        name,
+        \\        UserInputOption{
+        \\            .name = name,
+        \\            .used = false,
+        \\        },
+        \\    ) catch unreachable) |*prev_value| {
+        \\        foo();
+        \\        bar();
+        \\    }
+        \\    if (put(
+        \\        a,
+        \\        b,
+        \\    )) {
+        \\        foo();
+        \\    }
         \\}
         \\
     );
@@ -931,6 +1039,18 @@ test "zig fmt: if condition has line break but must not wrap" {
         \\    )) {
         \\        foo();
         \\    }
+        \\}
+        \\
+    );
+}
+
+test "zig fmt: function call with multiline argument" {
+    try testCanonical(
+        \\comptime {
+        \\    self.user_input_options.put(name, UserInputOption{
+        \\        .name = name,
+        \\        .used = false,
+        \\    });
         \\}
         \\
     );
@@ -1187,7 +1307,7 @@ test "zig fmt: array literal with hint" {
         \\const a = []u8{
         \\    1, 2,
         \\    3, //
-        \\        4,
+        \\    4,
         \\    5, 6,
         \\    7,
         \\};
@@ -1252,7 +1372,7 @@ test "zig fmt: multiline string parameter in fn call with trailing comma" {
         \\        \\ZIG_C_HEADER_FILES   {}
         \\        \\ZIG_DIA_GUIDS_LIB    {}
         \\        \\
-        \\    ,
+        \\        ,
         \\        std.cstr.toSliceConst(c.ZIG_CMAKE_BINARY_DIR),
         \\        std.cstr.toSliceConst(c.ZIG_CXX_COMPILER),
         \\        std.cstr.toSliceConst(c.ZIG_DIA_GUIDS_LIB),
@@ -1932,7 +2052,7 @@ test "zig fmt: preserve spacing" {
 test "zig fmt: return types" {
     try testCanonical(
         \\pub fn main() !void {}
-        \\pub fn main() var {}
+        \\pub fn main() anytype {}
         \\pub fn main() i32 {}
         \\
     );
@@ -2140,9 +2260,9 @@ test "zig fmt: call expression" {
     );
 }
 
-test "zig fmt: var type" {
+test "zig fmt: anytype type" {
     try testCanonical(
-        \\fn print(args: var) var {}
+        \\fn print(args: anytype) anytype {}
         \\
     );
 }
@@ -2844,20 +2964,20 @@ test "zig fmt: multiline string in array" {
     try testCanonical(
         \\const Foo = [][]const u8{
         \\    \\aaa
-        \\,
+        \\    ,
         \\    \\bbb
         \\};
         \\
         \\fn bar() void {
         \\    const Foo = [][]const u8{
         \\        \\aaa
-        \\    ,
+        \\        ,
         \\        \\bbb
         \\    };
         \\    const Bar = [][]const u8{ // comment here
         \\        \\aaa
         \\        \\
-        \\    , // and another comment can go here
+        \\        , // and another comment can go here
         \\        \\bbb
         \\    };
         \\}
@@ -3146,20 +3266,6 @@ test "zig fmt: hexadeciaml float literals with underscore separators" {
     );
 }
 
-test "zig fmt: noasync to nosuspend" {
-    // TODO: remove this
-    try testTransform(
-        \\pub fn main() void {
-        \\    noasync call();
-        \\}
-    ,
-        \\pub fn main() void {
-        \\    nosuspend call();
-        \\}
-        \\
-    );
-}
-
 test "zig fmt: convert async fn into callconv(.Async)" {
     try testTransform(
         \\async fn foo() void {}
@@ -3176,6 +3282,41 @@ test "zig fmt: convert extern fn proto into callconv(.C)" {
     ,
         \\extern fn foo0() void {}
         \\const foo1 = fn () callconv(.C) void;
+        \\
+    );
+}
+
+test "zig fmt: C var args" {
+    try testCanonical(
+        \\pub extern "c" fn printf(format: [*:0]const u8, ...) c_int;
+        \\
+    );
+}
+
+test "zig fmt: Only indent multiline string literals in function calls" {
+    try testCanonical(
+        \\test "zig fmt:" {
+        \\    try testTransform(
+        \\        \\const X = struct {
+        \\        \\    foo: i32, bar: i8 };
+        \\    ,
+        \\        \\const X = struct {
+        \\        \\    foo: i32, bar: i8
+        \\        \\};
+        \\        \\
+        \\    );
+        \\}
+        \\
+    );
+}
+
+test "zig fmt: Don't add extra newline after if" {
+    try testCanonical(
+        \\pub fn atomicSymLink(allocator: *Allocator, existing_path: []const u8, new_path: []const u8) !void {
+        \\    if (cwd().symLink(existing_path, new_path, .{})) {
+        \\        return;
+        \\    }
+        \\}
         \\
     );
 }
@@ -3222,7 +3363,8 @@ fn testParse(source: []const u8, allocator: *mem.Allocator, anything_changed: *b
     var buffer = std.ArrayList(u8).init(allocator);
     errdefer buffer.deinit();
 
-    anything_changed.* = try std.zig.render(allocator, buffer.outStream(), tree);
+    const outStream = buffer.outStream();
+    anything_changed.* = try std.zig.render(allocator, outStream, tree);
     return buffer.toOwnedSlice();
 }
 fn testTransform(source: []const u8, expected_source: []const u8) !void {

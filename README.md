@@ -17,7 +17,8 @@ A general-purpose programming language and toolchain for maintaining
 [![Build Status](https://dev.azure.com/ziglang/zig/_apis/build/status/ziglang.zig?branchName=master)](https://dev.azure.com/ziglang/zig/_build/latest?definitionId=1&branchName=master)
 
 Note that you can
-[download a binary of master branch](https://ziglang.org/download/#release-master).
+[download a binary of master branch](https://ziglang.org/download/#release-master) or 
+[install Zig from a package manager](https://github.com/ziglang/zig/wiki/Install-Zig-from-a-Package-Manager).
 
 ### Stage 1: Build Zig from C++ Source Code
 
@@ -51,6 +52,8 @@ cmake ..
 make install
 ```
 
+Need help? [Troubleshooting Build Issues](https://github.com/ziglang/zig/wiki/Troubleshooting-Build-Issues)
+
 ##### MacOS
 
 ```
@@ -64,10 +67,30 @@ make install
 
 You will now run into this issue:
 [homebrew and llvm 10 packages in apt.llvm.org are broken with undefined reference to getPollyPluginInfo](https://github.com/ziglang/zig/issues/4799)
+or
+[error: unable to create target: 'Unable to find target for this triple (no targets are registered)'](https://github.com/ziglang/zig/issues/5055),
+in which case try `-DZIG_WORKAROUND_4799=ON`
 
-Please help upstream LLVM and Homebrew solve this issue, there is nothing Zig
-can do about it. See that issue for a workaround you can do in the meantime.
+Hopefully this will be fixed upstream with LLVM 10.0.1.
 
 ##### Windows
 
 See https://github.com/ziglang/zig/wiki/Building-Zig-on-Windows
+
+## License
+
+The ultimate goal of the Zig project is to serve users. As a first-order
+effect, this means users of the compiler, helping programmers to write better
+code. Even more important, however, are the end users.
+
+Zig is intended to be used to help end users accomplish their goals. For
+example, it would be inappropriate and offensive to use Zig to implement
+[dark patterns](https://en.wikipedia.org/wiki/Dark_pattern) and it would be
+shameful to utilize Zig to exploit people instead of benefit them.
+
+However, such problems are best solved with social norms, not with software
+licenses. Any attempt to complicate the software license of Zig would risk
+compromising the value Zig provides to users.
+
+Therefore, Zig is available under the MIT (Expat) License, and comes with a
+humble request: use it to make software better serve the needs of end users.

@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2015-2020 Zig Contributors
+// This file is part of [zig](https://ziglang.org/), which is MIT licensed.
+// The MIT license requires this copyright notice to be included in all copies
+// and substantial portions of the software.
 const std = @import("std.zig");
 const builtin = @import("builtin");
 const debug = std.debug;
@@ -6,10 +11,11 @@ const math = std.math;
 const testing = std.testing;
 
 pub const trait = @import("meta/trait.zig");
+pub const TrailerFlags = @import("meta/trailer_flags.zig").TrailerFlags;
 
 const TypeInfo = builtin.TypeInfo;
 
-pub fn tagName(v: var) []const u8 {
+pub fn tagName(v: anytype) []const u8 {
     const T = @TypeOf(v);
     switch (@typeInfo(T)) {
         .ErrorSet => return @errorName(v),
@@ -145,8 +151,8 @@ test "std.meta.Child" {
 /// Given a "memory span" type, returns the "element type".
 pub fn Elem(comptime T: type) type {
     switch (@typeInfo(T)) {
-        .Array, => |info| return info.child,
-        .Vector, => |info| return info.child,
+        .Array => |info| return info.child,
+        .Vector => |info| return info.child,
         .Pointer => |info| switch (info.size) {
             .One => switch (@typeInfo(info.child)) {
                 .Array => |array_info| return array_info.child,
@@ -250,7 +256,7 @@ test "std.meta.containerLayout" {
     testing.expect(containerLayout(U3) == .Extern);
 }
 
-pub fn declarations(comptime T: type) []TypeInfo.Declaration {
+pub fn declarations(comptime T: type) []const TypeInfo.Declaration {
     return switch (@typeInfo(T)) {
         .Struct => |info| info.decls,
         .Enum => |info| info.decls,
@@ -274,7 +280,7 @@ test "std.meta.declarations" {
         fn a() void {}
     };
 
-    const decls = comptime [_][]TypeInfo.Declaration{
+    const decls = comptime [_][]const TypeInfo.Declaration{
         declarations(E1),
         declarations(S1),
         declarations(U1),
@@ -323,10 +329,10 @@ test "std.meta.declarationInfo" {
 }
 
 pub fn fields(comptime T: type) switch (@typeInfo(T)) {
-    .Struct => []TypeInfo.StructField,
-    .Union => []TypeInfo.UnionField,
-    .ErrorSet => []TypeInfo.Error,
-    .Enum => []TypeInfo.EnumField,
+    .Struct => []const TypeInfo.StructField,
+    .Union => []const TypeInfo.UnionField,
+    .ErrorSet => []const TypeInfo.Error,
+    .Enum => []const TypeInfo.EnumField,
     else => @compileError("Expected struct, union, error set or enum type, found '" ++ @typeName(T) ++ "'"),
 } {
     return switch (@typeInfo(T)) {
@@ -430,7 +436,7 @@ test "std.meta.TagType" {
 }
 
 ///Returns the active tag of a tagged union
-pub fn activeTag(u: var) @TagType(@TypeOf(u)) {
+pub fn activeTag(u: anytype) @TagType(@TypeOf(u)) {
     const T = @TypeOf(u);
     return @as(@TagType(T), u);
 }
@@ -459,10 +465,13 @@ pub fn TagPayloadType(comptime U: type, tag: @TagType(U)) type {
     testing.expect(trait.is(.Union)(U));
 
     const info = @typeInfo(U).Union;
+    const tag_info = @typeInfo(@TagType(U)).Enum;
 
     inline for (info.fields) |field_info| {
-        if (field_info.enum_field.?.value == @enumToInt(tag)) return field_info.field_type;
+        if (comptime mem.eql(u8, field_info.name, @tagName(tag)))
+            return field_info.field_type;
     }
+
     unreachable;
 }
 
@@ -480,7 +489,7 @@ test "std.meta.TagPayloadType" {
 
 /// Compares two of any type for equality. Containers are compared on a field-by-field basis,
 /// where possible. Pointers are not followed.
-pub fn eql(a: var, b: @TypeOf(a)) bool {
+pub fn eql(a: anytype, b: @TypeOf(a)) bool {
     const T = @TypeOf(a);
 
     switch (@typeInfo(T)) {
@@ -498,15 +507,14 @@ pub fn eql(a: var, b: @TypeOf(a)) bool {
             }
         },
         .Union => |info| {
-            if (info.tag_type) |_| {
+            if (info.tag_type) |Tag| {
                 const tag_a = activeTag(a);
                 const tag_b = activeTag(b);
                 if (tag_a != tag_b) return false;
 
                 inline for (info.fields) |field_info| {
-                    const enum_field = field_info.enum_field.?;
-                    if (enum_field.value == @enumToInt(tag_a)) {
-                        return eql(@field(a, enum_field.name), @field(b, enum_field.name));
+                    if (@field(Tag, field_info.name) == tag_a) {
+                        return eql(@field(a, field_info.name), @field(b, field_info.name));
                     }
                 }
                 return false;
@@ -627,7 +635,7 @@ test "intToEnum with error return" {
 
 pub const IntToEnumError = error{InvalidEnumTag};
 
-pub fn intToEnum(comptime Tag: type, tag_int: var) IntToEnumError!Tag {
+pub fn intToEnum(comptime Tag: type, tag_int: anytype) IntToEnumError!Tag {
     inline for (@typeInfo(Tag).Enum.fields) |f| {
         const this_tag_value = @field(Tag, f.name);
         if (tag_int == @enumToInt(this_tag_value)) {
@@ -658,7 +666,7 @@ pub fn refAllDecls(comptime T: type) void {
 /// Returns a slice of pointers to public declarations of a namespace.
 pub fn declList(comptime Namespace: type, comptime Decl: type) []const *const Decl {
     const S = struct {
-        fn declNameLessThan(lhs: *const Decl, rhs: *const Decl) bool {
+        fn declNameLessThan(context: void, lhs: *const Decl, rhs: *const Decl) bool {
             return mem.lessThan(u8, lhs.name, rhs.name);
         }
     };
@@ -668,7 +676,7 @@ pub fn declList(comptime Namespace: type, comptime Decl: type) []const *const De
         for (decls) |decl, i| {
             array[i] = &@field(Namespace, decl.name);
         }
-        std.sort.sort(*const Decl, &array, S.declNameLessThan);
+        std.sort.sort(*const Decl, &array, {}, S.declNameLessThan);
         return &array;
     }
 }
@@ -692,4 +700,129 @@ pub fn Vector(comptime len: u32, comptime child: type) type {
             .child = child,
         },
     });
+}
+
+/// Given a type and value, cast the value to the type as c would.
+/// This is for translate-c and is not intended for general use.
+pub fn cast(comptime DestType: type, target: anytype) DestType {
+    const TargetType = @TypeOf(target);
+    switch (@typeInfo(DestType)) {
+        .Pointer => |dest_ptr| {
+            switch (@typeInfo(TargetType)) {
+                .Int, .ComptimeInt => {
+                    return @intToPtr(DestType, target);
+                },
+                .Pointer => |ptr| {
+                    return @ptrCast(DestType, @alignCast(dest_ptr.alignment, target));
+                },
+                .Optional => |opt| {
+                    if (@typeInfo(opt.child) == .Pointer) {
+                        return @ptrCast(DestType, @alignCast(dest_ptr.alignment, target));
+                    }
+                },
+                else => {},
+            }
+        },
+        .Optional => |dest_opt| {
+            if (@typeInfo(dest_opt.child) == .Pointer) {
+                const dest_ptr = @typeInfo(dest_opt.child).Pointer;
+                switch (@typeInfo(TargetType)) {
+                    .Int, .ComptimeInt => {
+                        return @intToPtr(DestType, target);
+                    },
+                    .Pointer => {
+                        return @ptrCast(DestType, @alignCast(dest_ptr.alignment, target));
+                    },
+                    .Optional => |target_opt| {
+                        if (@typeInfo(target_opt.child) == .Pointer) {
+                            return @ptrCast(DestType, @alignCast(dest_ptr.alignment, target));
+                        }
+                    },
+                    else => {},
+                }
+            }
+        },
+        .Enum => {
+            if (@typeInfo(TargetType) == .Int or @typeInfo(TargetType) == .ComptimeInt) {
+                return @intToEnum(DestType, target);
+            }
+        },
+        .Int, .ComptimeInt => {
+            switch (@typeInfo(TargetType)) {
+                .Pointer => {
+                    return @intCast(DestType, @ptrToInt(target));
+                },
+                .Optional => |opt| {
+                    if (@typeInfo(opt.child) == .Pointer) {
+                        return @intCast(DestType, @ptrToInt(target));
+                    }
+                },
+                .Enum => {
+                    return @intCast(DestType, @enumToInt(target));
+                },
+                .Int, .ComptimeInt => {
+                    return @intCast(DestType, target);
+                },
+                else => {},
+            }
+        },
+        else => {},
+    }
+    return @as(DestType, target);
+}
+
+test "std.meta.cast" {
+    const E = enum(u2) {
+        Zero,
+        One,
+        Two,
+    };
+
+    var i = @as(i64, 10);
+
+    testing.expect(cast(*u8, 16) == @intToPtr(*u8, 16));
+    testing.expect(cast(*u64, &i).* == @as(u64, 10));
+    testing.expect(cast(*i64, @as(?*align(1) i64, &i)) == &i);
+
+    testing.expect(cast(?*u8, 2) == @intToPtr(*u8, 2));
+    testing.expect(cast(?*i64, @as(*align(1) i64, &i)) == &i);
+    testing.expect(cast(?*i64, @as(?*align(1) i64, &i)) == &i);
+
+    testing.expect(cast(E, 1) == .One);
+
+    testing.expectEqual(@as(u32, 4), cast(u32, @intToPtr(*u32, 4)));
+    testing.expectEqual(@as(u32, 4), cast(u32, @intToPtr(?*u32, 4)));
+    testing.expectEqual(@as(u32, 10), cast(u32, @as(u64, 10)));
+    testing.expectEqual(@as(u8, 2), cast(u8, E.Two));
+}
+
+/// Given a value returns its size as C's sizeof operator would.
+/// This is for translate-c and is not intended for general use.
+pub fn sizeof(target: anytype) usize {
+    switch (@typeInfo(@TypeOf(target))) {
+        .Type => return @sizeOf(target),
+        .Float, .Int, .Struct, .Union, .Enum => return @sizeOf(@TypeOf(target)),
+        .ComptimeFloat => return @sizeOf(f64), // TODO c_double #3999
+        .ComptimeInt => {
+            // TODO to get the correct result we have to translate
+            // `1073741824 * 4` as `int(1073741824) *% int(4)` since
+            // sizeof(1073741824 * 4) != sizeof(4294967296).
+            
+            // TODO test if target fits in int, long or long long
+            return @sizeOf(c_int);
+        },
+        else => @compileError("TODO implement std.meta.sizeof for type " ++ @typeName(@TypeOf(target))),
+    }
+}
+
+test "sizeof" {
+    const E = extern enum(c_int) { One, _ };
+    const S = extern struct { a: u32 };
+
+    testing.expect(sizeof(u32) == 4);
+    testing.expect(sizeof(@as(u32, 2)) == 4);
+    testing.expect(sizeof(2) == @sizeOf(c_int));
+    testing.expect(sizeof(E) == @sizeOf(c_int));
+    testing.expect(sizeof(E.One) == @sizeOf(c_int));
+    testing.expect(sizeof(S) == 4);
 }

@@ -153,6 +153,7 @@ export fn stage2_render_ast(tree: *ast.Tree, output_file: *FILE) Error {
     const c_out_stream = std.io.cOutStream(output_file);
     _ = std.zig.render(std.heap.c_allocator, c_out_stream, tree) catch |e| switch (e) {
         error.WouldBlock => unreachable, // stage1 opens stuff in exclusively blocking mode
+        error.NotOpenForWriting => unreachable,
         error.SystemResources => return .SystemResources,
         error.OperationAborted => return .OperationAborted,
         error.BrokenPipe => return .BrokenPipe,
@@ -179,8 +180,7 @@ export fn stage2_fmt(argc: c_int, argv: [*]const [*:0]const u8) c_int {
     return 0;
 }
 
-fn fmtMain(argc: c_int, argv: [*]const [*:0]const u8) !void {
-    const allocator = std.heap.c_allocator;
+fn argvToArrayList(allocator: *Allocator, argc: c_int, argv: [*]const [*:0]const u8) !ArrayList([]const u8) {
     var args_list = std.ArrayList([]const u8).init(allocator);
     const argc_usize = @intCast(usize, argc);
     var arg_i: usize = 0;
@@ -188,8 +188,16 @@ fn fmtMain(argc: c_int, argv: [*]const [*:0]const u8) !void {
         try args_list.append(mem.spanZ(argv[arg_i]));
     }
 
-    const args = args_list.span()[2..];
+    return args_list;
+}
 
+fn fmtMain(argc: c_int, argv: [*]const [*:0]const u8) !void {
+    const allocator = std.heap.c_allocator;
+
+    var args_list = try argvToArrayList(allocator, argc, argv);
+    defer args_list.deinit();
+
+    const args = args_list.span()[2..];
     return self_hosted_main.cmdFmt(allocator, args);
 }
 
@@ -387,6 +395,25 @@ fn detectNativeCpuWithLLVM(
     return result;
 }
 
+export fn stage2_env(argc: c_int, argv: [*]const [*:0]const u8) c_int {
+    const allocator = std.heap.c_allocator;
+
+    var args_list = argvToArrayList(allocator, argc, argv) catch |err| {
+        std.debug.print("unable to parse arguments: {}\n", .{@errorName(err)});
+        return -1;
+    };
+    defer args_list.deinit();
+
+    const args = args_list.span()[2..];
+
+    @import("print_env.zig").cmdEnv(allocator, args, std.io.getStdOut().outStream()) catch |err| {
+        std.debug.print("unable to print info: {}\n", .{@errorName(err)});
+        return -1;
+    };
+
+    return 0;
+}
+
 // ABI warning
 export fn stage2_cmd_targets(
     zig_triple: ?[*:0]const u8,
@@ -571,12 +598,9 @@ const Stage2LibCInstallation = extern struct {
 
 // ABI warning
 export fn stage2_libc_parse(stage1_libc: *Stage2LibCInstallation, libc_file_z: [*:0]const u8) Error {
-    stderr_file = std.io.getStdErr();
-    stderr = stderr_file.outStream();
     const libc_file = mem.spanZ(libc_file_z);
-    var libc = LibCInstallation.parse(std.heap.c_allocator, libc_file, stderr) catch |err| switch (err) {
+    var libc = LibCInstallation.parse(std.heap.c_allocator, libc_file) catch |err| switch (err) {
         error.ParseError => return .SemanticAnalyzeFail,
-        error.DiskQuota => return .DiskQuota,
         error.FileTooBig => return .FileTooBig,
         error.InputOutput => return .FileSystem,
         error.NoSpaceLeft => return .NoSpaceLeft,
@@ -585,8 +609,8 @@ export fn stage2_libc_parse(stage1_libc: *Stage2LibCInstallation, libc_file_z: [
         error.SystemResources => return .SystemResources,
         error.OperationAborted => return .OperationAborted,
         error.WouldBlock => unreachable,
+        error.NotOpenForReading => unreachable,
         error.Unexpected => return .Unexpected,
-        error.EndOfStream => return .EndOfFile,
         error.IsDir => return .IsDir,
         error.ConnectionResetByPeer => unreachable,
         error.ConnectionTimedOut => unreachable,
@@ -640,6 +664,7 @@ export fn stage2_libc_render(stage1_libc: *Stage2LibCInstallation, output_file: 
     const c_out_stream = std.io.cOutStream(output_file);
     libc.render(c_out_stream) catch |err| switch (err) {
         error.WouldBlock => unreachable, // stage1 opens stuff in exclusively blocking mode
+        error.NotOpenForWriting => unreachable,
         error.SystemResources => return .SystemResources,
         error.OperationAborted => return .OperationAborted,
         error.BrokenPipe => return .BrokenPipe,
@@ -651,23 +676,6 @@ export fn stage2_libc_render(stage1_libc: *Stage2LibCInstallation, output_file: 
         error.InputOutput => return .FileSystem,
     };
     return .None;
-}
-
-fn enumToString(value: var, type_name: []const u8) ![]const u8 {
-    switch (@typeInfo(@TypeOf(value))) {
-        .Enum => |e| {
-            if (e.is_exhaustive) {
-                return std.fmt.allocPrint(std.heap.c_allocator, ".{}", .{@tagName(value)});
-            } else {
-                return std.fmt.allocPrint(
-                    std.heap.c_allocator,
-                    "@intToEnum({}, {})",
-                    .{ type_name, @enumToInt(value) },
-                );
-            }
-        },
-        else => unreachable,
-    }
 }
 
 // ABI warning
@@ -887,13 +895,13 @@ const Stage2Target = extern struct {
 
             .windows => try os_builtin_str_buffer.outStream().print(
                 \\ .windows = .{{
-                \\        .min = {},
-                \\        .max = {},
+                \\        .min = {s},
+                \\        .max = {s},
                 \\    }}}},
                 \\
             , .{
-                try enumToString(target.os.version_range.windows.min, "Target.Os.WindowsVersion"),
-                try enumToString(target.os.version_range.windows.max, "Target.Os.WindowsVersion"),
+                target.os.version_range.windows.min,
+                target.os.version_range.windows.max,
             }),
         }
         try os_builtin_str_buffer.appendSlice("};\n");
@@ -1288,3 +1296,5 @@ export fn stage2_clang_arg_next(it: *ClangArgIterator) Error {
     };
     return .None;
 }
+
+export const stage2_is_zig0 = false;

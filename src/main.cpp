@@ -38,6 +38,7 @@ static int print_full_usage(const char *arg0, FILE *file, int return_code) {
         "  builtin                      show the source code of @import(\"builtin\")\n"
         "  cc                           use Zig as a drop-in C compiler\n"
         "  c++                          use Zig as a drop-in C++ compiler\n"
+        "  env                          print lib path, std path, compiler id and version\n"
         "  fmt                          parse files and render in canonical zig format\n"
         "  id                           print the base64-encoded compiler id\n"
         "  init-exe                     initialize a `zig build` application in the cwd\n"
@@ -126,6 +127,7 @@ static int print_full_usage(const char *arg0, FILE *file, int return_code) {
         "  -l[lib]                      alias for --library\n"
         "  -rdynamic                    add all symbols to the dynamic symbol table\n"
         "  -rpath [path]                add directory to the runtime library search path\n"
+        "  --stack [size]               (linux, windows, Wasm) override default stack size\n"
         "  --subsystem [subsystem]      (windows) /SUBSYSTEM:<subsystem> to the linker\n"
         "  -F[dir]                      (darwin) add search path for frameworks\n"
         "  -framework [name]            (darwin) link against framework\n"
@@ -414,6 +416,7 @@ static int main0(int argc, char **argv) {
     const char *test_filter = nullptr;
     const char *test_name_prefix = nullptr;
     bool test_evented_io = false;
+    bool is_versioned = false;
     size_t ver_major = 0;
     size_t ver_minor = 0;
     size_t ver_patch = 0;
@@ -581,6 +584,8 @@ static int main0(int argc, char **argv) {
         return (term.how == TerminationIdClean) ? term.code : -1;
     } else if (argc >= 2 && strcmp(argv[1], "fmt") == 0) {
         return stage2_fmt(argc, argv);
+    } else if (argc >= 2 && strcmp(argv[1], "env") == 0) {
+        return stage2_env(argc, argv);
     } else if (argc >= 2 && (strcmp(argv[1], "cc") == 0 || strcmp(argv[1], "c++") == 0)) {
         emit_h = false;
         strip = true;
@@ -866,6 +871,7 @@ static int main0(int argc, char **argv) {
                     fprintf(stderr, "expected linker arg after '%s'\n", buf_ptr(arg));
                     return EXIT_FAILURE;
                 }
+                is_versioned = true;
                 ver_major = atoi(buf_ptr(linker_args.at(i)));
             } else if (buf_eql_str(arg, "--minor-image-version")) {
                 i += 1;
@@ -873,6 +879,7 @@ static int main0(int argc, char **argv) {
                     fprintf(stderr, "expected linker arg after '%s'\n", buf_ptr(arg));
                     return EXIT_FAILURE;
                 }
+                is_versioned = true;
                 ver_minor = atoi(buf_ptr(linker_args.at(i)));
             } else if (buf_eql_str(arg, "--stack")) {
                 i += 1;
@@ -1224,13 +1231,18 @@ static int main0(int argc, char **argv) {
                 } else if (strcmp(arg, "--test-name-prefix") == 0) {
                     test_name_prefix = argv[i];
                 } else if (strcmp(arg, "--ver-major") == 0) {
+                    is_versioned = true;
                     ver_major = atoi(argv[i]);
                 } else if (strcmp(arg, "--ver-minor") == 0) {
+                    is_versioned = true;
                     ver_minor = atoi(argv[i]);
                 } else if (strcmp(arg, "--ver-patch") == 0) {
+                    is_versioned = true;
                     ver_patch = atoi(argv[i]);
                 } else if (strcmp(arg, "--test-cmd") == 0) {
                     test_exec_args.append(argv[i]);
+                } else if (strcmp(arg, "--stack") == 0) {
+                    stack_size_override = atoi(argv[i]);
                 } else if (strcmp(arg, "--subsystem") == 0) {
                     if (strcmp(argv[i], "console") == 0) {
                         subsystem = TargetSubsystemConsole;
@@ -1584,7 +1596,7 @@ static int main0(int argc, char **argv) {
             g->emit_llvm_ir = emit_llvm_ir;
 
             codegen_set_out_name(g, buf_out_name);
-            codegen_set_lib_version(g, ver_major, ver_minor, ver_patch);
+            codegen_set_lib_version(g, is_versioned, ver_major, ver_minor, ver_patch);
             g->want_single_threaded = want_single_threaded;
             codegen_set_linker_script(g, linker_script);
             g->version_script_path = version_script; 

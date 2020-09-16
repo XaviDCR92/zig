@@ -17,6 +17,7 @@
 
 #define WHITESPACE \
          ' ': \
+    case '\r': \
     case '\n'
 
 #define DIGIT_NON_ZERO \
@@ -106,6 +107,7 @@ static const struct ZigKeyword zig_keywords[] = {
     {"allowzero", TokenIdKeywordAllowZero},
     {"and", TokenIdKeywordAnd},
     {"anyframe", TokenIdKeywordAnyFrame},
+    {"anytype", TokenIdKeywordAnyType},
     {"asm", TokenIdKeywordAsm},
     {"async", TokenIdKeywordAsync},
     {"await", TokenIdKeywordAwait},
@@ -1569,6 +1571,7 @@ const char * token_name(TokenId id) {
         case TokenIdKeywordAlign: return "align";
         case TokenIdKeywordAnd: return "and";
         case TokenIdKeywordAnyFrame: return "anyframe";
+        case TokenIdKeywordAnyType: return "anytype";
         case TokenIdKeywordAsm: return "asm";
         case TokenIdKeywordBreak: return "break";
         case TokenIdKeywordCatch: return "catch";

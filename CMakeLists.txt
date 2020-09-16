@@ -53,6 +53,8 @@ set(ZIG_STATIC off CACHE BOOL "Attempt to build a static zig executable (not com
 set(ZIG_STATIC_LLVM off CACHE BOOL "Prefer linking against static LLVM libraries")
 set(ZIG_ENABLE_MEM_PROFILE off CACHE BOOL "Activate memory usage instrumentation")
 set(ZIG_PREFER_CLANG_CPP_DYLIB off CACHE BOOL "Try to link against -lclang-cpp")
+set(ZIG_WORKAROUND_4799 off CACHE BOOL "workaround for https://github.com/ziglang/zig/issues/4799")
+set(ZIG_WORKAROUND_POLLY_SO off CACHE STRING "workaround for https://github.com/ziglang/zig/issues/4799")
 set(ZIG_USE_CCACHE off CACHE BOOL "Use ccache if available")
 
 if(CCACHE_PROGRAM AND ZIG_USE_CCACHE)
@@ -86,6 +88,11 @@ if(APPLE AND ZIG_STATIC)
     list(REMOVE_ITEM LLVM_LIBRARIES "-lz")
     find_library(ZLIB NAMES z zlib libz)
     list(APPEND LLVM_LIBRARIES "${ZLIB}")
+endif()
+
+if(APPLE AND ZIG_WORKAROUND_4799)
+  # eg: ${CMAKE_PREFIX_PATH} could be /usr/local/opt/llvm/
+  list(APPEND LLVM_LIBRARIES "-Wl,${CMAKE_PREFIX_PATH}/lib/libPolly.a" "-Wl,${CMAKE_PREFIX_PATH}/lib/libPollyPPCG.a" "-Wl,${CMAKE_PREFIX_PATH}/lib/libPollyISL.a")
 endif()
 
 set(ZIG_CPP_LIB_DIR "${CMAKE_BINARY_DIR}/zig_cpp")
@@ -288,6 +295,7 @@ set(ZIG_SOURCES
     "${CMAKE_SOURCE_DIR}/src/target.cpp"
     "${CMAKE_SOURCE_DIR}/src/tokenizer.cpp"
     "${CMAKE_SOURCE_DIR}/src/util.cpp"
+    "${CMAKE_SOURCE_DIR}/src/softfloat_ext.cpp"
     "${ZIG_SOURCES_MEM_PROFILE}"
 )
 set(OPTIMIZED_C_SOURCES
@@ -318,9 +326,14 @@ set(LIBUNWIND_FILES_DEST "${ZIG_LIB_DIR}/libunwind")
 set(LIBCXX_FILES_DEST "${ZIG_LIB_DIR}/libcxx")
 set(ZIG_STD_DEST "${ZIG_LIB_DIR}/std")
 set(ZIG_CONFIG_H_OUT "${CMAKE_BINARY_DIR}/config.h")
+set(ZIG_CONFIG_ZIG_OUT "${CMAKE_BINARY_DIR}/config.zig")
 configure_file (
     "${CMAKE_SOURCE_DIR}/src/config.h.in"
     "${ZIG_CONFIG_H_OUT}"
+)
+configure_file (
+    "${CMAKE_SOURCE_DIR}/src/config.zig.in"
+    "${ZIG_CONFIG_ZIG_OUT}"
 )
 
 include_directories(
@@ -396,11 +409,15 @@ add_library(zig_cpp STATIC ${ZIG_CPP_SOURCES})
 set_target_properties(zig_cpp PROPERTIES
     COMPILE_FLAGS ${EXE_CFLAGS}
 )
+
 target_link_libraries(zig_cpp LINK_PUBLIC
     ${CLANG_LIBRARIES}
     ${LLD_LIBRARIES}
     ${LLVM_LIBRARIES}
 )
+if(ZIG_WORKAROUND_POLLY_SO)
+  target_link_libraries(zig_cpp LINK_PUBLIC "-Wl,${ZIG_WORKAROUND_POLLY_SO}")
+endif()
 
 add_library(opt_c_util STATIC ${OPTIMIZED_C_SOURCES})
 set_target_properties(opt_c_util PROPERTIES
@@ -460,6 +477,8 @@ set(BUILD_LIBSTAGE2_ARGS "build-lib"
     --bundle-compiler-rt
     -fPIC
     -lc
+    --pkg-begin build_options "${ZIG_CONFIG_ZIG_OUT}"
+    --pkg-end
 )
 
 if("${ZIG_TARGET_TRIPLE}" STREQUAL "native")

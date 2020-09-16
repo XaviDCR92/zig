@@ -1,7 +1,13 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2015-2020 Zig Contributors
+// This file is part of [zig](https://ziglang.org/), which is MIT licensed.
+// The MIT license requires this copyright notice to be included in all copies
+// and substantial portions of the software.
 const std = @import("../../std.zig");
 const mem = std.mem;
 const testing = std.testing;
 const Managed = std.math.big.int.Managed;
+const Mutable = std.math.big.int.Mutable;
 const Limb = std.math.big.Limb;
 const DoubleLimb = std.math.big.DoubleLimb;
 const maxInt = std.math.maxInt;
@@ -17,13 +23,13 @@ test "big.int comptime_int set" {
     var a = try Managed.initSet(testing.allocator, s);
     defer a.deinit();
 
-    const s_limb_count = 128 / Limb.bit_count;
+    const s_limb_count = 128 / @typeInfo(Limb).Int.bits;
 
     comptime var i: usize = 0;
     inline while (i < s_limb_count) : (i += 1) {
         const result = @as(Limb, s & maxInt(Limb));
-        s >>= Limb.bit_count / 2;
-        s >>= Limb.bit_count / 2;
+        s >>= @typeInfo(Limb).Int.bits / 2;
+        s >>= @typeInfo(Limb).Int.bits / 2;
         testing.expect(a.limbs[i] == result);
     }
 }
@@ -1452,4 +1458,25 @@ test "big.int gcd one large" {
     try r.gcd(a, b);
 
     testing.expect((try r.to(u64)) == 1);
+}
+
+test "big.int mutable to managed" {
+    const allocator = testing.allocator;
+    var limbs_buf = try allocator.alloc(Limb, 8);
+    defer allocator.free(limbs_buf);
+
+    var a = Mutable.init(limbs_buf, 0xdeadbeef);
+    var a_managed = a.toManaged(allocator);
+
+    testing.expect(a.toConst().eq(a_managed.toConst()));
+}
+
+test "big.int const to managed" {
+    var a = try Managed.initSet(testing.allocator, 123423453456);
+    defer a.deinit();
+
+    var b = try a.toConst().toManaged(testing.allocator);
+    defer b.deinit();
+
+    testing.expect(a.toConst().eq(b.toConst()));
 }

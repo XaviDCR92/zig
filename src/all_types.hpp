@@ -692,7 +692,7 @@ enum NodeType {
     NodeTypeSuspend,
     NodeTypeAnyFrameType,
     NodeTypeEnumLiteral,
-    NodeTypeVarFieldType,
+    NodeTypeAnyTypeField,
 };
 
 enum FnInline {
@@ -705,7 +705,7 @@ struct AstNodeFnProto {
     Buf *name;
     ZigList<AstNode *> params;
     AstNode *return_type;
-    Token *return_var_token;
+    Token *return_anytype_token;
     AstNode *fn_def_node;
     // populated if this is an extern declaration
     Buf *lib_name;
@@ -734,7 +734,7 @@ struct AstNodeFnDef {
 struct AstNodeParamDecl {
     Buf *name;
     AstNode *type;
-    Token *var_token;
+    Token *anytype_token;
     Buf doc_comments;
     bool is_noalias;
     bool is_comptime;
@@ -1420,6 +1420,7 @@ struct ZigTypeStruct {
     bool requires_comptime;
     bool resolve_loop_flag_zero_bits;
     bool resolve_loop_flag_other;
+    bool created_by_at_type;
 };
 
 struct ZigTypeOptional {
@@ -1808,7 +1809,6 @@ enum BuiltinFnId {
     BuiltinFnIdShrExact,
     BuiltinFnIdSetEvalBranchQuota,
     BuiltinFnIdAlignCast,
-    BuiltinFnIdOpaqueType,
     BuiltinFnIdThis,
     BuiltinFnIdSetAlignStack,
     BuiltinFnIdExport,
@@ -1825,6 +1825,9 @@ enum BuiltinFnId {
     BuiltinFnIdAs,
     BuiltinFnIdCall,
     BuiltinFnIdBitSizeof,
+    BuiltinFnIdWasmMemorySize,
+    BuiltinFnIdWasmMemoryGrow,
+    BuiltinFnIdSrc,
 };
 
 struct BuiltinFnEntry {
@@ -2075,6 +2078,8 @@ struct CodeGen {
     LLVMValueRef err_name_table;
     LLVMValueRef safety_crash_err_fn;
     LLVMValueRef return_err_fn;
+    LLVMValueRef wasm_memory_size;
+    LLVMValueRef wasm_memory_grow;
     LLVMTypeRef anyframe_fn_type;
 
     // reminder: hash tables must be initialized before use
@@ -2140,7 +2145,7 @@ struct CodeGen {
         ZigType *entry_num_lit_float;
         ZigType *entry_undef;
         ZigType *entry_null;
-        ZigType *entry_var;
+        ZigType *entry_anytype;
         ZigType *entry_global_error_set;
         ZigType *entry_enum_literal;
         ZigType *entry_any_frame;
@@ -2260,6 +2265,7 @@ struct CodeGen {
 
     Stage2LibCInstallation *libc;
 
+    bool is_versioned;
     size_t version_major;
     size_t version_minor;
     size_t version_patch;
@@ -2433,6 +2439,7 @@ struct ScopeBlock {
     LVal lval;
     bool safety_off;
     bool fast_math_on;
+    bool name_used;
 };
 
 // This scope is created from every defer expression.
@@ -2483,6 +2490,8 @@ struct ScopeLoop {
     ZigList<IrBasicBlockSrc *> *incoming_blocks;
     ResultLocPeerParent *peer_parent;
     ScopeExpr *spill_scope;
+
+    bool name_used;
 };
 
 // This scope blocks certain things from working such as comptime continue
@@ -2636,6 +2645,7 @@ enum IrInstSrcId {
     IrInstSrcIdCall,
     IrInstSrcIdCallArgs,
     IrInstSrcIdCallExtra,
+    IrInstSrcIdAsyncCallExtra,
     IrInstSrcIdConst,
     IrInstSrcIdReturn,
     IrInstSrcIdContainerInitList,
@@ -2724,7 +2734,6 @@ enum IrInstSrcId {
     IrInstSrcIdImplicitCast,
     IrInstSrcIdResolveResult,
     IrInstSrcIdResetResult,
-    IrInstSrcIdOpaqueType,
     IrInstSrcIdSetAlignStack,
     IrInstSrcIdArgType,
     IrInstSrcIdExport,
@@ -2748,6 +2757,9 @@ enum IrInstSrcId {
     IrInstSrcIdResume,
     IrInstSrcIdSpillBegin,
     IrInstSrcIdSpillEnd,
+    IrInstSrcIdWasmMemorySize,
+    IrInstSrcIdWasmMemoryGrow,
+    IrInstSrcIdSrc,
 };
 
 // ir_render_* functions in codegen.cpp consume Gen instructions and produce LLVM IR.
@@ -2840,6 +2852,8 @@ enum IrInstGenId {
     IrInstGenIdVectorExtractElem,
     IrInstGenIdAlloca,
     IrInstGenIdConst,
+    IrInstGenIdWasmMemorySize,
+    IrInstGenIdWasmMemoryGrow,
 };
 
 // Common fields between IrInstSrc and IrInstGen. This allows future passes
@@ -3241,6 +3255,20 @@ struct IrInstSrcCallExtra {
 
     IrInstSrc *options;
     IrInstSrc *fn_ref;
+    IrInstSrc *args;
+    ResultLoc *result_loc;
+};
+
+// This is a pass1 instruction, used by @asyncCall, when the args node
+// is not a literal.
+// `args` is expected to be either a struct or a tuple.
+struct IrInstSrcAsyncCallExtra {
+    IrInstSrc base;
+
+    CallModifier modifier;
+    IrInstSrc *fn_ref;
+    IrInstSrc *ret_ptr;
+    IrInstSrc *new_stack;
     IrInstSrc *args;
     ResultLoc *result_loc;
 };
@@ -3727,6 +3755,36 @@ struct IrInstGenMemcpy {
     IrInstGen *count;
 };
 
+struct IrInstSrcWasmMemorySize {
+    IrInstSrc base;
+
+    IrInstSrc *index;
+};
+
+struct IrInstGenWasmMemorySize {
+    IrInstGen base;
+
+    IrInstGen *index;
+};
+
+struct IrInstSrcWasmMemoryGrow {
+    IrInstSrc base;
+
+    IrInstSrc *index;
+    IrInstSrc *delta;
+};
+
+struct IrInstGenWasmMemoryGrow {
+    IrInstGen base;
+
+    IrInstGen *index;
+    IrInstGen *delta;
+};
+
+struct IrInstSrcSrc {
+    IrInstSrc base;
+};
+
 struct IrInstSrcSlice {
     IrInstSrc base;
 
@@ -4055,7 +4113,7 @@ struct IrInstSrcCheckSwitchProngs {
     IrInstSrc *target_value;
     IrInstSrcCheckSwitchProngsRange *ranges;
     size_t range_count;
-    bool have_else_prong;
+    AstNode* else_prong;
     bool have_underscore_prong;
 };
 
@@ -4173,10 +4231,6 @@ struct IrInstGenAlignCast {
     IrInstGen base;
 
     IrInstGen *target;
-};
-
-struct IrInstSrcOpaqueType {
-    IrInstSrc base;
 };
 
 struct IrInstSrcSetAlignStack {

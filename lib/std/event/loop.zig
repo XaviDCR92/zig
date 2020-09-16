@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2015-2020 Zig Contributors
+// This file is part of [zig](https://ziglang.org/), which is MIT licensed.
+// The MIT license requires this copyright notice to be included in all copies
+// and substantial portions of the software.
 const std = @import("../std.zig");
 const builtin = @import("builtin");
 const root = @import("root");
@@ -107,7 +112,8 @@ pub const Loop = struct {
     /// have the correct pointer value.
     /// https://github.com/ziglang/zig/issues/2761 and https://github.com/ziglang/zig/issues/2765
     pub fn init(self: *Loop) !void {
-        if (builtin.single_threaded) {
+        if (builtin.single_threaded
+            or (@hasDecl(root, "event_loop_mode") and root.event_loop_mode == .single_threaded)) {
             return self.initSingleThreaded();
         } else {
             return self.initMultiThreaded();

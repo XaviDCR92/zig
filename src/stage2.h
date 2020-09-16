@@ -142,6 +142,9 @@ ZIG_EXTERN_C void stage2_render_ast(struct Stage2Ast *ast, FILE *output_file);
 ZIG_EXTERN_C void stage2_zen(const char **ptr, size_t *len);
 
 // ABI warning
+ZIG_EXTERN_C int stage2_env(int argc, char **argv);
+
+// ABI warning
 ZIG_EXTERN_C void stage2_attach_segfault_handler(void);
 
 // ABI warning
@@ -378,5 +381,8 @@ ZIG_EXTERN_C void stage2_clang_arg_iterator(struct Stage2ClangArgIterator *it,
 
 // ABI warning
 ZIG_EXTERN_C enum Error stage2_clang_arg_next(struct Stage2ClangArgIterator *it);
+
+// ABI warning
+ZIG_EXTERN_C const bool stage2_is_zig0;
 
 #endif

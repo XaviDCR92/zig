@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2015-2020 Zig Contributors
+// This file is part of [zig](https://ziglang.org/), which is MIT licensed.
+// The MIT license requires this copyright notice to be included in all copies
+// and substantial portions of the software.
 const std = @import("std.zig");
 const builtin = std.builtin;
 const os = std.os;
@@ -30,7 +35,7 @@ pub fn getCwdAlloc(allocator: *Allocator) ![]u8 {
     var current_buf: []u8 = &stack_buf;
     while (true) {
         if (os.getcwd(current_buf)) |slice| {
-            return mem.dupe(allocator, u8, slice);
+            return allocator.dupe(u8, slice);
         } else |err| switch (err) {
             error.NameTooLong => {
                 // The path is too long to fit in stack_buf. Allocate geometrically
@@ -169,7 +174,7 @@ pub fn getEnvVarOwned(allocator: *mem.Allocator, key: []const u8) GetEnvVarOwned
         };
     } else {
         const result = os.getenv(key) orelse return error.EnvironmentVariableNotFound;
-        return mem.dupe(allocator, u8, result);
+        return allocator.dupe(u8, result);
     }
 }
 
@@ -281,9 +286,6 @@ pub const ArgIteratorWasi = struct {
 pub const ArgIteratorWindows = struct {
     index: usize,
     cmd_line: [*]const u8,
-    in_quote: bool,
-    quote_count: usize,
-    seen_quote_count: usize,
 
     pub const NextError = error{OutOfMemory};
 
@@ -295,9 +297,6 @@ pub const ArgIteratorWindows = struct {
         return ArgIteratorWindows{
             .index = 0,
             .cmd_line = cmd_line,
-            .in_quote = false,
-            .quote_count = countQuotes(cmd_line),
-            .seen_quote_count = 0,
         };
     }
 
@@ -328,6 +327,7 @@ pub const ArgIteratorWindows = struct {
         }
 
         var backslash_count: usize = 0;
+        var in_quote = false;
         while (true) : (self.index += 1) {
             const byte = self.cmd_line[self.index];
             switch (byte) {
@@ -335,14 +335,14 @@ pub const ArgIteratorWindows = struct {
                 '"' => {
                     const quote_is_real = backslash_count % 2 == 0;
                     if (quote_is_real) {
-                        self.seen_quote_count += 1;
+                        in_quote = !in_quote;
                     }
                 },
                 '\\' => {
                     backslash_count += 1;
                 },
                 ' ', '\t' => {
-                    if (self.seen_quote_count % 2 == 0 or self.seen_quote_count == self.quote_count) {
+                    if (!in_quote) {
                         return true;
                     }
                     backslash_count = 0;
@@ -360,6 +360,7 @@ pub const ArgIteratorWindows = struct {
         defer buf.deinit();
 
         var backslash_count: usize = 0;
+        var in_quote = false;
         while (true) : (self.index += 1) {
             const byte = self.cmd_line[self.index];
             switch (byte) {
@@ -370,10 +371,7 @@ pub const ArgIteratorWindows = struct {
                     backslash_count = 0;
 
                     if (quote_is_real) {
-                        self.seen_quote_count += 1;
-                        if (self.seen_quote_count == self.quote_count and self.seen_quote_count % 2 == 1) {
-                            try buf.append('"');
-                        }
+                        in_quote = !in_quote;
                     } else {
                         try buf.append('"');
                     }
@@ -384,7 +382,7 @@ pub const ArgIteratorWindows = struct {
                 ' ', '\t' => {
                     try self.emitBackslashes(&buf, backslash_count);
                     backslash_count = 0;
-                    if (self.seen_quote_count % 2 == 1 and self.seen_quote_count != self.quote_count) {
+                    if (in_quote) {
                         try buf.append(byte);
                     } else {
                         return buf.toOwnedSlice();
@@ -403,26 +401,6 @@ pub const ArgIteratorWindows = struct {
         var i: usize = 0;
         while (i < emit_count) : (i += 1) {
             try buf.append('\\');
-        }
-    }
-
-    fn countQuotes(cmd_line: [*]const u8) usize {
-        var result: usize = 0;
-        var backslash_count: usize = 0;
-        var index: usize = 0;
-        while (true) : (index += 1) {
-            const byte = cmd_line[index];
-            switch (byte) {
-                0 => return result,
-                '\\' => backslash_count += 1,
-                '"' => {
-                    result += 1 - (backslash_count % 2);
-                    backslash_count = 0;
-                },
-                else => {
-                    backslash_count = 0;
-                },
-            }
         }
     }
 };
@@ -463,7 +441,7 @@ pub const ArgIterator = struct {
         if (builtin.os.tag == .windows) {
             return self.inner.next(allocator);
         } else {
-            return mem.dupe(allocator, u8, self.inner.next() orelse return null);
+            return allocator.dupe(u8, self.inner.next() orelse return null);
         }
     }
 
@@ -578,7 +556,7 @@ test "windows arg parsing" {
     testWindowsCmdLine("a\\\\\\b d\"e f\"g h", &[_][]const u8{ "a\\\\\\b", "de fg", "h" });
     testWindowsCmdLine("a\\\\\\\"b c d", &[_][]const u8{ "a\\\"b", "c", "d" });
     testWindowsCmdLine("a\\\\\\\\\"b c\" d e", &[_][]const u8{ "a\\\\b c", "d", "e" });
-    testWindowsCmdLine("a   b\tc \"d f", &[_][]const u8{ "a", "b", "c", "\"d", "f" });
+    testWindowsCmdLine("a   b\tc \"d f", &[_][]const u8{ "a", "b", "c", "d f" });
 
     testWindowsCmdLine("\".\\..\\zig-cache\\build\" \"bin\\zig.exe\" \".\\..\" \".\\..\\zig-cache\" \"--help\"", &[_][]const u8{
         ".\\..\\zig-cache\\build",
@@ -600,8 +578,8 @@ fn testWindowsCmdLine(input_cmd_line: [*]const u8, expected_args: []const []cons
 }
 
 pub const UserInfo = struct {
-    uid: u32,
-    gid: u32,
+    uid: os.uid_t,
+    gid: os.gid_t,
 };
 
 /// POSIX function which gets a uid from username.
@@ -615,8 +593,10 @@ pub fn getUserInfo(name: []const u8) !UserInfo {
 /// TODO this reads /etc/passwd. But sometimes the user/id mapping is in something else
 /// like NIS, AD, etc. See `man nss` or look at an strace for `id myuser`.
 pub fn posixGetUserInfo(name: []const u8) !UserInfo {
-    var in_stream = try io.InStream.open("/etc/passwd", null);
-    defer in_stream.close();
+    const file = try std.fs.openFileAbsolute("/etc/passwd", .{});
+    defer file.close();
+
+    const reader = file.reader();
 
     const State = enum {
         Start,
@@ -629,11 +609,11 @@ pub fn posixGetUserInfo(name: []const u8) !UserInfo {
     var buf: [std.mem.page_size]u8 = undefined;
     var name_index: usize = 0;
     var state = State.Start;
-    var uid: u32 = 0;
-    var gid: u32 = 0;
+    var uid: os.uid_t = 0;
+    var gid: os.gid_t = 0;
 
     while (true) {
-        const amt_read = try in_stream.read(buf[0..]);
+        const amt_read = try reader.read(buf[0..]);
         for (buf[0..amt_read]) |byte| {
             switch (state) {
                 .Start => switch (byte) {
@@ -672,8 +652,8 @@ pub fn posixGetUserInfo(name: []const u8) !UserInfo {
                             '0'...'9' => byte - '0',
                             else => return error.CorruptPasswordFile,
                         };
-                        if (@mulWithOverflow(u32, uid, 10, *uid)) return error.CorruptPasswordFile;
-                        if (@addWithOverflow(u32, uid, digit, *uid)) return error.CorruptPasswordFile;
+                        if (@mulWithOverflow(u32, uid, 10, &uid)) return error.CorruptPasswordFile;
+                        if (@addWithOverflow(u32, uid, digit, &uid)) return error.CorruptPasswordFile;
                     },
                 },
                 .ReadGroupId => switch (byte) {
@@ -688,8 +668,8 @@ pub fn posixGetUserInfo(name: []const u8) !UserInfo {
                             '0'...'9' => byte - '0',
                             else => return error.CorruptPasswordFile,
                         };
-                        if (@mulWithOverflow(u32, gid, 10, *gid)) return error.CorruptPasswordFile;
-                        if (@addWithOverflow(u32, gid, digit, *gid)) return error.CorruptPasswordFile;
+                        if (@mulWithOverflow(u32, gid, 10, &gid)) return error.CorruptPasswordFile;
+                        if (@addWithOverflow(u32, gid, digit, &gid)) return error.CorruptPasswordFile;
                     },
                 },
             }
@@ -745,7 +725,7 @@ pub fn getSelfExeSharedLibPaths(allocator: *Allocator) error{OutOfMemory}![][:0]
                 fn callback(info: *os.dl_phdr_info, size: usize, list: *List) !void {
                     const name = info.dlpi_name orelse return;
                     if (name[0] == '/') {
-                        const item = try mem.dupeZ(list.allocator, u8, mem.spanZ(name));
+                        const item = try list.allocator.dupeZ(u8, mem.spanZ(name));
                         errdefer list.allocator.free(item);
                         try list.append(item);
                     }
@@ -766,7 +746,7 @@ pub fn getSelfExeSharedLibPaths(allocator: *Allocator) error{OutOfMemory}![][:0]
             var i: u32 = 0;
             while (i < img_count) : (i += 1) {
                 const name = std.c._dyld_get_image_name(i);
-                const item = try mem.dupeZ(allocator, u8, mem.spanZ(name));
+                const item = try allocator.dupeZ(u8, mem.spanZ(name));
                 errdefer allocator.free(item);
                 try paths.append(item);
             }

@@ -12,9 +12,9 @@ sudo apt-get update -q
 
 sudo apt-get remove -y llvm-*
 sudo rm -rf /usr/local/*
-sudo apt-get install -y libxml2-dev libclang-10-dev llvm-10 llvm-10-dev liblld-10-dev cmake s3cmd gcc-7 g++-7 ninja-build
+sudo apt-get install -y libxml2-dev libclang-10-dev llvm-10 llvm-10-dev liblld-10-dev cmake s3cmd gcc-7 g++-7 ninja-build tidy
 
-QEMUBASE="qemu-linux-x86_64-5.0.0-z2"
+QEMUBASE="qemu-linux-x86_64-5.1.0"
 wget https://ziglang.org/deps/$QEMUBASE.tar.xz
 tar xf $QEMUBASE.tar.xz
 PATH=$PWD/$QEMUBASE/bin:$PATH
@@ -51,6 +51,10 @@ cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -GNinja
 ninja install
 ./zig build test -Denable-qemu -Denable-wasmtime
+
+# look for HTML errors
+tidy -qe ../zig-cache/langref.html
+
 VERSION="$(./zig version)"
 
 if [ "${BUILD_REASON}" != "PullRequest" ]; then

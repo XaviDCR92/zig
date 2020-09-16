@@ -537,6 +537,7 @@ pub fn addPkgTests(
         these_tests.enable_qemu = is_qemu_enabled;
         these_tests.enable_wasmtime = is_wasmtime_enabled;
         these_tests.glibc_multi_install_dir = glibc_dir;
+        these_tests.addIncludeDir("test");
 
         step.dependOn(&these_tests.step);
     }
@@ -648,8 +649,9 @@ pub const StackTracesContext = struct {
 
             const stdout = child.stdout.?.inStream().readAllAlloc(b.allocator, max_stdout_size) catch unreachable;
             defer b.allocator.free(stdout);
-            var stderr = child.stderr.?.inStream().readAllAlloc(b.allocator, max_stdout_size) catch unreachable;
-            defer b.allocator.free(stderr);
+            const stderrFull = child.stderr.?.inStream().readAllAlloc(b.allocator, max_stdout_size) catch unreachable;
+            defer b.allocator.free(stderrFull);
+            var stderr = stderrFull;
 
             const term = child.wait() catch |err| {
                 debug.panic("Unable to spawn {}: {}\n", .{ full_exe_path, @errorName(err) });
