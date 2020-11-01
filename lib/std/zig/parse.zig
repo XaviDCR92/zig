@@ -2701,6 +2701,19 @@ const Parser = struct {
             return &node.base;
         }
 
+        if (p.eatToken(.Invalid_periodasterisks)) |period_asterisk| {
+            try p.errors.append(p.gpa, .{
+                .AsteriskAfterPointerDereference = .{ .token = period_asterisk },
+            });
+            const node = try p.arena.allocator.create(Node.SimpleSuffixOp);
+            node.* = .{
+                .base = .{ .tag = .Deref },
+                .lhs = lhs,
+                .rtoken = period_asterisk,
+            };
+            return &node.base;
+        }
+
         if (p.eatToken(.Period)) |period| {
             if (try p.parseIdentifier()) |identifier| {
                 const node = try p.arena.allocator.create(Node.SimpleInfixOp);
@@ -2896,11 +2909,12 @@ const Parser = struct {
     ///     <- KEYWORD_struct
     ///      / KEYWORD_enum (LPAREN Expr RPAREN)?
     ///      / KEYWORD_union (LPAREN (KEYWORD_enum (LPAREN Expr RPAREN)? / Expr) RPAREN)?
+    ///      / KEYWORD_opaque
     fn parseContainerDeclType(p: *Parser) !?ContainerDeclType {
         const kind_token = p.nextToken();
 
         const init_arg_expr = switch (p.token_ids[kind_token]) {
-            .Keyword_struct => Node.ContainerDecl.InitArg{ .None = {} },
+            .Keyword_struct, .Keyword_opaque => Node.ContainerDecl.InitArg{ .None = {} },
             .Keyword_enum => blk: {
                 if (p.eatToken(.LParen) != null) {
                     const expr = try p.expectNode(parseExpr, .{

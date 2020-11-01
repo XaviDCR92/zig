@@ -3,7 +3,6 @@
 // This file is part of [zig](https://ziglang.org/), which is MIT licensed.
 // The MIT license requires this copyright notice to be included in all copies
 // and substantial portions of the software.
-// Based on Go stdlib implementation
 
 const std = @import("../../std.zig");
 const mem = std.mem;
@@ -14,7 +13,7 @@ const BlockVec = Vector(2, u64);
 
 /// A single AES block.
 pub const Block = struct {
-    pub const block_size: usize = 16;
+    pub const block_length: usize = 16;
 
     /// Internal representation of a block.
     repr: BlockVec,
@@ -84,15 +83,35 @@ pub const Block = struct {
         };
     }
 
-    /// XOR the content of two blocks.
-    pub inline fn xor(block1: Block, block2: Block) Block {
+    /// Apply the bitwise XOR operation to the content of two blocks.
+    pub inline fn xorBlocks(block1: Block, block2: Block) Block {
         return Block{ .repr = block1.repr ^ block2.repr };
+    }
+
+    /// Apply the bitwise AND operation to the content of two blocks.
+    pub inline fn andBlocks(block1: Block, block2: Block) Block {
+        return Block{ .repr = block1.repr & block2.repr };
+    }
+
+    /// Apply the bitwise OR operation to the content of two blocks.
+    pub inline fn orBlocks(block1: Block, block2: Block) Block {
+        return Block{ .repr = block1.repr | block2.repr };
     }
 
     /// Perform operations on multiple blocks in parallel.
     pub const parallel = struct {
+        const cpu = std.Target.x86.cpu;
+
         /// The recommended number of AES encryption/decryption to perform in parallel for the chosen implementation.
-        pub const optimal_parallel_blocks = 8;
+        pub const optimal_parallel_blocks = switch (std.Target.current.cpu.model) {
+            &cpu.westmere => 6,
+            &cpu.sandybridge, &cpu.ivybridge => 8,
+            &cpu.haswell, &cpu.broadwell => 7,
+            &cpu.cannonlake, &cpu.skylake, &cpu.skylake_avx512 => 4,
+            &cpu.icelake_client, &cpu.icelake_server => 6,
+            &cpu.znver1, &cpu.znver2 => 8,
+            else => 8,
+        };
 
         /// Encrypt multiple blocks in parallel, each their own round key.
         pub inline fn encryptParallel(comptime count: usize, blocks: [count]Block, round_keys: [count]Block) [count]Block {
@@ -114,7 +133,7 @@ pub const Block = struct {
             return out;
         }
 
-        /// Encrypt multple blocks in parallel with the same round key.
+        /// Encrypt multiple blocks in parallel with the same round key.
         pub inline fn encryptWide(comptime count: usize, blocks: [count]Block, round_key: Block) [count]Block {
             comptime var i = 0;
             var out: [count]Block = undefined;
@@ -124,7 +143,7 @@ pub const Block = struct {
             return out;
         }
 
-        /// Decrypt multple blocks in parallel with the same round key.
+        /// Decrypt multiple blocks in parallel with the same round key.
         pub inline fn decryptWide(comptime count: usize, blocks: [count]Block, round_key: Block) [count]Block {
             comptime var i = 0;
             var out: [count]Block = undefined;
@@ -134,7 +153,7 @@ pub const Block = struct {
             return out;
         }
 
-        /// Encrypt multple blocks in parallel with the same last round key.
+        /// Encrypt multiple blocks in parallel with the same last round key.
         pub inline fn encryptLastWide(comptime count: usize, blocks: [count]Block, round_key: Block) [count]Block {
             comptime var i = 0;
             var out: [count]Block = undefined;
@@ -144,7 +163,7 @@ pub const Block = struct {
             return out;
         }
 
-        /// Decrypt multple blocks in parallel with the same last round key.
+        /// Decrypt multiple blocks in parallel with the same last round key.
         pub inline fn decryptLastWide(comptime count: usize, blocks: [count]Block, round_key: Block) [count]Block {
             comptime var i = 0;
             var out: [count]Block = undefined;
@@ -156,9 +175,9 @@ pub const Block = struct {
     };
 };
 
-fn KeySchedule(comptime AES: type) type {
-    std.debug.assert(AES.rounds == 10 or AES.rounds == 14);
-    const rounds = AES.rounds;
+fn KeySchedule(comptime Aes: type) type {
+    std.debug.assert(Aes.rounds == 10 or Aes.rounds == 14);
+    const rounds = Aes.rounds;
 
     return struct {
         const Self = @This();
@@ -234,24 +253,24 @@ fn KeySchedule(comptime AES: type) type {
 }
 
 /// A context to perform encryption using the standard AES key schedule.
-pub fn AESEncryptCtx(comptime AES: type) type {
-    std.debug.assert(AES.key_bits == 128 or AES.key_bits == 256);
-    const rounds = AES.rounds;
+pub fn AesEncryptCtx(comptime Aes: type) type {
+    std.debug.assert(Aes.key_bits == 128 or Aes.key_bits == 256);
+    const rounds = Aes.rounds;
 
     return struct {
         const Self = @This();
-        pub const block = AES.block;
-        pub const block_size = block.block_size;
-        key_schedule: KeySchedule(AES),
+        pub const block = Aes.block;
+        pub const block_length = block.block_length;
+        key_schedule: KeySchedule(Aes),
 
         /// Create a new encryption context with the given key.
-        pub fn init(key: [AES.key_bits / 8]u8) Self {
+        pub fn init(key: [Aes.key_bits / 8]u8) Self {
             var t1 = Block.fromBytes(key[0..16]);
-            const key_schedule = if (AES.key_bits == 128) ks: {
-                break :ks KeySchedule(AES).expand128(&t1);
+            const key_schedule = if (Aes.key_bits == 128) ks: {
+                break :ks KeySchedule(Aes).expand128(&t1);
             } else ks: {
                 var t2 = Block.fromBytes(key[16..32]);
-                break :ks KeySchedule(AES).expand256(&t1, &t2);
+                break :ks KeySchedule(Aes).expand256(&t1, &t2);
             };
             return Self{
                 .key_schedule = key_schedule,
@@ -261,7 +280,7 @@ pub fn AESEncryptCtx(comptime AES: type) type {
         /// Encrypt a single block.
         pub fn encrypt(ctx: Self, dst: *[16]u8, src: *const [16]u8) void {
             const round_keys = ctx.key_schedule.round_keys;
-            var t = Block.fromBytes(src).xor(round_keys[0]);
+            var t = Block.fromBytes(src).xorBlocks(round_keys[0]);
             comptime var i = 1;
             inline while (i < rounds) : (i += 1) {
                 t = t.encrypt(round_keys[i]);
@@ -273,7 +292,7 @@ pub fn AESEncryptCtx(comptime AES: type) type {
         /// Encrypt+XOR a single block.
         pub fn xor(ctx: Self, dst: *[16]u8, src: *const [16]u8, counter: [16]u8) void {
             const round_keys = ctx.key_schedule.round_keys;
-            var t = Block.fromBytes(&counter).xor(round_keys[0]);
+            var t = Block.fromBytes(&counter).xorBlocks(round_keys[0]);
             comptime var i = 1;
             inline while (i < rounds) : (i += 1) {
                 t = t.encrypt(round_keys[i]);
@@ -288,7 +307,7 @@ pub fn AESEncryptCtx(comptime AES: type) type {
             var ts: [count]Block = undefined;
             comptime var j = 0;
             inline while (j < count) : (j += 1) {
-                ts[j] = Block.fromBytes(src[j * 16 .. j * 16 + 16][0..16]).xor(round_keys[0]);
+                ts[j] = Block.fromBytes(src[j * 16 .. j * 16 + 16][0..16]).xorBlocks(round_keys[0]);
             }
             comptime var i = 1;
             inline while (i < rounds) : (i += 1) {
@@ -310,7 +329,7 @@ pub fn AESEncryptCtx(comptime AES: type) type {
             var ts: [count]Block = undefined;
             comptime var j = 0;
             inline while (j < count) : (j += 1) {
-                ts[j] = Block.fromBytes(counters[j * 16 .. j * 16 + 16][0..16]).xor(round_keys[0]);
+                ts[j] = Block.fromBytes(counters[j * 16 .. j * 16 + 16][0..16]).xorBlocks(round_keys[0]);
             }
             comptime var i = 1;
             inline while (i < rounds) : (i += 1) {
@@ -326,33 +345,33 @@ pub fn AESEncryptCtx(comptime AES: type) type {
 }
 
 /// A context to perform decryption using the standard AES key schedule.
-pub fn AESDecryptCtx(comptime AES: type) type {
-    std.debug.assert(AES.key_bits == 128 or AES.key_bits == 256);
-    const rounds = AES.rounds;
+pub fn AesDecryptCtx(comptime Aes: type) type {
+    std.debug.assert(Aes.key_bits == 128 or Aes.key_bits == 256);
+    const rounds = Aes.rounds;
 
     return struct {
         const Self = @This();
-        pub const block = AES.block;
-        pub const block_size = block.block_size;
-        key_schedule: KeySchedule(AES),
+        pub const block = Aes.block;
+        pub const block_length = block.block_length;
+        key_schedule: KeySchedule(Aes),
 
         /// Create a decryption context from an existing encryption context.
-        pub fn initFromEnc(ctx: AESEncryptCtx(AES)) Self {
+        pub fn initFromEnc(ctx: AesEncryptCtx(Aes)) Self {
             return Self{
                 .key_schedule = ctx.key_schedule.invert(),
             };
         }
 
         /// Create a new decryption context with the given key.
-        pub fn init(key: [AES.key_bits / 8]u8) Self {
-            const enc_ctx = AESEncryptCtx(AES).init(key);
+        pub fn init(key: [Aes.key_bits / 8]u8) Self {
+            const enc_ctx = AesEncryptCtx(Aes).init(key);
             return initFromEnc(enc_ctx);
         }
 
         /// Decrypt a single block.
         pub fn decrypt(ctx: Self, dst: *[16]u8, src: *const [16]u8) void {
             const inv_round_keys = ctx.key_schedule.round_keys;
-            var t = Block.fromBytes(src).xor(inv_round_keys[0]);
+            var t = Block.fromBytes(src).xorBlocks(inv_round_keys[0]);
             comptime var i = 1;
             inline while (i < rounds) : (i += 1) {
                 t = t.decrypt(inv_round_keys[i]);
@@ -367,7 +386,7 @@ pub fn AESDecryptCtx(comptime AES: type) type {
             var ts: [count]Block = undefined;
             comptime var j = 0;
             inline while (j < count) : (j += 1) {
-                ts[j] = Block.fromBytes(src[j * 16 .. j * 16 + 16][0..16]).xor(inv_round_keys[0]);
+                ts[j] = Block.fromBytes(src[j * 16 .. j * 16 + 16][0..16]).xorBlocks(inv_round_keys[0]);
             }
             comptime var i = 1;
             inline while (i < rounds) : (i += 1) {
@@ -386,35 +405,35 @@ pub fn AESDecryptCtx(comptime AES: type) type {
 }
 
 /// AES-128 with the standard key schedule.
-pub const AES128 = struct {
+pub const Aes128 = struct {
     pub const key_bits: usize = 128;
     pub const rounds = ((key_bits - 64) / 32 + 8);
     pub const block = Block;
 
     /// Create a new context for encryption.
-    pub fn initEnc(key: [key_bits / 8]u8) AESEncryptCtx(AES128) {
-        return AESEncryptCtx(AES128).init(key);
+    pub fn initEnc(key: [key_bits / 8]u8) AesEncryptCtx(Aes128) {
+        return AesEncryptCtx(Aes128).init(key);
     }
 
     /// Create a new context for decryption.
-    pub fn initDec(key: [key_bits / 8]u8) AESDecryptCtx(AES128) {
-        return AESDecryptCtx(AES128).init(key);
+    pub fn initDec(key: [key_bits / 8]u8) AesDecryptCtx(Aes128) {
+        return AesDecryptCtx(Aes128).init(key);
     }
 };
 
 /// AES-256 with the standard key schedule.
-pub const AES256 = struct {
+pub const Aes256 = struct {
     pub const key_bits: usize = 256;
     pub const rounds = ((key_bits - 64) / 32 + 8);
     pub const block = Block;
 
     /// Create a new context for encryption.
-    pub fn initEnc(key: [key_bits / 8]u8) AESEncryptCtx(AES256) {
-        return AESEncryptCtx(AES256).init(key);
+    pub fn initEnc(key: [key_bits / 8]u8) AesEncryptCtx(Aes256) {
+        return AesEncryptCtx(Aes256).init(key);
     }
 
     /// Create a new context for decryption.
-    pub fn initDec(key: [key_bits / 8]u8) AESDecryptCtx(AES256) {
-        return AESDecryptCtx(AES256).init(key);
+    pub fn initDec(key: [key_bits / 8]u8) AesDecryptCtx(Aes256) {
+        return AesDecryptCtx(Aes256).init(key);
     }
 };

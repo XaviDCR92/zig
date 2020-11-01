@@ -12,17 +12,35 @@ usingnamespace @import("../os/bits.zig");
 
 extern "c" fn __error() *c_int;
 pub extern "c" fn NSVersionOfRunTimeLibrary(library_name: [*:0]const u8) u32;
-pub extern "c" fn _NSGetExecutablePath(buf: [*]u8, bufsize: *u32) c_int;
+pub extern "c" fn _NSGetExecutablePath(buf: [*:0]u8, bufsize: *u32) c_int;
 pub extern "c" fn _dyld_image_count() u32;
 pub extern "c" fn _dyld_get_image_header(image_index: u32) ?*mach_header;
 pub extern "c" fn _dyld_get_image_vmaddr_slide(image_index: u32) usize;
 pub extern "c" fn _dyld_get_image_name(image_index: u32) [*:0]const u8;
 
+pub const COPYFILE_ACL = 1 << 0;
+pub const COPYFILE_STAT = 1 << 1;
+pub const COPYFILE_XATTR = 1 << 2;
+pub const COPYFILE_DATA = 1 << 3;
+
+pub const copyfile_state_t = *opaque {};
+pub extern "c" fn fcopyfile(from: fd_t, to: fd_t, state: ?copyfile_state_t, flags: u32) c_int;
+
 pub extern "c" fn @"realpath$DARWIN_EXTSN"(noalias file_name: [*:0]const u8, noalias resolved_name: [*]u8) ?[*:0]u8;
 
 pub extern "c" fn __getdirentries64(fd: c_int, buf_ptr: [*]u8, buf_len: usize, basep: *i64) isize;
-pub extern "c" fn @"fstat$INODE64"(fd: fd_t, buf: *Stat) c_int;
-pub extern "c" fn @"fstatat$INODE64"(dirfd: fd_t, path_name: [*:0]const u8, buf: *Stat, flags: u32) c_int;
+
+extern "c" fn fstat(fd: fd_t, buf: *Stat) c_int;
+/// On x86_64 Darwin, fstat has to be manully linked with $INODE64 suffix to force 64bit version.
+/// Note that this is fixed on aarch64 and no longer necessary.
+extern "c" fn @"fstat$INODE64"(fd: fd_t, buf: *Stat) c_int;
+pub const _fstat = if (builtin.arch == .aarch64) fstat else @"fstat$INODE64";
+
+extern "c" fn fstatat(dirfd: fd_t, path: [*:0]const u8, stat_buf: *Stat, flags: u32) c_int;
+/// On x86_64 Darwin, fstatat has to be manully linked with $INODE64 suffix to force 64bit version.
+/// Note that this is fixed on aarch64 and no longer necessary.
+extern "c" fn @"fstatat$INODE64"(dirfd: fd_t, path_name: [*:0]const u8, buf: *Stat, flags: u32) c_int;
+pub const _fstatat = if (builtin.arch == .aarch64) fstatat else @"fstatat$INODE64";
 
 pub extern "c" fn mach_absolute_time() u64;
 pub extern "c" fn mach_timebase_info(tinfo: ?*mach_timebase_info_data) void;
@@ -163,3 +181,5 @@ pub const pthread_attr_t = extern struct {
     __sig: c_long,
     __opaque: [56]u8,
 };
+
+pub extern "c" fn arc4random_buf(buf: [*]u8, len: usize) void;

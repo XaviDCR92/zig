@@ -360,7 +360,7 @@ fn iter_fn(info: *dl_phdr_info, size: usize, counter: *usize) IterFnError!void {
 }
 
 test "dl_iterate_phdr" {
-    if (builtin.os.tag == .windows or builtin.os.tag == .wasi or builtin.os.tag == .macosx)
+    if (builtin.os.tag == .windows or builtin.os.tag == .wasi or builtin.os.tag == .macos)
         return error.SkipZigTest;
 
     var counter: usize = 0;
@@ -590,4 +590,16 @@ test "fsync" {
 
     try os.fsync(file.handle);
     try os.fdatasync(file.handle);
+}
+
+test "getrlimit and setrlimit" {
+    if (!@hasDecl(os, "rlimit")) {
+        return error.SkipZigTest;
+    }
+
+    inline for (std.meta.fields(os.rlimit_resource)) |field| {
+        const resource = @intToEnum(os.rlimit_resource, field.value);
+        const limit = try os.getrlimit(resource);
+        try os.setrlimit(resource, limit);
+    }
 }

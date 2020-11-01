@@ -22,7 +22,7 @@ pub usingnamespace @import("os/bits.zig");
 pub usingnamespace switch (std.Target.current.os.tag) {
     .linux => @import("c/linux.zig"),
     .windows => @import("c/windows.zig"),
-    .macosx, .ios, .tvos, .watchos => @import("c/darwin.zig"),
+    .macos, .ios, .tvos, .watchos => @import("c/darwin.zig"),
     .freebsd, .kfreebsd => @import("c/freebsd.zig"),
     .netbsd => @import("c/netbsd.zig"),
     .dragonfly => @import("c/dragonfly.zig"),
@@ -122,9 +122,9 @@ pub extern "c" fn readlink(noalias path: [*:0]const u8, noalias buf: [*]u8, bufs
 pub extern "c" fn readlinkat(dirfd: fd_t, noalias path: [*:0]const u8, noalias buf: [*]u8, bufsize: usize) isize;
 
 pub usingnamespace switch (builtin.os.tag) {
-    .macosx, .ios, .watchos, .tvos => struct {
+    .macos, .ios, .watchos, .tvos => struct {
         pub const realpath = @"realpath$DARWIN_EXTSN";
-        pub const fstatat = @"fstatat$INODE64";
+        pub const fstatat = _fstatat;
     },
     else => struct {
         pub extern "c" fn realpath(noalias file_name: [*:0]const u8, noalias resolved_name: [*]u8) ?[*:0]u8;
@@ -150,8 +150,8 @@ pub extern "c" fn socketpair(domain: c_uint, sock_type: c_uint, protocol: c_uint
 pub extern "c" fn listen(sockfd: fd_t, backlog: c_uint) c_int;
 pub extern "c" fn getsockname(sockfd: fd_t, noalias addr: *sockaddr, noalias addrlen: *socklen_t) c_int;
 pub extern "c" fn connect(sockfd: fd_t, sock_addr: *const sockaddr, addrlen: socklen_t) c_int;
-pub extern "c" fn accept(sockfd: fd_t, addr: *sockaddr, addrlen: *socklen_t) c_int;
-pub extern "c" fn accept4(sockfd: fd_t, addr: *sockaddr, addrlen: *socklen_t, flags: c_uint) c_int;
+pub extern "c" fn accept(sockfd: fd_t, addr: ?*sockaddr, addrlen: ?*socklen_t) c_int;
+pub extern "c" fn accept4(sockfd: fd_t, addr: ?*sockaddr, addrlen: ?*socklen_t, flags: c_uint) c_int;
 pub extern "c" fn getsockopt(sockfd: fd_t, level: u32, optname: u32, optval: ?*c_void, optlen: *socklen_t) c_int;
 pub extern "c" fn setsockopt(sockfd: fd_t, level: u32, optname: u32, optval: ?*const c_void, optlen: socklen_t) c_int;
 pub extern "c" fn send(sockfd: fd_t, buf: *const c_void, len: usize, flags: u32) isize;
@@ -189,12 +189,12 @@ pub usingnamespace switch (builtin.os.tag) {
         pub const sigprocmask = __sigprocmask14;
         pub const stat = __stat50;
     },
-    .macosx, .ios, .watchos, .tvos => struct {
+    .macos, .ios, .watchos, .tvos => struct {
         // XXX: close -> close$NOCANCEL
         // XXX: getdirentries -> _getdirentries64
         pub extern "c" fn clock_getres(clk_id: c_int, tp: *timespec) c_int;
         pub extern "c" fn clock_gettime(clk_id: c_int, tp: *timespec) c_int;
-        pub const fstat = @"fstat$INODE64";
+        pub const fstat = _fstat;
         pub extern "c" fn getrusage(who: c_int, usage: *rusage) c_int;
         pub extern "c" fn gettimeofday(noalias tv: ?*timeval, noalias tz: ?*timezone) c_int;
         pub extern "c" fn nanosleep(rqtp: *const timespec, rmtp: ?*timespec) c_int;
@@ -249,10 +249,10 @@ pub extern "c" fn aligned_alloc(alignment: usize, size: usize) ?*c_void;
 pub extern "c" fn malloc(usize) ?*c_void;
 
 pub usingnamespace switch (builtin.os.tag) {
-    .linux, .freebsd, .kfreebsd, .netbsd, .openbsd => struct {
+    .linux, .freebsd, .kfreebsd, .netbsd => struct {
         pub extern "c" fn malloc_usable_size(?*const c_void) usize;
     },
-    .macosx, .ios, .watchos, .tvos => struct {
+    .macos, .ios, .watchos, .tvos => struct {
         pub extern "c" fn malloc_size(?*const c_void) usize;
     },
     else => struct {},
@@ -329,8 +329,8 @@ pub extern "c" fn pthread_cond_signal(cond: *pthread_cond_t) c_int;
 pub extern "c" fn pthread_cond_broadcast(cond: *pthread_cond_t) c_int;
 pub extern "c" fn pthread_cond_destroy(cond: *pthread_cond_t) c_int;
 
-pub const pthread_t = *@Type(.Opaque);
-pub const FILE = @Type(.Opaque);
+pub const pthread_t = *opaque {};
+pub const FILE = opaque {};
 
 pub extern "c" fn dlopen(path: [*:0]const u8, mode: c_int) ?*c_void;
 pub extern "c" fn dlclose(handle: *c_void) c_int;
@@ -342,3 +342,6 @@ pub extern "c" fn fsync(fd: c_int) c_int;
 pub extern "c" fn fdatasync(fd: c_int) c_int;
 
 pub extern "c" fn prctl(option: c_int, ...) c_int;
+
+pub extern "c" fn getrlimit(resource: rlimit_resource, rlim: *rlimit) c_int;
+pub extern "c" fn setrlimit(resource: rlimit_resource, rlim: *const rlimit) c_int;

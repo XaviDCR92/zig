@@ -86,7 +86,7 @@ pub fn main() anyerror!void {
         std.debug.print("{} errors were logged.\n", .{log_err_count});
     }
     if (leaks != 0) {
-        std.debug.print("{} tests leaked memory.\n", .{ok_count});
+        std.debug.print("{} tests leaked memory.\n", .{leaks});
     }
     if (leaks != 0 or log_err_count != 0) {
         std.process.exit(1);
@@ -103,6 +103,6 @@ pub fn log(
         log_err_count += 1;
     }
     if (@enumToInt(message_level) <= @enumToInt(std.testing.log_level)) {
-        std.debug.print("[{}] ({}): " ++ format, .{ @tagName(scope), @tagName(message_level) } ++ args);
+        std.debug.print("[{}] ({}): " ++ format ++ "\n", .{ @tagName(scope), @tagName(message_level) } ++ args);
     }
 }

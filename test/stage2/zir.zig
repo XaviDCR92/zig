@@ -1,5 +1,5 @@
 const std = @import("std");
-const TestContext = @import("../../src-self-hosted/test.zig").TestContext;
+const TestContext = @import("../../src/test.zig").TestContext;
 // self-hosted does not yet support PE executable files / COFF object files
 // or mach-o files. So we do the ZIR transform test cases cross compiling for
 // x86_64-linux.

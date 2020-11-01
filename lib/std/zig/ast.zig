@@ -171,6 +171,7 @@ pub const Error = union(enum) {
     ExpectedBlockOrField: ExpectedBlockOrField,
     DeclBetweenFields: DeclBetweenFields,
     InvalidAnd: InvalidAnd,
+    AsteriskAfterPointerDereference: AsteriskAfterPointerDereference,
 
     pub fn render(self: *const Error, tokens: []const Token.Id, stream: anytype) !void {
         switch (self.*) {
@@ -222,6 +223,7 @@ pub const Error = union(enum) {
             .ExpectedBlockOrField => |*x| return x.render(tokens, stream),
             .DeclBetweenFields => |*x| return x.render(tokens, stream),
             .InvalidAnd => |*x| return x.render(tokens, stream),
+            .AsteriskAfterPointerDereference => |*x| return x.render(tokens, stream),
         }
     }
 
@@ -275,6 +277,7 @@ pub const Error = union(enum) {
             .ExpectedBlockOrField => |x| return x.token,
             .DeclBetweenFields => |x| return x.token,
             .InvalidAnd => |x| return x.token,
+            .AsteriskAfterPointerDereference => |x| return x.token,
         }
     }
 
@@ -288,7 +291,7 @@ pub const Error = union(enum) {
     pub const ExpectedVarDecl = SingleTokenError("Expected variable declaration, found '{}'");
     pub const ExpectedFn = SingleTokenError("Expected function, found '{}'");
     pub const ExpectedReturnType = SingleTokenError("Expected 'var' or return type expression, found '{}'");
-    pub const ExpectedAggregateKw = SingleTokenError("Expected '" ++ Token.Id.Keyword_struct.symbol() ++ "', '" ++ Token.Id.Keyword_union.symbol() ++ "', or '" ++ Token.Id.Keyword_enum.symbol() ++ "', found '{}'");
+    pub const ExpectedAggregateKw = SingleTokenError("Expected '" ++ Token.Id.Keyword_struct.symbol() ++ "', '" ++ Token.Id.Keyword_union.symbol() ++ "', '" ++ Token.Id.Keyword_enum.symbol() ++ "', or '" ++ Token.Id.Keyword_opaque.symbol() ++ "', found '{}'");
     pub const ExpectedEqOrSemi = SingleTokenError("Expected '=' or ';', found '{}'");
     pub const ExpectedSemiOrLBrace = SingleTokenError("Expected ';' or '{{', found '{}'");
     pub const ExpectedSemiOrElse = SingleTokenError("Expected ';' or 'else', found '{}'");
@@ -323,6 +326,7 @@ pub const Error = union(enum) {
     pub const ExtraAllowZeroQualifier = SimpleError("Extra allowzero qualifier");
     pub const DeclBetweenFields = SimpleError("Declarations are not allowed between container fields");
     pub const InvalidAnd = SimpleError("`&&` is invalid. Note that `and` is boolean AND.");
+    pub const AsteriskAfterPointerDereference = SimpleError("`.*` can't be followed by `*`. Are you missing a space?");
 
     pub const ExpectedCall = struct {
         node: *Node,
@@ -821,6 +825,15 @@ pub const Node = struct {
         } else {
             unreachable;
         }
+    }
+
+    pub fn findFirstWithId(self: *Node, id: Id) ?*Node {
+        if (self.id == id) return self;
+        var child_i: usize = 0;
+        while (self.iterate(child_i)) |child| : (child_i += 1) {
+            if (child.findFirstWithId(id)) |result| return result;
+        }
+        return null;
     }
 
     pub fn dump(self: *Node, indent: usize) void {

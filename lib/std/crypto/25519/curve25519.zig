@@ -39,6 +39,11 @@ pub const Curve25519 = struct {
         }
     }
 
+    /// Multiply a point by the cofactor
+    pub fn clearCofactor(p: Edwards25519) Edwards25519 {
+        return p.dbl().dbl().dbl();
+    }
+
     fn ladder(p: Curve25519, s: [32]u8, comptime bits: usize) !Curve25519 {
         var x1 = p.x;
         var x2 = Fe.one;
@@ -94,6 +99,14 @@ pub const Curve25519 = struct {
         const cofactor = [_]u8{8} ++ [_]u8{0} ** 31;
         _ = ladder(p, cofactor, 4) catch |_| return error.WeakPublicKey;
         return try ladder(p, s, 256);
+    }
+
+    /// Compute the Curve25519 equivalent to an Edwards25519 point.
+    pub fn fromEdwards25519(p: std.crypto.ecc.Edwards25519) !Curve25519 {
+        try p.clearCofactor().rejectIdentity();
+        const one = std.crypto.ecc.Edwards25519.Fe.one;
+        const x = one.add(p.y).mul(one.sub(p.y).invert()); // xMont=(1+yEd)/(1-yEd)
+        return Curve25519{ .x = x };
     }
 };
 

@@ -31,6 +31,7 @@ pub usingnamespace switch (builtin.arch) {
 pub usingnamespace @import("bits.zig");
 pub const tls = @import("linux/tls.zig");
 pub const BPF = @import("linux/bpf.zig");
+pub usingnamespace @import("linux/io_uring.zig");
 
 /// Set by startup code, used by `getauxval`.
 pub var elf_aux_maybe: ?[*]std.elf.Auxv = null;
@@ -1003,14 +1004,14 @@ pub fn socketpair(domain: i32, socket_type: i32, protocol: i32, fd: [2]i32) usiz
     return syscall4(.socketpair, @intCast(usize, domain), @intCast(usize, socket_type), @intCast(usize, protocol), @ptrToInt(&fd[0]));
 }
 
-pub fn accept(fd: i32, noalias addr: *sockaddr, noalias len: *socklen_t) usize {
+pub fn accept(fd: i32, noalias addr: ?*sockaddr, noalias len: ?*socklen_t) usize {
     if (builtin.arch == .i386) {
         return socketcall(SC_accept, &[4]usize{ fd, addr, len, 0 });
     }
     return accept4(fd, addr, len, 0);
 }
 
-pub fn accept4(fd: i32, noalias addr: *sockaddr, noalias len: *socklen_t, flags: u32) usize {
+pub fn accept4(fd: i32, noalias addr: ?*sockaddr, noalias len: ?*socklen_t, flags: u32) usize {
     if (builtin.arch == .i386) {
         return socketcall(SC_accept4, &[4]usize{ @bitCast(usize, @as(isize, fd)), @ptrToInt(addr), @ptrToInt(len), flags });
     }
@@ -1261,6 +1262,26 @@ pub fn fdatasync(fd: fd_t) usize {
 
 pub fn prctl(option: i32, arg2: usize, arg3: usize, arg4: usize, arg5: usize) usize {
     return syscall5(.prctl, @bitCast(usize, @as(isize, option)), arg2, arg3, arg4, arg5);
+}
+
+pub fn getrlimit(resource: rlimit_resource, rlim: *rlimit) usize {
+    // use prlimit64 to have 64 bit limits on 32 bit platforms
+    return prlimit(0, resource, null, rlim);
+}
+
+pub fn setrlimit(resource: rlimit_resource, rlim: *const rlimit) usize {
+    // use prlimit64 to have 64 bit limits on 32 bit platforms
+    return prlimit(0, resource, rlim, null);
+}
+
+pub fn prlimit(pid: pid_t, resource: rlimit_resource, new_limit: ?*const rlimit, old_limit: ?*rlimit) usize {
+    return syscall4(
+        .prlimit64,
+        @bitCast(usize, @as(isize, pid)),
+        @bitCast(usize, @as(isize, @enumToInt(resource))),
+        @ptrToInt(new_limit),
+        @ptrToInt(old_limit),
+    );
 }
 
 test "" {
